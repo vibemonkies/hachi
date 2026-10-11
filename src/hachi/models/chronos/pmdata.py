@@ -25,12 +25,9 @@ from statistics import median
 from time import perf_counter
 from typing import Any, Literal
 
-from pydantic import TypeAdapter
-
-from hachi.contracts.base import Contract, Sha256, SubjectId, Text
+from hachi.contracts.base import Contract, Sha256, Text
 from hachi.contracts.manifests import ModelRef, RunManifest, SplitManifest
 from hachi.contracts.tables import Aggregate
-from hachi.data.pmdata import dataset_snapshot_ref, iter_aggregates, load_manifest, verify
 from hachi.evaluation import (
     ComparisonResult,
     EvaluationConfig,
@@ -42,8 +39,6 @@ from hachi.evaluation import (
     TrainingPrefix,
     compare_forecasts,
     evaluate_forecast,
-    hourly_features,
-    nested_participant_folds,
     write_comparison_packet,
 )
 from hachi.evaluation.metrics import (
@@ -52,7 +47,7 @@ from hachi.evaluation.metrics import (
     bootstrap_participant_mean,
     combine_metric_reports,
 )
-from hachi.evaluation.pmdata_run import PMDataProtocol
+from hachi.evaluation.pmdata_run import PMDataProtocol, fold_split, load_inputs
 from hachi.evaluation.serialization import document_bytes, document_sha256
 from hachi.models.baselines import BaselineConfig, TreeConfig, fit_baseline, fit_tree
 from hachi.models.baselines.artifacts import ForecastArtifact
@@ -95,28 +90,6 @@ class Inputs:
     labels: tuple[Aggregate, ...]
 
 
-def fold_split(protocol: PMDataProtocol, fold: NestedFold) -> SplitManifest:
-    """The protocol runner's SplitManifest construction, field for field (pmdata_run.run)."""
-    return SplitManifest(
-        schema_version="0.1",
-        manifest_id=f"pmdata-outer{fold.outer_fold}-inner{fold.inner_fold}",
-        created_at_utc=protocol.split_created_at_utc,
-        dataset_snapshot=protocol.expected_snapshot,
-        task="physiology_forecast",
-        fold=fold.outer_fold,
-        n_folds=protocol.folds.outer_folds,
-        **fold.partitions(),
-        lookback_hours=protocol.lookback_hours,
-        horizon_hours=protocol.horizon_hours,
-        embargo_hours=protocol.embargo_hours,
-        cutoff_stride_hours=protocol.cutoff_stride_hours,
-        min_history_hours=protocol.min_history_hours,
-        evaluation_window=protocol.evaluation_window,
-        seed=protocol.folds.seed,
-        test_opened_at_utc=None,
-    )
-
-
 def chronos_evaluation(protocol: PMDataProtocol, config: ChronosPMDataConfig) -> EvaluationConfig:
     """The protocol's scoring rules; only the pretrained-overlap disclosure differs."""
     return EvaluationConfig.model_validate(
@@ -141,17 +114,11 @@ def check_binding(protocol: PMDataProtocol, config: ChronosPMDataConfig) -> None
         raise ValueError("Chronos context must be exactly the protocol lookback")
 
 
-def load_inputs(snapshot: Path, protocol: PMDataProtocol, config: ChronosPMDataConfig) -> Inputs:
+def prepare(snapshot: Path, protocol: PMDataProtocol, config: ChronosPMDataConfig) -> Inputs:
+    """The shared protocol inputs and sealed splits (pmdata_run), bound to this config."""
     check_binding(protocol, config)
-    verified = verify(snapshot)
-    if not verified["ok"] or dataset_snapshot_ref(snapshot) != protocol.expected_snapshot:
-        raise ValueError("snapshot verification or admitted identity mismatch")
-    roster = TypeAdapter(list[SubjectId], config=Contract.model_config).validate_python(
-        load_manifest(snapshot)["subjects"]
-    )
-    plan = nested_participant_folds(roster, protocol.folds, exclusions=protocol.exclusions)
+    plan, view, labels = load_inputs(snapshot, protocol)
     folds = tuple(f for f in plan.folds if f.outer_fold == protocol.active_outer_fold)
-    bins = tuple(iter_aggregates(snapshot, "hour", metrics=[protocol.evaluation.metric]))
     return Inputs(
         protocol,
         config,
@@ -159,8 +126,8 @@ def load_inputs(snapshot: Path, protocol: PMDataProtocol, config: ChronosPMDataC
         plan,
         folds,
         tuple(fold_split(protocol, f) for f in folds),
-        hourly_features(bins, protocol.feature_policy),
-        tuple(b.aggregate for b in bins),
+        view,
+        labels,
     )
 
 

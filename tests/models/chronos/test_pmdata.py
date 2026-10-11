@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from hachi.contracts.tables import Aggregate
 from hachi.data.pmdata import FeatureBin
+from hachi.evaluation import pmdata_run
 from hachi.evaluation.pmdata_run import PMDataProtocol
 from hachi.evaluation.serialization import document_sha256
 from hachi.models.chronos import pmdata
@@ -88,11 +89,11 @@ def test_export_then_score_keeps_test_sealed_and_summary_identifier_free(monkeyp
                 pipeline_version="generated-1",
             )
             bins.append(FeatureBin(row, row.interval_end_utc))
-    monkeypatch.setattr(pmdata, "verify", lambda _: {"ok": True})
-    monkeypatch.setattr(pmdata, "dataset_snapshot_ref", lambda _: selected.expected_snapshot)
-    monkeypatch.setattr(pmdata, "load_manifest", lambda _: {"subjects": subjects})
-    monkeypatch.setattr(pmdata, "iter_aggregates", lambda *args, **kwargs: iter(bins))
-    inputs = pmdata.load_inputs(tmp_path / "snapshot", selected, bound)
+    monkeypatch.setattr(pmdata_run, "verify", lambda _: {"ok": True})
+    monkeypatch.setattr(pmdata_run, "dataset_snapshot_ref", lambda _: selected.expected_snapshot)
+    monkeypatch.setattr(pmdata_run, "load_manifest", lambda _: {"subjects": subjects})
+    monkeypatch.setattr(pmdata_run, "iter_aggregates", lambda *args, **kwargs: iter(bins))
+    inputs = pmdata.prepare(tmp_path / "snapshot", selected, bound)
     assert len(inputs.splits) == 3
     assert all(s.test_opened_at_utc is None for s in inputs.splits)
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from hachi.evaluation.pmdata_run import PMDataProtocol
 from hachi.evaluation.serialization import document_bytes
 
-from .pmdata import ChronosPMDataConfig, export, load_inputs, score
+from .pmdata import ChronosPMDataConfig, export, prepare, score
 
 
 def main() -> int:
@@ -28,7 +28,7 @@ def main() -> int:
     try:
         protocol = PMDataProtocol.model_validate_json(args.protocol.read_bytes())
         config = ChronosPMDataConfig.model_validate_json(args.config.read_bytes())
-        inputs = load_inputs(args.snapshot, protocol, config)
+        inputs = prepare(args.snapshot, protocol, config)
         if args.command == "export":
             result = export(inputs, args.output)
         else:
