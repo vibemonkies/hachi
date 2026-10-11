@@ -140,3 +140,43 @@ def test_estimates_rearrange_crossings_and_clip_to_metric_bounds(chronos):
 def test_estimates_require_the_configured_levels(chronos):
     with pytest.raises(ValueError, match="not among"):
         estimates([[60.0, 61.0, 62.0]], (0.25, 0.5, 0.75), (0,), chronos)
+
+
+def test_extended_builder_adds_longer_context_and_past_steps(chronos):
+    from hachi.data.pmdata import FeatureBin
+    from hachi.evaluation.context import ContextPolicy, context_index
+    from hachi.evaluation.features import HourlyFeaturePolicy
+    from hachi.models.chronos.adapter import extended_builder
+
+    hr = [feature("synthetic-0", h, 60.0 + h % 7) for h in range(-12, 0) if h != -9]
+    steps = [feature("synthetic-0", h, 100.0 + h, metric="steps") for h in range(-12, 0)]
+    policies = [
+        HourlyFeaturePolicy(
+            metric=m,
+            aggregation=a,
+            min_coverage=0.5,
+            min_observed_count=30,
+            availability_rule="synthetic-final-at-bin-end",
+        )
+        for m, a in (("heart_rate", "mean"), ("steps", "sum"))
+    ]
+    bins = [FeatureBin(f.aggregate, f.available_at_utc) for f in (*hr, *steps)]
+    index = context_index(bins, ContextPolicy(hours=12, channels=policies))
+    harness = request([r for r in hr if r.start_utc >= BASE - 6 * HOUR])
+    longer = extended_builder(chronos, index, context_hours=12, harness_lookback_hours=6)(harness)
+    assert longer is not None and len(longer.context) == 12 and longer.context[3] is None
+    assert longer.context[-6:] == build_request(harness, chronos).context
+    covariate = extended_builder(
+        chronos, index, context_hours=6, harness_lookback_hours=6, covariates=["steps"]
+    )(harness)
+    assert covariate is not None and covariate.row()["past_covariates"] == {
+        "steps": [94.0, 95.0, 96.0, 97.0, 98.0, 99.0]
+    }
+    assert covariate.request_id != build_request(harness, chronos).request_id
+    short = request([r for r in hr if r.start_utc >= BASE - 3 * HOUR])
+    with pytest.raises(ValueError, match="disagrees"):
+        extended_builder(chronos, index, context_hours=12, harness_lookback_hours=6)(short)
+    with pytest.raises(ValueError, match="other channels"):
+        extended_builder(
+            chronos, index, context_hours=6, harness_lookback_hours=6, covariates=["heart_rate"]
+        )
