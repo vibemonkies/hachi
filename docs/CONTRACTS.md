@@ -70,6 +70,14 @@ The cutoff rule lives in `hachi.contracts.causality`: an observation may inform 
 
 Every non-2xx response is an `ApiError` with a stable `error_code` and a `request_id`. Validate and authorize ids server-side; never accept an arbitrary filesystem path from the browser. Input hashes plus model/version/task form an idempotency key so retries do not rerun expensive jobs.
 
+Transport conventions:
+
+- The import body is the export file itself. The declared source comes as query parameters: `subject_id`, `tz_name`, `source_format` and `data_mode`.
+- `DELETE` takes `?confirm=<subject id>`.
+- A repeated idempotent request answers 200 with the existing import or job. A new one answers 202.
+
+The implementation and its served-artifact layout are described in [src/hachi/api/README.md](../src/hachi/api/README.md).
+
 ## Result envelope
 
 `ReportResult` is a tagged union. Narrow on `status`, then on `task`:
