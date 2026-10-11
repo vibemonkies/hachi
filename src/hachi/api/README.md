@@ -56,7 +56,7 @@ reason is logged, and that snapshot or artifact is not used.
 | `POST /v1/subjects/{id}/observations` | `SelfReportRequest` → the same | 201 when an entry was stored. Re-sending an entry exactly is a no-op. Re-sending a changed entry returns 409. A correction is a new `entry_id` with `supersedes` naming the current version: same `kind`, entered no earlier. Forks, deleted ids and wrong episode references are refused. |
 | `GET /v1/subjects/{id}/observations[?as_of=&versions=all]` | → `SelfReportHistory` | Current version of each entry, in recording order. `as_of` shows what was known then; `versions=all` lists every version. An empty list for a known subject with none; 404 for an unknown subject. |
 | `DELETE /v1/subjects/{id}/observations/{entry_id}?confirm={entry_id}` | → 204 | Erases every version of the entry (SQLite secure delete plus a WAL scrub) and leaves a content-free tombstone, so the ids are never reused. Invalidates the subject's illness/recovery reports. Returns 409 for an onset a recorded resolution refers to. |
-| `POST /v1/scenarios` | `ScenarioRequest` → `ReportResult` | `unavailable` until #15's frozen two-process artifact is served. |
+| `POST /v1/scenarios` | `ScenarioRequest` → `ReportResult` | Synchronous `alertness` simulation from #15's `two-process-v1` model (see below). Nothing about the subject is read or stored. |
 | `DELETE /v1/subjects/{id}?confirm={id}` | → 204 | Removes private files first, then the records: if a file can't be removed it answers 500 and keeps every record, so the deletion can be retried. Running jobs, or writes for a subject being deleted, return 409. |
 | `GET /healthz` | → `HealthStatus` | Code identity and the served artifact refs. |
 
@@ -173,6 +173,26 @@ model's input semantics and belongs to the model owner.
 The sealed-hour replay re-reads the import once per lookback hour, so its cost grows with
 history length times lookback (see the #78 README). It runs inside the report job, never in
 the request.
+
+## Sleep scenarios (#15)
+
+`POST /v1/scenarios` runs #15's conditional two-process simulation (`hachi.scenarios`) on
+the request's schedules and returns its `AlertnessResult`. `mode` is `simulation`,
+`validation` is null, `data_mode` is `synthetic` and there is no dataset snapshot (the
+contract's simulation exemption). The request's assumptions are echoed, and the model
+description says what the index is not: not a probability, KSS or PVT forecast, and not a
+measured or causal benefit. The answer is deterministic for a request, apart from
+`generated_at_utc`.
+
+The model's identity is the bundle `python -m hachi.scenarios.demo` archives in
+`model-artifact.json`: `configs/scenarios/two-process-v1.toml` plus the package's sources and
+README, hashed the same way. Every result names it as `provenance.artifact`
+(`two-process-v1@<sha256>`). Set `HACHI_SCENARIO_MODEL` to that pin to require an exact
+bundle. A checkout that differs then answers `unavailable` and is listed as a health problem.
+
+The contract refuses unknown fields, duplicate ids, wake times not after bedtime or more than
+16 h later, nonexistent local times and offsets. The simulator's own limits answer 422
+without echoing values.
 
 ## GPU models (Chronos-2)
 
