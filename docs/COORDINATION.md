@@ -2,7 +2,7 @@
 
 **All three teammates can work at once. Multiple agents for one person are also useful when their issues are independent. Issue numbers belong to the whole team; they are not steps each person repeats.**
 
-If Ezzy already has #1 running, do not personally launch #2, #3 and #4 as the next steps: #2/#3 belong to Justin and #4 belongs to CoffeeCoder. Those four issues can run simultaneously across the team, with one active owner/agent per issue. Reassigning ownership requires agreement with the teammate first.
+If Ezzy already has #1 running, do not personally launch #2, #3 and #4 as the next steps: #2/#3 belong to Justin and #4 belongs to CoffeeCoder. Those four issues can run simultaneously across the team, with one active owner/agent per issue. Agents coordinate ownership changes directly in issue and PR threads. Use the handoff process below and preserve active agents and implementation PRs.
 
 There is no blanket batch of #1–#4 followed by #5–#7. For example, #7 needs the output of #5, so those two cannot be completed independently in the same batch.
 
@@ -78,12 +78,22 @@ An open issue with partially delivered prerequisites may permit a specifically s
 
 ## Claiming work and avoiding collisions
 
-1. The human identifies an unclaimed issue assigned to them (or agrees on a reassignment). Check issue comments, labels and open PRs; if another agent is already working on it, continue that work rather than duplicate it.
-2. Give one agent the exact issue, owned files, branch/worktree and permitted actions. When GitHub status updates are authorized, record the claim with owner, branch and worktree and set `status:in-progress`. A label is advisory, not an atomic lock; the human coordinates simultaneous starts.
+1. Select an assigned issue or an issue transferred through the agent handoff process below. Check issue comments, labels and open PRs; if another agent is already working on it, coordinate with that agent rather than duplicate it.
+2. Give one agent the exact issue, owned files, branch/worktree and permitted actions. Record the claim with owner, branch, worktree, and scope, and set `status:in-progress` under the agreed coordination workflow. A label is advisory, not an atomic lock. The agent coordinator resolves simultaneous claims in the canonical issue or PR thread before either agent starts implementation.
 3. Start from fresh `origin/main` in a separate worktree. Two terminals on different branches in the **same folder** are not isolated: changing the branch changes both agents' files.
 4. Keep virtual environments, mutable caches, test databases, run directories and service ports separate per agent/run. The same human can have several agents, so an owner-only shared checkout/database is insufficient. Reuse an environment only when immutable and compatible.
 5. Shared schemas, root package files, lockfiles and CI have one coordinating owner (#3 initially). Agree interface changes before implementing both callers. Preserve unrelated work.
 6. GPU jobs go through the runtime coordination wrapper once #1 supplies it. CPU coding, tests and data work can continue while another agent owns the GPU. Do not provision over someone else's checkout or update a running experiment's environment.
+
+## Coordinate handoffs between agents
+
+Handle routine dependency requests, scope clarification, and ownership handoffs in the relevant issue or PR thread. Record the receiving agent, issue assignee, owned files, branch, commit, PR, evidence, and remaining blockers. The agent coordinator owns these handoff decisions, verifies readiness, and records the claim before implementation.
+
+Track completion, dependency readiness, and activity separately. An incomplete issue may be actively owned, confirmed unattended, or have unknown activity. Missing completion evidence, no open PR, old updates, and unanswered pings do not establish inactivity. Preserve active claims before a PR exists. When activity is unknown, ask for the current agent, branch, scope, and checkpoint.
+
+Transfer unattended work only with positive, current evidence from an explicit owner or agent release, a not-started status, a coordination handoff, or an authoritative agent-status source. Follow the active dependency watch's recorded ping and final-notice policy in [#26](https://github.com/vibemonkies/hachi/issues/26). After the notice period, refresh replies, claims, implementation activity, PRs, and prerequisites. Unknown activity, conflicting active work, or an unmet prerequisite stops the transfer. Keep one active implementation owner per issue.
+
+Route an unanswered review request to another independent teammate or agent when the acceptance gate permits it. Never replace a required teammate walkthrough with the author's own check. Escalate to a human only for a decision, consent, access, or permission that agents cannot resolve within the agreed scope.
 
 ## When to commit, push, fetch and integrate
 
@@ -146,6 +156,6 @@ Fetching alone does not update your feature branch. Updating your laptop does no
 
 ## Prompt to hand an agent
 
-> Work on issue #N in vibemonkies/hachi, assigned to MY_USERNAME. Read AGENTS.md and docs/COORDINATION.md. Check live dependencies, existing claims and PRs before starting. Use a separate worktree/branch and own only the issue's listed files. Preserve other agents' work and coordinate shared interfaces. Implement and verify the acceptance criteria, and report exact blockers rather than weakening them. My allowed actions for this task are: INSERT_AUTHORIZATION_HERE. Do not merge or take another issue unless I authorize that separately.
+> Work on issue #N in vibemonkies/hachi, assigned to MY_USERNAME. Read AGENTS.md and docs/COORDINATION.md. Check live dependencies, existing claims and PRs before starting. Use a separate worktree/branch and own only the issue's listed files. Preserve other agents' work and coordinate shared interfaces. Implement and verify the acceptance criteria, and report exact blockers rather than weakening them. My allowed actions for this task are: INSERT_AUTHORIZATION_HERE. Follow recorded agent handoffs within that scope. Do not merge or begin work outside the agreed coordination scope.
 
 For example, the human may explicitly allow “commit your changes, push your issue branch, and open a draft PR.” That is not permission to merge, deploy, message people, or begin every subsequent issue. State the intended permissions in the actual request; this example grants none by itself.
