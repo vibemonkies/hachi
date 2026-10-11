@@ -41,8 +41,13 @@ it does not recompute scientific metrics from source labels or certify source ac
 
 The aggregate `development.json` contains digests and support counts, without
 participant IDs or predictions. Physiology development evidence is explicitly
-separate from final selection. Every other task stays blocked until its own adapter
-and evidence land. The CLI emits aggregate status only, including on failures.
+separate from final selection. The Stanford anomaly adapter separately verifies the
+producer's existing protocol/artifact/whole-person folds and reconciles its metrics
+against saved observed-control counts. It retains the floating-clock convention and
+limited coverage; it does not produce illness probabilities. Use `--kind stanford-burden`
+with the approved #9 packet index. Illness, recovery and measured alertness stay
+blocked until their own adapters and evidence land. The CLI emits aggregate status
+only, including on failures.
 
 ## Freeze exact decisions
 
@@ -59,8 +64,8 @@ UV_CACHE_DIR="$PWD/.cache/uv" uv run python -I -m hachi.evaluation.finalization 
   --output /approved/private/runs/new-decision-freeze
 ```
 
-This consumes `hachi.models.ensemble.selection.SelectionRule`/`SelectionLog` and
-`judge` from #12. Until those modules land it refuses with the named dependency.
+This consumes the merged `hachi.models.ensemble.selection.SelectionRule`/`SelectionLog`
+and `judge` from #12; an older checkout missing them refuses with the named dependency.
 It checks the recorded incumbent chain and gates against the owner's rule; it
 does not invent a rule or choose a different model. It preserves exact selection,
 calibration and manifest hashes, plus the decision documents, in exclusive output.
@@ -75,6 +80,11 @@ selected-artifact inference reproduction, independent review, and the parent's
 coordinated test opening are still required. There is no test-opening command.
 The parent must verify actual delivered prerequisites before authorizing the later
 final-test action; neither a hashed declaration nor a green check substitutes for it.
+The #12 owner will supply direct selection-step-to-comparison/evaluation packet hash
+links and selected export receipts. Ridge/Chronos serving receipt integration and
+fresh selected inference remain pending those actual exports. #10 score packets
+with null export references can establish development evidence without establishing
+a served final artifact.
 
 Read back any emitted packet with its approved index digest:
 

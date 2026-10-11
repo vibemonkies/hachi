@@ -155,6 +155,18 @@ def test_source_receipt_cannot_be_rebound_to_false_sources(generated_bundle):
         validate_development(root, reindex(root), repo)
 
 
+def test_source_omission_and_duplicate_run_reference(generated_bundle):
+    root, _pin, repo, packet, _ = generated_bundle
+    shutil.copytree(packet, packet.parent / "duplicate")
+    receipt = validate_development(root, reindex(root), repo)
+    assert len(receipt.evaluations) == 1
+    doc = json.loads((packet / "source-sha256.json").read_text())
+    del doc["forecast.py"]
+    (packet / "source-sha256.json").write_bytes(document_bytes(doc))
+    with pytest.raises(EvidenceRefused, match="omits"):
+        validate_development(root, reindex(root), repo)
+
+
 def test_index_pin_completeness_and_symlink_refusals(generated_bundle, tmp_path):
     root, pin, _, packet, _ = generated_bundle
     with pytest.raises(EvidenceRefused, match="expected checksum"):
@@ -207,5 +219,8 @@ def test_cli_private_readback_no_overwrite_and_sanitized_errors(generated_bundle
     assert main(args) == 1
     error = capsys.readouterr().out
     assert str(root) not in error and "synthetic-" not in error
+    inside = [*args[:-1], str(root / "forbidden-output")]
+    assert main(inside) == 1
+    assert not (root / "forbidden-output").exists()
     with pytest.raises(FileExistsError):
         write_private(output, {"other.json": b"{}"})

@@ -8,9 +8,10 @@ from pydantic import ValidationError
 
 from hachi.evaluation.serialization import document_bytes, document_sha256
 
+from .burden import validate_stanford_burden
 from .development import validate_development
 from .freeze import FreezeRequest, freeze_decisions
-from .integrity import EvidenceRefused, verify_index, write_private
+from .integrity import EvidenceRefused, require_separate_output, verify_index, write_private
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -18,6 +19,7 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     dev = commands.add_parser("development", help="verify existing private development evidence")
     dev.add_argument("--bundle", type=Path, required=True)
+    dev.add_argument("--kind", choices=["forecast", "stanford-burden"], default="forecast")
     dev.add_argument("--expected-index-sha256", required=True)
     dev.add_argument("--artifact-bundle", type=Path, action="append", default=[])
     dev.add_argument("--artifact-index-sha256", action="append", default=[])
@@ -36,9 +38,17 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "development":
             artifacts = list(zip(args.artifact_bundle, args.artifact_index_sha256, strict=True))
-            receipt = validate_development(
-                args.bundle, args.expected_index_sha256, args.repo, artifact_bundles=artifacts
-            )
+            require_separate_output(args.output, [args.bundle, *args.artifact_bundle])
+            if args.kind == "stanford-burden":
+                if artifacts:
+                    raise EvidenceRefused("Stanford burden stores its own algorithm artifact")
+                receipt = validate_stanford_burden(
+                    args.bundle, args.expected_index_sha256, args.repo
+                )
+            else:
+                receipt = validate_development(
+                    args.bundle, args.expected_index_sha256, args.repo, artifact_bundles=artifacts
+                )
             hashes = write_private(args.output, {"development.json": document_bytes(receipt)})
             print(
                 json.dumps(

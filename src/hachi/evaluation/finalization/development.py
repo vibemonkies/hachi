@@ -196,7 +196,7 @@ def validate_development(
     index = verify_index(root, expected_index_sha256)
     indexes = [(root, index)] + [(p, verify_index(p, sha)) for p, sha in artifact_bundles]
     packets = sorted({str(Path(name).parent) for name in index if name.endswith("/run.json")})
-    evaluations = []
+    evaluations: dict[str, EvaluationIdentity] = {}
     for relative in packets:
         identity, _, _ = _packet(root / relative, repo)
         run = RunManifest.model_validate_json(read_file(root, f"{relative}/run.json"))
@@ -217,7 +217,10 @@ def validate_development(
                 run,
                 EvaluationConfig.model_validate_json(read_file(root, f"{relative}/config.json")),
             )
-        evaluations.append(identity)
+        previous = evaluations.get(identity.run_sha256)
+        if previous is not None and previous != identity:
+            raise EvidenceRefused("one immutable run refers to inconsistent evaluations")
+        evaluations[identity.run_sha256] = identity
     comparisons = []
     for name in sorted(index):
         if not name.endswith("/comparison.json"):
@@ -243,7 +246,7 @@ def validate_development(
         bundle_index_sha256=expected_index_sha256,
         files_verified=len(index),
         artifact_bundle_index_sha256=[sha for _, sha in artifact_bundles],
-        evaluations=evaluations,
+        evaluations=list(evaluations.values()),
         comparison_sha256=comparisons,
         task_support=[
             TaskSupport(

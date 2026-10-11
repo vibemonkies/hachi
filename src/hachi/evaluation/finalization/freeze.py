@@ -10,7 +10,7 @@ from hachi.contracts.manifests import RunManifest, SplitManifest
 from hachi.evaluation.serialization import document_bytes, document_sha256
 
 from .development import TASKS, DevelopmentReceipt, TaskSupport
-from .integrity import EvidenceRefused, digest, read_file, write_private
+from .integrity import EvidenceRefused, digest, read_file, require_separate_output, write_private
 
 
 class DocumentRef(Contract):
@@ -79,6 +79,7 @@ def freeze_decisions(root: Path, request: FreezeRequest, output: Path) -> Freeze
     new selection experiment. Packet linkage, fresh selected inference, scientific
     support and independent acceptance remain explicit final-test prerequisites.
     """
+    require_separate_output(output, [root])
     try:
         from hachi.models.ensemble.selection import SelectionLog, SelectionRule, judge
     except ModuleNotFoundError as exc:

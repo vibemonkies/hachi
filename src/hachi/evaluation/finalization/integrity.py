@@ -4,6 +4,7 @@ import hashlib
 import os
 import stat
 import subprocess
+from functools import cache
 from pathlib import Path
 
 from pydantic import TypeAdapter
@@ -61,21 +62,45 @@ def verify_index(root: Path, expected: str) -> dict[str, str]:
     return index
 
 
+@cache
+def _git_blob(repo: Path, git_sha: str, relative: str) -> bytes:
+    result = subprocess.run(
+        ["git", "show", f"{git_sha}:{relative}"], cwd=repo, capture_output=True, check=False
+    )
+    if result.returncode:
+        raise EvidenceRefused("producing source commit is unavailable")
+    return result.stdout
+
+
 def verify_sources(raw: bytes, repo: Path, git_sha: str, prefix: str) -> None:
     """Compare historical source receipts with their producing commit, not current main."""
     sources = SOURCES.validate_json(raw)
     if not sources:
         raise EvidenceRefused("source receipt is empty")
+    paths = {f"src/hachi/{n}" if "/" in n else f"{prefix}/{n}" for n in sources}
+    tracked = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", git_sha, prefix],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    required = {
+        p
+        for p in tracked.stdout.splitlines()
+        if str(Path(p).parent) == prefix and Path(p).suffix == ".py"
+    }
+    if tracked.returncode or not required or not required <= paths:
+        raise EvidenceRefused("source receipt omits producing implementation files")
     for name, expected in sources.items():
         relative = f"src/hachi/{name}" if "/" in name else f"{prefix}/{name}"
-        result = subprocess.run(
-            ["git", "show", f"{git_sha}:{relative}"],
-            cwd=repo,
-            capture_output=True,
-            check=False,
-        )
-        if result.returncode or digest(result.stdout) != expected:
+        if digest(_git_blob(repo, git_sha, relative)) != expected:
             raise EvidenceRefused("source receipt differs from the producing commit")
+
+
+def require_separate_output(output: Path, roots: list[Path]) -> None:
+    if any(output.resolve().is_relative_to(root.resolve()) for root in roots):
+        raise EvidenceRefused("output must be outside immutable input bundles")
 
 
 def write_private(output: Path, payloads: dict[str, bytes]) -> dict[str, str]:
