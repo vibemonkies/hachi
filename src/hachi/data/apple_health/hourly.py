@@ -16,7 +16,7 @@ from hachi.evaluation.features import HourlyFeature, HourlyFeaturePolicy
 from hachi.evaluation.features import hourly_features as _select_features
 
 from .importer import ImportConfig
-from .store import EPOCH, iter_observations, timestamp_us
+from .store import EPOCH, select_candidates, timestamp_us
 
 AVAILABILITY_RULE = "apple-hour-end-sealed-native-v1"
 PIPELINE_VERSION = "apple-hourly-1"
@@ -167,18 +167,20 @@ def _iter_hourly_bins(
     lower = _utc(start, "start") if start is not None else None
     with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
         connection.execute("PRAGMA cache_size=-4096")
-        connection.execute("PRAGMA temp_store=FILE")
+        # Candidate metadata and selector state stay in connection-local RAM.
+        # There is no participant temp file to leave behind after a hard crash.
+        connection.execute("PRAGMA temp_store=MEMORY")
         if connection.execute("SELECT value FROM metadata WHERE key='completed'").fetchone() != (
             "true",
         ):
             raise ValueError("import has not completed")
         (payload,) = connection.execute("SELECT value FROM metadata WHERE key='config'").fetchone()
         config = ImportConfig.model_validate_json(payload)
+        _index_candidates(connection, metric, audit_as_of)
         # Select the grid from native candidates, not full-import winners: a late
         # winning watch record must not erase a previously eligible phone hour.
         (first,) = connection.execute(
-            "SELECT min(start_us) FROM candidates WHERE family=? AND end_us<=? AND available_us<=?",
-            (metric, timestamp_us(audit_as_of), timestamp_us(audit_as_of)),
+            "SELECT min(start_us) FROM temp.hourly_index",
         ).fetchone()
         if first is None:
             return
@@ -188,25 +190,78 @@ def _iter_hourly_bins(
             if hour < lower:
                 hour += HOUR
         while hour < cutoff:
-            selected = iter_observations(path, as_of=hour + HOUR)
+            _set_hour_window(connection, hour, hour + HOUR)
+            selected = (row for _, row in select_candidates(connection, hour + HOUR))
             item = _aggregate_hour(selected, config, metric, aggregation, hour)
-            yield item, _audit_hour(connection, item, metric, audit_as_of)
+            yield item, _audit_hour(connection, item, audit_as_of)
             hour += HOUR
+
+
+def _index_candidates(
+    connection: sqlite3.Connection, metric: NativeMetric, as_of: datetime
+) -> None:
+    """Index known native numeric metadata once, without copying health payloads."""
+    connection.execute(
+        "CREATE TEMP TABLE hourly_index (row_id INTEGER PRIMARY KEY, "
+        "start_us INTEGER, end_us INTEGER, available_us INTEGER)"
+    )
+    cutoff = timestamp_us(as_of)
+    connection.execute(
+        "INSERT INTO temp.hourly_index SELECT row_id, start_us, end_us, available_us "
+        "FROM main.candidates WHERE family=? AND end_us<=? AND available_us<=?",
+        (metric, cutoff, cutoff),
+    )
+    connection.executescript("""
+        CREATE INDEX temp.hourly_start ON hourly_index(start_us);
+        CREATE VIRTUAL TABLE temp.hourly_ranges USING rtree(row_id, min_start, max_end);
+        INSERT INTO temp.hourly_ranges SELECT row_id, start_us, end_us FROM hourly_index;
+        CREATE TEMP TABLE hourly_window (begin_us INTEGER, seal_us INTEGER);
+        INSERT INTO temp.hourly_window VALUES (0, 0);
+        CREATE TEMP VIEW candidates AS
+            SELECT native.* FROM hourly_index idx
+            JOIN main.candidates native ON native.row_id=idx.row_id
+            JOIN hourly_window win
+            WHERE idx.start_us>=win.begin_us AND idx.start_us<win.seal_us
+                AND idx.end_us<=win.seal_us AND idx.available_us<=win.seal_us;
+    """)
+
+
+def _set_hour_window(connection: sqlite3.Connection, start: datetime, seal: datetime) -> None:
+    """Keep every overlap dependency, including chains before the model lookback.
+
+    At closure, eligible intervals end <= seal. Therefore only the left edge
+    needs expanding. Greedy source selection is independent across disconnected
+    overlap components; pruning those components cannot change a retained winner.
+    RTree bounds only narrow candidates; exact integer predicates decide edges.
+    """
+    begin, end = timestamp_us(start), timestamp_us(seal)
+    while True:
+        (earlier,) = connection.execute(
+            "SELECT min(idx.start_us) FROM temp.hourly_ranges bounds "
+            "JOIN temp.hourly_index idx ON idx.row_id=bounds.row_id "
+            "WHERE bounds.min_start<=:begin AND bounds.max_end>=:begin "
+            "AND idx.start_us<:begin AND idx.end_us>:begin "
+            "AND idx.end_us<=:seal AND idx.available_us<=:seal",
+            {"begin": begin, "seal": end},
+        ).fetchone()
+        if earlier is None:
+            break
+        begin = earlier
+    connection.execute("UPDATE temp.hourly_window SET begin_us=?, seal_us=?", (begin, end))
 
 
 def _audit_hour(
     connection: sqlite3.Connection,
     item: _AppleFeatureBin,
-    metric: NativeMetric,
     as_of: datetime,
 ) -> HourAudit:
     row = item.aggregate
     begin, seal, cutoff = map(timestamp_us, (row.interval_start_utc, row.interval_end_utc, as_of))
     known = late = crossing = 0
     candidates = connection.execute(
-        "SELECT end_us, available_us FROM candidates WHERE family=? "
-        "AND start_us>=? AND start_us<? AND end_us<=? AND available_us<=?",
-        (metric, begin, seal, cutoff, cutoff),
+        "SELECT end_us, available_us FROM temp.hourly_index "
+        "WHERE start_us>=? AND start_us<? AND end_us<=? AND available_us<=?",
+        (begin, seal, cutoff, cutoff),
     )
     for end, available in candidates:
         known += 1

@@ -75,8 +75,10 @@ Primary semantics: [HealthKit percent units](https://developer.apple.com/documen
 
 `hourly.py` bridges the immutable importer snapshot to the evaluator's structural
 `FeatureBin` interface. The importer/parser/normalization/selection policy is unchanged.
-The original API rejects Apple imports unconditionally for hourly-feature artifacts;
-this helper supplies the data seam. WindyTrout owns API wiring and source compatibility.
+The API consumes this seam only for artifacts with an explicitly recorded Apple
+source admission ([PR85](https://github.com/vibemonkies/hachi/pull/85)). WindyTrout
+owns that serving metadata and API wiring. Original PMData receipts remain intact;
+every admitted Apple forecast carries a warning about the unvalidated source transfer.
 
 ```python
 from hachi.data.apple_health.hourly import AVAILABILITY_RULE, apple_hourly_features
@@ -163,7 +165,7 @@ records. It is **not** scientific readiness or real Apple forecast validation.
 Serving must retain the original frozen artifact/protocol receipt and separately
 declare any accepted Apple input rule. Low-density history abstains at the existing
 0.5/30 HR gates; no friend export or held case was used to choose them. Generated
-Apple HTTP-to-artifact evidence, once wired, is synthetic transport proof; #21's
+Apple HTTP-to-artifact evidence is synthetic transport proof; #21's
 actual consented export and source-transfer validation remain separate gates.
 
 The focused tests exercise density versus duration, unchanged gates, late higher
@@ -173,21 +175,77 @@ missing/vendor-only history and foreign policy refusal. Additional sentinels ver
 known-only late counts, exclusive reason reconciliation, exact-duplicate counting,
 all-late missingness, crossing-winner suppression, read-only snapshots and native
 oracle agreement. Feature identity/readiness stay fixed while later audit receipts
-show newly known exclusions. On this Mac, a generated
-1,440-record/48-hour probe took 0.012 seconds for one native read versus 0.285
-seconds for sealed-hour replay (48 eligible bins), Python 3.12.13. Replay reuses a
-read-only SQLite snapshot and the canonical `iter_observations(as_of=closure)`
-boundary, with private disk-backed temporary state. Generated hostile-record tests
-pin agreement with an independent native-read oracle. It scans prior candidates
-per hour; supply the model lookback `start` in serving.
+show newly known exclusions.
 
-GreenHawk's independent review at `cb1c5a7` measured a 48-hour lookback at 12.0
-seconds for 20,000 generated HR records and 69.5 seconds for 105,120 records; one
-native read of the latter took 1.46 seconds. These are reviewer measurements of
-prior replay, not an interactive-latency guarantee for the audited update. The
-history × lookback cost remains an explicit API integration gate. A performance
-change must preserve importer precedence, the fixed closure and native-read oracle;
-no parser/store or API changes are included in this audit update.
+### Exact windowed replay and performance
+
+Serving should pass its declared lookback `start`. The helper opens one read-only
+snapshot connection and builds a numeric index of the requested metric's candidates
+known by the audit cutoff. Each hour starts with its own `[start, closure)` window.
+It repeatedly extends the left edge across closure-eligible overlapping intervals,
+retaining transitive dependencies even before the model lookback. Candidates ending
+after closure are ineligible, so the right edge cannot extend. Disconnected overlap
+components cannot affect each other's greedy winners. A connection-local view feeds
+that window to the **unchanged importer `select_candidates`** ordering and overlap
+rules. Exact integer predicates decide edges; outward-rounded RTree bounds only
+narrow the search. This avoids parsing the entire historical import once per hour
+without applying a naive date filter that would change precedence.
+
+Numeric metadata and selector state use connection-local in-memory SQLite TEMP
+tables (`temp_store=MEMORY`); health payloads are read from the original snapshot.
+No temporary participant file is created. Closing the connection releases state on
+success, failure or interruption, and process termination leaves no temp file.
+Tests pin equality to the independent full `iter_observations(as_of=closure)` oracle,
+including a transitive pre-lookback suppressor chain, half-open edges, late/future
+records, other metric families and randomized hostile intervals. Failure injection
+checks read-only source hashes, memory-only TEMP storage and closed connections.
+
+Measured on MacBook-Air-4.local, macOS arm64, Python 3.12.13 / SQLite 3.50.4, with
+105,120 **generated** native HR points (8,760 hours × 12/hour) in a 137,154,560-byte
+snapshot; context 48 hours / 576 points. Baseline was merged helper `0662bef`
+(SHA256 `06a4b378c7258a93fac7d474c2b9d8d7a4c24f4f0341ff6cdfde268b7068c891`).
+The optimized helper SHA256 is
+`7987e96e77a6a349722d6e44532a93cbb39c5d372b7e0ad3991b09d5fe9cd820`.
+
+| Replay | Process-cold | Warm | Process peak RSS |
+| --- | ---: | ---: | ---: |
+| Full-history baseline | 60.376 s | 67.860 s | 55.5 MB |
+| Windowed, initial measurement | 0.406 s | 0.430 s | 68.3 MB |
+| Windowed, repeat measurement | 0.777 s | 0.775 s | 69.1 MB |
+
+“Process-cold” means the first call in a fresh Python process; the OS filesystem
+cache was **not** evicted. Each warm call rebuilds its own index; no participant
+cache is shared. Native iteration once took 1.976 s in the baseline process.
+All 48 bins **and audits**, including sub-threshold values, match the merged full
+replay exactly (serialized receipt SHA256
+`4397a59847a382ce969c32ae0e5114ec3e18e2532ef97dd2bc3463170a48edca`).
+The unchanged 0.5/30 gates yield zero features for this sparse fixture; faster
+abstention is not increased source readiness or a physiological coverage claim.
+
+A second generated year at 60 samples/hour (525,600 native points; 685,486,080-byte
+snapshot) took 4.974 s process-cold and 2.764 s warm for the same 48-hour lookback,
+with 149.8 MB process peak RSS. Its 2,880 context points produced 48 features at
+the original gates; feature and audit hashes were identical cold/warm. This measures
+larger-history scaling and memory, not source-transfer accuracy. Numeric index
+memory scales with known candidates; a pathological connected interval chain can
+still require historical replay to preserve exact precedence.
+The importer permits up to 2,000,000 records. Peak API memory at that cap is
+unmeasured; the 525,600-record result is the largest measured fixture here. This
+sizing limit is handed to the serving owner rather than claimed as a cap-scale
+latency or memory guarantee.
+
+The generated-only runner refuses real-source metadata and emits counts, timings
+and hashes. Use a fresh private owner/run root and the project's Python environment:
+
+```sh
+python tests/data/apple_health/hourly_benchmark.py prepare --run-root /private/owner/hourly-bench
+python tests/data/apple_health/hourly_benchmark.py measure --run-root /private/owner/hourly-bench --output /private/owner/hourly-bench/timing.json
+```
+
+These are helper measurements. The separate actual HTTP measurements below address
+the prior ~70-second API-path gate for the tested CPU artifact. No parser/store,
+evaluation-contract, artifact descriptor or model-gate changes are part of this
+performance change.
 
 A separate generated 48-hour dense/sparse probe loaded the actual frozen PMData
 `hourly-last-valid-v1-141306001b16e168` artifact with receipt
@@ -203,3 +261,46 @@ After the audit update, the same checksum/code-verified artifact again produced
 at the earlier cutoff; their later audit receipt counted 30 late exclusions while
 every prior feature, identity and readiness remained identical. The original CPU
 receipt verified without a descriptor or shared feature-contract override.
+
+### Generated HTTP transport against the original frozen CPU artifact
+
+At producing integration `a31f247`, a fresh isolated loopback API on port 8722
+staged that **same original** checksum/code-verified #9 artifact and evaluation
+packet. Its serving profile retained the PMData policy and protocol hash and added
+an explicit Apple policy with identical metric, aggregation and 0.5/30 gates, the
+sealed Apple rule, and rationale “Generated transport proof only; not validated
+on Apple data.” No PMData observations or source calendar dates entered these
+generated Apple inputs.
+
+| Generated native volume | Import through HTTP | First report | Uncached second report | Result |
+| --- | ---: | ---: | ---: | --- |
+| 105,120 points, 12/hour | 8.742 s | 0.705 s | 0.645 s | `INSUFFICIENT_HISTORY` at original gates |
+| 525,600 points, 60/hour | 49.339 s | 2.799 s | 2.918 s | 24/24 exact points per report versus direct inference |
+
+Both use a 48-hour context. The second request uses a distinct subsecond `as_of`
+with the same floored native cutoff, so report idempotency cannot supply a cached
+result. These are wall times from POST to completed report, including polling;
+the first sparse report is the fresh API process's first forecast, while the first
+dense report follows its separate upload in that process. The OS cache was not
+evicted. Every successful response stays `synthetic`, point-only with null bounds,
+and carries `DEVICE_SHIFT` with the explicit unvalidated rationale. The private
+aggregate receipt SHA256 is
+`4157ff85e8fbdc595ad324ce29ede8ad1e71783114f10cef9eb020f536f62a8d`.
+
+A separate HTTP append sentinel imported 2,880 generated records, then a new batch
+for the same synthetic subject with 30 future-created higher-priority updates and
+one record whose event end was still in the future. A new uncached report at the
+original native cutoff kept all 24 forecast points identical. All 48 prior features,
+identities, readiness and earlier audit receipts matched exactly. At a later audit
+cutoff the 30 creations were counted as permanently excluded late inputs; the
+future-end record stayed unknown. The original model receipt verified throughout.
+Owned services were stopped and port 8722 released after each probe.
+After integrating the same-gate validator fix from PR91 (`182a7b8`), the HTTP append
+sentinel passed again at `e7dfdc0` with the original artifact receipt unchanged.
+Independent boundary probes now refuse lowered coverage and count admissions.
+
+This proves generated upload → imported snapshot → source-admitted hourly inputs
+→ the actual frozen CPU artifact over HTTP. It does not establish Apple clinical
+or population accuracy, calibration, #21's actual consented case, or compatibility
+for every artifact. Source admissions remain per artifact; the serving owner owns
+metadata validation and the separate scientific/source-transfer gate.
