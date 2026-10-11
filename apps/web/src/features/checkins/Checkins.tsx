@@ -45,7 +45,10 @@ function CheckinWorkspace({
   const [state, setState] = useState<HistoryState>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<{
+    kind: "save" | "delete";
+    message: string;
+  } | null>(null);
   const [editing, setEditing] = useState<SelfReportEntry>();
   const [formSequence, setFormSequence] = useState(0);
   const [deleting, setDeleting] = useState<SelfReportEntry>();
@@ -63,11 +66,14 @@ function CheckinWorkspace({
       new FormData(event.currentTarget).get("confirm-entry") !==
       deleting.entry_id
     ) {
-      setError("Type the exact entry identifier to confirm deletion.");
+      setError({
+        kind: "delete",
+        message: "Type the exact entry identifier to confirm deletion.",
+      });
       return;
     }
     setBusy(true);
-    setError("");
+    setError(null);
     try {
       await api.deleteEntry(subjectId, deleting.entry_id);
       setDeleting(undefined);
@@ -76,7 +82,7 @@ function CheckinWorkspace({
       );
       await reload();
     } catch (error) {
-      setError(message(error));
+      setError({ kind: "delete", message: message(error) });
     } finally {
       setBusy(false);
     }
@@ -120,7 +126,7 @@ function CheckinWorkspace({
   });
   async function save(entry: SelfReportEntry) {
     setBusy(true);
-    setError("");
+    setError(null);
     setFeedback("");
     try {
       await api.save(subjectId, entryRequest(entry));
@@ -133,7 +139,7 @@ function CheckinWorkspace({
         );
       return true;
     } catch (error) {
-      setError(message(error));
+      setError({ kind: "save", message: message(error) });
       return false;
     } finally {
       setBusy(false);
@@ -150,9 +156,9 @@ function CheckinWorkspace({
           {feedback}
         </p>
       )}
-      {error && (
+      {error?.kind === "delete" && (
         <p className="error-text" role="alert">
-          {error}
+          {error.message}
         </p>
       )}
       <>
@@ -164,7 +170,7 @@ function CheckinWorkspace({
             onsets={onsets}
             busy={busy}
             onSave={save}
-            saveError={error}
+            saveError={error?.kind === "save" ? error.message : undefined}
           />
           <section aria-label="Saved check-in history">
             <h2>Saved history</h2>
@@ -215,7 +221,7 @@ function CheckinWorkspace({
                         disabled={busy}
                         onClick={() => {
                           setEditing(entry);
-                          setError("");
+                          setError(null);
                         }}
                       >
                         Correct this {label(entry.kind)}
