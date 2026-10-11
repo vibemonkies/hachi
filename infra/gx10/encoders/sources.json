@@ -1,0 +1,100 @@
+{
+  "cuda_toolkit": {
+    "release": "12.9.1",
+    "platform": "linux-sbsa",
+    "base_url": "https://developer.download.nvidia.com/compute/cuda/redist/",
+    "manifest": "redistrib_12.9.1.json",
+    "purpose": "Build-time nvcc and headers matching the bundled CUDA 12.9 of the torch wheel. The machine's CUDA 13.0 toolkit is never used or changed; torch refuses extension builds with a different CUDA major.",
+    "components": [
+      {
+        "component": "cuda_nvcc",
+        "version": "12.9.86",
+        "path": "cuda_nvcc/linux-sbsa/cuda_nvcc-linux-sbsa-12.9.86-archive.tar.xz",
+        "sha256": "0aa1fce92dbae76c059c27eefb9d0ffb58e1291151e44ff7c7f1fc2dd9376c0d"
+      },
+      {
+        "component": "cuda_cudart",
+        "version": "12.9.79",
+        "path": "cuda_cudart/linux-sbsa/cuda_cudart-linux-sbsa-12.9.79-archive.tar.xz",
+        "sha256": "8b422a3b2cb8452cb678181b0bf9d7aa7342df168b5319c5488ae3b8514101fc"
+      },
+      {
+        "component": "cuda_cccl",
+        "version": "12.9.27",
+        "path": "cuda_cccl/linux-sbsa/cuda_cccl-linux-sbsa-12.9.27-archive.tar.xz",
+        "sha256": "8c3da24801b500f1d9217d191bb4b63e5d2096c8e7d0b7695e876853180ba82f"
+      },
+      {
+        "component": "cuda_nvrtc",
+        "version": "12.9.86",
+        "path": "cuda_nvrtc/linux-sbsa/cuda_nvrtc-linux-sbsa-12.9.86-archive.tar.xz",
+        "sha256": "fb2d50c791465f333fc2236d2419170cf7a7886f48dd9b967a10f8233c686029"
+      },
+      {
+        "component": "cuda_nvtx",
+        "version": "12.9.79",
+        "path": "cuda_nvtx/linux-sbsa/cuda_nvtx-linux-sbsa-12.9.79-archive.tar.xz",
+        "sha256": "dae359c2c51f83a5cd402468f481a82aeb6d32d79dc707d3625607e83cf97ceb"
+      },
+      {
+        "component": "cuda_profiler_api",
+        "version": "12.9.79",
+        "path": "cuda_profiler_api/linux-sbsa/cuda_profiler_api-linux-sbsa-12.9.79-archive.tar.xz",
+        "sha256": "e07f47ef3aeb3a3ca995e9070d77d98ad79460216bf2075c9f9018962ae1d03b"
+      },
+      {
+        "component": "libcublas",
+        "version": "12.9.1.4",
+        "path": "libcublas/linux-sbsa/libcublas-linux-sbsa-12.9.1.4-archive.tar.xz",
+        "sha256": "e99b074e6f66034e563508118804599d7579f73afc8424c55ad5fd8d12e085a5"
+      },
+      {
+        "component": "libcurand",
+        "version": "10.3.10.19",
+        "path": "libcurand/linux-sbsa/libcurand-linux-sbsa-10.3.10.19-archive.tar.xz",
+        "sha256": "078afec842c99b3a953d62cc76bd74afa2d883dc436e6d642e6440bb1e85eb8e"
+      },
+      {
+        "component": "libcusolver",
+        "version": "11.7.5.82",
+        "path": "libcusolver/linux-sbsa/libcusolver-linux-sbsa-11.7.5.82-archive.tar.xz",
+        "sha256": "db463593ffcbc78f542a7f1ef808da43bf742acae654d970d99a47289c2a83e5"
+      },
+      {
+        "component": "libcusparse",
+        "version": "12.5.10.65",
+        "path": "libcusparse/linux-sbsa/libcusparse-linux-sbsa-12.5.10.65-archive.tar.xz",
+        "sha256": "8d1c8a57ba3eaecc3f7c11e29fed275a2f3dca5cea51dd2a24d07ab5d9998583"
+      }
+    ]
+  },
+  "sdists": [
+    {
+      "name": "causal-conv1d",
+      "version": "1.5.0.post8",
+      "url": "https://files.pythonhosted.org/packages/51/2a/5d5ce2bbc1dd20ed98c57a7e3456aaab2f5a25088aaf1fbb74142450054f/causal_conv1d-1.5.0.post8.tar.gz",
+      "sha256": "b3dc31fac0278da281b3f24ab164b01bd4518ac744e9fdd8d5d65adbf45b7136",
+      "force_build_env": "CAUSAL_CONV1D_FORCE_BUILD"
+    },
+    {
+      "name": "mamba-ssm",
+      "version": "2.2.4",
+      "url": "https://files.pythonhosted.org/packages/1d/c7/6e21ecece28e6d625f42e708c7523cd78ec82d1622f98562f82bf02748b7/mamba_ssm-2.2.4.tar.gz",
+      "sha256": "e4114c69302796c91b71e90032c2d974f611608fab331582a80de6eaf075efb9",
+      "force_build_env": "MAMBA_FORCE_BUILD"
+    }
+  ],
+  "git": [
+    {
+      "name": "momentfm",
+      "version": "0.1.5",
+      "repository": "https://github.com/moment-timeseries-foundation-model/moment.git",
+      "commit": "38f7310ad594100747ca2a8357e9c7ca7d323e0e",
+      "why": "PyPI's momentfm 0.1.4 pins numpy==1.25.2 (no CPython 3.12 wheel) and transformers==4.33.3; this commit relaxes the pins to transformers>=4.54.1."
+    }
+  ],
+  "gencode_variants": {
+    "upstream": "",
+    "blackwell": "-gencode arch=compute_120,code=sm_120 -gencode arch=compute_121,code=sm_121 -gencode arch=compute_121,code=compute_121"
+  }
+}
