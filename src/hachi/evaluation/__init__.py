@@ -2,6 +2,13 @@
 
 from .artifacts import document_sha256, write_comparison_packet, write_packet
 from .comparison import ComparisonResult, compare_forecasts
+from .features import (
+    ForecastObservation,
+    HourlyFeature,
+    HourlyFeaturePolicy,
+    HourlyFeatureView,
+    hourly_features,
+)
 from .forecast import (
     EvaluationConfig,
     EvaluationResult,
@@ -20,12 +27,17 @@ __all__ = [
     "EvaluationResult",
     "ForecastEstimate",
     "ForecastInput",
+    "ForecastObservation",
+    "HourlyFeature",
+    "HourlyFeaturePolicy",
+    "HourlyFeatureView",
     "Predictor",
     "PredictorFactory",
     "TrainingPrefix",
     "compare_forecasts",
     "document_sha256",
     "evaluate_forecast",
+    "hourly_features",
     "partition_participants",
     "rolling_origins",
     "write_comparison_packet",

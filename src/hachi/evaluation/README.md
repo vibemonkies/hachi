@@ -7,7 +7,9 @@ software behavior, not forecast accuracy or real-data integration.
 ## Caller and boundaries
 
 Use the merged canonical `Observation`, `Aggregate`, `SplitManifest`, and
-`RunManifest` models. No shared schema, dependency, or root lockfile is changed.
+`RunManifest` models. No generated schema, fixture, dependency, or root lockfile is changed.
+The shared causal helper accepts a read-only timestamp Protocol with unchanged
+UTC cutoff guard and event-end/availability comparisons.
 The models in `forecast.py` are internal experiment configuration and estimates,
 not new API DTOs.
 
@@ -76,9 +78,10 @@ checks dataset IDs and roster membership, not upstream archive checksums.
   the prespecified minimum-history inclusion policy. Cohort-overlap status and
   its evidence/limitation note are required in the experiment config.
 - Forecast targets are hourly aggregates for one level metric/aggregation.
-  Aggregates lack availability timestamps, so they are deliberately **labels
-  only**. A PMData feature adapter must preserve raw/derived feature availability;
-  simply feeding the full precomputed aggregate table into a model is unsafe.
+  Bare aggregates lack availability timestamps and remain **labels only**.
+  `HourlyFeature` wraps an observed canonical hourly aggregate with readiness
+  and its documented source availability rule. Raw and derived inputs for the
+  selected metric cannot be mixed, and derived aggregation must match config.
 - Counts reconcile expected retained target bins to scored, missing-label,
   labeled abstention, or insufficient-history points. Scheduler purges are
   reported separately by origin. A missing label never becomes zero or healthy.
@@ -87,6 +90,55 @@ checks dataset IDs and roster membership, not upstream archive checksums.
   a single participant has no estimable between-participant CI. Interval coverage
   and width are conditional on scored points with supplied intervals. No nominal
   interval coverage or calibrated accuracy claim is invented.
+
+## Availability-preserving hourly view
+
+The internal `HourlyFeature` preserves the complete canonical `Aggregate`,
+including coverage, native observed count, source IDs, pipeline version and timezone.
+It requires a non-missing level value on a UTC whole-hour grid and UTC readiness
+at or after bin end. It is not a canonical source `Observation` or a new wire DTO.
+Its derived record ID hashes only that bin and its readiness/rule, never the whole
+snapshot: withheld future rows must not alter earlier input identities.
+
+```python
+from hachi.evaluation import HourlyFeaturePolicy, hourly_features
+from hachi.data.pmdata import iter_aggregates  # supplied by #5
+
+policy = HourlyFeaturePolicy(
+    metric="heart_rate",
+    aggregation="mean",
+    min_coverage=prespecified_coverage,
+    min_observed_count=prespecified_native_count,
+    availability_rule=documented_source_availability_rule,
+)
+view = hourly_features(iter_aggregates(snapshot, "hour", metrics=["heart_rate"]), policy)
+result = evaluate_forecast(split_manifest, view.features, targets, fit_model, config)
+# Persist view.policy and view.counts beside the private run packet.
+```
+
+The loader's `FeatureBin(aggregate, available_at_utc)` named tuple implements the
+structural input interface. It must guarantee that recomputation at **every** cutoff
+at or after readiness gives the stored value and coverage, including coverage-span
+availability. The consumer enforces timestamps; it cannot prove this upstream
+causal guarantee from a final aggregate alone. #5 owns its recomputation tests.
+
+The explicit inclusion policy gives exclusive counts for included, missing,
+low-coverage, low-count, other-metric and other-aggregation bins. Missingness stays
+missing. Duplicate selected bins are refused. Scientific thresholds remain to be
+frozen against the admitted real cohort; these tests establish software behavior.
+Canonical hourly labels retain missing bins separately from feature selection.
+
+Record exclusions in derived mode must identify derived feature IDs. Raw record
+quarantines must be applied **before** aggregation; the evaluator refuses unmatched
+record exclusions rather than pretending to subtract a raw row from a mean.
+Whole-participant exclusions retain their existing behavior. A pre-excluded snapshot
+must document raw exclusions in its processing provenance, with no leftover raw
+record exclusions in the derived-input split manifest.
+
+#9's simple and tree baselines preserve already-derived values and use native
+`observed_count` for their sample-count policy. They do not re-average hourly means
+with raw rows. Saved model source receipts also bind this feature adapter and
+shared causality/serialization helpers; prior artifacts require their prior code.
 
 ## Reproduce the software path
 
@@ -196,13 +248,13 @@ or speculative PMData-specific parser is needed before that interface is agreed.
 2. The participant roster and explicit subject/record exclusions. Keep identifiers
    and the persisted split in approved private storage. The synthetic six-person
    split and October 2026 dates are demonstration settings, not PMData settings.
-3. Canonical `Observation` rows for model inputs, preserving metric/unit, event
+3. Canonical `Observation` rows or readiness-bearing `HourlyFeature` inputs, preserving metric/unit, event
    interval and `available_at_utc`. Where historical availability is not observed,
    provide the documented `availability_rule` and mark availability `assumed`.
    A complete aggregate table cannot safely substitute for these feature inputs:
    canonical `Aggregate` has no availability timestamp. If #5 exposes only
-   aggregates, agree an availability-preserving view with the contracts owner
-   before wiring it into this evaluator.
+   aggregates, use the agreed `FeatureBin` view and the explicit inclusion policy
+   above. Never invent availability from the final aggregate alone.
 4. Canonical hourly `Aggregate` labels for one agreed level metric/aggregation,
    with explicit missing bins, source exclusions and the pipeline version.
    Duplicate-source precedence and quarantined source contributions must already
@@ -220,7 +272,7 @@ the local synthetic packets establish none of its data-admission requirements.
 Once available: reconcile representative source records, define the real split
 and inclusion protocol, keep test sealed, run validation and a real baseline,
 then verify packet hashes and denominators against #5's audit. Scientific fold
-selection, full leakage/outcome coverage and teammate reproduction remain issue
+selection, full leakage/outcome coverage remain issue
 gates; a successful synthetic run does not close #7.
 
 No data acquisition, service, GPU job, publication, or GitHub state change is

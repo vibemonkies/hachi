@@ -12,14 +12,15 @@ from pydantic import Field, model_validator
 from hachi.contracts.base import Contract, Sha256, UtcDatetime
 from hachi.contracts.causality import available_by
 from hachi.contracts.metrics import METRICS, Aggregation, Metric
-from hachi.contracts.tables import Observation
 from hachi.evaluation import (
     ForecastEstimate,
     ForecastInput,
+    ForecastObservation,
     Predictor,
     PredictorFactory,
     TrainingPrefix,
 )
+from hachi.evaluation.features import HourlyFeature, require_input_series
 from hachi.evaluation.serialization import document_sha256
 
 HOUR = timedelta(hours=1)
@@ -50,14 +51,15 @@ class HourlyValue:
 
 
 def hourly_values(
-    observations: Sequence[Observation], config: BaselineConfig, cutoff: datetime
+    observations: Sequence[ForecastObservation], config: BaselineConfig, cutoff: datetime
 ) -> tuple[HourlyValue, ...]:
     """Use only completed UTC bins and records available at the requested instant.
 
     A source interval spanning hours is omitted rather than prorated. Sample counts
     enforce the declared inclusion policy; they do not establish time coverage.
     """
-    bins: dict[datetime, list[Observation]] = defaultdict(list)
+    require_input_series(observations, config.metric, config.aggregation)
+    bins: dict[datetime, list[ForecastObservation]] = defaultdict(list)
     for row in observations:
         if row.metric != config.metric or not available_by(row, cutoff):
             continue
@@ -66,6 +68,20 @@ def hourly_values(
             bins[start].append(row)
     output: list[HourlyValue] = []
     for start, rows in sorted(bins.items()):
+        if isinstance(rows[0], HourlyFeature):
+            if len(rows) != 1:
+                raise ValueError("duplicate derived hourly bins")
+            feature = rows[0]
+            if feature.aggregate.observed_count >= config.min_samples_per_hour:
+                output.append(
+                    HourlyValue(
+                        start,
+                        feature.value,
+                        feature.available_at_utc,
+                        feature.aggregate.observed_count,
+                    )
+                )
+            continue
         if len(rows) < config.min_samples_per_hour:
             continue
         values = [r.value for r in rows]
@@ -145,7 +161,7 @@ class BaselineArtifact(Contract):
 
 
 def fit_baseline(training: TrainingPrefix, config: BaselineConfig) -> BaselineArtifact:
-    by_subject: dict[str, list[Observation]] = defaultdict(list)
+    by_subject: dict[str, list[ForecastObservation]] = defaultdict(list)
     for row in training.observations:
         by_subject[row.subject_id].append(row)
     series = [hourly_values(rows, config, training.fit_as_of) for rows in by_subject.values()]
