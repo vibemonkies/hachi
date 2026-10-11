@@ -1,5 +1,43 @@
 # #19 private storage and demo evidence
 
+## Correction/concurrency follow-up after PR79/PR76
+
+[corrections-receipt.json](corrections-receipt.json) records the clean checkout
+`8ff3d95af114dfc8d4b7d8a061c6ac66bfa09759`, including WindyTrout's merged fix
+[PR81](https://github.com/vibemonkies/hachi/pull/81) (`e88b0f8`). Against `84a5cbe`,
+six independent TCP cases failed: tombstone-only subject deletion; correction
+resurrection after chain erasure; a resolution dangling after onset erasure;
+identical observations and cached reports accepted during whole deletion; and a
+report published with a stale self-report key. All six pass with PR81. This lane
+retains independent tests; it does not duplicate the API owner's implementation.
+
+The focused run passed 27 tests: ten actual TCP checks, seven independent generated
+GPU transport/identity boundaries, and ten owner correction regressions. The
+production CLI separately passed 37 focused checks with its served Git SHA and
+empty model refs pinned, safe logs, isolated private roots and only generated
+subjects. It verifies current/all/as-of histories, earlier versus corrected report
+keys, chain and tombstone erasure, report invalidation/isolation and ID reuse only
+after whole-subject deletion. The CLI and TCP fixtures stop their own service and
+remove only disposable state. The original 44-check upload suite and unchanged
+private source inspection were retained as historical evidence, not rerun.
+
+The cheap GPU checks invoke no SSH/GPU. They refuse wrong request identity,
+duplicated results, request hash, model revision and weights without echoing
+submitted values; the transport captures stderr and disables password prompts.
+An in-memory run also confirms a concrete retention limitation: request cleanup
+leaves remote prediction/evidence files outside the subject deletion inventory.
+Personal GPU use remains gated on explicit source transfer/account consent and
+verified remote retention/cleanup, including failures. This is a current privacy
+gate, not a request to repeat the model owner's expensive GPU parity work.
+
+The private-roster current-tree/demo scan covered 630 tracked files with zero
+findings at the receipt's source commit. Future rendered screenshots/recordings
+need separate review. The merged Apple helper supplies neither an approved
+per-artifact serving profile nor real-source transfer/UI evidence. Those scoped
+follow-ups stay with #16/#18/#21/#22. Source-only work does not imply consent.
+
+## Original upload/storage acceptance checkpoint
+
 [receipt.json](receipt.json) binds sanitized execution evidence to source commit
 `809839b` in NobleCat's isolated #19 worktree on MacBook-Air-4.local. The source tree
 was clean before the receipt was written. The runtime used its own disposable
