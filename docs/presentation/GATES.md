@@ -6,8 +6,9 @@ preparation. Refresh at review/rehearsal time. This is a gate map, not a new sco
 decision or a scientific acceptance record. Activity is unknown unless a current
 worker has acknowledged it; this table does not infer activity from labels.
 
-The tracker #26 is closed, while required downstream issues remain open. Its closure
-does not prove the [product completion gates](../PRODUCT.md) or waive them.
+Root has reopened tracker #26 after correcting its premature closure; required
+downstream issues remain open. That status correction does not deliver or waive
+the [product completion gates](../PRODUCT.md).
 All final cohort/clinical/real-case/full-UI claims remain blocked. The finalization
 tooling's `final_test_authorized: false` is not test-opening permission.
 
