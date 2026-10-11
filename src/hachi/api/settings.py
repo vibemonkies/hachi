@@ -12,6 +12,9 @@ Environment (all optional except the owner):
     HACHI_API_PORT            default by owner (DEFAULT_PORTS)
     HACHI_API_CORS_ORIGINS    comma-separated browser origins (default: Vite on 5173)
     HACHI_GIT_SHA             default `git rev-parse HEAD` of this checkout
+    HACHI_GX10_SSH            SSH destination of the GX10 (e.g. asus@5asb) for GPU models
+    HACHI_GX10_CHECKOUT       GX10 clone of a merged main commit that runs inference
+    HACHI_GX10_TIMEOUT        seconds one GPU job may take, queue wait included (default 180)
 """
 
 import os
@@ -50,6 +53,11 @@ class Settings:
     # Development and tests only: serve snapshots whose archive the registry did not admit,
     # labelled data_mode "synthetic". Never set for real data.
     allow_unadmitted_snapshots: bool = False
+    # GPU models (Chronos-2) run on the GX10 through scripts/gx10/gpu-run; unset means
+    # every GPU-backed forecast answers GPU_UNAVAILABLE.
+    gx10_ssh: str | None = None
+    gx10_checkout: str | None = None
+    gx10_timeout_seconds: float = 180.0
 
     @property
     def port(self) -> int:
@@ -85,6 +93,9 @@ class Settings:
             cors_origins=_split(env["HACHI_API_CORS_ORIGINS"])
             if "HACHI_API_CORS_ORIGINS" in env
             else DEFAULT_CORS_ORIGINS,
+            gx10_ssh=env.get("HACHI_GX10_SSH") or None,
+            gx10_checkout=env.get("HACHI_GX10_CHECKOUT") or None,
+            gx10_timeout_seconds=float(env.get("HACHI_GX10_TIMEOUT", "180")),
         )
 
 
