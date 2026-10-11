@@ -100,6 +100,24 @@ class ClaimChecks(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     checker.render(manifest)
 
+    def test_scenario_admission_is_limited_to_public_readme(self):
+        manifest = self.changed()
+        manifest["sources"]["scenario-report"]["path"] = "src/hachi/scenarios/model.py"
+        with self.assertRaisesRegex(ValueError, "outside public evidence scope"):
+            checker.render(manifest)
+
+    def test_new_selection_and_parameter_bindings_fail_on_tampering(self):
+        for identifier, field, changed in [
+            ("selected-errors", "mae", 0.0),
+            ("simulation-parameters", "config", "sample_minutes = 1"),
+        ]:
+            with self.subTest(claim=identifier):
+                manifest = self.changed()
+                claim = next(c for c in manifest["claims"] if c["id"] == identifier)
+                claim["values"][field]["expected"] = changed
+                with self.assertRaises(ValueError):
+                    checker.render(manifest)
+
     def test_preparation_cannot_grant_completion_or_test_authority(self):
         for key, value in [("completion", "complete"), ("final_test_authorized", True)]:
             manifest = self.changed()
