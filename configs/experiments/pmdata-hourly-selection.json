@@ -30,8 +30,7 @@
     "ensemble-stacked"
   ],
   "ablations_not_candidates": [
-    "handcrafted-ridge-population",
-    "chronos-2-embedding-ridge-population"
+    "handcrafted-ridge-population"
   ],
-  "disclosure": "Written after the #9 comparator and #10 Chronos-2 zero-shot inner-validation results were published and before any #12 score. Every candidate is selected on the same 12 inner-validation participants of outer fold 0, so the selected model's validation advantage is optimistic (multiple comparisons); only the sealed outer test, opened by a separate decision, can confirm it. Frozen-encoder candidates from #11 are inserted after chronos-2-embedding-ridge by a recorded rule amendment before their scores exist."
+  "disclosure": "Written after the #9 comparator and #10 Chronos-2 zero-shot inner-validation results were published and before any #12 score. Every candidate is selected on the same 12 inner-validation participants of outer fold 0, so the selected model's validation advantage is optimistic (multiple comparisons); only the sealed outer test, opened by a separate decision, can confirm it. Frozen-encoder candidates from #11 are inserted after chronos-2-embedding-ridge by a recorded rule amendment before their scores exist. Amendment 1 (2026-10-11, before any #12 score, after SnowyFortress's review on hachi-issue-12): meta learners use grouped meta-folds inside each inner fold's training participants over 2019-12-25..2020-01-01; the embedding-head population ablation is dropped because a Chronos embedding is computed from the personal context; memory is gated on actual process RSS (and CUDA-allocated peak for GPU models), with traced allocations reported only."
 }
