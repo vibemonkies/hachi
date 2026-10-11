@@ -125,6 +125,22 @@ def feature_table(
     return table.replace_schema_metadata({k.encode(): v.encode() for k, v in metadata.items()})
 
 
+def join_features(features: pa.Table, join_map: pa.Table) -> pa.Table:
+    """Attach the requester's private fold keys; unmatched requests are dropped, never guessed.
+
+    Arrow's hash join cannot carry list columns, so this joins through a dictionary.
+    """
+    keys = {r["request_sha256"]: r for r in join_map.to_pylist()}
+    if len(keys) != join_map.num_rows:
+        raise ValueError("join map repeats a request")
+    rows = [
+        {**keys[r["request_sha256"]], **r}
+        for r in features.to_pylist()
+        if r["request_sha256"] in keys
+    ]
+    return pa.Table.from_pylist(rows).replace_schema_metadata(features.schema.metadata)
+
+
 def _checkpoint(model: str) -> str:
     pin = json.loads((REPO / f"configs/models/encoders/{model}.json").read_text())["checkpoint"]
     return f"{pin['repository']}@{pin['revision']}"
@@ -202,9 +218,9 @@ def main() -> int:
         pq.write_table(table, args.output)
         summary = {"rows": table.num_rows, "output_sha256": _sha(args.output)}
         if args.join_map is not None:
-            joined = pq.read_table(args.join_map).join(table, "request_sha256", join_type="inner")
+            joined = join_features(table, pq.read_table(args.join_map))
             target = args.output.with_name("oof-features.parquet")
-            pq.write_table(joined.replace_schema_metadata(table.schema.metadata), target)
+            pq.write_table(joined, target)
             summary.update({"joined_rows": joined.num_rows, "oof_sha256": _sha(target)})
         summary["finite"] = bool(all(table.column("finite").to_pylist()))
         print(json.dumps(summary, indent=2))

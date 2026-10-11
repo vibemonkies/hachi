@@ -5,7 +5,12 @@ import pytest
 np = pytest.importorskip("numpy", reason="encoder inputs require the optional baselines extra")
 
 from hachi.evaluation.serialization import document_sha256  # noqa: E402
-from hachi.models.encoders.requests import feature_table, model_inputs, read_requests  # noqa: E402
+from hachi.models.encoders.requests import (  # noqa: E402
+    feature_table,
+    join_features,
+    model_inputs,
+    read_requests,
+)
 
 MEANS = np.zeros(19, dtype=np.float32)
 STDS = np.ones(19, dtype=np.float32)
@@ -80,3 +85,17 @@ def test_feature_table_keys_vectors_by_request_hash():
     assert table.num_rows == 4 and {r["model"] for r in rows} == {"wbm_hr", "moment_hr"}
     assert {r["dim"] for r in rows} == {256, 1024} and all(r["finite"] for r in rows)
     assert table.schema.metadata[b"k"] == b"v"
+
+
+def test_join_attaches_private_fold_keys_and_drops_unmatched_requests():
+    import pyarrow as pa
+
+    table = feature_table(np.asarray(["h1", "h2"]), {"wbm_hr": np.ones((2, 256))}, {"k": "v"})
+    keys = pa.Table.from_pylist(
+        [{"request_sha256": "h1", "outer_fold": 0, "inner_fold": 2, "cutoff_floating": "x"}]
+    )
+    joined = join_features(table, keys)
+    assert joined.num_rows == 1 and joined.to_pylist()[0]["inner_fold"] == 2
+    assert len(joined.to_pylist()[0]["vector"]) == 256 and joined.schema.metadata[b"k"] == b"v"
+    with pytest.raises(ValueError, match="repeats"):
+        join_features(table, pa.concat_tables([keys, keys]))
