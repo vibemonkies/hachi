@@ -1,0 +1,72 @@
+# PMData: the first development cohort for physiology and wellness forecasting (#5).
+schema_version = "0.1"
+dataset_id = "pmdata"
+name = "PMData: A Sports Logging Dataset"
+version = "simula-2020-04-24"
+status = "downloaded"
+access = "public"
+primary_url = "https://datasets.simula.no/pmdata/"
+doi = "10.17605/OSF.IO/VX4BK"
+catalog_checked_on = 2026-10-11
+citation = "Thambawita V, Hicks SA, Borgli H, Stensland HK, Jha D, Svensen MK, Pettersen SA, Johansen D, Johansen HD, Pettersen SD, Nordvang S, Pedersen S, Gjerdrum A, Gronli TM, Fredriksen PM, Eg R, Hansen K, Fagernes S, Claudi C, Biorn-Hansen A, Nguyen DTD, Kupka T, Hammer HL, Jain R, Riegler MA, Halvorsen P. PMData: A Sports Logging Dataset. MMSys 2020, 231-236. doi:10.1145/3339825.3394926"
+access_steps = [
+  "Download https://datasets.simula.no/downloads/pmdata.zip (1,416,129,266 bytes; Last-Modified 2020-04-24). No account is needed.",
+  "Record the archive's SHA-256 here; Simula publishes no checksum.",
+]
+access_owner = "justin06lee"
+approved_users = ["justin06lee"]
+storage = "Any team machine or the GX10 under ~/hachi/data/pmdata/<version>/; attribution, a license link and a note of changes are required."
+checksum_strategy = "SHA-256 of pmdata.zip as downloaded (no upstream checksum); per-file checksums recorded during #5 ingestion."
+blocked_capabilities = [
+  "Illness onset and recovery: PMData has no infection labels; fatigue is not illness.",
+  "Commercial use: the binding license is CC BY-NC 4.0.",
+]
+notes = [
+  "16 participants (the paper's sex breakdown sums to 15), ages 25-60, Fitbit Versa 2, about five months from November 2019 to March 2020 (the paper's introduction also says three months).",
+  "Per-minute calories, steps and distance; heart rate without a documented interval (row counts imply roughly every 8-10 s); daily resting HR, sleep score and sleep logs; PMSys wellness, sRPE and injury reports; Google Forms reports.",
+  "Wellness: fatigue, sleep quality, soreness, stress and mood on 1-5 where 3 is normal, 1-2 below and 4-5 above normal; readiness 0-10. Whether high fatigue means better or worse is undocumented and must be resolved from the data in #5.",
+]
+
+[terms]
+license = "CC BY-NC 4.0 (binding reading of conflicting sources)"
+license_url = "https://creativecommons.org/licenses/by-nc/4.0/legalcode"
+commercial_use = "prohibited"
+redistribution = "allowed_with_attribution"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://osf.io/vx4bk"
+quote = "The license for the PMData dataset is Attribution-NonCommercial 4.0 International."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://web-backend.simula.no/sites/default/files/publications/files/3339825.3394926.pdf"
+quote = "free to use for research and teaching purposes under the license Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://datasets.simula.no/pmdata/"
+quote = "PMData is licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) License"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "physiology_forecast"
+role = "features"
+notes = "First real cohort for hourly and next-day forecasting of resting HR, steps and sleep."
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Healthy-period alert burden and missingness behaviour on real Fitbit data."
+
+[[tasks]]
+task = "alertness"
+role = "exploratory"
+notes = "Daily wellness fatigue is not an hourly alertness label; at most an observational sanity check."
+
+[[files]]
+name = "pmdata.zip"
+bytes = 1416129266
+sha256 = "53a49d94a2e9713fb8a0fc57d4d9dec3e1e4d2ae866969cd1f7537a5bc125357"

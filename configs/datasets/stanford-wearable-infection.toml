@@ -1,0 +1,37 @@
+# Code and example inputs for the Stanford detectors (NightSignal, isolation forest).
+schema_version = "0.1"
+dataset_id = "stanford-wearable-infection"
+name = "StanfordBioinformatics/wearable-infection (code and example data)"
+version = "main-2021-09-20"
+status = "candidate"
+access = "public"
+primary_url = "https://github.com/StanfordBioinformatics/wearable-infection"
+catalog_checked_on = 2026-10-11
+citation = "Alavi A, et al. Real-time alerting system for COVID-19 and other stress events using wearable data. Nat Med 28, 175-184 (2022). doi:10.1038/s41591-021-01593-2; Mishra T, et al. Pre-symptomatic detection of COVID-19 from smartwatch data. Nat Biomed Eng 4, 1208-1220 (2020). doi:10.1038/s41551-020-00640-6"
+access_steps = ["git clone https://github.com/StanfordBioinformatics/wearable-infection and pin the commit used."]
+access_owner = "justin06lee"
+storage = "Any team machine or the GX10; keep attribution and the Apache-2.0 notice."
+checksum_strategy = "Pin the upstream git commit SHA."
+notes = [
+  "Example inputs only (one Apple Watch and one Fitbit participant, date-shifted); not a representative illness cohort.",
+  "Any causal adaptation of NightSignal gets its own model id (#9).",
+]
+
+[terms]
+license = "Apache License 2.0"
+license_url = "https://github.com/StanfordBioinformatics/wearable-infection"
+commercial_use = "allowed"
+redistribution = "allowed_with_attribution"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://github.com/StanfordBioinformatics/wearable-infection"
+quote = "Licensed under the Apache License, Version 2.0; Copyright [2021] [Stanford University, School of Medicine]"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "anomaly"
+role = "baseline_reproduction"
+notes = "Reproduce NightSignal and the isolation-forest detector on their example inputs before adapting them."

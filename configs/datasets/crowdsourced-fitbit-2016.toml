@@ -1,0 +1,48 @@
+schema_version = "0.1"
+dataset_id = "crowdsourced-fitbit-2016"
+name = "Crowd-sourced Fitbit datasets 03.12.2016-05.12.2016 (RTI International)"
+version = "zenodo-53894"
+status = "downloaded"
+access = "public"
+primary_url = "https://zenodo.org/records/53894"
+doi = "10.5281/zenodo.53894"
+catalog_checked_on = 2026-10-11
+citation = "Furberg R, Brinton J, Keating M, Ortiz A. Crowd-sourced Fitbit datasets 03.12.2016-05.12.2016. Zenodo (2016). doi:10.5281/zenodo.53894"
+access_steps = ["Download the two mturkfitbit_export zips (45.7 MB total) from Zenodo and record their SHA-256."]
+access_owner = "justin06lee"
+approved_users = ["justin06lee"]
+storage = "Any team machine or the GX10; attribution required."
+checksum_strategy = "Verify Zenodo's MD5, then pin SHA-256 per archive."
+notes = [
+  "Thirty Amazon Mechanical Turk Fitbit users over about two months: minute-level activity, heart rate and sleep.",
+  "Small; best as a real-format fixture for minute-level ingestion tests, not for evaluation.",
+]
+
+[terms]
+license = "CC BY 4.0"
+license_url = "https://creativecommons.org/licenses/by/4.0/legalcode"
+commercial_use = "allowed"
+redistribution = "allowed_with_attribution"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://zenodo.org/records/53894"
+quote = "Creative Commons Attribution 4.0 International"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "physiology_forecast"
+role = "exploratory"
+notes = "Minute-level Fitbit ingestion fixture."
+
+[[files]]
+name = "mturkfitbit_export_3.12.16-4.11.16.zip"
+bytes = 20410739
+sha256 = "cca5d7b1cae2370b3e1024349aa86732394129afcc84ce7b6067693ac0f4c2c6"
+
+[[files]]
+name = "mturkfitbit_export_4.12.16-5.12.16.zip"
+bytes = 25291915
+sha256 = "4741dfabd18453de19b6dd0a7204e8fea6e45e70bc9ddbe396956c8e4fde02f8"

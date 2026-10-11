@@ -1,0 +1,42 @@
+schema_version = "0.1"
+dataset_id = "nhanes-paxmin-h"
+name = "NHANES 2013-2014 Physical Activity Monitor - Minute (PAXMIN_H)"
+version = "2013-2014-rev-2022-10"
+status = "candidate"
+access = "public"
+primary_url = "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2013/DataFiles/PAXMIN_H.htm"
+catalog_checked_on = 2026-10-11
+citation = "National Center for Health Statistics. National Health and Nutrition Examination Survey: NHANES 2013-2014. Hyattsville, MD: US Department of Health and Human Services, Centers for Disease Control and Prevention."
+access_steps = [
+  "Download https://ftp.cdc.gov/pub/NHANES/LargeDataFiles/PAXMIN_H.xpt (8.7 GB SAS XPT) and the documentation page; no account is needed.",
+  "Join the examination sample weights from the matching demographics file before computing population statistics.",
+]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Public data; any team machine or the GX10."
+checksum_strategy = "SHA-256 of the XPT as downloaded; NCHS publishes no checksum."
+blocked_capabilities = []
+notes = [
+  "7,776 participants aged 3+, wrist ActiGraph GT3X+ summarised to MIMS units per minute for about 7 days, with wake/sleep/non-wear predictions.",
+  "No heart rate and no steps (MIMS is not a step count); one week per person, cross-sectional; survey weights required.",
+  "Optional (#24): population activity and sleep priors only.",
+]
+
+[terms]
+license = "NCHS Data User Agreement"
+license_url = "https://www.cdc.gov/nchs/data_access/restrictions.htm"
+commercial_use = "unclear"
+redistribution = "unclear"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2013/DataFiles/PAXMIN_H.htm"
+quote = "Use the data in this dataset for statistical reporting and analysis only"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "physiology_forecast"
+role = "exploratory"
+notes = "Population priors for activity and sleep timing; incompatible units with watch step counts."

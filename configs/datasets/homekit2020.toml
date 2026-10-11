@@ -1,0 +1,59 @@
+# The best illness-label cohort found: Fitbit minute data with lab-confirmed influenza.
+schema_version = "0.1"
+dataset_id = "homekit2020"
+name = "Homekit2020 (Evidation, University of Washington, Sage Bionetworks)"
+version = "1.0"
+status = "candidate"
+access = "credentialed"
+primary_url = "https://www.synapse.org/#!Synapse:syn22803188"
+catalog_checked_on = 2026-10-11
+citation = "Merrill MA, et al. Homekit2020: A Benchmark for Time Series Classification on a Large Mobile Sensing Dataset with Laboratory Tested Ground Truth of Influenza Infections. CHIL 2023, PMLR 209."
+access_steps = [
+  "Create a Synapse account and pass the Certified User quiz.",
+  "Validate your profile: ORCID, signed pledge and an identity document (for students, usually a letter from the university's signing official). This is the slow step.",
+  "Request access to Homekit2020 with an Intended Data Use statement; Synapse publishes it.",
+  "Accept the Conditions for Use yourself; each teammate repeats every step.",
+  "Download with `synapse get syn51476306` (homekit2020-1.0.zip).",
+]
+access_owner = "justin06lee"
+storage = "Only accounts of approved users; not the shared GX10 account unless all three are approved."
+checksum_strategy = "Record Synapse's MD5 for the archive, then pin SHA-256."
+notes = [
+  "5,034 US adults, 206 influenza-positive by lab PCR (influenza A/B, RSV), Dec 2019 to Jul 2020: minute-level Fitbit HR, steps and sleep plus day-level resting HR and sleep features; 120-day daily ILI surveys with symptom onset and severity; a recovery follow-up about 14 days after testing.",
+  "The conditions grant Evidation a royalty-free licence to resulting IP; read them before accepting.",
+  "Recommended application: the only verified open-process cohort with lab-confirmed respiratory infections and minute-level consumer wearable data.",
+]
+
+[terms]
+license = "Homekit2020 Conditions for Use (Synapse)"
+license_url = "https://www.synapse.org/#!Synapse:syn22803188"
+commercial_use = "unclear"
+redistribution = "prohibited"
+team_access = "each_user_must_accept"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = true
+
+[[terms.evidence]]
+url = "https://www.synapse.org/#!Synapse:syn22803188"
+quote = "Study data may not be redistributed"
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://www.synapse.org/#!Synapse:syn22803188"
+quote = "Access to this data is granted only to qualified researchers"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "illness_onset"
+role = "outcome_labels"
+notes = "Lab-confirmed influenza with self-reported onset; minute-level Fitbit before onset."
+
+[[tasks]]
+task = "recovery"
+role = "outcome_labels"
+notes = "Follow-up survey about 14 days after testing; check censoring against the endpoint."
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Lead time and false alerts around confirmed infections."

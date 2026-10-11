@@ -1,0 +1,78 @@
+schema_version = "0.1"
+dataset_id = "nethealth"
+name = "NetHealth Fitbit data (University of Notre Dame)"
+version = "web-2026-10-11"
+status = "downloaded"
+access = "registration"
+primary_url = "https://sites.nd.edu/nethealth/data-2/"
+catalog_checked_on = 2026-10-11
+citation = "Cite the NetHealth study as the site requests (no formal citation text is published); report publications to nethealth@nd.edu."
+access_steps = [
+  "Download Fitbit Activity Data and Fitbit Sleep Data (CSV) with their codebooks from the NetHealth data page.",
+  "Complete the site's short form saying you downloaded the data for research.",
+  "Email nethealth@nd.edu about any publication or report that uses it.",
+]
+access_owner = "justin06lee"
+approved_users = ["justin06lee"]
+storage = "Any team machine or the GX10."
+checksum_strategy = "SHA-256 of each downloaded file; the site publishes none."
+notes = [
+  "Notre Dame students followed 2015-2019: about 358k daily activity rows and 334k daily sleep rows (steps, HR-zone minutes, daily HR mean and SD, wear compliance, bedtime, wake time, minutes asleep).",
+  "Daily only; raw minute HR is not released and there is no resting-HR column. No license is stated, so commercial use and redistribution are unclear.",
+  "Useful for long personal histories (years per person) in next-day forecasting and baseline drift.",
+  "Hachi registers and uses only the Fitbit activity and sleep files and their codebooks. The rest of the release (surveys, network, communication events, grades, calendar) is unregistered and sits apart on the GX10 in ~/hachi/data/nethealth-extra/, with a README and its own SHA256SUMS.",
+]
+
+[terms]
+license = "No license stated; site requests a download form and publication notice"
+license_url = "https://sites.nd.edu/nethealth/data-2/"
+commercial_use = "unclear"
+redistribution = "unclear"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://sites.nd.edu/nethealth/data-2/"
+quote = "Please complete this short form to inform us that you have downloaded data and are using it for research purposes."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://sites.nd.edu/nethealth/data-2/"
+quote = "Please inform us via email (nethealth@nd.edu) of any publications and reports generated from using the data."
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "physiology_forecast"
+role = "features"
+notes = "Multi-year daily steps and sleep timing per person."
+
+[[files]]
+name = "Codebook Fitbit Activity (1-30).pdf"
+bytes = 76995
+sha256 = "2aaa63e2d9feb5aa1cc98e6ca14bedd3a38fbff983912a28b7b250e2d345af4b"
+
+[[files]]
+name = "Codebook Fitbit Sleep (1-30).pdf"
+bytes = 53131
+sha256 = "d16671f36aab4d884079e4c957903d2be0498b7bda77d46ce2976ed47473af17"
+
+[[files]]
+name = "FitbitActivity(1-30-20).csv"
+bytes = 36172274
+sha256 = "01f386d842981873e0d8f0ccd931bdc2ec5246ac3c52ed538c3fe2edf58ae04f"
+
+[[files]]
+name = "FitbitActivity(1-30-20).dta"
+bytes = 21840162
+sha256 = "92e0a61da5af24744035268cd87a58ecaeeeefdd0b4efedc5f845b8b8bb4d270"
+
+[[files]]
+name = "FitbitSleep(1-30-20).csv"
+bytes = 19819364
+sha256 = "68022d8847f9134eac85850f554218effb890079ba177c1ff9a8c7c0d733b62a"
+
+[[files]]
+name = "FitbitSleep(1-30-20).dta"
+bytes = 22035671
+sha256 = "76e3cc9d5e29af6894fc2e4d00a6854e208900334419ea7c9865d8d8821bc4b3"

@@ -1,0 +1,53 @@
+schema_version = "0.1"
+dataset_id = "lifesnaps"
+name = "LifeSnaps: a 4-month multi-modal dataset capturing unobtrusive snapshots of our lives in the wild"
+version = "4"
+status = "downloaded"
+access = "public"
+primary_url = "https://zenodo.org/records/7229547"
+doi = "10.5281/zenodo.7229547"
+catalog_checked_on = 2026-10-11
+citation = "Yfantidou S, et al. LifeSnaps, a 4-month multi-modal dataset capturing unobtrusive snapshots of our lives in the wild. Sci Data 9, 663 (2022). doi:10.1038/s41597-022-01764-x"
+access_steps = [
+  "Download rais_anonymized.zip (615.0 MB, md5 726afe263ab4b900a721eac19b2ca13a) from the version 4 record; version 2 is file-restricted.",
+  "Verify the MD5, record the SHA-256 here and move the status to downloaded.",
+]
+access_owner = "justin06lee"
+approved_users = ["justin06lee"]
+storage = "Any team machine or the GX10; attribution required."
+checksum_strategy = "Verify Zenodo's MD5, then pin SHA-256 of the archive."
+notes = [
+  "71 participants (Sweden, Greece, Italy, Cyprus), Fitbit Sense, two rounds of up to 9 weeks in 2021-22.",
+  "Sub-minute HR, 5-minute HRV, wrist temperature, daily SpO2, respiratory rate and resting HR, sleep stages and schedule, steps; three-times-daily mood check-ins including tired/alert.",
+  "No illness labels; tired/alert check-ins are a weak alertness proxy, not KSS or PVT. Over 9 GB unzipped (MongoDB export plus daily and hourly CSVs).",
+  "Recommended now: the richest open Fitbit set for Apple-like signals (HRV, wrist temperature, SpO2).",
+]
+
+[terms]
+license = "CC BY 4.0"
+license_url = "https://creativecommons.org/licenses/by/4.0/legalcode"
+commercial_use = "allowed"
+redistribution = "allowed_with_attribution"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://zenodo.org/records/7229547"
+quote = "Creative Commons Attribution 4.0 International"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "physiology_forecast"
+role = "features"
+notes = "Next-day and hourly forecasting with HRV, wrist temperature and SpO2 channels close to Apple Watch summaries."
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Healthy-period alert burden; no illness labels."
+
+[[files]]
+name = "rais_anonymized.zip"
+bytes = 615037493
+sha256 = "04e102621d2a998bf31d25c6bdd0ab4cce4d8febc4067d49862aa82e30b418bc"

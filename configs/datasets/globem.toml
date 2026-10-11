@@ -1,0 +1,49 @@
+schema_version = "0.1"
+dataset_id = "globem"
+name = "GLOBEM: multi-year longitudinal passive sensing (Fitbit + phone)"
+version = "1.1"
+status = "candidate"
+access = "credentialed"
+primary_url = "https://physionet.org/content/globem/1.1/"
+doi = "10.13026/r9s1-s711"
+catalog_checked_on = 2026-10-11
+citation = "Xu X, et al. GLOBEM Dataset: Multi-Year Datasets for Longitudinal Human Behavior Modeling Generalization (version 1.1). PhysioNet (2023). doi:10.13026/r9s1-s711; Xu X et al., NeurIPS 2022 Datasets and Benchmarks; plus the standard PhysioNet citation shown on the project page."
+access_steps = [
+  "Use the same PhysioNet credential as CovIdentify (account, CITI 'Data or Specimens Only Research' report, credentialing application with a reference).",
+  "Sign the PhysioNet Credentialed Health Data Use Agreement 1.5.0 on the GLOBEM project page.",
+  "Download. Each teammate is credentialed individually.",
+]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Only accounts used solely by credentialed users who signed; not the shared GX10 account unless all three are credentialed."
+checksum_strategy = "SHA-256 per file, compared with PhysioNet's SHA256SUMS.txt."
+blocked_capabilities = []
+notes = [
+  "497 participants, 705 person-years across four yearly cohorts (2018-2021), about 77 days each, as daily Fitbit and phone features (steps, sleep).",
+  "No heart rate and no illness labels; weekly wellbeing and depression surveys.",
+  "Recommended: the largest longitudinal daily-Fitbit set for next-day steps/sleep forecasting and personal-baseline anomaly evaluation, at no extra credentialing cost once CovIdentify access exists.",
+]
+
+[terms]
+license = "PhysioNet Credentialed Health Data License 1.5.0"
+license_url = "https://physionet.org/content/globem/1.1/"
+commercial_use = "unclear"
+redistribution = "prohibited"
+team_access = "each_user_must_be_credentialed"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://physionet.org/content/globem/1.1/"
+quote = "Only credentialed users who sign the DUA can access the files."
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "physiology_forecast"
+role = "features"
+notes = "Daily steps and sleep forecasting across many people and years."
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Alert burden on long healthy-presumed stretches; no illness labels."
