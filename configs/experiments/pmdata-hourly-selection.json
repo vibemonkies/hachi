@@ -1,0 +1,36 @@
+{
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "partition": "validation",
+  "active_outer_fold": 0,
+  "primary_metric": "mae",
+  "interval_lower": 0.1,
+  "interval_upper": 0.9,
+  "gates": {
+    "paired_mae_upper_below": 0.0,
+    "paired_decile_loss_upper_below": 0.0,
+    "coverage_min": 0.75,
+    "coverage_max": 0.85,
+    "max_extra_abstention": 0.05,
+    "max_latency_p95_seconds": 1.0,
+    "max_peak_memory_bytes": 4294967296
+  },
+  "candidate_order": [
+    "train-population-mean-v1",
+    "hourly-last-valid-v1",
+    "utc-seasonal-naive-v1",
+    "causal-hourly-tree-v1",
+    "handcrafted-ridge-personal",
+    "chronos-2-zero-shot",
+    "chronos-2-zero-shot-ctx168",
+    "chronos-2-zero-shot-ctx720",
+    "chronos-2-zero-shot-steps",
+    "chronos-2-embedding-ridge",
+    "chronos-2-finetuned",
+    "ensemble-equal-weight",
+    "ensemble-stacked"
+  ],
+  "ablations_not_candidates": [
+    "handcrafted-ridge-population"
+  ],
+  "disclosure": "Written after the #9 comparator and #10 Chronos-2 zero-shot inner-validation results were published and before any #12 score. Every candidate is selected on the same 12 inner-validation participants of outer fold 0, so the selected model's validation advantage is optimistic (multiple comparisons); only the sealed outer test, opened by a separate decision, can confirm it. Frozen-encoder candidates from #11 are inserted after chronos-2-embedding-ridge by a recorded rule amendment before their scores exist. Amendment 1 (2026-10-11, before any #12 score, after SnowyFortress's review on hachi-issue-12): meta learners use grouped meta-folds inside each inner fold's training participants over 2019-12-25..2020-01-01; the embedding-head population ablation is dropped because a Chronos embedding is computed from the personal context; memory is gated on actual process RSS (and CUDA-allocated peak for GPU models), with traced allocations reported only."
+}
