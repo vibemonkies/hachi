@@ -37,7 +37,9 @@ def choose_context(snapshot: Path, export_dir: Path, zeroshot_dir: Path) -> dict
                 split, inputs.view.features, inputs.labels, factory, inputs.chronos_evaluation
             )
             reports.append(result.metrics)
-        pooled[hours] = combine_metric_reports(reports, seed=0).mae.value
+        pooled[hours] = combine_metric_reports(
+            reports, seed=inputs.experiment.protocol.folds.seed
+        ).mae.value
     chosen = min(pooled, key=pooled.get)
     return {
         "rule": "lowest pooled inner-validation MAE of the univariate zero-shot contexts",

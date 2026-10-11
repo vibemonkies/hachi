@@ -9,7 +9,7 @@ final candidate is then replayed through the harness, paired with the incumbent 
 
 import json
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from statistics import fmean
@@ -22,7 +22,7 @@ from hachi.evaluation import (
     evaluate_forecast,
 )
 from hachi.evaluation.metrics import Estimate, bootstrap_participant_mean, combine_metric_reports
-from hachi.evaluation.serialization import document_sha256
+from hachi.evaluation.serialization import document_bytes, document_sha256
 
 from ..chronos.adapter import AdapterLog, replay_factory
 from ..chronos.evaluation import Forecasts, load_forecasts
@@ -199,7 +199,9 @@ def add_finetuned(
             table = stacking.table(result, _deciles(log, forecasts.levels))
             by_rate.setdefault(rate, {})[fold] = (result, table, receipt)
     pooled = {
-        rate: combine_metric_reports([r.metrics for r, _, _ in folds.values()], seed=0).mae
+        rate: combine_metric_reports(
+            [r.metrics for r, _, _ in folds.values()], seed=inputs.experiment.protocol.folds.seed
+        ).mae
         for rate, folds in by_rate.items()
     }
     chosen = min(pooled, key=lambda r: pooled[r].value if pooled[r] else float("inf"))
@@ -296,9 +298,9 @@ def abstention_share(candidate: Candidate) -> float:
     return abstained / (abstained + scored) if abstained + scored else 1.0
 
 
-def coverage(candidate: Candidate) -> Estimate | None:
+def coverage(candidate: Candidate, seed: int) -> Estimate | None:
     return combine_metric_reports(
-        [r.metrics for r in candidate.official.values()], seed=0
+        [r.metrics for r in candidate.official.values()], seed=seed
     ).interval_coverage
 
 
@@ -339,7 +341,7 @@ def challenge(
         paired_points=paired,
         paired_mae=_boot([d.mae for d in differences], scoring),
         paired_decile_loss=_boot(decile, scoring),
-        coverage=coverage(cand),
+        coverage=coverage(cand, inputs.experiment.protocol.folds.seed),
         abstention_share=abstention_share(cand),
         incumbent_abstention_share=abstention_share(inc),
         latency_p95_seconds=costs.get(name, {}).get("latency_p95_seconds"),
@@ -565,10 +567,37 @@ def run_score(
     embed_dir: Path,
     finetune_runs: Mapping[str, Mapping[int, Path]],
     output: Path,
+    measure: Callable[[str, Path, Path, Path], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     import hashlib
     import subprocess
     import sys
+
+    def in_fresh_process(name: str, snapshot: Path, export_dir: Path, embed_dir: Path) -> dict:
+        measured = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-m",
+                "hachi.models.training",
+                "cost",
+                "--candidate",
+                name,
+                "--snapshot",
+                str(snapshot),
+                "--export",
+                str(export_dir),
+                "--embed",
+                str(embed_dir),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+            cwd=REPO,
+        )
+        return json.loads(measured.stdout)
+
+    measure = measure or in_fresh_process
 
     from hachi.evaluation import write_comparison_packet, write_packet
 
@@ -624,28 +653,7 @@ def run_score(
     run_official(scoring)
     # CPU costs in fresh processes, so each RSS is that model's own serving process.
     for name in (*COMPARATORS, *RIDGES):
-        measured = subprocess.run(
-            [
-                sys.executable,
-                "-I",
-                "-m",
-                "hachi.models.training",
-                "cost",
-                "--candidate",
-                name,
-                "--snapshot",
-                str(snapshot),
-                "--export",
-                str(export_dir),
-                "--embed",
-                str(embed_dir),
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-            cwd=REPO,
-        )
-        costs[name] = json.loads(measured.stdout)
+        costs[name] = measure(name, snapshot, export_dir, embed_dir)
     embed_ridge = costs["chronos-2-embedding-ridge"]
     costs["chronos-2-embedding-ridge"] = {
         **embed_ridge,
@@ -686,9 +694,10 @@ def run_score(
             packets[f"{name}/inner-{fold}"] = write_packet(
                 output / "candidates" / name / f"inner-{fold}", inputs.splits[fold], run, result
             )["evaluation.json"]
+    links: dict[tuple[str, str], dict[str, dict[str, str]]] = {}
     for (incumbent, name), results in chain.items():
         for fold, result in enumerate(results):
-            write_comparison_packet(
+            hashes = write_comparison_packet(
                 output / "chain" / f"{incumbent}__vs__{name}" / f"inner-{fold}",
                 inputs.splits[fold],
                 _run_manifest(scoring, incumbent, fold, git, environment),
@@ -697,9 +706,16 @@ def run_score(
                 ),
                 result,
             )
+            links.setdefault((incumbent, name), {})[f"inner-{fold}"] = {
+                "path": f"chain/{incumbent}__vs__{name}/inner-{fold}",
+                "comparison.json": hashes["comparison.json"],
+                "sha256.json": hashlib.sha256(document_bytes(hashes)).hexdigest(),
+            }
     pooled = {}
     for name, candidate in scoring.candidates.items():
-        report = combine_metric_reports([r.metrics for r in candidate.official.values()], seed=0)
+        report = combine_metric_reports(
+            [r.metrics for r in candidate.official.values()], seed=experiment.protocol.folds.seed
+        )
         counts: dict[str, int] = defaultdict(int)
         for result in candidate.official.values():
             for key in (
@@ -747,6 +763,7 @@ def run_score(
                     "status": s.status,
                     "gates": s.gates,
                     "evidence": asdict(s.challenge) if s.challenge else None,
+                    "packets": links.get((s.incumbent, s.candidate), {}),
                 }
                 for s in log.steps
             ],
