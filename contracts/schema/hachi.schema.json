@@ -1577,6 +1577,11 @@
       ],
       "type": "string"
     },
+    "LocalDateTime": {
+      "description": "Local wall-clock time, without an offset.",
+      "format": "local-date-time",
+      "type": "string"
+    },
     "Metric": {
       "enum": [
         "heart_rate",
@@ -2805,14 +2810,10 @@
           "$ref": "#/$defs/Identifier"
         },
         "bedtime_local": {
-          "description": "Local wall-clock time, without an offset.",
-          "format": "date-time",
-          "type": "string"
+          "$ref": "#/$defs/LocalDateTime"
         },
         "wake_time_local": {
-          "description": "Local wall-clock time, without an offset.",
-          "format": "date-time",
-          "type": "string"
+          "$ref": "#/$defs/LocalDateTime"
         }
       },
       "required": [
