@@ -9,6 +9,7 @@ from .features import (
     HourlyFeatureView,
     hourly_features,
 )
+from .folds import NestedFold, NestedFoldConfig, NestedFoldPlan, nested_participant_folds
 from .forecast import (
     EvaluationConfig,
     EvaluationResult,
@@ -31,6 +32,9 @@ __all__ = [
     "HourlyFeature",
     "HourlyFeaturePolicy",
     "HourlyFeatureView",
+    "NestedFold",
+    "NestedFoldConfig",
+    "NestedFoldPlan",
     "Predictor",
     "PredictorFactory",
     "TrainingPrefix",
@@ -38,6 +42,7 @@ __all__ = [
     "document_sha256",
     "evaluate_forecast",
     "hourly_features",
+    "nested_participant_folds",
     "partition_participants",
     "rolling_origins",
     "write_comparison_packet",
