@@ -6,8 +6,8 @@ This turns admitted illness cohorts into immutable label snapshots: canonical `S
 |---|---|---|
 | `stanford-covid19-wearables` (Mishra 2020) | Supplementary Data 1: Table 3 (category, onset, diagnosis and recovery dates) and Table 5 (daily symptom surveys) | Built |
 | `stanford-covid19-wearables-phase2` (Alavi 2022) | Source data: each COVID-19 positive's test date, symptom onset or none, recruitment and device | Built |
-| `cmu-common-cold-project` | Five-study file: daily baseline-adjusted Jackson scores, "have a cold?", viral shedding, infection | Adapter tested on synthetic rows only; gated on CMU analysis registration |
-| CovIdentify, Homekit2020, Evidation ILI | | Access blocked (see the report) |
+| `cmu-common-cold-project` | Five-study file: daily baseline-adjusted Jackson scores, "have a cold?", viral shedding, infection | Built after the CMU analysis registration (2026-10-11) |
+| CovIdentify, Homekit2020, Evidation ILI | | Not available to this project; `rejected_for_task` in the registry |
 
 ## Commands
 
@@ -15,12 +15,14 @@ This turns admitted illness cohorts into immutable label snapshots: canonical `S
 export HACHI_DATA_ROOT=/Volumes/T7/Stockpile/hachi.datasets
 uv run python -I -m hachi.data.clinical build stanford-covid19-wearables --report-dir reports/data
 uv run python -I -m hachi.data.clinical build stanford-covid19-wearables-phase2 --report-dir reports/data
+uv run python -I -m hachi.data.clinical build cmu-common-cold-project --report-dir reports/data
 uv run python -I -m hachi.data.clinical verify "$HACHI_DATA_ROOT/derived/<snapshot-id>" --full
+uv run python -I -m hachi.data.clinical reconcile "$HACHI_DATA_ROOT/derived/<snapshot-id>"
 ```
 
 `build` refuses any source file whose name, size or SHA-256 differs from the registry. It builds in a private staging directory, leaves nothing behind on failure, and never overwrites a snapshot. The directory is named `<pipeline_version>-<dataset_id>-<dataset_version>-<first 12 hex of the snapshot hash>` and is made read-only. The hash covers the source files, both configs, every table and the audit. It leaves out how the build ran (git SHA and library versions are recorded under `built_with`), so the same code, configs and sources give a byte-identical directory. Phase 2 streams 36 GB of CSV from its zip, which takes a few minutes. Archives are never extracted.
 
-The CMU build exits before reading anything unless `[analysis_registration]` in `configs/outcomes/cmu-common-cold-project.toml` records the submitted Data Analysis Form, as CMU's agreement requires.
+The CMU build and reconcile exit before reading anything unless `[analysis_registration]` in `configs/outcomes/cmu-common-cold-project.toml` records the submitted Data Analysis Form, as CMU's agreement requires. It was submitted on 2026-10-11. Errors name columns, never cell values, and odd codes are counted rather than read.
 
 ## Reading a snapshot
 
@@ -98,7 +100,7 @@ Synthetic tests (`tests/data/clinical/`) cover:
 - every definition on hand-built timelines (horizons, ongoing and washout exclusions, negatives needing full survey coverage, partial onsets, test linking and the test target, asymptomatic infection, undated illness, relapse merging, both recovery endpoints and their rejection rules, and confidence);
 - generated workbooks and archives in both Stanford layouts (including export-error and blank members, and macOS metadata);
 - contract validity, byte-identical rebuilds, read-only output, tamper detection, admission refusal and unexpected archive members;
-- the CMU adapter and its registration gate on a synthetic five-study file;
+- the CMU adapter, its registration gate and its reconcile on a synthetic five-study file;
 - that reports contain no participant ids or dates.
 
-The current snapshots are `clinical-labels-2-stanford-covid19-wearables-2020-nbe-6a864b03b2d3` and `clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm-bbbca036d9e5`, both built from commit `18ec9fc`. Both pass `verify --full` and `reconcile` with 0 mismatches, and a second phase 1 build was byte-identical. Both are on the GX10 read-only with `sha256sum -c` passing. They supersede the `clinical-labels-1` snapshots from PR #58, which have byte-identical tables and lack only `symptom_scores`. Their sanitized audit is [`reports/data/clinical-labels.md`](../../../../reports/data/clinical-labels.md).
+The current snapshots are `clinical-labels-2-stanford-covid19-wearables-2020-nbe-6a864b03b2d3` and `clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm-bbbca036d9e5` (commit `18ec9fc`), and `clinical-labels-2-cmu-common-cold-project-retrieved-2026-10-10-7c1429b102eb` (commit `b504950`). All pass `verify --full` and `reconcile` with 0 mismatches, and their rebuilds were byte-identical (phase 1 and CMU checked independently). All are on the GX10 read-only with `sha256sum -c` passing. They supersede the `clinical-labels-1` Stanford snapshots from PR #58, which have byte-identical tables and lack only `symptom_scores`. Their sanitized audit is [`reports/data/clinical-labels.md`](../../../../reports/data/clinical-labels.md).
