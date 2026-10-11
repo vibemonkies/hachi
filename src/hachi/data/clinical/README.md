@@ -99,3 +99,5 @@ Synthetic tests (`tests/data/clinical/`) cover:
 - contract validity, byte-identical rebuilds, read-only output, tamper detection, admission refusal and unexpected archive members;
 - the CMU adapter and its registration gate on a synthetic five-study file;
 - that reports contain no participant ids or dates.
+
+The first real snapshots are `clinical-labels-1-stanford-covid19-wearables-2020-nbe-168d54133c8b` (commit `f0ad975`) and `clinical-labels-1-stanford-covid19-wearables-phase2-2022-nm-1360e4624f99` (commit `d49ff43`). Both pass `verify --full` and `reconcile` with 0 mismatches, and a second phase 1 build was byte-identical. Both are on the GX10 read-only with `sha256sum -c` passing. Their sanitized audit is [`reports/data/clinical-labels-1.md`](../../../../reports/data/clinical-labels-1.md).
