@@ -229,6 +229,10 @@ the original gates; feature and audit hashes were identical cold/warm. This meas
 larger-history scaling and memory, not source-transfer accuracy. Numeric index
 memory scales with known candidates; a pathological connected interval chain can
 still require historical replay to preserve exact precedence.
+The importer permits up to 2,000,000 records. Peak API memory at that cap is
+unmeasured; the 525,600-record result is the largest measured fixture here. This
+sizing limit is handed to the serving owner rather than claimed as a cap-scale
+latency or memory guarantee.
 
 The generated-only runner refuses real-source metadata and emits counts, timings
 and hashes. Use a fresh private owner/run root and the project's Python environment:
@@ -291,6 +295,9 @@ identities, readiness and earlier audit receipts matched exactly. At a later aud
 cutoff the 30 creations were counted as permanently excluded late inputs; the
 future-end record stayed unknown. The original model receipt verified throughout.
 Owned services were stopped and port 8722 released after each probe.
+After integrating the same-gate validator fix from PR91 (`182a7b8`), the HTTP append
+sentinel passed again at `e7dfdc0` with the original artifact receipt unchanged.
+Independent boundary probes now refuse lowered coverage and count admissions.
 
 This proves generated upload → imported snapshot → source-admitted hourly inputs
 → the actual frozen CPU artifact over HTTP. It does not establish Apple clinical
