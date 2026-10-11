@@ -141,6 +141,8 @@ def main() -> None:
     dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True))
     environment = hashlib.sha256((root / "uv.lock").read_bytes()).hexdigest()
     args.output.mkdir(mode=0o700, parents=True, exist_ok=False)
+    (args.output / "models").mkdir(mode=0o700)
+    (args.output / "evaluations").mkdir(mode=0o700)
     receipt = {
         "data_mode": "synthetic",
         "git_sha": git_sha,
