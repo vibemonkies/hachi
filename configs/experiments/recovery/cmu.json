@@ -1,5 +1,5 @@
 {
-  "protocol_version": "recovery-cmu-research-1",
+  "protocol_version": "recovery-cmu-research-2",
   "expected_snapshot_sha256": "7c1429b102ebf5bcb5c0f94db0aba6c1e290d1b0b78aeae68c7105b3cfda38c3",
   "expected_fold_plan_sha256": "f95b01edbd73c7511e517b03a1bf9e4a887d19f416b2a172b523b4eb2d790016",
   "endpoint": "outcomes-1-sustained-symptom-free-2d",
@@ -22,7 +22,7 @@
   "expected_split_protocol_sha256": "0f9b7b6f49ce382574ee3b1692ecbe4b9ce712991d1cd0ebef1376938d2e03bb",
   "censoring": "last-observed-symptomatic-or-intermediate-day",
   "outcome_scope": "active-outer-development-only",
-  "historical_test_aggregate_exposure": false,
+  "historical_test_aggregate_exposure": true,
   "calibration_days": [
     1,
     2,

@@ -27,7 +27,7 @@ class CMUSplitProtocol(Contract):
 
 
 class Protocol(Contract):
-    protocol_version: Literal["recovery-phase1-research-2", "recovery-cmu-research-1"]
+    protocol_version: Literal["recovery-phase1-research-2", "recovery-cmu-research-2"]
     cohort: Literal["stanford_phase1", "cmu_common_cold"]
     split_protocol_path: Literal[
         "configs/evaluation/stanford-phase1-clinical.json",
@@ -75,12 +75,8 @@ class Protocol(Contract):
             or len(set(self.calibration_days)) != len(self.calibration_days)
         ):
             raise ValueError("calibration/scoring days must fit the frozen source horizon")
-        if cohort == CMU and (
-            self.maximum_export_days > 3
-            or self.primary_horizon_days > 2
-            or self.historical_test_aggregate_exposure
-        ):
-            raise ValueError("CMU requires its separate short-follow-up unexposed protocol")
+        if cohort == CMU and (self.maximum_export_days > 3 or self.primary_horizon_days > 2):
+            raise ValueError("CMU requires its separate short-follow-up protocol")
         return self
 
 

@@ -98,6 +98,17 @@ no full-roster eligible-outcome counts are published. `private_export_audit` is 
 the same run, not appended afterward. Research artifact format2 includes its native cohort,
 clock and predictor schema; old artifacts do not satisfy the corrected format.
 
+Publication receipt format3 allowlists only recovery-task eligibility and task-specific
+exclusions in development and per-fold audits. Canonical/source endpoint categories and
+no-follow-up totals stay in private `private-audit.json`; future audit categories remain
+private by default. Previously publishing CMU development categories alongside #8's
+source-wide totals made test-partition outcome totals derivable. Both cohorts now record
+historical aggregate exposure. Eligibility still correlates with #8's source categories,
+so residual test-label totals remain roughly inferable from those existing source-wide
+audits. Minimization cannot restore past blinding. No test-total subtraction is performed.
+CMU protocol version2 changes exposure metadata only; original pre-score model, split,
+predictors and short-horizon choices remain unchanged.
+
 Tests cover analytic likelihood and gradients, the constant hazard's closed-form estimate,
 extreme logits, interval truncation, causal landmark availability, episode boundaries,
 participant support rather than repeated episodes, calibration unknowns, cluster bootstrap,

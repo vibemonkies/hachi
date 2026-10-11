@@ -18,6 +18,7 @@ from hachi.data.clinical import dataset_snapshot_ref
 from hachi.evaluation.serialization import document_sha256
 
 from .artifacts import RecoveryArtifact, load_artifact, save_artifact, source_hashes, write_private
+from .audits import PUBLIC_AUDIT_POLICY, public_counts
 from .clinical import ENDPOINT, landmarks
 from .cohorts import STANFORD, cohort_named
 from .evaluation import calibration, compare, summarize_scores, supported_horizon
@@ -52,7 +53,7 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
     config_hash = document_sha256(config_document)
     lock_hash = hashlib.sha256((repo / "uv.lock").read_bytes()).hexdigest()
     receipt = {
-        "format": "recovery-validation-2",
+        "format": "recovery-validation-3",
         "cohort": cohort.name,
         "git_sha": git_sha,
         "git_dirty": False,
@@ -69,6 +70,8 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
         "outer_test_outcomes_read_this_run": False,
         "outer_test_scored": False,
         "historical_test_aggregate_exposure": protocol.historical_test_aggregate_exposure,
+        "public_audit_policy": PUBLIC_AUDIT_POLICY,
+        "residual_test_aggregate_inferability": True,
         "outcome_scope": protocol.outcome_scope,
         "censoring": protocol.censoring,
         "selection": protocol.selection,
@@ -81,6 +84,7 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
     }
     pooled_scores: list[dict] = []
     development_audit: Counter[str] = Counter()
+    private_audit = {"folds": []}
     export_audit: Counter[str] = Counter()
     validation_people: set[str] = set()
     for fold in active:
@@ -92,6 +96,13 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
             snapshot, fold.validation_subjects, cohort
         )
         development_audit.update(validation_audit)
+        private_audit["folds"].append(
+            {
+                "inner_fold": fold.inner_fold,
+                "train": train_audit,
+                "validation": validation_audit,
+            }
+        )
         train = [r.observation for r in train_landmarks]
         validation = [r.observation for r in validation_landmarks]
         support = supported_horizon(
@@ -102,8 +113,8 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
         )
         fold_report = {
             "inner_fold": fold.inner_fold,
-            "train_audit": train_audit,
-            "validation_audit": validation_audit,
+            "train_audit": public_counts(train_audit),
+            "validation_audit": public_counts(validation_audit),
             "supported_follow_up_days": support,
             "train_subjects_with_landmarks": len({r.subject for r in train}),
             "validation_subjects_with_landmarks": len({r.subject for r in validation}),
@@ -268,7 +279,9 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
         pooled_scores, bootstrap=protocol.bootstrap_replicates, seed=folds_config.seed
     )
     receipt["pooled_comparison"]["horizon_days"] = protocol.primary_horizon_days
-    receipt["development_audit"] = dict(sorted(development_audit.items()))
+    private_audit["development"] = dict(sorted(development_audit.items()))
+    write_private(output / "private-audit.json", private_audit)
+    receipt["development_audit"] = public_counts(dict(development_audit))
     receipt["private_export_audit"] = dict(sorted(export_audit.items()))
     receipt["elapsed_seconds"] = round(perf_counter() - started, 3)
     receipt["limitations"] = [
@@ -284,6 +297,8 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
         "Horizon-straddling interval coarsening assumes non-informative observation.",
         "Few clusters/events limit bootstrap precision; fold intervals are descriptive.",
         "Distributions are hypothetical static landmark-covariate projections, not exact dates.",
+        "Source-wide #8 audits leave test-label totals roughly inferable from task support.",
+        "Minimization removes category breakdowns; it cannot restore historical blinding.",
     ]
     if cohort == STANFORD:
         receipt["limitations"].append(
@@ -293,6 +308,9 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
             "Stanford retains original label-extent support and one-event gate; thin folds."
         )
     else:
+        receipt["limitations"].append(
+            "Earlier public CMU category counts enabled test-total derivation; exposure recorded."
+        )
         receipt["limitations"].append(
             "CMU challenge follow-up is short; Jackson scores do not transfer to app severity."
         )

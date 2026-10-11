@@ -57,7 +57,16 @@ def test_runner_never_requests_test_outcomes_and_owns_development_export_counts(
             )
             for i, s in enumerate(subjects)
         ]
-        return rows, {"canonical_episodes": len(rows)}
+        return rows, {
+            "canonical_episodes": len(rows),
+            "endpoint_resolved_resolved": 1,
+            "endpoint_right_censored_no_qualifying_run": len(rows) - 1,
+            "endpoint_right_censored_no_follow_up": 2,
+            "excluded_no_follow_up": 2,
+            "future_source_summary": 123,
+            "eligible_resolved": 1,
+            "eligible_censored": len(rows) - 1,
+        }
 
     monkeypatch.setattr(runner, "landmarks", guarded_landmarks)
     monkeypatch.setattr(
@@ -78,7 +87,23 @@ def test_runner_never_requests_test_outcomes_and_owns_development_export_counts(
     assert requested == [
         partition for f in active for partition in (f.train_subjects, f.validation_subjects)
     ]
-    assert receipt["development_audit"] == {"canonical_episodes": len(development)}
+    assert receipt["development_audit"] == {
+        "eligible_resolved": len(active),
+        "eligible_censored": len(development) - len(active),
+    }
+    public = (output / "aggregate.json").read_text()
+    for category in (
+        "canonical_episodes",
+        "endpoint_resolved_resolved",
+        "endpoint_right_censored_no_qualifying_run",
+        "endpoint_right_censored_no_follow_up",
+        "excluded_no_follow_up",
+        "future_source_summary",
+    ):
+        assert category not in public
+    audit = json.loads((output / "private-audit.json").read_bytes())
+    assert audit["development"]["canonical_episodes"] == len(development)
+    assert len(audit["folds"]) == len(active)
     assert receipt["outer_test_outcomes_read_this_run"] is False
     assert receipt["outer_test_scored"] is False
     assert json.loads((output / "aggregate.json").read_bytes()) == receipt
