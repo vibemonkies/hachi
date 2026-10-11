@@ -79,10 +79,27 @@ its rendered verification are described under [Private offline replay](#private-
 
 ## Browser integration and honest gates
 
-Build the exact reviewed #17 source in this same isolated worktree after its owner
-publishes it. Set its documented API origin to `http://127.0.0.1:8720`. Run `npm ci`
-in `apps/web` with an owned npm cache, then `npm run build`; serve `dist` with Vite
-preview using `npm run preview -- --host 127.0.0.1 --port 5180 --strictPort`.
+Build the exact published #17 source in a clean owned review checkout. PR111
+`0b58f4e7358a1bcc1f29c036eac98c954a808449` and corrected
+`5a422ddb2f1d0dd2a5c4e1003a1c833cf430daca` were exercised with these settings
+in both the build and preview shell (later app revisions need fresh evidence):
+
+```sh
+export VITE_HACHI_API_BASE_URL=
+export VITE_HACHI_API_PROXY_TARGET=http://127.0.0.1:8720
+export VITE_HACHI_REPLAY_PROXY_TARGET=http://127.0.0.1:8729
+export npm_config_cache=/approved/private/runtime/worker22/npm-cache
+# From apps/web in that same source checkout:
+npm ci
+npm run build
+npm run preview -- --host 127.0.0.1 --port 5180 --strictPort
+```
+
+The same-origin `/v1` and `/healthz` routes reach the API; `/replay/report` reaches
+the separate loopback provider on 8729 with `changeOrigin`, without rewriting.
+Run the published `replay.py serve` command below with `--port 8729` when using
+the actual app; port 5180 belongs to the web preview. No provider or UI source
+override is needed.
 Record web commit, build SHA,
 API `/healthz` Git SHA and artifact pin. Check served index bytes against `dist`.
 
@@ -105,10 +122,16 @@ unvalidated rationale. Sparse history can still return `INSUFFICIENT_HISTORY`.
 Real personal Apple imports are excluded from shared-GPU models pending an
 approved transfer/retention design. See the [API source-admission documentation](../../src/hachi/api/README.md#apple-health-imports)
 and [generated CPU-artifact HTTP proof](../../src/hachi/data/apple_health/README.md#generated-http-transport-against-the-original-frozen-cpu-artifact).
-That generated proof does not establish real Apple accuracy or the actual app
-path. The real import → report → chart browser path depends on #17's implementation;
-check-ins on #18, safe demo/storage on #19, final artifact selection on #20,
-separately consented late case on #21. #15's sleep scenario and clinical #13/#14
+That generated proof does not establish real Apple accuracy. The actual PR111 app
+existing-PMData-subject → report → chart and private offline replay were exercised
+at the pinned head: [source-bound receipts and scope](../../reports/verification/app-rehearsal/README.md#actual-app-runtime-at-pr111-0b58f4e).
+One app origin matched 24 points/48 endpoints at each head; the separate API
+oracle covers 25 origins/600 points at each head. Generated Apple input exercised
+the `0b58f4e` app import/status/
+coverage and the truthful unavailable response, not a real Apple case.
+#19's storage/demo implementation is accepted; #18's complete integrated states,
+#20's selected-artifact parity and #21's separately consented late case remain
+gates. #15's sleep scenario and clinical #13/#14
 also retain their own acceptance gates. Record each unavailable/failing state
 honestly. Do not open test, tune on the friend case, or create consent/export.
 
@@ -120,8 +143,9 @@ read-only loopback transport and a dedicated rehearsal viewer. It consumes the
 authoritative `ReportJob`/`ReportResult` models, checks the generated contract schema
 hash and validates both the original and projected response. It never imports an
 inference client or attempts a live fallback. Its [private numeric/time/geometry verification](../../reports/verification/app-rehearsal/README.md#private-replay-consumer-follow-up)
-used the saved real response with the live API stopped. This is the standalone
-viewer; replay through Coffee's actual app remains a #22 gate.
+used the saved real response with the live API stopped. That PR delivered the
+standalone viewer. The later PR111 app replay proof is separately source-bound
+below; neither establishes all #22 gates.
 
 The cache preserves the whole completed original response, with its original
 `data_mode` (`real` or `synthetic`), generated time, code, artifact, snapshot,
@@ -181,11 +205,33 @@ Generate an explicitly synthetic staggered-window source with
 then use the same save/check/serve path. Its five points and three missing target
 windows are a rendered gap regression, not real-data or inference evidence.
 
-This viewer proves the independent consumer path. App replay integration remains
-pending Coffee's concrete #17 source handoff and narrowly agreed module/root wiring.
-Offline replay from a saved real result must pass the numeric/rendered comparison
-with the live API unavailable; final app acceptance still requires that same path
-through the reviewed app UI. It does not select a model or open outer test.
+This viewer proves the independent consumer path. For Coffee's actual app, open
+the existing-subject coverage through its controls, select the private frozen UTC
+cutoff, review coverage, request the forecast and open its exact-value table.
+Keep private identifiers/times out of tool arguments/output: the observed run
+supplied trusted saved-response values locally through ordinary input events,
+then used native buttons/navigation; it did not inject report or React state.
+Evaluate the trimmed text of `app_compare.js` with T3 `preview_evaluate`,
+`awaitPromise: true`. The read-only helper compares actual DOM/table/SVG against
+the provider's validated saved response, including exact endpoints, cutoff,
+units, rounded quality, artifact/snapshot/code and original mode. On the live
+view it also requires the whole live result to equal the saved result after
+removing only `ReplayInfo`. It returns counts/booleans or a generic failed gate;
+never print raw DOM, responses or exceptions.
+
+Stop only the owned API, verify 8720 has no listener, and load saved replay
+through the actual app. Open the exact-value tables and rerun the same helper;
+record replay provenance, no live report requests and the absent API listener.
+The helper checks interval starts on the app's common cutoff-to-cutoff+24h UTC
+domain, unlike the standalone viewer's interval midpoints. It deliberately
+requires the original point-only CPU comparator: it is not selected 720-hour
+interval-model parity. Use the generated staggered-window cache for gap and
+mobile illustrations, and a missing private cache for the visible 409 refusal.
+The [broader actual app evidence](../../reports/verification/app-rehearsal/app-runtime-0b58f4e.json)
+and [corrected-head live/replay follow-up](../../reports/verification/app-rehearsal/app-runtime-5a422dd.json)
+record their paths at each producing head. New source needs a rebuild/relaunch
+and fresh comparison; no model selection or outer-test opening is authorized
+by this runbook.
 
 ## Verification and cleanup
 

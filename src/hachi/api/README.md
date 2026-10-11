@@ -113,6 +113,8 @@ declares `interval_nominal_coverage`. Such intervals stay `uncalibrated`, with a
   split.json    sha256 must equal run.split_manifest_sha256
   config.json   sha256 must equal run.config_sha256 (EvaluationConfig)
   serving.json  ServingSpec: input kind, feature policy, protocol hash
+  protocol.json the protocol (or density variant) the packet was evaluated under;
+                required for CPU artifacts
 ```
 
 Loading refuses an artifact when any of these checks fails:
@@ -123,6 +125,15 @@ Loading refuses an artifact when any of these checks fails:
 - A manifest fails strict schema validation.
 - The baseline implementation does not match the code it was saved with.
 - The model, evaluation, feature policy and feature order disagree.
+- A CPU artifact's served gate or thinning isn't the evaluated one. The staged protocol must
+  match `serving.protocol_sha256` and be a committed protocol under `configs/evaluation` (a
+  run's own `protocol.json` normalizes to its committed file), so no gate is written by hand.
+  It must list the pinned model's exact config among its comparators, with that config's count
+  gate. Its evaluation must be the packet's `config.json` and its split parameters the
+  packet's split. The served `feature_policy` and `history_thinning`
+  must equal the protocol's. The packet's `run_id` must carry exactly that thinning's label
+  (`-<model_id>-<suffix>`), or none for an unthinned protocol. So a full-density packet is
+  never served thinned, and a thinned packet is never served unthinned.
 
 Stage an artifact straight from a run's output:
 
@@ -169,6 +180,40 @@ requirement naming the dataset the served models were evaluated on.
 Typical 5-minute Apple Watch HR fills about 12 minutes an hour, so it abstains at a 0.5
 minute-density / 30-sample gate (`INSUFFICIENT_HISTORY`). Lowering those gates changes the
 model's input semantics and belongs to the model owner.
+
+### Density-variant artifacts (#97, #102)
+
+A model frozen on a predeclared density variant serves at that variant's gate. #102 (Amendment
+1 of #97) thins PMData HR to the earliest sample per UTC 5-minute slot. Coverage is distinct
+sampled minutes / 60, exactly as the Apple helper counts it, and the gate is coverage ≥ 0.10
+and ≥ 6 samples.
+
+Its artifacts come from `python -m hachi.models.density.run fit --variant <file>`. The runner
+labels every packet's `run_id` with the thinning's suffix and records the variant in
+`input-audit.json`. Stage them with the variant file as `--protocol`. That records the
+variant's `feature_policy` and its rule as `history_thinning`:
+
+```json
+"history_thinning": {"metric": "heart_rate", "slot_seconds": 300,
+                     "keep": "earliest_start_per_utc_slot", "pipeline_suffix": "thin300s-applemin",
+                     "coverage": "distinct_sampled_minutes_per_60"}
+```
+
+The API then thins every source's history the same way before applying the gate:
+- **PMData subjects** use `thinned_bins`, which needs the `baselines` extra. Without it they
+  get `unavailable` with that requirement, and Apple subjects are still served.
+- **Apple subjects** use #78's sealed samples, thinned after sealing and source precedence.
+  Only rows are dropped; coverage keeps the helper's own definition.
+
+Thinning keeps the earliest sample in each slot from **any** source. A phone sample at :00:45
+therefore beats a watch sample at :01:30; source precedence only settles same-instant or
+overlapping records.
+
+Thinning matters for Apple. Natively, six samples in six consecutive minutes pass 0.10/6, but
+the validated rule needs them in six distinct slots. An Apple admission keeps the model's exact
+gate. #97's slot-coverage variant isn't served.
+
+The evidence is PMData only. An admission's rationale should say so, and `DEVICE_SHIFT` stays.
 
 The sealed-hour replay re-reads the import once per lookback hour, so its cost grows with
 history length times lookback (see the #78 README). It runs inside the report job, never in

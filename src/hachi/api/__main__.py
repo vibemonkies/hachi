@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.serving
                 else serving_from_protocol(args.protocol, args.model, args.admit_apple)
             )
-            pin = stage_artifact(root, args.model, args.packet, serving)
+            pin = stage_artifact(root, args.model, args.packet, serving, args.protocol)
         else:
             pin = parse_pin(args.pin)
         served = load_served_artifact(root, pin)
@@ -174,10 +174,23 @@ def serving_from_protocol(
     """Hourly-feature serving bound to the exact protocol file the run wrote.
 
     A Chronos-2 artifact (#10/#12) is served on the GX10 with its own q0.1-q0.9 coverage;
-    a #9 baseline is served on the CPU and is point-only.
+    a #9 baseline is served on the CPU and is point-only. A predeclared density variant
+    (#102) is checked against its base protocol, and its thinning is served with the model.
     """
     data = path.read_bytes()
     protocol = json.loads(data)
+    thinning = None
+    if "thinning" in protocol:
+        from hachi.models.density.config import load_variant
+        from hachi.models.density.rule import AppleMinuteThinning
+
+        variant, _ = load_variant(path)
+        if not isinstance(variant.thinning, AppleMinuteThinning):
+            raise ValueError(
+                "only sampled-minute thinning (#102) is served: Apple bins keep minute coverage"
+            )
+        protocol = variant.protocol.model_dump(mode="json")
+        thinning = variant.thinning
     model = json.loads((model_dir / "model.json").read_bytes())
     chronos = model.get("format_version") == "chronos-2-artifact-1"
     if chronos:
@@ -202,6 +215,7 @@ def serving_from_protocol(
         requires_gpu=chronos,
         protocol_sha256=hashlib.sha256(data).hexdigest(),
         accepted_sources=admissions,
+        history_thinning=thinning,
     )
 
 
