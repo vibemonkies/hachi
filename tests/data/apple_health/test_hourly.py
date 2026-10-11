@@ -467,3 +467,69 @@ def test_private_numeric_index_is_memory_only_and_closes_on_failure(
         if p.is_file()
     }
     assert before == after
+
+
+def thin_policy(**changes):
+    """The Apple-density variant's gate (#97): >= 6 of 12 five-minute slots."""
+    return policy(min_observed_count=6, **changes)
+
+
+def test_thinning_keeps_the_earliest_sample_per_utc_slot_with_slot_coverage(tmp_path, config):
+    _, _, path = run(tmp_path, config, [native(m, value=str(60 + m)) for m in range(30)])
+    view = apple_hourly_features(path, thin_policy(), START + HOUR, thin_slot_seconds=300)
+    (feature,) = view.features
+    assert feature.aggregate.value == fmean(60 + m for m in (0, 5, 10, 15, 20, 25))
+    assert (feature.aggregate.observed_count, feature.aggregate.coverage) == (6, 0.5)
+    assert feature.aggregate.pipeline_version == "apple-hourly-1+thin300s"
+    audit = view.audits[0]
+    assert (audit.included_records, audit.excluded_by_thinning) == (6, 24)
+    assert audit.excluded_by_precedence == 0
+    assert audit.known_candidates == (
+        audit.included_records
+        + audit.excluded_created_after_seal
+        + audit.excluded_cross_hour
+        + audit.excluded_by_precedence
+        + audit.excluded_by_thinning
+    )
+    # Without thinning the same hour is the native minute-density bin, unchanged.
+    native_view = apple_hourly_features(path, thin_policy(), START + HOUR)
+    assert native_view.features[0].aggregate.value == 74.5
+    assert native_view.audits[0].excluded_by_thinning == 0
+
+
+def test_five_minute_watch_cadence_passes_the_thinned_gate_only(tmp_path, config):
+    _, _, path = run(tmp_path, config, [native(m, value="62") for m in range(0, 60, 5)])
+    sampled = apple_hourly_features(path, thin_policy(), START + HOUR)
+    assert not sampled.features and sampled.counts["low_coverage"] == 1  # 12/60 minutes
+    thinned = apple_hourly_features(path, thin_policy(), START + HOUR, thin_slot_seconds=300)
+    (feature,) = thinned.features
+    assert (
+        feature.aggregate.observed_count,
+        feature.aggregate.coverage,
+        feature.aggregate.value,
+    ) == (12, 1.0, 62.0)
+    sparse = [native(m) for m in range(0, 25, 5)]  # five slots: one short of the gate
+    _, _, few = run(tmp_path / "few", config, sparse)
+    refused = apple_hourly_features(few, thin_policy(), START + HOUR, thin_slot_seconds=300)
+    assert not refused.features and refused.counts["low_coverage"] == 1
+
+
+def test_thinning_runs_after_sealing_so_late_samples_never_win_a_slot(tmp_path, config):
+    late = native(0, value="99", created=START + HOUR + timedelta(minutes=1))
+    on_time = [native(m, value="60") for m in range(1, 60, 5)]
+    _, _, path = run(tmp_path, config, [late, *on_time])
+    view = apple_hourly_features(
+        path, thin_policy(), START + 2 * HOUR, START, thin_slot_seconds=300
+    )
+    assert (
+        view.features[0].aggregate.value == 60.0 and view.features[0].aggregate.observed_count == 12
+    )
+    assert view.audits[0].excluded_created_after_seal == 1
+
+
+@pytest.mark.parametrize(("metric", "seconds"), [("steps", 300), ("heart_rate", 7)])
+def test_thinning_needs_heart_rate_and_slots_that_tile_the_hour(tmp_path, config, metric, seconds):
+    _, _, path = run(tmp_path, config, [native(0)])
+    changes = {"metric": metric, "aggregation": "sum"} if metric == "steps" else {}
+    with pytest.raises(ValueError, match="tile the hour"):
+        apple_hourly_features(path, thin_policy(**changes), START + HOUR, thin_slot_seconds=seconds)

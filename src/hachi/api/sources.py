@@ -17,6 +17,7 @@ from hachi.data import pmdata
 from hachi.data.apple_health import iter_observations as apple_observations
 from hachi.data.apple_health.hourly import apple_hourly_features
 from hachi.evaluation.features import HourlyFeature, HourlyFeaturePolicy, hourly_features
+from hachi.models.density.rule import ThinningRule
 from hachi.storage import child
 
 
@@ -113,19 +114,36 @@ class SubjectData:
         return [o for o in rows if start is None or o.start_utc >= start]
 
     def hourly_features(
-        self, policy: HourlyFeaturePolicy, as_of: datetime, start: datetime | None = None
+        self,
+        policy: HourlyFeaturePolicy,
+        as_of: datetime,
+        start: datetime | None = None,
+        thinning: ThinningRule | None = None,
     ) -> list[HourlyFeature]:
         """Derived hourly bins final by `as_of`, selected by the model's own feature policy.
 
         Apple imports are sealed at each hour end by #78's source rule; the policy must carry
-        that rule, so a PMData policy can never be stamped onto Apple bins.
+        that rule, so a PMData policy can never be stamped onto Apple bins. `thinning` rebuilds
+        bins the way a density-variant artifact was evaluated (#97), for either source.
         """
         if self.kind == "apple_import":
-            view = apple_hourly_features(self.path, policy, as_of, start)
+            slot = thinning.slot_seconds if thinning is not None else None
+            view = apple_hourly_features(self.path, policy, as_of, start, thin_slot_seconds=slot)
             return [f for f in view.features if start is None or f.start_utc >= start]
-        bins = pmdata.iter_aggregates(
-            self.path, "hour", as_of=as_of, subjects=[self.subject_id], metrics=[policy.metric]
-        )
+        if thinning is None:
+            bins = pmdata.iter_aggregates(
+                self.path, "hour", as_of=as_of, subjects=[self.subject_id], metrics=[policy.metric]
+            )
+        else:
+            # numpy, from the baselines extra, is needed only to thin snapshot history.
+            from hachi.models.density.thinning import thinned_bins
+
+            thinned, _ = thinned_bins(self.path, thinning, subjects=[self.subject_id])
+            bins = [  # the same cutoff rule iter_aggregates applies
+                b
+                for b in thinned
+                if b.aggregate.interval_end_utc <= as_of and b.available_at_utc <= as_of
+            ]
         view = hourly_features(bins, policy)
         return [f for f in view.features if start is None or f.start_utc >= start]
 

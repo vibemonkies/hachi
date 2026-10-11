@@ -37,6 +37,7 @@ from hachi.models.baselines import BaselineArtifact, TreeArtifact, load_artifact
 from hachi.models.baselines.artifacts import Receipt
 from hachi.models.baselines.tree import FEATURES
 from hachi.models.chronos.artifacts import load_artifact as load_chronos_artifact
+from hachi.models.density.rule import ThinningRule
 from hachi.storage import child
 
 from .chronos import ENTRY_POINT as CHRONOS_ENTRY_POINT
@@ -98,11 +99,28 @@ class ServingSpec(Contract):
         default_factory=list,
         description="Other input sources this artifact may serve, each declared explicitly.",
     )
+    history_thinning: ThinningRule | None = Field(
+        default=None,
+        description=(
+            "The evaluation thinned the model's history this way (a predeclared density "
+            "variant); served history from every source is thinned identically."
+        ),
+    )
 
     @model_validator(mode="after")
     def _policy(self) -> Self:
         if (self.input == "hourly_features") != (self.feature_policy is not None):
             raise ValueError("feature_policy is given exactly for hourly_features input")
+        thinning = self.history_thinning
+        if thinning is not None and (
+            self.feature_policy is None
+            or self.feature_policy.metric != thinning.metric
+            or self.feature_policy.min_observed_count > thinning.slots_per_hour
+        ):
+            raise ValueError(
+                "history thinning needs an hourly policy on the thinned metric whose count "
+                "gate fits the hour's slots"
+            )
         sources = [a.source for a in self.accepted_sources]
         if len(sources) != len(set(sources)):
             raise ValueError("each accepted source is declared once")

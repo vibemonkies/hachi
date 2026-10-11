@@ -357,7 +357,9 @@ def model_inputs(
     if artifact.serving.input == "hourly_features":
         policy = input_policy(artifact, subject)
         assert policy is not None, "selection admits only sources with a policy"
-        rows: list = subject.hourly_features(policy, cutoff, start)
+        rows: list = subject.hourly_features(
+            policy, cutoff, start, artifact.serving.history_thinning
+        )
     else:
         rows = subject.observations(artifact.metric, cutoff, start)
     rows.sort(key=lambda o: (o.end_utc, o.available_at_utc, o.record_id))

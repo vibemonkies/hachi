@@ -1,5 +1,6 @@
 """Apple Health imports reach hourly-feature models only through an explicit admission."""
 
+import hashlib
 import json
 from datetime import UTC, datetime, timedelta
 
@@ -7,10 +8,13 @@ import pytest
 from pydantic import ValidationError
 
 from hachi.api.artifacts import ServingSpec, SourceAdmission, stage_artifact
+from hachi.api.sources import SubjectData
 from hachi.contracts.api import Coverage, ReportJob
 from hachi.contracts.manifests import TimeWindow
 from hachi.data.apple_health.hourly import AVAILABILITY_RULE, apple_hourly_features
 from hachi.evaluation import ForecastInput
+from hachi.evaluation.features import hourly_features
+from hachi.models.density.rule import ThinningRule
 
 from .conftest import HR_POLICY, export_xml, heart_rate_record, make_packet, upload, wait
 
@@ -194,3 +198,143 @@ def test_staging_records_an_explicit_apple_admission(tmp_path, data_root, snapsh
     admitted = serving_from_protocol(protocol, packet.model_dir, RATIONALE)
     (admission,) = admitted.accepted_sources
     assert admission.feature_policy == APPLE_POLICY and admission.rationale == RATIONALE
+
+
+# A density-variant artifact (#97): history thinned to one sample per UTC 5-minute slot and a
+# gate of >= 6 of 12 slots. Served history from every source is thinned the same way.
+THIN = ThinningRule(slot_seconds=300, pipeline_suffix="thin300s")
+THIN_POLICY = HR_POLICY.model_copy(update={"min_observed_count": 6})
+THIN_RATIONALE = "Synthetic: validated for 5-minute cadence on PMData only; not on Apple devices."
+
+
+@pytest.fixture
+def thinned_client(tmp_path, data_root, snapshot_id, open_client, make_settings):
+    serving = admitting_serving(
+        feature_policy=THIN_POLICY,
+        history_thinning=THIN,
+        accepted_sources=[
+            SourceAdmission(
+                source="apple_health",
+                feature_policy=THIN_POLICY.model_copy(
+                    update={"availability_rule": AVAILABILITY_RULE}
+                ),
+                rationale=THIN_RATIONALE,
+            )
+        ],
+    )
+    packet = make_packet(
+        tmp_path / "thin-packet",
+        data_root / "derived" / snapshot_id,
+        serving=ServingSpec.model_validate(serving.model_dump()),  # re-validated as staged
+        artifact_id="synthetic-last-valid-hr-thin300s",
+    )
+    root = tmp_path / "thin-artifacts"
+    root.mkdir()
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    return open_client(make_settings(artifact_root=root, served_artifacts=(pin,))), pin
+
+
+def test_five_minute_apple_history_is_forecast_by_a_density_validated_artifact(thinned_client):
+    client, pin = thinned_client
+    upload(client, apple_hr_export(72, every_minutes=5), subject="synthetic-apple-watch")
+    wait(client)
+    result = forecast(client, "synthetic-apple-watch").result.root
+    assert result.status == "ok", result  # the same export abstains at native density gates
+    assert result.provenance.artifact == pin
+    shift = next(w for w in result.warnings if w.code == "DEVICE_SHIFT")
+    assert THIN_RATIONALE in shift.message
+
+    # Direct predict on #78's sealed bins, thinned by the artifact's rule, gives the same output.
+    service = client.app.state.service
+    served = service.catalog.artifacts[0]
+    subject = service.catalog.subject("synthetic-apple-watch", service.metadata, service.workspace)
+    cutoff = result.as_of
+    view = apple_hourly_features(
+        subject.path,
+        THIN_POLICY.model_copy(update={"availability_rule": AVAILABILITY_RULE}),
+        cutoff,
+        cutoff - timedelta(hours=48),
+        thin_slot_seconds=300,
+    )
+    assert {f.aggregate.observed_count for f in view.features} == {12}
+    targets = tuple(
+        TimeWindow(start_utc=cutoff + timedelta(hours=i), end_utc=cutoff + timedelta(hours=i + 1))
+        for i in range(24)
+    )
+    direct = served.model.predict(
+        ForecastInput("synthetic-apple-watch", cutoff, targets, view.features)
+    )
+    assert [p.median for p in result.forecast.series[0].points] == [e.median for e in direct]
+
+
+def test_snapshot_history_is_thinned_per_subject_exactly_as_in_evaluation(data_root, snapshot_id):
+    pytest.importorskip("numpy", reason="thinning snapshot history needs the baselines extra")
+    from hachi.api.sources import open_dataset_snapshot
+    from hachi.data.pmdata import iter_aggregates
+    from hachi.models.density.thinning import thinned_bins
+
+    snapshot = open_dataset_snapshot(data_root, snapshot_id, allow_unadmitted=True)
+    every, _ = thinned_bins(snapshot.path, THIN)
+    subject = sorted(snapshot.subjects)[0]
+    data = SubjectData(
+        subject_id=subject,
+        kind="dataset_snapshot",
+        data_mode=snapshot.data_mode,
+        snapshot=snapshot.ref,
+        tz_name=snapshot.tz_name,
+        path=snapshot.path,
+        dataset_source_kind=snapshot.source_kind,
+    )
+    last = max(b.aggregate.interval_end_utc for b in iter_aggregates(snapshot.path, "hour"))
+    for as_of in (last - timedelta(days=1), last):
+        served = data.hourly_features(THIN_POLICY, as_of, thinning=THIN)
+        expected = hourly_features(
+            [
+                b
+                for b in every
+                if b.aggregate.subject_id == subject
+                and b.aggregate.interval_end_utc <= as_of
+                and b.available_at_utc <= as_of
+            ],
+            THIN_POLICY,
+        ).features
+        assert served == list(expected)
+        assert all(f.aggregate.pipeline_version.endswith("+thin300s") for f in served)
+
+
+def test_thinning_is_declared_with_a_gate_thinned_hours_can_meet():
+    too_strict = HR_POLICY.model_copy(update={"min_observed_count": 13}).model_dump()
+    with pytest.raises(ValidationError, match="fits the hour's slots"):
+        ServingSpec.model_validate(
+            admitting_serving().model_dump()
+            | {"feature_policy": too_strict, "accepted_sources": [], "history_thinning": THIN}
+        )
+    with pytest.raises(ValidationError, match="thinned metric"):
+        ServingSpec(
+            format_version="hachi-serving-1",
+            task="physiology_forecast",
+            resolution="hour",
+            entry_point="hachi.models.baselines.load_artifact",
+            input="observations",
+            feature_policy=None,
+            history_thinning=THIN,
+        )
+
+
+def test_staging_a_density_variant_records_its_thinning_and_exact_gate(
+    tmp_path, data_root, snapshot_id
+):
+    from hachi.api.__main__ import serving_from_protocol
+    from hachi.models.density.config import REPO
+
+    variant = REPO / "configs/evaluation/pmdata-hourly-validation-apple-density.json"
+    packet = make_packet(tmp_path / "p", data_root / "derived" / snapshot_id)
+    serving = serving_from_protocol(variant, packet.model_dir, THIN_RATIONALE)
+    assert serving.history_thinning == THIN
+    assert serving.feature_policy.min_observed_count == 6
+    assert serving.feature_policy.min_coverage == 0.5
+    (admission,) = serving.accepted_sources
+    assert admission.feature_policy == serving.feature_policy.model_copy(
+        update={"availability_rule": AVAILABILITY_RULE}
+    )
+    assert serving.protocol_sha256 == hashlib.sha256(variant.read_bytes()).hexdigest()

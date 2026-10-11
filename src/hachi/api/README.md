@@ -170,6 +170,25 @@ Typical 5-minute Apple Watch HR fills about 12 minutes an hour, so it abstains a
 minute-density / 30-sample gate (`INSUFFICIENT_HISTORY`). Lowering those gates changes the
 model's input semantics and belongs to the model owner.
 
+### Density-variant artifacts (#97)
+
+A model frozen on a predeclared density variant serves at that variant's gate instead. #97
+thinned PMData HR to the earliest sample per UTC 5-minute slot and gated hours at ≥ 6 of 12
+slots. Its artifacts come from `python -m hachi.models.density.run fit` and are staged with
+the variant file as `--protocol`. That records the variant's `feature_policy` and its rule as
+`history_thinning`:
+
+```json
+"history_thinning": {"metric": "heart_rate", "slot_seconds": 300,
+                     "keep": "earliest_start_per_utc_slot", "pipeline_suffix": "thin300s"}
+```
+
+The API then thins every source's history the same way before applying the gate. PMData
+subjects use `thinned_bins`, which needs the `baselines` extra. Apple subjects use #78's sealed
+samples, thinned after sealing and source precedence. Coverage is the share of slots in both
+cases, so an Apple admission keeps the model's exact gate and no coverage is relabelled. The
+evidence is PMData only. An admission's rationale should say so, and `DEVICE_SHIFT` stays.
+
 The sealed-hour replay re-reads the import once per lookback hour, so its cost grows with
 history length times lookback (see the #78 README). It runs inside the report job, never in
 the request.
