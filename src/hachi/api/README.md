@@ -246,6 +246,11 @@ A Chronos-2 artifact from #10/#12 is staged like a baseline. `stage-artifact --p
 `interval_nominal_coverage: 0.8` (q0.1-q0.9). Only zero-shot, univariate artifacts are served,
 with a context equal to the protocol lookback or a longer one from a context policy.
 
+Like a CPU artifact, a Chronos artifact must be staged with `--protocol`. Its model pins the
+protocol's hash, so the staged file must be that exact committed document (the run's
+`protocol.json`). The served feature gate must be the protocol's own. Without the protocol, a
+48 h Chronos artifact's gate would be whatever `serving.json` says.
+
 #12's selected `chronos-2-zero-shot-ctx720` is the longer kind. Stage it with the run's
 `protocol.json` (its `protocol_sha256`). A report keeps the 48 h harness history and builds
 the subject's `ContextIndex` at the cutoff (`SubjectData.context_index`, #12's own
@@ -289,7 +294,13 @@ compares each forecast with two references:
 
 It compares the median and, when given, both bounds. `--tolerance` sets the largest
 difference still counted as agreement (exact by default). `--no-direct` skips the second
-reference, which saves GPU jobs for GPU models. It prints counts, differences and identities only:
+reference, which saves GPU jobs for GPU models. It prints counts, differences and identities only.
+
+For a GPU model, `--export-requests <requests.jsonl>` also checks the API's own input
+construction against the evaluator's export, without a GPU job. For each origin it rebuilds the
+exact request the API would send (inputs, targets and longer context, as in a report) and checks
+that its content-hash `request_id` is among the export's. Contexts are read and dropped; only
+counts are printed. Unlike the direct reference, this doesn't reuse the API's outputs:
 
 ```sh
 uv run --extra api python -I -m hachi.api handoff \

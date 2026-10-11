@@ -280,8 +280,13 @@ def _load_directory(
             raise ArtifactRefused(
                 "ARTIFACT_INCOMPATIBLE", "thinned-history Chronos evaluations are not served"
             )
-        if PROTOCOL_FILE in files and _sha256(files[PROTOCOL_FILE]) != serving.protocol_sha256:
-            raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "serving names another protocol")
+        if PROTOCOL_FILE not in files:
+            raise ArtifactRefused(
+                "ARTIFACT_INCOMPATIBLE",
+                "a GPU artifact carries the protocol it was evaluated under; "
+                "stage it with --protocol",
+            )
+        _check_chronos_protocol(files[PROTOCOL_FILE], model, split, serving)
         _check_chronos(model, split, serving)
     elif PROTOCOL_FILE not in files:
         raise ArtifactRefused(
@@ -429,6 +434,37 @@ def _check_protocol(
     if _run_label(run) != expected or (expected and not run.run_id.endswith(f"-{expected}")):
         raise ArtifactRefused(
             "ARTIFACT_INCOMPATIBLE", "the packet's history label differs from the served thinning"
+        )
+
+
+def _check_chronos_protocol(
+    data: bytes, model: ChronosServed, split: SplitManifest, serving: ServingSpec
+) -> None:
+    """A Chronos artifact pins its protocol's hash; the staged protocol must be that committed
+    document, and the served feature gate its own, never one written into serving.json."""
+    digest = _sha256(data)
+    if not digest == serving.protocol_sha256 == model.artifact.protocol_sha256:
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "the model, serving and staged protocol name other protocols"
+        )
+    try:
+        document = json.loads(data)
+        policy = HourlyFeaturePolicy.model_validate_json(json.dumps(document["feature_policy"]))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "the staged protocol is not a served evaluation protocol"
+        ) from exc
+    if "thinning" in document or protocol_key(document) not in frozen_protocols():
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "the staged protocol is not a committed, predeclared one"
+        )
+    if any(key in document and document[key] != getattr(split, key) for key in SPLIT_PARAMETERS):
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "the packet was not evaluated under the staged protocol"
+        )
+    if serving.feature_policy != policy:
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "the served feature gate differs from the evaluated one"
         )
 
 

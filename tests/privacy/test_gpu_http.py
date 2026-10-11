@@ -1,5 +1,6 @@
 """Actual HTTP cleanup/error/refusal checks with generated staged models and no GPU."""
 
+import hashlib
 import importlib.util
 import sys
 from pathlib import Path
@@ -10,6 +11,7 @@ pytest.importorskip("fastapi")
 from test_correction_http import live_api as live_api
 from test_gpu_boundary import PIN, SENTINEL, Remote
 
+from hachi.api import artifacts
 from hachi.api.artifacts import ServingSpec, SourceAdmission, load_served_artifact, stage_artifact
 from hachi.api.gpu import Gx10Target
 from hachi.api.sources import open_dataset_snapshot
@@ -38,11 +40,13 @@ def stage_generated_catalog(service, tmp_path, remote):
     build(archive, data_root / "derived", load_config(), admission, GitState("0" * 40, False))
     (snapshot,) = [p for p in (data_root / "derived").iterdir() if not p.name.startswith(".")]
     packet = factory.make_packet(tmp_path / "generated-baseline", snapshot)
+    # The generated model pins the generated packet's protocol, as real Chronos artifacts do.
+    protocol_sha256 = hashlib.sha256(packet.protocol.read_bytes()).hexdigest()
     config = ChronosConfig(model=PIN, metric="heart_rate", aggregation="mean", context_hours=48)
     model = ChronosArtifact(
         model_id="chronos-2-zero-shot",
         chronos=config,
-        protocol_sha256="a" * 64,
+        protocol_sha256=protocol_sha256,
         harness_lookback_hours=48,
     )
     model_dir = tmp_path / "generated-chronos"
@@ -70,7 +74,7 @@ def stage_generated_catalog(service, tmp_path, remote):
         feature_policy=factory.HR_POLICY,
         interval_nominal_coverage=0.8,
         requires_gpu=True,
-        protocol_sha256="a" * 64,
+        protocol_sha256=protocol_sha256,
         accepted_sources=[
             SourceAdmission(
                 source="apple_health",
@@ -83,9 +87,14 @@ def stage_generated_catalog(service, tmp_path, remote):
     )
     artifact_root = tmp_path / "generated-artifacts"
     artifact_root.mkdir()
-    pin = stage_artifact(artifact_root, model_dir, packet.packet_dir, serving)
     target = Gx10Target(transport=remote, owner="privacy-test", checkout="/generated")
-    service.catalog.artifacts = (load_served_artifact(artifact_root, pin, target),)
+    committed = artifacts.frozen_protocols
+    with pytest.MonkeyPatch.context() as patch:  # the generated protocol counts as predeclared
+        patch.setattr(
+            artifacts, "frozen_protocols", lambda: committed() | factory.FIXTURE_PROTOCOLS
+        )
+        pin = stage_artifact(artifact_root, model_dir, packet.packet_dir, serving, packet.protocol)
+        service.catalog.artifacts = (load_served_artifact(artifact_root, pin, target),)
     service.catalog.datasets = (
         open_dataset_snapshot(data_root, snapshot.name, allow_unadmitted=True),
     )

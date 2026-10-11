@@ -87,7 +87,7 @@ def scenario_result(
     try:
         scenario = scenario_from_request(request, model.config)
         curves = simulate(scenario, model.config)
-    except ValueError as exc:  # the domain's own limits; the contract already checks most
+    except (ValueError, OverflowError) as exc:  # the domain's limits; the contract checks most
         raise ApiProblem(
             "VALIDATION_FAILED", "The schedules are outside what the scenario model accepts."
         ) from exc

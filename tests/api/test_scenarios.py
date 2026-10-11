@@ -31,6 +31,11 @@ def with_schedules(*schedules, **changes):
     return REQUEST | {"schedules": list(schedules)} | changes
 
 
+def sched(schedule_id, bedtime, wake):
+    """A schedule with a distinctive id that no response may echo."""
+    return schedule(f"zq-sentinel-{schedule_id}", bedtime, wake)
+
+
 def test_a_scenario_is_a_synchronous_labelled_simulation(client):
     response = client.post("/v1/scenarios", json=REQUEST)
     assert response.status_code == 200
@@ -97,30 +102,41 @@ def test_boundary_schedules_are_simulated(client, body):
 @pytest.mark.parametrize(
     "body",
     [
-        pytest.param(with_schedules(schedule("w", "2026-10-10T22:00:00", "2026-10-10T21:00:00")),
+        # Distinctive values ("zq-sentinel", :17 minutes, 24.75, year 9999/0001) must never be
+        # echoed, whichever rule refuses them.
+        pytest.param(with_schedules(sched("w", "2026-10-10T22:17:00", "2026-10-10T21:17:00")),
                      id="wake-before-bedtime"),
-        pytest.param(with_schedules(schedule("z", "2026-10-10T22:00:00", "2026-10-10T22:00:00")),
+        pytest.param(with_schedules(sched("z", "2026-10-10T22:17:00", "2026-10-10T22:17:00")),
                      id="no-sleep"),
-        pytest.param(with_schedules(schedule("l", "2026-10-10T20:00:00", "2026-10-11T12:01:00")),
+        pytest.param(with_schedules(sched("l", "2026-10-10T20:17:00", "2026-10-11T12:18:00")),
                      id="over-16h"),
-        pytest.param(with_schedules(*(schedule(f"s{i}", "2026-10-10T22:00:00",
-                                               "2026-10-11T06:00:00") for i in range(5))),
+        pytest.param(with_schedules(*(sched(f"s{i}", "2026-10-10T22:17:00",
+                                            "2026-10-11T06:17:00") for i in range(5))),
                      id="five-schedules"),
-        pytest.param(with_schedules(schedule("d", "2026-10-10T22:00:00", "2026-10-11T06:00:00"),
-                                    schedule("d", "2026-10-10T23:00:00", "2026-10-11T07:00:00")),
+        pytest.param(with_schedules(sched("d", "2026-10-10T22:17:00", "2026-10-11T06:17:00"),
+                                    sched("d", "2026-10-10T23:17:00", "2026-10-11T07:17:00")),
                      id="duplicate-ids"),
-        pytest.param(with_schedules(schedule("g", "2026-03-08T02:30:00", "2026-03-08T09:00:00")),
+        pytest.param(with_schedules(sched("g", "2026-03-08T02:17:00", "2026-03-08T09:17:00")),
                      id="bedtime-in-dst-gap"),
-        pytest.param(with_schedules(schedule("o", "2026-10-10T22:00:00-07:00",
-                                             "2026-10-11T06:00:00-07:00")),
+        pytest.param(with_schedules(sched("o", "2026-10-10T22:17:00-07:00",
+                                          "2026-10-11T06:17:00-07:00")),
                      id="offset-instead-of-local-time"),
         pytest.param(with_schedules(), id="no-schedules"),
-        pytest.param(REQUEST | {"tz_name": "Mars/Olympus_Mons"}, id="unknown-timezone"),
-        pytest.param(assume(prior_sleep_hours=24.5), id="prior-sleep-over-a-day"),
-        pytest.param(assume(caffeine="two cups"), id="unmodeled-caffeine-value"),
+        pytest.param(REQUEST | {"tz_name": "Mars/Zq_Sentinel"}, id="unknown-timezone"),
+        pytest.param(assume(prior_sleep_hours=24.75), id="prior-sleep-over-a-day"),
+        pytest.param(assume(caffeine="zq-sentinel-caffeine"), id="unmodeled-caffeine-value"),
         pytest.param({k: v for k, v in REQUEST.items() if k != "assumptions"},
                      id="missing-assumptions"),
-        pytest.param(REQUEST | {"measured_alertness": True}, id="unknown-field"),
+        pytest.param(REQUEST | {"zq_sentinel_field": True}, id="unknown-field"),
+        # Contract-valid local times whose UTC instants leave the datetime range.
+        pytest.param(with_schedules(sched("y", "9999-12-31T20:17:00", "9999-12-31T23:17:00")),
+                     id="year-9999-los-angeles"),
+        pytest.param(with_schedules(sched("u", "9999-12-31T10:17:00", "9999-12-31T18:17:00"),
+                                    tz_name="UTC"),
+                     id="year-9999-utc-simulated-past-the-range"),
+        pytest.param(with_schedules(sched("t", "0001-01-01T02:17:00", "0001-01-01T08:17:00"),
+                                    tz_name="Asia/Tokyo"),
+                     id="year-0001-tokyo"),
     ],
 )  # fmt: skip
 def test_malformed_schedules_are_refused_without_echo(client, body):
@@ -128,7 +144,18 @@ def test_malformed_schedules_are_refused_without_echo(client, body):
     assert response.status_code == 422, response.text
     error = ApiError.model_validate_json(response.content)
     assert error.error_code == "VALIDATION_FAILED"
-    assert "two cups" not in response.text and "Mars" not in response.text
+    text = response.text.lower()
+    for echoed in ("sentinel", ":17", "24.75", "9999", "0001-"):
+        assert echoed not in text
+
+
+def test_an_ambiguous_fall_back_bedtime_resolves_to_its_first_occurrence(client):
+    # 01:30 happens twice in Los Angeles on 2026-11-01; the first (PDT, UTC-7) is 08:30Z.
+    body = with_schedules(schedule("fold", "2026-11-01T01:30:00", "2026-11-01T08:00:00"))
+    result = ReportResult.model_validate_json(client.post("/v1/scenarios", json=body).content)
+    assert result.root.as_of.isoformat() == "2026-11-01T08:30:00+00:00"  # not 09:30Z (PST)
+    (curve,) = result.root.alertness.curves
+    assert curve.points[0].time_utc.isoformat() == "2026-11-01T16:00:00+00:00"  # 08:00 PST
 
 
 @pytest.mark.parametrize(

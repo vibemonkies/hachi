@@ -23,10 +23,11 @@ from hachi.contracts.api import HealthStatus, ReportJob
 from hachi.contracts.base import SCHEMA_VERSION
 from hachi.contracts.manifests import RunManifest, SplitManifest, TimeWindow
 from hachi.contracts.results import PhysiologyForecastResult
-from hachi.evaluation import ForecastEstimate, evaluate_forecast
+from hachi.evaluation import ForecastEstimate, ForecastInput, evaluate_forecast
 
 from .artifacts import ServedArtifact
-from .reports import predictor
+from .chronos import ChronosServed
+from .reports import forecast_targets, model_inputs, predictor
 from .sources import SubjectData
 
 HOUR = timedelta(hours=1)
@@ -183,6 +184,34 @@ def load_packet(packet: Path) -> tuple[RunManifest, dict[str, Any]]:
     return run, json.loads((packet / "evaluation.json").read_bytes())
 
 
+def served_request_id(
+    served: ServedArtifact, subject: SubjectData, as_of: datetime, horizon_hours: int
+) -> str | None:
+    """The id of the request this API sends the GPU for one origin, built without a GPU job.
+
+    It follows the report path exactly (inputs, targets, longer context), so comparing it with
+    the evaluator's own export checks the API's construction independently of its outputs.
+    """
+    if not isinstance(served.model, ChronosServed):
+        raise ValueError("only GPU models send context requests")
+    cutoff, history = model_inputs(served, subject, as_of)
+    if served.evaluation.history_policy != "causal_prefix":
+        history = ()
+    policy = served.model.artifact.context_policy
+    context = subject.context_index(policy, cutoff) if policy is not None else None
+    model_input = ForecastInput(
+        subject.subject_id, cutoff, forecast_targets(as_of, horizon_hours), history
+    )
+    built = served.model.context_request(model_input, context)
+    return None if built is None else built.request_id
+
+
+def export_request_ids(path: Path) -> frozenset[str]:
+    """Request ids from an evaluator export; contexts are read and dropped, never reported."""
+    with path.open("rb") as stream:
+        return frozenset(json.loads(line)["request_id"] for line in stream if line.strip())
+
+
 def run_handoff(
     base_url: str,
     packet: Path,
@@ -191,6 +220,7 @@ def run_handoff(
     *,
     direct: bool = True,
     tolerance: float = 0.0,
+    export_requests: Path | None = None,
 ) -> dict[str, Any]:
     run, evaluation = load_packet(packet)
     if run.artifact != served.ref:
@@ -198,12 +228,22 @@ def run_handoff(
     _, payload = _call(base_url, "GET", "/healthz")
     health = HealthStatus.model_validate_json(payload)
     vs_packet, vs_direct = Tally(tolerance), Tally(tolerance)
+    exported = export_request_ids(export_requests) if export_requests is not None else None
+    vs_export: Counter[str] = Counter()
     outcomes: Counter[str] = Counter()
     provenance_mismatches = 0
     for prediction in evaluation["predictions"]:
         origin = prediction["origin"]
         cutoff = datetime.fromisoformat(origin["cutoff"])
         horizon = len(origin["targets"])
+        if exported is not None:
+            subject = subjects[origin["subject_id"]]
+            request_id = served_request_id(served, subject, cutoff, horizon)
+            if request_id is None:
+                vs_export["api_abstained"] += 1
+            else:
+                vs_export["compared"] += 1
+                vs_export["in_export"] += request_id in exported
         job = request_forecast(
             base_url,
             {
@@ -243,6 +283,7 @@ def run_handoff(
     agrees = (
         vs_packet.agrees
         and (vs_direct.agrees or not direct)
+        and (exported is None or vs_export["in_export"] == vs_export["compared"])
         and not provenance_mismatches
         and not outcomes["api_missing_forecast"]
         and served.ref in health.artifacts
@@ -258,4 +299,7 @@ def run_handoff(
         "provenance_mismatches": provenance_mismatches,
         "vs_packet_predictions": vs_packet.summary(),
         "vs_direct_inference": vs_direct.summary() if direct else "skipped",
+        "vs_export_requests": dict(sorted(vs_export.items()))
+        if exported is not None
+        else "skipped",
     }
