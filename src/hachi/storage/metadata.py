@@ -80,6 +80,8 @@ class Metadata:
         self._connection = sqlite3.connect(path, check_same_thread=False, isolation_level=None)
         self._connection.execute("PRAGMA journal_mode=WAL")
         self._connection.execute("PRAGMA foreign_keys=ON")
+        # Personal documents must not survive deletion in SQLite free pages.
+        self._connection.execute("PRAGMA secure_delete=ON")
         self._connection.execute("PRAGMA busy_timeout=5000")
         self._migrate()
 
@@ -277,13 +279,20 @@ class Metadata:
 
     def delete_subject(self, subject_id: str) -> list[str]:
         """Remove every metadata row for the subject; returns the deleted import ids."""
-        with self.transaction() as db:
-            ids = [
-                r[0]
-                for r in db.execute(
-                    "SELECT import_id FROM imports WHERE subject_id=?", (subject_id,)
-                ).fetchall()
-            ]
-            for table in ("imports", "report_jobs", "self_reports"):
-                db.execute(f"DELETE FROM {table} WHERE subject_id=?", (subject_id,))
+        with self._lock:
+            with self.transaction() as db:
+                ids = [
+                    r[0]
+                    for r in db.execute(
+                        "SELECT import_id FROM imports WHERE subject_id=?", (subject_id,)
+                    ).fetchall()
+                ]
+                for table in ("imports", "report_jobs", "self_reports"):
+                    db.execute(f"DELETE FROM {table} WHERE subject_id=?", (subject_id,))
+            # WAL frames contain pre-deletion documents even with secure_delete enabled.
+            # This API owns its connection/database; an external reader blocking the
+            # checkpoint is an operator error, not successful deletion evidence.
+            busy, _, _ = self._connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+            if busy:
+                raise RuntimeError("personal metadata WAL checkpoint was blocked")
         return ids
