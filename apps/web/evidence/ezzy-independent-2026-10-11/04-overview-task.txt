@@ -1,0 +1,49 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Overview" [active] [level=1]
+  - status: Synthetic report ready.
+  - paragraph:
+    - text: Cutoff
+    - strong: 2026-10-10T07:00:00Z
+  - link "Change cutoff":
+    - /url: "#import"
+  - link "Forecast Illustrative heart rate Six selected hourly bins within 24 hours · Open forecast →":
+    - /url: "#forecast"
+    - generic: Forecast
+    - strong: Illustrative heart rate
+    - generic: Six selected hourly bins within 24 hours · Open forecast →
+  - link "Baseline deviation Illustrative baseline deviation Historical fixture scores · View deviation →":
+    - /url: "#anomaly"
+    - generic: Baseline deviation
+    - strong: Illustrative baseline deviation
+    - generic: Historical fixture scores · View deviation →
+  - heading "Unavailable outputs" [level=2]
+  - heading "Illness onset · unavailable" [level=3]
+  - paragraph: Needs symptom-onset labels and evaluation on people excluded from training.
+  - heading "Recovery · unavailable" [level=3]
+  - paragraph: Needs a defined recovery endpoint and follow-up data.
+- document

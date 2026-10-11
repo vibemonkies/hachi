@@ -1,0 +1,90 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Sleep comparison" [level=1]
+  - status
+  - generic: Named fixture preset
+  - combobox "Named fixture preset":
+    - option "Steady evening · 22:30 to 06:30" [selected]
+    - option "Later night · 00:30 to 06:30"
+    - option "Unsupported schedule · 03:00 to 07:00"
+  - paragraph: Both examples use America/Los_Angeles, PDT (UTC−07:00). Steady evening starts October 9; later night starts October 10. Both wake October 10.
+  - generic: SYNTHETIC SCHEDULE
+  - paragraph:
+    - text: Bedtime
+    - strong: 22:30
+    - text: · Wake
+    - strong: 06:30
+    - text: · October 10, 2026 wake date
+  - figure "Steady evening · illustrative alertness Arbitrary illustration index, 0 to 100, higher means more alert in the drawing. No measured scale, equations, calibration, or personal accuracy claim.":
+    - heading "Steady evening · illustrative alertness" [level=3]
+    - paragraph: Arbitrary illustration index, 0 to 100, higher means more alert in the drawing. No measured scale, equations, calibration, or personal accuracy claim.
+    - region "Steady evening · illustrative alertness chart, scroll horizontally on narrow screens":
+      - img "Steady evening · illustrative alertness. Synthetic illustration. Arbitrary illustration index, 0 to 100, higher means more alert in the drawing. No measured scale, equations, calibration, or personal accuracy claim. Exact UTC timestamps and values follow in the table. Gaps mean missing observations.":
+        - generic: "0.0"
+        - generic: "50.0"
+        - generic: "100.0"
+        - generic: index
+        - generic: 10-10 14:00
+        - generic: 10-10 17:00
+        - generic: 10-10 20:00
+        - generic: 10-10 23:00
+        - generic: 10-11 02:00
+    - paragraph: All times UTC. Gaps are missing observations, not zero.
+    - generic "View exact values and missing observations" [active]
+    - region "Steady evening · illustrative alertness values":
+      - table "Steady evening · illustrative alertness · synthetic values in index":
+        - caption: Steady evening · illustrative alertness · synthetic values in index
+        - rowgroup:
+          - row "Timestamp UTC Value (index) Illustrative bounds (index)":
+            - columnheader "Timestamp UTC"
+            - columnheader "Value (index)"
+            - columnheader "Illustrative bounds (index)"
+        - rowgroup:
+          - row "2026-10-10T14:00:00Z 72 Not applicable":
+            - cell "2026-10-10T14:00:00Z"
+            - cell "72"
+            - cell "Not applicable"
+          - row "2026-10-10T17:00:00Z 83 Not applicable":
+            - cell "2026-10-10T17:00:00Z"
+            - cell "83"
+            - cell "Not applicable"
+          - row "2026-10-10T20:00:00Z 76 Not applicable":
+            - cell "2026-10-10T20:00:00Z"
+            - cell "76"
+            - cell "Not applicable"
+          - row "2026-10-10T23:00:00Z 61 Not applicable":
+            - cell "2026-10-10T23:00:00Z"
+            - cell "61"
+            - cell "Not applicable"
+          - row "2026-10-11T02:00:00Z 67 Not applicable":
+            - cell "2026-10-11T02:00:00Z"
+            - cell "67"
+            - cell "Not applicable"
+  - generic "Fixed assumptions and source"
+  - paragraph: Prior sleep · three illustrative nights of 8 hours. Caffeine · none after 12:00 local. Light · ordinary indoor morning light and dim evening light. No naps, shift work, medication, or individual chronotype effects are represented.
+  - paragraph: Manually drawn examples; no equations or measured alertness data.
+- document

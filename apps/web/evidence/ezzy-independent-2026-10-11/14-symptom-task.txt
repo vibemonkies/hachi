@@ -1,0 +1,49 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Symptoms" [level=1]
+  - status
+  - paragraph: Nothing is saved or sent. Leaving this section or reloading clears the draft and preview.
+  - generic: Synthetic event time · UTC
+  - textbox "Synthetic event time · UTC": 2026-10-09T12:00
+  - generic: Synthetic symptom
+  - combobox "Synthetic symptom":
+    - option "Example fatigue"
+    - option "Example sore throat"
+    - option "Example headache" [selected]
+  - generic: Example severity
+  - combobox "Example severity":
+    - option "Mild"
+    - option "Moderate" [selected]
+    - option "Severe"
+  - button "Preview synthetic entry" [active]
+  - status:
+    - generic: SYNTHETIC · UNSAVED PREVIEW
+    - heading "Example headache · Moderate" [level=2]
+    - paragraph: Event time · 2026-10-09T12:00:00Z
+    - paragraph: Entry time · 2026-10-11T07:43:07.113Z (actual preview creation time)
+    - button "Clear preview"
+- document

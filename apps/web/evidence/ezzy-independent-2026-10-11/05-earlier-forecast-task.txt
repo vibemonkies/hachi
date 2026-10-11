@@ -1,0 +1,85 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Forecast" [level=1]
+  - status: Synthetic report ready.
+  - paragraph:
+    - text: Cutoff
+    - strong: 2026-10-09T07:00:00Z
+  - link "Change cutoff":
+    - /url: "#import"
+  - figure "Heart rate · hourly mean Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range.":
+    - heading "Heart rate · hourly mean" [level=3]
+    - paragraph: Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range.
+    - region "Heart rate · hourly mean chart, scroll horizontally on narrow screens":
+      - img "Heart rate · hourly mean. Synthetic illustration. Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range. Exact UTC timestamps and values follow in the table. Gaps mean missing observations.":
+        - generic: "53.0"
+        - generic: "66.5"
+        - generic: "80.0"
+        - generic: bpm
+        - generic: 10-09 07:00
+        - generic: 10-09 11:00
+        - generic: 10-09 15:00
+        - generic: 10-09 19:00
+        - generic: 10-09 23:00
+        - generic: 10-10 03:00
+    - paragraph: All times UTC. Gaps are missing observations, not zero.
+    - generic "View exact values and missing observations" [active]
+    - region "Heart rate · hourly mean values":
+      - table "Heart rate · hourly mean · synthetic values in bpm":
+        - caption: Heart rate · hourly mean · synthetic values in bpm
+        - rowgroup:
+          - row "Timestamp UTC Value (bpm) Illustrative bounds (bpm)":
+            - columnheader "Timestamp UTC"
+            - columnheader "Value (bpm)"
+            - columnheader "Illustrative bounds (bpm)"
+        - rowgroup:
+          - row "2026-10-09T07:00:00Z 62 55 to 69":
+            - cell "2026-10-09T07:00:00Z"
+            - cell "62"
+            - cell "55 to 69"
+          - row "2026-10-09T11:00:00Z 64 57 to 71":
+            - cell "2026-10-09T11:00:00Z"
+            - cell "64"
+            - cell "57 to 71"
+          - row "2026-10-09T15:00:00Z 72 65 to 79":
+            - cell "2026-10-09T15:00:00Z"
+            - cell "72"
+            - cell "65 to 79"
+          - row "2026-10-09T19:00:00Z 70 63 to 77":
+            - cell "2026-10-09T19:00:00Z"
+            - cell "70"
+            - cell "63 to 77"
+          - row "2026-10-09T23:00:00Z 66 59 to 73":
+            - cell "2026-10-09T23:00:00Z"
+            - cell "66"
+            - cell "59 to 73"
+          - row "2026-10-10T03:00:00Z 61 54 to 68":
+            - cell "2026-10-10T03:00:00Z"
+            - cell "61"
+            - cell "54 to 68"
+  - paragraph: Import-wide count · 342/360 hourly bins. Reports are pre-authored examples for the selected cutoff; no observations are analyzed.
+- document

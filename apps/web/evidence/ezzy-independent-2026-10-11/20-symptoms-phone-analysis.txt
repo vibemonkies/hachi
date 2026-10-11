@@ -1,0 +1,43 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Symptoms" [active] [level=1]
+  - status
+  - paragraph: Nothing is saved or sent. Leaving this section or reloading clears the draft and preview.
+  - generic: Synthetic event time · UTC
+  - textbox "Synthetic event time · UTC": 2026-10-10T06:30
+  - generic: Synthetic symptom
+  - combobox "Synthetic symptom":
+    - option "Example fatigue" [selected]
+    - option "Example sore throat"
+    - option "Example headache"
+  - generic: Example severity
+  - combobox "Example severity":
+    - option "Mild" [selected]
+    - option "Moderate"
+    - option "Severe"
+  - button "Preview synthetic entry"
+- document
