@@ -41,9 +41,9 @@ function defaultTimeZone() {
 }
 
 function isUtcInstant(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(value)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(value)) return false;
   const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().replace(".000Z", "Z") === value;
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 19) === value.slice(0, 19);
 }
 
 export function ImportPanel({
@@ -385,7 +385,7 @@ function CoveragePanel({
             placeholder="2026-10-10T07:00:00Z"
             value={asOfDraft}
             onChange={(event) => onAsOfChange(event.target.value)}
-            pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
+            pattern={"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z"}
             title="Enter an ISO 8601 UTC instant ending in Z, such as 2026-10-10T07:00:00Z."
             required
           />
