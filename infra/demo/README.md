@@ -126,6 +126,7 @@ only delete disposable roots and generated subjects they created themselves.
 ```sh
 .venv/bin/pytest tests/privacy tests/api tests/data/apple_health
 .venv/bin/python scripts/privacy/verify_http.py --port 8719
+.venv/bin/python scripts/privacy/verify_launcher.py
 .venv/bin/python scripts/privacy/scan.py --assets infra/demo \
   --clinical-snapshot <permitted-private-phase1-snapshot>
 .venv/bin/python scripts/privacy/inspect_clinical.py \
