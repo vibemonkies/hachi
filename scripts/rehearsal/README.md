@@ -74,7 +74,8 @@ explicit unavailable reasons. Separately labeled **synthetic** HTTP checks exerc
 an Apple XML import, insufficient coverage, persistent check-in readback, malformed
 import and unavailable sleep scenario. These are transport evidence, not real-data
 model or clinical evidence. A live response is saved mode 0600 under
-`private-results/`; saving it does not implement or prove offline replay.
+`private-results/`; saving alone does not prove replay. The separate consumer and
+its rendered verification are described under [Private offline replay](#private-offline-replay).
 
 ## Browser integration and honest gates
 
@@ -94,9 +95,18 @@ quality and point-only absence of an interval band in the comparison. Do not
 rename a fixture into a real result or inject a result into UI state.
 
 Current main's fixture workspace is separate evidence. An admitted dataset
-snapshot can produce an actual PMData report; an Apple upload with the current
-hourly-feature artifact is unavailable. Neither alone proves real
-upload → report → chart. The real browser path depends on #17's implementation;
+snapshot can produce an actual PMData report. This runbook stages the frozen
+PMData comparator without Apple admission, so an Apple upload through that
+profile returns `unavailable` / `NO_ARTIFACT_FOR_TASK`. Apple admission is
+**per artifact**, not a blanket API limitation: an explicitly admitted profile
+uses `apple-hour-end-sealed-native-v1`, retains the model's metric, aggregation
+and density gates, and labels successful transfer with `DEVICE_SHIFT` and its
+unvalidated rationale. Sparse history can still return `INSUFFICIENT_HISTORY`.
+Real personal Apple imports are excluded from shared-GPU models pending an
+approved transfer/retention design. See the [API source-admission documentation](../../src/hachi/api/README.md#apple-health-imports)
+and [generated CPU-artifact HTTP proof](../../src/hachi/data/apple_health/README.md#generated-http-transport-against-the-original-frozen-cpu-artifact).
+That generated proof does not establish real Apple accuracy or the actual app
+path. The real import → report → chart browser path depends on #17's implementation;
 check-ins on #18, safe demo/storage on #19, final artifact selection on #20,
 separately consented late case on #21. #15's sleep scenario and clinical #13/#14
 also retain their own acceptance gates. Record each unavailable/failing state
@@ -104,11 +114,14 @@ honestly. Do not open test, tune on the friend case, or create consent/export.
 
 ## Private offline replay
 
-`replay.py` implements a versioned private cache, typed `ReportProvider` seam,
+[PR86](https://github.com/vibemonkies/hachi/pull/86), merged at `91bc669`, delivered
+`replay.py`: a versioned private cache, typed Python `ReportProvider` seam,
 read-only loopback transport and a dedicated rehearsal viewer. It consumes the
 authoritative `ReportJob`/`ReportResult` models, checks the generated contract schema
 hash and validates both the original and projected response. It never imports an
-inference client or attempts a live fallback. It does not modify the app or API.
+inference client or attempts a live fallback. Its [private numeric/time/geometry verification](../../reports/verification/app-rehearsal/README.md#private-replay-consumer-follow-up)
+used the saved real response with the live API stopped. This is the standalone
+viewer; replay through Coffee's actual app remains a #22 gate.
 
 The cache preserves the whole completed original response, with its original
 `data_mode` (`real` or `synthetic`), generated time, code, artifact, snapshot,

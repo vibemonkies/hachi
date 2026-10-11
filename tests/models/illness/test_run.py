@@ -24,10 +24,10 @@ PROTOCOL = load_protocol(Path("configs/experiments/illness/phase1.toml")).model_
 
 
 @pytest.fixture
-def snapshot(tmp_path):
+def snapshot(tmp_path, request):
     path = tmp_path / "synthetic-snapshot"
     path.mkdir()
-    subjects = [f"synthetic-{i}" for i in range(24)]
+    subjects = [f"synthetic-{i}" for i in range(getattr(request, "param", 24))]
     pq.write_table(
         pa.Table.from_pylist([{"subject_id": s} for s in subjects]), path / "subjects.parquet"
     )
@@ -90,7 +90,13 @@ def clean_run(monkeypatch):
     monkeypatch.setattr("hachi.evaluation.clinical_protocol.verify", lambda snapshot: {"ok": True})
     monkeypatch.setattr(
         "hachi.models.illness.run.subprocess.check_output",
-        lambda args, **kwargs: "" if "--porcelain" in args else "a" * 40,
+        lambda args, **kwargs: (
+            Path("uv.lock").read_bytes()
+            if args[1:2] == ["show"]
+            else ""
+            if "--porcelain" in args
+            else "a" * 40
+        ),
     )
 
 
@@ -196,3 +202,202 @@ def test_partial_external_fold_candidates_do_not_pool_incompatible_features(
             clinical=clinical(plan),
             external_by_inner={0: features},
         )
+
+
+def test_pretrained_support_gate_prevents_any_fit_scores_or_selection(
+    snapshot, tmp_path, monkeypatch
+):
+    from hachi.models.illness.data import FeaturePoint
+    from hachi.models.illness.pretrained_protocol import (
+        load_pretrained_protocol,
+        representation_feature_names,
+    )
+
+    path, subjects = snapshot
+    plan = nested_participant_folds(subjects, PROTOCOL.folds)
+    shared = clinical(plan)
+    frozen = load_pretrained_protocol(Path("configs/experiments/illness/pretrained.json"))
+    # Synthetic policy identity only; the clinical production document remains unchanged.
+    comparison = frozen.model_copy(
+        update={
+            "task_protocol": frozen.task_protocol.model_copy(update={"sha256": PROTOCOL.sha256}),
+            "clinical_protocol": frozen.clinical_protocol.model_copy(
+                update={"sha256": document_sha256(shared)}
+            ),
+        }
+    )
+    clean_run(monkeypatch)
+
+    def forbidden_fit(*args, **kwargs):
+        pytest.fail("unsupported calibration reached classifier fitting")
+
+    monkeypatch.setattr("hachi.models.illness.run.fit", forbidden_fit)
+    external, support = {}, {}
+    for fold in plan.folds:
+        if fold.outer_fold != 0:
+            continue
+        rows, _ = data.at_risk_windows(
+            path, fold.train_subjects + fold.validation_subjects, PROTOCOL
+        )
+        keys = {(r.subject_id, r.cutoff) for r in rows}
+        external[fold.inner_fold] = FeatureSet(
+            feature_names=representation_feature_names(frozen.representations[-1]),
+            provenance_sha256="e" * 64,
+            fit_subjects=(),
+            clock="floating_local_shifted",
+            points=tuple(
+                FeaturePoint(subject_id=s, at=c, available_at=c, values=(1.0,) * 770)
+                for s, c in sorted(keys)
+            ),
+        )
+        support[fold.inner_fold] = frozenset(keys)
+    summary = run(
+        path,
+        tmp_path / "unsupported",
+        PROTOCOL,
+        clinical=shared,
+        external_by_inner=external,
+        feature_family="chronos_hr",
+        comparison=comparison,
+        supported_by_inner=support,
+    )
+    assert all(
+        e["status"] == "insufficient_context_supported_calibration_participants"
+        and e["scored_validation_windows"] == 0
+        for e in summary["fold_evidence"]
+    )
+    assert not list((tmp_path / "unsupported").glob("inner-*/predictions.json"))
+    assert all(
+        s["development_candidate"] is None and s["status"] == "descriptive_only_no_selection"
+        for s in summary["selection"].values()
+    )
+    assert summary["pretrained_protocol_sha256"] == document_sha256(comparison)
+    wrong_schema = {
+        inner: features.model_copy(update={"feature_names": ("wrong_width_and_name",)})
+        for inner, features in external.items()
+    }
+    rejected = tmp_path / "wrong-schema"
+    with pytest.raises(ValueError, match="schema differs from frozen"):
+        run(
+            path,
+            rejected,
+            PROTOCOL,
+            clinical=shared,
+            external_by_inner=wrong_schema,
+            feature_family="chronos_hr",
+            comparison=comparison,
+            supported_by_inner=support,
+        )
+    assert not rejected.exists()
+
+
+@pytest.mark.parametrize("snapshot", [48], indirect=True)
+def test_frozen_report_rederives_real_head_packets_and_rejects_prediction_tamper(
+    snapshot, tmp_path, monkeypatch
+):
+    import hachi.models.illness.pretrained_evidence as module
+    from hachi.evaluation.serialization import document_bytes
+    from hachi.models.illness.data import FeaturePoint
+    from hachi.models.illness.pretrained_features import FrozenFeatures
+    from hachi.models.illness.pretrained_protocol import (
+        load_pretrained_protocol,
+        representation_feature_names,
+    )
+
+    path, subjects = snapshot
+    plan = nested_participant_folds(subjects, PROTOCOL.folds)
+    shared = clinical(plan)
+    frozen = load_pretrained_protocol(Path("configs/experiments/illness/pretrained.json"))
+    comparison = frozen.model_copy(
+        update={
+            "task_protocol": frozen.task_protocol.model_copy(update={"sha256": PROTOCOL.sha256}),
+            "clinical_protocol": frozen.clinical_protocol.model_copy(
+                update={"sha256": document_sha256(shared)}
+            ),
+        }
+    )
+    clean_run(monkeypatch)
+    external, support = {}, {}
+    for fold in plan.folds:
+        if fold.outer_fold != 0:
+            continue
+        rows, _ = data.at_risk_windows(
+            path, fold.train_subjects + fold.validation_subjects, PROTOCOL
+        )
+        keys = {(r.subject_id, r.cutoff) for r in rows}
+        external[fold.inner_fold] = FeatureSet(
+            feature_names=representation_feature_names(frozen.representations[0]),
+            provenance_sha256="e" * 64,
+            fit_subjects=(),
+            clock="floating_local_shifted",
+            points=tuple(
+                FeaturePoint(subject_id=s, at=c, available_at=c, values=(1.0,) * 76)
+                for s, c in sorted(keys)
+            ),
+        )
+        support[fold.inner_fold] = frozenset(keys)
+    features = FrozenFeatures(
+        "meanpool_hr", external, support, {"synthetic_source_sha256": "a" * 64}
+    )
+    output = tmp_path / "heads"
+    run(
+        path,
+        output,
+        PROTOCOL,
+        clinical=shared,
+        external_by_inner=external,
+        feature_family="meanpool_hr",
+        comparison=comparison,
+        supported_by_inner=support,
+    )
+    from hachi.models.illness.run import write_private
+
+    write_private(output / "external-features.json", external)
+    write_private(output / "feature-provenance.json", features.provenance)
+    repo = tmp_path / "compiler-repo"
+    clinical_path = repo / comparison.clinical_protocol.path
+    clinical_path.parent.mkdir(parents=True)
+    clinical_path.write_bytes(document_bytes(shared))
+    monkeypatch.setattr(module, "REPO", repo)
+    monkeypatch.setattr(module, "load_pretrained_protocol", lambda _: comparison)
+    monkeypatch.setattr(module, "load_protocol", lambda _: PROTOCOL)
+    monkeypatch.setattr(module, "build_meanpool_features", lambda *args: features)
+    # Source binding is exercised on real committed source by the clinical CPU command.
+    monkeypatch.setattr(module, "source_hashes", lambda: {})
+    result = module.compile_report(path, tmp_path / "unused-contexts", output)
+    assert result["head_replay"]["predictions"] == 6480
+    assert result["head_replay"]["max_probability_delta"] < 1e-12
+    assert result["serving"] == "unavailable" and result["outer_test"] == "sealed"
+    split_path = output / "inner-0-24h-logistic/split.json"
+    manifest_path = output / "inner-0-24h-logistic/run.json"
+    original_split, original_manifest = split_path.read_bytes(), manifest_path.read_bytes()
+    split = json.loads(original_split)
+    split["horizon_hours"] = 48
+    split_path.write_bytes(document_bytes(split))
+    manifest = json.loads(original_manifest)
+    manifest["split_manifest_sha256"] = document_sha256(split)
+    manifest_path.write_bytes(document_bytes(manifest))
+    with pytest.raises(ValueError, match="complete frozen split"):
+        module.compile_report(path, tmp_path / "unused-contexts", output)
+    split_path.write_bytes(original_split)
+    manifest_path.write_bytes(original_manifest)
+    manifest = json.loads(original_manifest)
+    manifest["feature_order"] = ["substituted-feature"]
+    manifest_path.write_bytes(document_bytes(manifest))
+    with pytest.raises(ValueError, match="manifest differs"):
+        module.compile_report(path, tmp_path / "unused-contexts", output)
+    manifest_path.write_bytes(original_manifest)
+    summary_path = output / "summary.json"
+    original_summary = summary_path.read_bytes()
+    summary = json.loads(original_summary)
+    summary["outer_test_status"] = "opened"
+    summary_path.write_bytes(document_bytes(summary))
+    with pytest.raises(ValueError, match="run identity"):
+        module.compile_report(path, tmp_path / "unused-contexts", output)
+    summary_path.write_bytes(original_summary)
+    prediction_path = output / "inner-0-24h-logistic/predictions.json"
+    predictions = json.loads(prediction_path.read_bytes())
+    predictions[0]["window"]["positive"] = not predictions[0]["window"]["positive"]
+    prediction_path.write_bytes(document_bytes(predictions))
+    with pytest.raises(ValueError, match="eligible validation features/labels"):
+        module.compile_report(path, tmp_path / "unused-contexts", output)

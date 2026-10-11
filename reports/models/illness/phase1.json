@@ -5755,7 +5755,7 @@
     "Validated causal serving input and independent API replay."
   ],
   "report_provenance": {
-    "assembly_source_sha256": "200ffcccd03d5c979d349aabae3b0a155d164cd13ae971e3fba34541a599fb11",
+    "assembly_source_sha256": "66b4dca4e6471a3fdd8ab0d2c52df811bea1eca07908cf5178dcba7eea2bbf5e",
     "input_packets": {
       "anomaly-derived": {
         "files_sha256": {
@@ -6518,7 +6518,7 @@
         "inventory_sha256": "5b8947da9fcd9fa4bd4f6d1670d8459cbe347cf3e0b23e180ea7f4cb55984d93"
       }
     },
-    "producing_commit": "2db1651447e4b4b19abe372d1b9c9d9858457c83",
+    "producing_commit": "1132c41a39092eadb99a088bfb597f1234ba2fc5",
     "replay_worker_sha256": "eed960053172b19f8f4e2c34364718467753d628f8e61a64e6495124209b3bdc",
     "source_only_rerun_comparison": {
       "anomaly-derived": {

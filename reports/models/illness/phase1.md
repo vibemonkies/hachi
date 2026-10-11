@@ -8,7 +8,7 @@ A negative label requires completed symptom-free surveys throughout the future w
 
 ## Frozen protocol and provenance
 
-- Clean scoring source: 722f51ae1d5bdcdd46dbfa594acff872444839a4; report-producing code: 2db1651447e4b4b19abe372d1b9c9d9858457c83.
+- Clean scoring source: 722f51ae1d5bdcdd46dbfa594acff872444839a4; report-producing code: 1132c41a39092eadb99a088bfb597f1234ba2fc5.
 - Frozen task protocol SHA 7411de9327a5065affad1fea7905842cae9151b0e6091288f0cc6f227d66b30c; shared protocol SHA 60a4345a6feb8f4a192e6aec718e4b364d2f22a93ad8d227e1645d092ec6e82c.
 - Labels-1 snapshot SHA 168d54133c8bc1c566f0b1a023d4f7ca04f54cecbadd3257fa4840e0031e8a33; labels-1 must remain retained for this pinned experiment. Labels-2 has identical task tables but is not accepted by this task protocol.
 - Full roster: 121 people, outer4/inner3/mintrain4/seed42/activeouter0; plan SHA 13dd73b4b3f2b6beabe105c5e577e86e935fa68edfdc117d8e9ebdc7c772fa5e. Each inner fold allocates 60 training / 30 validation / 31 sealed test people before task eligibility.
@@ -16,7 +16,7 @@ A negative label requires completed symptom-free surveys throughout the future w
 - Frozen logistic C1, tree depth2/leaf10, calibration C1; cap 1 negative-only false-alert episode per 30 evaluable negative cutoff-days; 1000 whole-participant bootstrap replicates and 95% intervals.
 - Label-grid recheck: 11,092 development cutoffs / 66,552 comparisons / 0 mismatches. Base-only replay: 81 artifacts / 4,464 predictions / 0 decisions differ / max probability delta 6.66e-16.
 - Input file hashes, assembly/worker source hashes, exact producing revisions and source-only rerun reconciliation are in phase1.json. Operational thresholds are explicitly redacted; runner gates remain unchanged and delivered comparison status is separately derived by the assembly.
-- Prior-run reconciliation: survey-history-001 at 4ac23a9cdfcafd024a77de3bd6eb8d250f812c8b versus survey-history-002 at 722f51ae1d5bdcdd46dbfa594acff872444839a4: protocols/folds/labels/aggregate metrics/selections identical; nightly-rest-001 at 4ac23a9cdfcafd024a77de3bd6eb8d250f812c8b versus nightly-rest-002 at 722f51ae1d5bdcdd46dbfa594acff872444839a4: protocols/folds/labels/aggregate metrics/selections identical; anomaly-derived-001 at 4ac23a9cdfcafd024a77de3bd6eb8d250f812c8b versus anomaly-derived-002 at 722f51ae1d5bdcdd46dbfa594acff872444839a4: protocols/folds/labels/aggregate metrics/selections identical
+- Prior-run reconciliation: anomaly-derived-001 at 4ac23a9cdfcafd024a77de3bd6eb8d250f812c8b versus anomaly-derived-002 at 722f51ae1d5bdcdd46dbfa594acff872444839a4: protocols/folds/labels/aggregate metrics/selections identical; nightly-rest-001 at 4ac23a9cdfcafd024a77de3bd6eb8d250f812c8b versus nightly-rest-002 at 722f51ae1d5bdcdd46dbfa594acff872444839a4: protocols/folds/labels/aggregate metrics/selections identical; survey-history-001 at 4ac23a9cdfcafd024a77de3bd6eb8d250f812c8b versus survey-history-002 at 722f51ae1d5bdcdd46dbfa594acff872444839a4: protocols/folds/labels/aggregate metrics/selections identical
 - Original -001 to -002 source change: lazy optional-dependency imports and TYPE_CHECKING packaging; no scientific feature/calibration/selection setting changed. Changed source paths are recorded beside the verified aggregate equality.
 
 ## Eligible validation denominators
@@ -31,12 +31,12 @@ A negative label requires completed symptom-free surveys throughout the future w
 
 | Horizon/label | Windows | Zero prior 7-day surveys | Fraction |
 |---|---:|---:|---:|
-| 24h/positive | 36 | 33 | 0.917 |
 | 24h/negative | 134 | 9 | 0.067 |
-| 48h/positive | 72 | 67 | 0.931 |
+| 24h/positive | 36 | 33 | 0.917 |
 | 48h/negative | 85 | 6 | 0.071 |
-| 72h/positive | 107 | 101 | 0.944 |
+| 48h/positive | 72 | 67 | 0.931 |
 | 72h/negative | 62 | 3 | 0.048 |
+| 72h/positive | 107 | 101 | 0.944 |
 
 ## Candidate results
 
@@ -100,18 +100,18 @@ These candidates were selected using these validation metrics. Their displayed v
 
 | Added family/horizon/model | Paired AUPRC difference (95% CI) |
 |---|---:|
-| nightly-rest/24h/logistic | -0.096 [-0.272, 0.077] |
-| nightly-rest/24h/tree | 0.017 [-0.008, 0.059] |
-| nightly-rest/48h/logistic | 0.008 [-0.017, 0.041] |
-| nightly-rest/48h/tree | 0.004 [-0.021, 0.037] |
-| nightly-rest/72h/logistic | -0.004 [-0.022, 0.009] |
-| nightly-rest/72h/tree | 0.001 [-0.024, 0.027] |
 | anomaly-derived/24h/logistic | -0.007 [-0.020, 0.006] |
 | anomaly-derived/24h/tree | 0.000 [0.000, 0.000] |
 | anomaly-derived/48h/logistic | -0.001 [-0.003, 0.000] |
 | anomaly-derived/48h/tree | 0.009 [-0.040, 0.054] |
 | anomaly-derived/72h/logistic | 0.000 [0.000, 0.000] |
 | anomaly-derived/72h/tree | 0.014 [0.000, 0.038] |
+| nightly-rest/24h/logistic | -0.096 [-0.272, 0.077] |
+| nightly-rest/24h/tree | 0.017 [-0.008, 0.059] |
+| nightly-rest/48h/logistic | 0.008 [-0.017, 0.041] |
+| nightly-rest/48h/tree | 0.004 [-0.021, 0.037] |
+| nightly-rest/72h/logistic | -0.004 [-0.022, 0.009] |
+| nightly-rest/72h/tree | 0.001 [-0.024, 0.027] |
 
 No strictly positive lower bound establishes added physiology at these selected windows. This is insufficient evidence about physiology, not evidence of no physiological signal. Native extraction: 240 eligible distinct cutoffs, 123 observed rest/117 missing; anomaly 20 scored/103 cold-start/117 missing. Missing values remain missing until fit-only imputation; classification coverage is not native anomaly coverage.
 

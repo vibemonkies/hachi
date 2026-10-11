@@ -355,6 +355,8 @@ def main(argv: list[str] | None = None) -> int:
 
 def render(report: dict) -> str:
     "Render every scientific table from the assembled data, without manual metric edits."
+    # Public JSON is canonical; its in-memory precursor must render to the same bytes.
+    report = json.loads(json.dumps(report, sort_keys=True, allow_nan=False))
 
     def number(value):
         return "unestimable" if value is None else f"{value:.3f}"

@@ -1,0 +1,50 @@
+{
+  "analysis_plan_file_sha256": "97412fd797ff892173d47e686e7469367d117a04f977b325be01af5a2c169290",
+  "base_git_sha": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+  "clock": "simulated_future_for_generated_proof",
+  "data_mode": "synthetic",
+  "focused_tests": {
+    "command": "uv run --locked pytest tests/evaluation/prospective",
+    "passed": 39
+  },
+  "follow_up_after_window": true,
+  "implementation_sha256": "527c0e74775eb099dae2460a241c1e3c0fc2a5389362b1801114f9af06441cfa",
+  "independent_software_review": {
+    "focused_tests_passed": 39,
+    "implementation_sha256": "527c0e74775eb099dae2460a241c1e3c0fc2a5389362b1801114f9af06441cfa",
+    "reviewer": "IcyRabbit",
+    "scientific_acceptance": false
+  },
+  "limits": [
+    "simulated future clock",
+    "generated forecasts, not real model inference",
+    "no trusted clock or independent custody",
+    "no real study, participant data, freeze or outcome validation",
+    "issue 25 remains open"
+  ],
+  "prediction_before_window": true,
+  "proof_command": "uv run --locked python -m hachi.evaluation.prospective generated-proof",
+  "python": "3.12.13",
+  "real_study_authorized": false,
+  "refusals": [
+    "outcome_before_window_end",
+    "stale_head",
+    "input_tamper",
+    "prediction_backfill",
+    "real_protocol",
+    "duplicate_follow_up",
+    "receipt_tamper"
+  ],
+  "repository_check": {
+    "binding": "run on source-identical precommit tree; source subsequently committed unchanged",
+    "command": "UV_CACHE_DIR=/private/tmp/hachi25-uv-cache npm exec --cache /private/tmp/hachi25-npm-cache --yes --package bun@1.4.0 -- make check",
+    "contracts": "schema, fixtures, generated types and tsc passed",
+    "coordination_tests": 5,
+    "passed": 594,
+    "skipped": 23,
+    "subtests": 6
+  },
+  "source_git_sha": "de8ed8cf6e2d87b49b228cc4f68ae7abca9fce53",
+  "trusted_attestation": false,
+  "verified_receipts": 3
+}
