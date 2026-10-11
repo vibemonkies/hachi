@@ -31,6 +31,15 @@ artifact, workspace and SQLite database. Mean HTTP job latency was 0.175 s
 (0.153–0.218 s), while a separate test process ran concurrently; this is local
 rehearsal timing, not a model benchmark or a performance improvement claim.
 
+Final source verification at clean
+`4129197028d4c6bf758a4a7d3b6d695ac889d00a` adds exact private subject/cutoff/job
+identity checks and disables inherited HTTP proxies for the loopback client.
+[Final receipt](api-4129197.json) again has 25/25 origins and 600/600 matching
+points against both references, with no missing/extra points. Runtime root
+`~/hachi/runtime/jadeox/run-003` and owned session 33677 were stopped afterward.
+Mean local job latency was 0.197 s (0.176–0.240 s); no performance comparison is
+claimed across these checks.
+
 Actual unavailable responses were anomaly `NO_ARTIFACT_FOR_TASK`, illness
 `NO_VALIDATED_ILLNESS_ARTIFACT`, and recovery `NO_ONGOING_EPISODE` for a request
 without a recorded ongoing episode. No zero probabilities or recovery curves
@@ -97,6 +106,10 @@ passed **152/152** in 18.10 s. Web `npm ci` and `npm run build` passed.
 - #17's owner must publish the actual UI implementation so this lane can run its
   real report/chart path and privately compare displayed values, artifact, units,
   mode and quality with the API. Its checkpoint is currently unpublished.
+  Coffee's [confirmed local checkpoint](https://github.com/vibemonkies/hachi/issues/17#issuecomment-6108831979)
+  is `659415b`; his authorization reserves CI-triggering publication. It proxies
+  to 8717 with no API-base setting and has no existing-PMData-subject entry seam.
+  A local proxy override would not by itself create a supported import path.
 - The API currently imports Apple XML/ZIP, while this comparator consumes PMData
   hourly features. A real Apple upload with it returns unavailable. An existing
   admitted PMData report is not proof of upload → forecast compatibility.

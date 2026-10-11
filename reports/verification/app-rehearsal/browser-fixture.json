@@ -14,7 +14,6 @@
   "api_exec_session": 73157,
   "web_exec_session": 13106,
   "t3_tab": "tab_2_59316b9b-7649-4515-a3ca-58df7593fb55",
-  "recorded_at_utc": "2026-10-11T12:02:18.386867+00:00",
   "screenshots": {
     "synthetic-phone.png": "8595550f9d567b0abb6652e6b1e08997eff6056a59940981628ff02fd8cddfb9",
     "synthetic-desktop.png": "684f95475a1e0cae7a7f4d7466589cc5a3988f005dce97d947d20c4e2a4e2919"
@@ -54,5 +53,9 @@
     "tab_closed": true,
     "viewport_reset": true,
     "owned_services_stopped": true
+  },
+  "screenshot_capture_times_utc": {
+    "synthetic-desktop.png": "2026-10-11T11:58:40.025356+00:00",
+    "synthetic-phone.png": "2026-10-11T11:58:40.093865+00:00"
   }
 }
