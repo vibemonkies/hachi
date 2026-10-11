@@ -126,8 +126,11 @@ Loading refuses an artifact when any of these checks fails:
 - The baseline implementation does not match the code it was saved with.
 - The model, evaluation, feature policy and feature order disagree.
 - A CPU artifact's served gate or thinning isn't the evaluated one. The staged protocol must
-  match `serving.protocol_sha256`, its evaluation must be the packet's `config.json` and its
-  split parameters the packet's split. The served `feature_policy` and `history_thinning`
+  match `serving.protocol_sha256` and be a committed protocol under `configs/evaluation` (a
+  run's own `protocol.json` normalizes to its committed file), so no gate is written by hand.
+  It must list the pinned model's exact config among its comparators, with that config's count
+  gate. Its evaluation must be the packet's `config.json` and its split parameters the
+  packet's split. The served `feature_policy` and `history_thinning`
   must equal the protocol's. The packet's `run_id` must carry exactly that thinning's label
   (`-<model_id>-<suffix>`), or none for an unthinned protocol. So a full-density packet is
   never served thinned, and a thinned packet is never served unthinned.

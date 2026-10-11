@@ -19,6 +19,7 @@ trust from serving.json: they must equal the staged protocol, whose evaluation s
 the packet's own config, and a packet's run_id label must name exactly the declared thinning.
 """
 
+import functools
 import hashlib
 import json
 import os
@@ -53,6 +54,7 @@ MODEL_FILES = ("artifact.json", "model.json", "source-sha256.json")
 PACKET_FILES = ("run.json", "split.json", "config.json")
 PROTOCOL_FILE = "protocol.json"
 TOP_LEVEL = frozenset({"model", "serving.json", *PACKET_FILES})
+FROZEN_PROTOCOL_DIR = Path(__file__).resolve().parents[3] / "configs" / "evaluation"
 SPLIT_PARAMETERS = (
     "lookback_hours",
     "horizon_hours",
@@ -287,7 +289,7 @@ def _load_directory(
             "a CPU artifact carries the protocol it was evaluated under; stage it with --protocol",
         )
     else:
-        _check_protocol(files[PROTOCOL_FILE], run, split, evaluation, serving)
+        _check_protocol(files[PROTOCOL_FILE], run, split, evaluation, serving, model)
 
     # Features: one metric and aggregation end to end, in the order the model was trained on.
     config = model.config
@@ -312,20 +314,46 @@ def _run_label(run: RunManifest) -> str | None:
     return run.run_id.rsplit(marker, 1)[1] if marker in run.run_id else None
 
 
+def _protocol_key(document: object) -> str:
+    return _sha256(json.dumps(document, sort_keys=True, separators=(",", ":")).encode())
+
+
+@functools.cache
+def frozen_protocols() -> frozenset[str]:
+    """Predeclared protocols committed under configs/evaluation, as written and as a run's
+    protocol.json writes them (normalized), with density variants unwrapped."""
+    from hachi.evaluation.pmdata_run import PMDataProtocol
+
+    keys: set[str] = set()
+    for path in sorted(FROZEN_PROTOCOL_DIR.glob("*.json")):
+        document = json.loads(path.read_bytes())
+        effective = document["protocol"] if "thinning" in document else document
+        keys.add(_protocol_key(effective))
+        try:
+            normalized = PMDataProtocol.model_validate_json(json.dumps(effective))
+        except ValueError:
+            continue  # not a PMData protocol (e.g. a clinical one); its raw form is enough
+        keys.add(_protocol_key(normalized.model_dump(mode="json")))
+    return frozenset(keys)
+
+
 def _check_protocol(
     data: bytes,
     run: RunManifest,
     split: SplitManifest,
     evaluation: EvaluationConfig,
     serving: ServingSpec,
+    model: ForecastModel,
 ) -> None:
     """Derive the evaluated gate and thinning from the staged protocol; serve nothing else.
 
-    The protocol is a PMData protocol or a density variant wrapping one. Its evaluation section
-    must be the packet's own config and its split parameters the packet's split. The served
-    feature policy and thinning must equal it, and the packet's run_id label must be exactly
-    that thinning's suffix, so neither direction (a full-density packet served thinned, or a
-    thinned packet served unthinned) can be staged.
+    The protocol is a committed, predeclared PMData protocol or a density variant wrapping
+    one, so no gate can be written by hand. It must name the pinned model's exact config among
+    its comparators, with that config's own count gate. Its evaluation section must be the
+    packet's config and its split parameters the packet's split. The served feature policy and
+    thinning must equal it, and the packet's run_id label must be exactly that thinning's
+    suffix, so neither a full-density packet served thinned nor a thinned packet served
+    unthinned can be staged.
     """
     if serving.protocol_sha256 != _sha256(data):
         raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "serving names another protocol")
@@ -344,6 +372,27 @@ def _check_protocol(
         raise ArtifactRefused(
             "ARTIFACT_INCOMPATIBLE", "the staged protocol is not a served evaluation protocol"
         ) from exc
+    if _protocol_key(effective) not in frozen_protocols():
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "the staged protocol is not a committed, predeclared one"
+        )
+    comparators = [*effective.get("baselines", []), effective.get("tree")]
+    config_type = type(model.config)
+
+    def same_config(entry: object) -> bool:
+        try:
+            return config_type.model_validate_json(json.dumps(entry)) == model.config
+        except ValueError:
+            return False
+
+    if not any(entry is not None and same_config(entry) for entry in comparators):
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "the pinned model is not one of the protocol's comparators"
+        )
+    if policy.min_observed_count != model.config.min_samples_per_hour:
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "the protocol's count gate is not the pinned model's own"
+        )
     if evaluated != evaluation or any(
         key in effective and effective[key] != getattr(split, key) for key in SPLIT_PARAMETERS
     ):

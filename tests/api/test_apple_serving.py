@@ -20,6 +20,7 @@ from hachi.contracts.manifests import TimeWindow
 from hachi.data.apple_health.hourly import AVAILABILITY_RULE, apple_hourly_features
 from hachi.evaluation import ForecastInput
 from hachi.evaluation.features import hourly_features
+from hachi.models.baselines import BaselineConfig
 from hachi.models.density.rule import AppleMinuteThinning, ThinningRule
 
 from .conftest import HR_POLICY, export_xml, heart_rate_record, make_packet, upload, wait
@@ -389,6 +390,18 @@ SUFFIX = THIN.pipeline_suffix
         # The served gate is the evaluated one, never one written into serving.json.
         pytest.param(lambda: plain_serving(HR_POLICY), {"evaluated_policy": THIN_POLICY},
                      "feature gate", id="gate-not-evaluated"),
+        # A hand-written protocol is not evidence, whatever gate it names,
+        pytest.param(thinned_serving, {"predeclared": False}, "committed, predeclared",
+                     id="protocol-not-predeclared"),
+        # and the protocol must have evaluated this very model, at the model's own count gate.
+        pytest.param(thinned_serving, {"comparators": [BaselineConfig(
+                         method="seasonal_naive", metric="heart_rate", aggregation="mean",
+                         min_samples_per_hour=6)]},
+                     "not one of the protocol's comparators", id="model-not-evaluated"),
+        pytest.param(thinned_serving, {"config": BaselineConfig(
+                         method="last_valid", metric="heart_rate", aggregation="mean",
+                         min_samples_per_hour=1)},
+                     "count gate", id="count-gate-not-the-models"),
     ],
 )  # fmt: skip
 def test_served_thinning_and_gate_are_bound_to_the_evaluated_protocol(
