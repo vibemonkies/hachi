@@ -392,6 +392,8 @@ def main() -> int:
             result = receipt(provider)
         print(json.dumps(result, indent=2))
         return 0
+    except KeyboardInterrupt:
+        return 0
     except ReplayFailure as error:
         print(json.dumps({"ok": False, "error_code": str(error)}))
     except Exception as error:
