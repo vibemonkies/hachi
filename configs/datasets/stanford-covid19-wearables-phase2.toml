@@ -11,6 +11,7 @@ citation = "Alavi A, Bogu GK, Wang M, et al. Real-time alerting system for COVID
 access_steps = [
   "Download https://storage.googleapis.com/gbsc-gcp-project-ipop_public/COVID-19-Phase2/COVID-19-Phase2-Wearables.zip (5,537,624,129 bytes).",
   "Compare with the bucket's published MD5 (base64 GcW5agCBOE7a4+Lhj+i/NA==), then record the SHA-256 here.",
+  "Download the paper's source data, https://static-content.springer.com/esm/art%3A10.1038%2Fs41591-021-01593-2/MediaObjects/41591_2021_1593_MOESM3_ESM.xlsx (25,369 bytes). Its SourceData_COVID19_Positives sheet holds each positive participant's test and symptom-onset dates. The archive itself has no labels.",
 ]
 access_owner = "justin06lee"
 approved_users = ["justin06lee"]
@@ -18,6 +19,7 @@ storage = "Any team machine or the GX10; attribution required."
 checksum_strategy = "Verify the GCS MD5 at download, then pin SHA-256 of the archive."
 notes = [
   "3,318 participants, 84 infected, from the real-time alerting study; no explicit data license is stated, so terms are recorded as unclear (non-commercial research with citation only).",
+  "The archive holds HR and steps for 2,123 participants (Fitbit, and Apple Watch through HealthKit) and no labels. The source-data workbook pinned below lists only the 84 COVID-19 positives (test date, symptom onset or none, retrospective/prospective, device); no surveys, negative tests or other illnesses were released, so every other participant-day is unknown, not healthy. Dates are shifted (some fall in 2027-2028).",
 ]
 
 [terms]
@@ -48,3 +50,8 @@ notes = "84 infection episodes with wearable history; check onset-label definiti
 name = "COVID-19-Phase2-Wearables.zip"
 bytes = 5537624129
 sha256 = "c90b13146d3996b4d2159c4af31115b9ba2cb3c3fc2e15565b34c016ced9c994"
+
+[[files]]
+name = "41591_2021_1593_MOESM3_ESM.xlsx"
+bytes = 25369
+sha256 = "166f8465e9e0259fc6e185a07630f1048b369f9e0c34872dc978f656cd08e3b3"
