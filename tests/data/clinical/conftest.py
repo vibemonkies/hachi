@@ -177,8 +177,9 @@ def phase2_archive(path: Path, subjects: dict[str, tuple[int, int]]) -> Path:
                 hr.append(f"{t:%Y-%m-%d %H:%M:%S},70")
                 st.append(f"HK Connect,{t:%Y-%m-%d %H:%M:%S},{t:%Y-%m-%d %H:%M:59},40")
             z.writestr(f"{base}/Orig_Fitbit_HR.csv", "\n".join(hr) + "\n")
-            # A header repeated mid-file, as in some real members.
+            # A header repeated mid-file, and an hour without zero padding, as in real members.
             st.insert(3, "device,start_datetime,end_datetime,steps")
+            st.append(f"HK Connect,{day(first)} 9:30:00,{day(first)} 9:30:59,40")
             z.writestr(f"{base}/Orig_NonFitbit_ST.csv", "\n".join(st) + "\n")
             z.writestr(
                 f"{base}/Orig_Fitbit_ST.csv", "BigQuery error in query operation: Error processing"

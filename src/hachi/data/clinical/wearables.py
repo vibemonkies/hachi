@@ -130,6 +130,7 @@ def list_members(archive: Path, layout: str) -> tuple[list[Member], Counter]:
 
 
 NUMBER = r"^-?\d+(\.\d+)?$"
+HOUR = r"^\d{4}-\d{2}-\d{2}[ T](?P<h>\d{1,2}):"
 # Some phase 2 members hold the text of a failed BigQuery export instead of a CSV.
 EXPORT_ERRORS = ("BigQuery error in query operation", "Error in query string")
 
@@ -181,8 +182,10 @@ def _scan(args: tuple[Path, Member]) -> tuple[Member, dict[str, int], dict]:
                 if member.stream == "steps":
                     steps = batch.column("steps")
                     numeric = pc.fill_null(pc.match_substring_regex(steps, NUMBER), False)
-                    keep = pc.and_(valid, numeric)
-                    hours = pc.utf8_slice_codeunits(pc.filter(column, keep), 11, 13)
+                    # Hours are not always zero-padded ("2023-09-25 1:05:00").
+                    hour = pc.struct_field(pc.extract_regex(column, HOUR), "h")
+                    keep = pc.and_(pc.and_(valid, numeric), pc.is_valid(hour))
+                    hours = pc.utf8_lpad(pc.filter(hour, keep), 2, "0")
                     values = pc.cast(pc.filter(steps, keep), pa.float64())
                     table = pa.table({"h": hours, "s": values})
                     for item in table.group_by("h").aggregate([("s", "sum")]).to_pylist():
