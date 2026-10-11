@@ -18,16 +18,19 @@ sleep scenario. Missing data and unavailable models stay visible.
 
 “We ran actual pretrained forecasts and actually trained task heads on permitted
 research data. The development comparisons measured the zero-shot forecasting
-candidate. Adding frozen wearable representations to the same trained head did not
-demonstrate benefit in this task. We keep that negative result and the failed or
-abstained predictions. The notes give the paired support, uncertainty and burden.
+candidate. Development selection now retains long-context zero-shot Chronos after
+actual fine-tuning and ensembles failed to demonstrate a gain over it. Adding frozen
+wearable representations to the same trained head also did not demonstrate benefit.
+We keep the negative results, selection optimism and failed or abstained predictions.
+The notes give paired support, uncertainty and burden; native intervals are uncalibrated.
 
 “A separate CPU baseline API and saved-real-result replay consumer were verified
-against the frozen development packet. That is groundwork. The final-selected model,
-complete app integration, clinical acceptance and separately consented personal case
-are still missing. We are not claiming a finished clinical predictor or completed
-full demo. The next step is accepted selection and independent final evaluation,
-then the same artifact through the actual app and a full live/offline rehearsal.”
+against the frozen development packet. A standalone original sleep simulator is now
+available, with synthetic assumptions and no measured alertness validation. Final
+artifact freeze/test acceptance, complete app integration, clinical acceptance and
+the separately consented personal case are still missing. The next step is independent
+final evaluation, then the same artifact through the actual app and a full live/offline
+rehearsal. Current clinical exposed partitions are research-only.”
 
 Use generated numerical notes if numbers are needed. Do not copy rounded values into
 an untracked slide or talk card. No new accuracy, adaptation win or case claim may be
@@ -60,7 +63,9 @@ Refresh live issue/dependency/review/mail context. Have the evidence owner ident
 accepted public sources and exact producing receipts. Review changes in scope,
 denominators and proof limits before replacing any source pin. A new SHA of an altered
 packet does not make it accepted. Superseded recovery evidence is refused; pending CMU
-scope, unpublished Coffee sources and private artifacts are excluded.
+scope, unpublished app sources and private artifacts are excluded. The published
+simulator README is admitted by exact path; its executable sources are not presentation
+inputs. Accepted development selection does not grant final-test or clinical authority.
 
 Edit `claims.json` and `NARRATIVE.template.md`, then run:
 
@@ -76,7 +81,10 @@ claim. Issue numbers, source URLs, hashes and launch instructions are identifier
 procedural values, not accuracy measurements. Prose outside the generated narrative
 contains no independent measured performance headline.
 
-Source review snapshot: `7db3baafcf0f8a0c3f615c69443a102b58dc4eee`. Worker AzureOsprey
+Original source review snapshot: `7db3baafcf0f8a0c3f615c69443a102b58dc4eee`; accepted
+development-selection update at `011e98abb1830f7139aece926bdd606388426911` and conditional
+simulator update at `85a8c80658e7066dc2a1e9d06ebc4489bf597f21`. Worker AzureOsprey
 represents `ezzy1630` for explicitly delegated preparation in the isolated
-`issue-23-ezzy-presentation` worktree/branch. Accountable issue assignee remains
+`issue-23-ezzy-presentation` worktree, branch `issue-23-development-evidence`.
+Accountable issue assignee remains
 CoffeeCoder1015. Root/SnowyFortress retains scientific and test-opening control.

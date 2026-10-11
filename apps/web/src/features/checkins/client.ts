@@ -2,6 +2,7 @@ import type {
   RecoveryRequest,
   ScenarioRequest,
   SelfReportRequest,
+  UtcDatetime,
 } from "../../../../../contracts/typescript/index";
 import { parseDocument } from "./schema";
 
@@ -38,12 +39,18 @@ export function createCheckinApi(baseUrl: string) {
   const subjectPath = (subjectId: string) =>
     `/v1/subjects/${encodeURIComponent(subjectId)}`;
   return {
-    async history(subjectId: string, versions: "current" | "all" = "current") {
+    async history(
+      subjectId: string,
+      versions: "current" | "all" = "current",
+      asOf?: UtcDatetime,
+    ) {
+      const query = new URLSearchParams();
+      if (versions === "all") query.set("versions", "all");
+      if (asOf !== undefined) query.set("as_of", asOf);
+      const suffix = query.size ? `?${query}` : "";
       return parseDocument(
         "SelfReportHistory",
-        await request(
-          `${subjectPath(subjectId)}/observations${versions === "all" ? "?versions=all" : ""}`,
-        ),
+        await request(`${subjectPath(subjectId)}/observations${suffix}`),
       );
     },
     async deleteEntry(subjectId: string, entryId: string) {
