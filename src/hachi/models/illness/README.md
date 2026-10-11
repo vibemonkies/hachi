@@ -84,3 +84,54 @@ report discloses threshold redaction and preserves original runner gates. Earlie
 run equality is reported only when their packets are supplied. Original scoring
 requires a completely clean checkout, including untracked files; use this isolated
 worker checkout without generated mail-helper files. Labels-1 must remain retained.
+
+The separately frozen clinical-context exporter streams only admitted standard
+Stanford HR/steps. HR hours use the mean of recorded-minute medians, require at
+least 30 recorded minutes, and become available only when complete. A native
+point is assumed ready at its recorded floating time (steps conservatively one
+minute later); actual arrival timestamps do not exist in this archive. Conflicting
+duplicates remain unknown. The two complete step-edge interpretations must have
+equal totals; steps are absent from the primary model requests.
+
+~~~sh
+python -I -m hachi.models.illness.context_export \
+  --snapshot "$HACHI_LABEL_SNAPSHOT" --archive "$HACHI_NATIVE_ARCHIVE" \
+  --output "$HACHI_RUN_ROOT/illness-clinical-contexts"
+~~~
+
+This emits private content-hashed Chronos requests and the agreed
+WBM/MOMENT/MeanPool encoder requests: 168 completed HR hours with at least 24
+observed hours. Requests contain physiology and units/policy only; identities,
+floating cutoffs and inner train/validation roles stay in a separate private join
+map. Only development participants with eligible at-risk labels are considered;
+outer test is never read. The exporter runs no model or scoring. Frozen encoders
+return features; downstream heads, imputation/scaling and any dimensionality
+reduction must fit inside the training participants. A complete model-comparison
+protocol must be frozen before these features produce scores.
+
+Recheck an existing private packet and regenerate its sanitized public receipt
+without repeating native extraction or running inference:
+
+~~~sh
+python -I -m hachi.models.illness.context_export \
+  --verify-only --snapshot "$HACHI_LABEL_SNAPSHOT" \
+  --output "$HACHI_RUN_ROOT/illness-clinical-contexts" \
+  --public-report reports/models/illness/clinical-contexts.json
+~~~
+
+Verification exercises the actual Chronos request reader, encoder content hashes,
+coverage policy, exact development eligibility/fold joins and private permissions.
+The public receipt binds both extraction and verification revisions and input
+file hashes; arbitrary private-summary fields cannot become public report data.
+
+The frozen representation comparison is configs/experiments/illness/pretrained.json.
+It binds the original task/shared protocol and the supported model specifications:
+MeanPool76, WBM256, MOMENT1024, and Chronos768 plus its location/scale in bpm.
+Chronos request metadata uses24 hours; the encoder sees the same168-hour past
+context and this metadata does not change its embedding. Pretraining overlap with
+Stanford remains unknown. No PCA or hyperparameter search is introduced. All-missing
+inputs and inadequate context-supported fit/calibration people or classes are
+unavailable states. Reports must include full-window missingness and identical
+common-context comparisons, with no final cross-family winner or opened outer test.
+Prior CPU development metrics were already seen; the new feature protocol is
+frozen before any representation scores, rather than claiming a blind original study.

@@ -12,6 +12,7 @@ from time import perf_counter
 from hachi.contracts.manifests import ModelRef, RunManifest, SplitManifest
 from hachi.data.clinical.snapshot import dataset_snapshot_ref, verify
 from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
+from hachi.evaluation.folds import NestedFold
 from hachi.evaluation.serialization import document_bytes, document_sha256
 
 from .artifacts import export, load, save
@@ -23,8 +24,33 @@ from .data import (
     roster,
 )
 from .metrics import Score, paired_auprc, report, scalar_metrics
+from .pretrained_protocol import PretrainedProtocol, representation_feature_names
 from .protocol import Protocol
+from .support import CutoffKey, support_evidence
 from .training import calibration_partition, fit
+
+
+def clinical_split(
+    snapshot: Path, fold: NestedFold, protocol: Protocol, clinical: ClinicalProtocol, h: int
+) -> SplitManifest:
+    return SplitManifest(
+        schema_version="0.1",
+        manifest_id=f"illness-outer0-inner{fold.inner_fold}-{h}h",
+        created_at_utc=clinical.split_created_at_utc,
+        dataset_snapshot=dataset_snapshot_ref(snapshot),
+        task="illness_onset",
+        fold=0,
+        n_folds=protocol.outer_folds,
+        **fold.partitions(),
+        lookback_hours=protocol.feature_lookback_days * 24,
+        horizon_hours=h,
+        embargo_hours=0,
+        cutoff_stride_hours=24,
+        min_history_hours=0,
+        evaluation_window=None,
+        seed=protocol.seed,
+        test_opened_at_utc=None,
+    )
 
 
 def write_private(path: Path, document: object) -> None:
@@ -41,6 +67,8 @@ def run(
     clinical: ClinicalProtocol,
     external_by_inner: dict[int, FeatureSet] | None = None,
     feature_family: str = "survey-history-control",
+    comparison: PretrainedProtocol | None = None,
+    supported_by_inner: dict[int, frozenset[CutoffKey]] | None = None,
 ) -> dict:
     """Only outer0 inner-validation data score. No switch exists to open outer test."""
     import sklearn
@@ -52,12 +80,28 @@ def run(
     if clinical.folds != protocol.folds or clinical.active_outer_fold != protocol.active_outer_fold:
         raise ValueError("task folds differ from shared clinical protocol")
     active = [f for f in plan.folds if f.outer_fold == protocol.active_outer_fold]
+    if comparison is not None:
+        if (
+            comparison.task_protocol.sha256 != protocol.sha256
+            or comparison.clinical_protocol.sha256 != document_sha256(clinical)
+            or feature_family not in {r.name for r in comparison.representations}
+            or external_by_inner is None
+            or supported_by_inner is None
+            or set(supported_by_inner) != {f.inner_fold for f in active}
+        ):
+            raise ValueError("frozen comparison requires matching protocols/features/support")
+    elif supported_by_inner is not None:
+        raise ValueError("support gates require the frozen comparison protocol")
     if external_by_inner is not None:
         if set(external_by_inner) != {f.inner_fold for f in active}:
             raise ValueError("external features require every active inner fold")
         schemas = {f.feature_names for f in external_by_inner.values()}
         if len(schemas) != 1:
             raise ValueError("external feature order must match across all inner folds")
+        if comparison is not None:
+            representation = next(r for r in comparison.representations if r.name == feature_family)
+            if schemas != {representation_feature_names(representation)}:
+                raise ValueError("external feature schema differs from frozen representation")
     repo = Path(__file__).resolve().parents[4]
     git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
     dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=repo, text=True))
@@ -67,6 +111,8 @@ def run(
     write_private(output / "protocol.json", protocol)
     write_private(output / "fold-plan.json", plan)
     write_private(output / "clinical-protocol.json", clinical)
+    if comparison is not None:
+        write_private(output / "pretrained-protocol.json", comparison)
     scores: dict[tuple[int, str], list[Score]] = defaultdict(list)
     statuses: dict[tuple[int, str], list[str]] = defaultdict(list)
     evidence = []
@@ -86,6 +132,19 @@ def run(
             snapshot, fold.train_subjects + fold.validation_subjects, protocol, external
         )
         exclusions.append({"inner_fold": fold.inner_fold, "label_dispositions": counts})
+        if comparison is not None:
+            supported = supported_by_inner[fold.inner_fold]
+            row_keys = {(r.subject_id, r.cutoff) for r in rows}
+            if not supported <= row_keys or any(
+                ((r.subject_id, r.cutoff) in supported)
+                != all(v is not None for v in r.features[len(SURVEY_FEATURE_NAMES) :])
+                or (
+                    (r.subject_id, r.cutoff) not in supported
+                    and any(v is not None for v in r.features[len(SURVEY_FEATURE_NAMES) :])
+                )
+                for r in rows
+            ):
+                raise ValueError("runtime support flags differ from exact-cutoff vector presence")
         for h in protocol.horizons_hours:
             train = [
                 r for r in rows if r.horizon_hours == h and r.subject_id in fold.train_subjects
@@ -94,28 +153,26 @@ def run(
                 r for r in rows if r.horizon_hours == h and r.subject_id in fold.validation_subjects
             ]
             eligible_validation[h].extend(validation)
-            split = SplitManifest(
-                schema_version="0.1",
-                manifest_id=f"illness-outer0-inner{fold.inner_fold}-{h}h",
-                created_at_utc=clinical.split_created_at_utc,
-                dataset_snapshot=dataset_snapshot_ref(snapshot),
-                task="illness_onset",
-                fold=0,
-                n_folds=protocol.outer_folds,
-                **fold.partitions(),
-                lookback_hours=protocol.feature_lookback_days * 24,
-                horizon_hours=h,
-                embargo_hours=0,
-                cutoff_stride_hours=24,
-                min_history_hours=0,
-                evaluation_window=None,
-                seed=protocol.seed,
-                test_opened_at_utc=None,
+            support = (
+                support_evidence(
+                    train + validation,
+                    fold.train_subjects,
+                    fold.validation_subjects,
+                    supported_by_inner[fold.inner_fold],
+                    protocol,
+                    comparison,
+                )
+                if comparison is not None
+                else None
             )
+            split = clinical_split(snapshot, fold, protocol, clinical, h)
             for candidate in protocol.candidate_order:
                 root = output / f"inner-{fold.inner_fold}-{h}h-{candidate}"
                 root.mkdir(mode=0o700)
-                fitted, status = fit(candidate, train, fold.train_subjects, protocol)
+                if support is not None and support["fit_status"] != "supported":
+                    fitted, status = None, support["fit_status"]
+                else:
+                    fitted, status = fit(candidate, train, fold.train_subjects, protocol)
                 statuses[(h, candidate)].append(status)
                 entry = {
                     "inner_fold": fold.inner_fold,
@@ -127,7 +184,14 @@ def run(
                     "eligible_validation_participants": len({r.subject_id for r in validation}),
                 }
                 write_private(root / "split.json", split)
-                write_private(root / "config.json", protocol)
+                config = (
+                    {"task": protocol, "comparison": comparison}
+                    if comparison is not None
+                    else protocol
+                )
+                write_private(root / "config.json", config)
+                if support is not None:
+                    entry["context_support"] = support
                 if fitted is None:
                     entry["scored_validation_windows"] = 0
                     evidence.append(entry)
@@ -175,7 +239,7 @@ def run(
                     created_at_utc=datetime.now(UTC),
                     git_sha=git_sha,
                     git_dirty=False,
-                    config_sha256=protocol.sha256,
+                    config_sha256=document_sha256(config),
                     dataset_snapshot=dataset_snapshot_ref(snapshot),
                     split_manifest_sha256=document_sha256(split),
                     task="illness_onset",
@@ -261,6 +325,12 @@ def run(
             "paired_auprc_vs_incumbent": comparisons,
             "product_status": "unavailable",
         }
+        if comparison is not None:
+            selection[str(h)] = {
+                "development_candidate": None,
+                "status": "descriptive_only_no_selection",
+                "product_status": "unavailable",
+            }
     summary = {
         "protocol_id": protocol.protocol_id,
         "protocol_sha256": protocol.sha256,
@@ -301,5 +371,8 @@ def run(
         },
         "seconds": perf_counter() - started,
     }
+    if comparison is not None:
+        summary["pretrained_protocol_sha256"] = document_sha256(comparison)
+        summary["gates"]["pretrained_feature_candidate"] = "descriptive_development_only"
     write_private(output / "summary.json", summary)
     return summary
