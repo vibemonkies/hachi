@@ -6,7 +6,7 @@ Personal physiological forecasting from wearable history, with measured uncertai
 
 ## Start here
 
-1. Read the [product scope](docs/PRODUCT.md) and [team roadmap](docs/ROADMAP.md).
+1. Read [which issues can run together and when to push/pull](docs/COORDINATION.md), then the [product scope](docs/PRODUCT.md) and [team roadmap](docs/ROADMAP.md).
 2. Pick your first assigned [GitHub issue](https://github.com/vibemonkies/hachi/issues). Check its dependencies before starting.
 3. Use the [shared contracts](docs/CONTRACTS.md), [research catalog](docs/RESEARCH.md), and [GX10 workflow](docs/DEVELOPMENT.md).
 4. Open a small PR with the issue number and reproducible evidence. Use the [evaluation protocol](docs/EVALUATION.md) for model work.
