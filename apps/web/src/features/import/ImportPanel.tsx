@@ -122,7 +122,7 @@ export function ImportPanel({
             value={subjectId}
             disabled={busy}
             onChange={(event) => setSubjectId(event.target.value)}
-            pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,127}"
+            pattern={"[A-Za-z0-9][A-Za-z0-9_\\-]{0,127}"}
             title="Start with a letter or digit. Use at most 128 letters, digits, underscores, or hyphens."
             required
           />
@@ -171,7 +171,7 @@ export function ImportPanel({
             value={subjectId}
             disabled={busy}
             onChange={(event) => setSubjectId(event.target.value)}
-            pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,127}"
+            pattern={"[A-Za-z0-9][A-Za-z0-9_\\-]{0,127}"}
             title="Start with a letter or digit. Use at most 128 letters, digits, underscores, or hyphens."
             required
           />
