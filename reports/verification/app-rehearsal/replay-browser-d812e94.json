@@ -1,0 +1,84 @@
+{
+  "real": {
+    "ok": true,
+    "pointsCompared": 24,
+    "numericMismatch": 0,
+    "geometryMismatch": 0,
+    "originalDataMode": "real",
+    "replayMetadataPresent": true,
+    "provenanceVisible": true,
+    "qualityVisible": true,
+    "identifiersOmitted": true,
+    "timestampsVisible": true,
+    "unitsVisible": true,
+    "pointOnlyBoundsVisible": true,
+    "pointOnly": true,
+    "noIntervalBand": true,
+    "onlyLocalResources": true
+  },
+  "synthetic": {
+    "ok": true,
+    "pointsCompared": 24,
+    "numericMismatch": 0,
+    "geometryMismatch": 0,
+    "originalDataMode": "synthetic",
+    "replayMetadataPresent": true,
+    "provenanceVisible": true,
+    "qualityVisible": true,
+    "identifiersOmitted": true,
+    "timestampsVisible": true,
+    "unitsVisible": true,
+    "pointOnlyBoundsVisible": true,
+    "pointOnly": true,
+    "noIntervalBand": true,
+    "onlyLocalResources": true
+  },
+  "consumer_git_sha": "d812e940ada1cc2b312f44d60147b1063c6c24f4",
+  "source_git_sha": "849bff2b07b8da8917bef4e41dddab48030d17d8",
+  "browser_compare_sha256": "31fb6f8c5278735a406aefc663b5a2926813de943da5ec8aa07976c3bd2bca18",
+  "cache_sha256": "161ddd77be065d76f2cf15be0e101df09416b0829f9c2bfc117eb2498728b4d1",
+  "live_api_port_8720_stopped": true,
+  "private_real_page_screenshots_taken": false,
+  "viewport": {
+    "desktop": [
+      1280,
+      800
+    ],
+    "synthetic_phone": [
+      390,
+      844
+    ],
+    "synthetic_phone_body_width": 390
+  },
+  "error_boundary": {
+    "missing_cache": "HTTP 409 CACHE_MISSING",
+    "visible_role_alert": true,
+    "live_fallback": false,
+    "overflow": false
+  },
+  "gates": {
+    "app_replay": "pending Coffee17 handoff/ownership",
+    "real_apple_upload_to_chart": "pending source-policy API seam and17",
+    "full_issue22": "blocked17/18/19/20/21; no final model/test/friend claim"
+  },
+  "page_external_resource_requests_disallowed_by_csp": true,
+  "screenshots": {
+    "replay-synthetic-desktop.png": {
+      "sha256": "48eb727976be887ac0d910093b7d616cc50215f8373fe79ed0474b67a132cfcc",
+      "captured_at_utc": "2026-10-11T12:49:12.310971+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)"
+    },
+    "replay-synthetic-phone.png": {
+      "sha256": "2bf5184b8262e98a6dc999f5da02a9259e10967fddb2eb230a54db8f24db1f37",
+      "captured_at_utc": "2026-10-11T12:49:20.569381+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)"
+    },
+    "replay-missing-cache.png": {
+      "sha256": "f6d1bbf8457ddbd3d3871f32f37e05b745ebef6d4c96dce2162e0b75605762ab",
+      "captured_at_utc": "2026-10-11T12:49:34.411170+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)"
+    }
+  },
+  "target_cutoff_and_interval_times_verified": false,
+  "x_scale": "ordinal point index; superseded by UTC fidelity fix"
+}
