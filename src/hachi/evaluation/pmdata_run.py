@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import platform
+import resource
 import subprocess
 import sys
 import traceback
@@ -113,6 +114,7 @@ def _aggregate_metrics(report: MetricReport) -> dict[str, object]:
 def run(snapshot: Path, output: Path, protocol: PMDataProtocol) -> dict[str, object]:
     """Run only inner validation cohorts of one outer fold, exporting each frozen model."""
     output_created = False
+    started = perf_counter()
     try:
         verified = verify(snapshot)
         if not verified["ok"] or dataset_snapshot_ref(snapshot) != protocol.expected_snapshot:
@@ -244,6 +246,12 @@ def run(snapshot: Path, output: Path, protocol: PMDataProtocol) -> dict[str, obj
             "nested_plan_sha256": document_sha256(plan),
             "environment_sha256": environment,
             "python": platform.python_version(),
+            "resources": {
+                "elapsed_seconds": perf_counter() - started,
+                "peak_rss_bytes": int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+                * (1 if sys.platform == "darwin" else 1024),
+                "scope": "whole process, including snapshot verification and artifact replay",
+            },
             "source_sha256": source_hashes(),
             "active_outer_fold": protocol.active_outer_fold,
             "outer_test_sealed": True,
