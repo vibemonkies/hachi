@@ -38,6 +38,22 @@ class ClaimChecks(unittest.TestCase):
                 )
                 self.assertFalse(f"source measurement row `{anchor}`." in output)
 
+    def test_simulation_fence_closes_before_separate_evidence_paragraph(self):
+        claim = next(c for c in self.manifest["claims"] if c["id"] == "simulation-parameters")
+        config = claim["values"]["config"]["expected"]
+        outputs = checker.render(self.manifest)
+        for name, output in outputs.items():
+            with self.subTest(document=name):
+                self.assertTrue(
+                    f"```toml\n{config}\n```\n\n" in output,
+                    "configuration fence must close on a standalone line",
+                )
+        self.assertTrue(
+            "\n```\n\n [Evidence](CLAIMS.md#simulation-parameters).\n" in outputs["NARRATIVE.md"],
+            "evidence link must follow the closing fence in a separate paragraph",
+        )
+        self.assertNotIn("``` [Evidence]", outputs["NARRATIVE.md"])
+
     def test_altered_number_cannot_be_rounded_into_a_claim(self):
         manifest = self.changed()
         manifest["claims"][0]["values"]["people"]["expected"] += 1
@@ -97,6 +113,24 @@ class ClaimChecks(unittest.TestCase):
             with self.subTest(path=path):
                 manifest = self.changed()
                 manifest["sources"]["chronos"]["path"] = path
+                with self.assertRaises(ValueError):
+                    checker.render(manifest)
+
+    def test_scenario_admission_is_limited_to_public_readme(self):
+        manifest = self.changed()
+        manifest["sources"]["scenario-report"]["path"] = "src/hachi/scenarios/model.py"
+        with self.assertRaisesRegex(ValueError, "outside public evidence scope"):
+            checker.render(manifest)
+
+    def test_new_selection_and_parameter_bindings_fail_on_tampering(self):
+        for identifier, field, changed in [
+            ("selected-errors", "mae", 0.0),
+            ("simulation-parameters", "config", "sample_minutes = 1"),
+        ]:
+            with self.subTest(claim=identifier):
+                manifest = self.changed()
+                claim = next(c for c in manifest["claims"] if c["id"] == identifier)
+                claim["values"][field]["expected"] = changed
                 with self.assertRaises(ValueError):
                     checker.render(manifest)
 

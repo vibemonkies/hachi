@@ -132,8 +132,8 @@
     },
     "final": {
       "path": "reports/evaluation/final/README.md",
-      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
-      "sha256": "12ee07a88d6cde35a6d93a7ebff8056db022e7d21e6dc405e436aa7695e7b784",
+      "commit": "66a39842ffed015fe4764f6b5012a751118aeb51",
+      "sha256": "95e13fd222cd74088637385bec7eb126783023ee632c4cefd1a7220cdfd30621",
       "scope": "Development tooling only; no selected model, test authority or accepted superseded recovery packet."
     },
     "product": {
@@ -177,6 +177,36 @@
       "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
       "sha256": "a6a289585d8c07dbef195771074dbe89b8ae2d240aa34d09a8457280d00f21a6",
       "scope": "Public research access, no explicit data license; source citation."
+    },
+    "selection": {
+      "path": "reports/models/issue12-pmdata-hourly-selection.json",
+      "commit": "011e98abb1830f7139aece926bdd606388426911",
+      "sha256": "92d9624a922dee9cdf2ca6435ec174ebb8edebd2e89d82919b9c6109bc22eb71",
+      "scope": "Accepted development selection only. Saved Challenge estimates replayed by root; original decile/runtime measurements not independently recomputed. Scoring producer 921265fc3300cda0197c952741c4a5cd4ba81e5f; export producer 7b49924105cda187242252eaf1a9292aa8fcd1cd. Original protocol/rule/context/dataset and per-fold comparison hashes retained in this public report. No final test or clinical acceptance."
+    },
+    "selection-report": {
+      "path": "reports/models/issue12-pmdata-hourly-selection.md",
+      "commit": "011e98abb1830f7139aece926bdd606388426911",
+      "sha256": "983d3dfec902f5c61dfee03cc1e4a63cd7ef30029f80e7c0feac1acbc9c6167d",
+      "scope": "Public methods, selected artifact identity, training/meta-fold provenance, negative results and selection optimism. Root verified the native selected loader and original private source hashes; presentation does not inspect or copy private artifacts. Native intervals uncalibrated; final freeze/test opening remains root-owned."
+    },
+    "scenario-report": {
+      "path": "src/hachi/scenarios/README.md",
+      "commit": "85a8c80658e7066dc2a1e9d06ebc4489bf597f21",
+      "sha256": "61ea51d88624b84dcdced6ae52b0153a1efef8218c51df5daa55807778fa775e",
+      "scope": "Original conditional simulation, accepted at reviewed head 0622db3e2d971dfc5549db0741c70f7c07bd2f9b. Root independently checked CLI, implemented equations, local-time boundaries and rendered source-bound SVG. No measured rating/PVT validation, personalization, API or full app integration; no independent paper-constant verification."
+    },
+    "scenario-config": {
+      "path": "configs/scenarios/two-process-v1.toml",
+      "commit": "85a8c80658e7066dc2a1e9d06ebc4489bf597f21",
+      "sha256": "94fa3c787da36862bd2f4ab207a9d10c94c438981996cb9e65e222bc657ef2eb",
+      "scope": "Exact public illustrative parameters, assumptions rather than fitted personal coefficients. Changing parameters changes the conditional comparison."
+    },
+    "scenario-request": {
+      "path": "configs/scenarios/compare-bedtimes.toml",
+      "commit": "85a8c80658e7066dc2a1e9d06ebc4489bf597f21",
+      "sha256": "ba868466f9d0fcda167cf337a9ed6c0c3777fbb1281b028b00f3da8a93f5ece7",
+      "scope": "Committed explicitly synthetic CLI request only; no participant record or evidence of measured alertness."
     }
   },
   "claims": [
@@ -936,6 +966,535 @@
         }
       },
       "limit": "Development-validation uncertainty conditional on this protocol/cohort, not population clinical accuracy."
+    },
+    {
+      "id": "selected-support",
+      "text": "Development-selected `{model}` uses {people} validation participants across {folds} inner folds. Of {expected} expected hourly targets, {history} lack sufficient history and {missing} lack labels, leaving {scored} scored points; {abstained} eligible points are abstained.",
+      "values": {
+        "model": {
+          "source": "selection",
+          "pointer": "/selection/selected",
+          "expected": "chronos-2-zero-shot-ctx720"
+        },
+        "people": {
+          "source": "selection",
+          "pointer": "/validation_participants",
+          "expected": 12
+        },
+        "folds": {
+          "source": "selection",
+          "pointer": "/inner_folds",
+          "expected": 3
+        },
+        "expected": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/counts/expected_points",
+          "expected": 2016
+        },
+        "history": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/counts/insufficient_history_points",
+          "expected": 168
+        },
+        "missing": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/counts/missing_labels",
+          "expected": 249
+        },
+        "scored": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/counts/scored_points",
+          "expected": 1599
+        },
+        "abstained": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/counts/abstained_points",
+          "expected": 0
+        }
+      },
+      "limit": "One outer fold, same development cutoffs and causal source assumptions. Zero eligible abstentions does not imply complete expected-target coverage. No final test, clinical or Apple transfer claim."
+    },
+    {
+      "id": "selected-errors",
+      "text": "The selected development model reports MAE {mae:.2f} bpm [{maelo:.2f}, {maehi:.2f}] and RMSE {rmse:.2f} bpm [{rmselo:.2f}, {rmsehi:.2f}].",
+      "values": {
+        "mae": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/mae/value",
+          "expected": 8.052100447913935
+        },
+        "maelo": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/mae/confidence_interval/0",
+          "expected": 7.150452193319816
+        },
+        "maehi": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/mae/confidence_interval/1",
+          "expected": 9.15306714544498
+        },
+        "rmse": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/rmse/value",
+          "expected": 13.013156530481758
+        },
+        "rmselo": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/rmse/confidence_interval/0",
+          "expected": 11.474457750958301
+        },
+        "rmsehi": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/rmse/confidence_interval/1",
+          "expected": 14.561896355604915
+        }
+      },
+      "limit": "Equal participant weighting and participant-bootstrap uncertainty, not independent post-selection test estimates. Selection on these same participants makes the selected error optimistic."
+    },
+    {
+      "id": "selected-intervals",
+      "text": "Native nominal {nominal} interval coverage is {coverage:.3f} [{clo:.3f}, {chi:.3f}], with mean width {width:.2f} bpm [{wlo:.2f}, {whi:.2f}].",
+      "values": {
+        "coverage": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/interval_coverage/value",
+          "expected": 0.7820733249081157
+        },
+        "clo": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/interval_coverage/confidence_interval/0",
+          "expected": 0.7450790702287571
+        },
+        "chi": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/interval_coverage/confidence_interval/1",
+          "expected": 0.8105604056411061
+        },
+        "width": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/mean_interval_width/value",
+          "expected": 23.02054720771046
+        },
+        "wlo": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/mean_interval_width/confidence_interval/0",
+          "expected": 20.633719371157415
+        },
+        "whi": {
+          "source": "selection",
+          "pointer": "/candidates/chronos-2-zero-shot-ctx720/mean_interval_width/confidence_interval/1",
+          "expected": 25.62148097104453
+        },
+        "nominal": {
+          "source": "selection-report",
+          "expected": "80%"
+        }
+      },
+      "limit": "Same validation targets, native nominal interval from the public report, uncalibrated after selection. These are not clinical probabilities or final-test coverage."
+    },
+    {
+      "id": "selection-ridge",
+      "text": "`{candidate}` versus `{incumbent}`: paired \u0394MAE {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {support} common targets; rule result `{status}`.",
+      "values": {
+        "candidate": {
+          "source": "selection",
+          "pointer": "/selection/steps/3/candidate",
+          "expected": "handcrafted-ridge-personal"
+        },
+        "incumbent": {
+          "source": "selection",
+          "pointer": "/selection/steps/3/incumbent",
+          "expected": "train-population-mean-v1"
+        },
+        "support": {
+          "source": "selection",
+          "pointer": "/selection/steps/3/evidence/paired_points",
+          "expected": 1599
+        },
+        "delta": {
+          "source": "selection",
+          "pointer": "/selection/steps/3/evidence/paired_mae/value",
+          "expected": -2.474096799845009
+        },
+        "lo": {
+          "source": "selection",
+          "pointer": "/selection/steps/3/evidence/paired_mae/confidence_interval/0",
+          "expected": -4.166581702070478
+        },
+        "hi": {
+          "source": "selection",
+          "pointer": "/selection/steps/3/evidence/paired_mae/confidence_interval/1",
+          "expected": -0.689071205754028
+        },
+        "status": {
+          "source": "selection",
+          "pointer": "/selection/steps/3/status",
+          "expected": "promoted"
+        }
+      },
+      "limit": "Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements."
+    },
+    {
+      "id": "selection-context-middle",
+      "text": "`{candidate}` versus `{incumbent}`: paired \u0394MAE {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {support} common targets; rule result `{status}`.",
+      "values": {
+        "candidate": {
+          "source": "selection",
+          "pointer": "/selection/steps/5/candidate",
+          "expected": "chronos-2-zero-shot-ctx168"
+        },
+        "incumbent": {
+          "source": "selection",
+          "pointer": "/selection/steps/5/incumbent",
+          "expected": "handcrafted-ridge-personal"
+        },
+        "support": {
+          "source": "selection",
+          "pointer": "/selection/steps/5/evidence/paired_points",
+          "expected": 1599
+        },
+        "delta": {
+          "source": "selection",
+          "pointer": "/selection/steps/5/evidence/paired_mae/value",
+          "expected": -1.3282185147115129
+        },
+        "lo": {
+          "source": "selection",
+          "pointer": "/selection/steps/5/evidence/paired_mae/confidence_interval/0",
+          "expected": -2.2082286871413013
+        },
+        "hi": {
+          "source": "selection",
+          "pointer": "/selection/steps/5/evidence/paired_mae/confidence_interval/1",
+          "expected": -0.6364510038142329
+        },
+        "status": {
+          "source": "selection",
+          "pointer": "/selection/steps/5/status",
+          "expected": "promoted"
+        }
+      },
+      "limit": "Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements."
+    },
+    {
+      "id": "selection-context-long",
+      "text": "`{candidate}` versus `{incumbent}`: paired \u0394MAE {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {support} common targets; rule result `{status}`.",
+      "values": {
+        "candidate": {
+          "source": "selection",
+          "pointer": "/selection/steps/6/candidate",
+          "expected": "chronos-2-zero-shot-ctx720"
+        },
+        "incumbent": {
+          "source": "selection",
+          "pointer": "/selection/steps/6/incumbent",
+          "expected": "chronos-2-zero-shot-ctx168"
+        },
+        "support": {
+          "source": "selection",
+          "pointer": "/selection/steps/6/evidence/paired_points",
+          "expected": 1599
+        },
+        "delta": {
+          "source": "selection",
+          "pointer": "/selection/steps/6/evidence/paired_mae/value",
+          "expected": -0.34128749162253885
+        },
+        "lo": {
+          "source": "selection",
+          "pointer": "/selection/steps/6/evidence/paired_mae/confidence_interval/0",
+          "expected": -0.5129882669091845
+        },
+        "hi": {
+          "source": "selection",
+          "pointer": "/selection/steps/6/evidence/paired_mae/confidence_interval/1",
+          "expected": -0.15941570360119803
+        },
+        "status": {
+          "source": "selection",
+          "pointer": "/selection/steps/6/status",
+          "expected": "promoted"
+        }
+      },
+      "limit": "Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements."
+    },
+    {
+      "id": "adaptation-negative",
+      "text": "`{candidate}` versus `{incumbent}`: paired \u0394MAE {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {support} common targets; rule result `{status}`.",
+      "values": {
+        "candidate": {
+          "source": "selection",
+          "pointer": "/selection/steps/9/candidate",
+          "expected": "chronos-2-finetuned"
+        },
+        "incumbent": {
+          "source": "selection",
+          "pointer": "/selection/steps/9/incumbent",
+          "expected": "chronos-2-zero-shot-ctx720"
+        },
+        "support": {
+          "source": "selection",
+          "pointer": "/selection/steps/9/evidence/paired_points",
+          "expected": 1599
+        },
+        "delta": {
+          "source": "selection",
+          "pointer": "/selection/steps/9/evidence/paired_mae/value",
+          "expected": 0.027241326962173778
+        },
+        "lo": {
+          "source": "selection",
+          "pointer": "/selection/steps/9/evidence/paired_mae/confidence_interval/0",
+          "expected": -0.1438925511998738
+        },
+        "hi": {
+          "source": "selection",
+          "pointer": "/selection/steps/9/evidence/paired_mae/confidence_interval/1",
+          "expected": 0.22805644197502714
+        },
+        "status": {
+          "source": "selection",
+          "pointer": "/selection/steps/9/status",
+          "expected": "kept_incumbent"
+        }
+      },
+      "limit": "Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements."
+    },
+    {
+      "id": "stacking-negative",
+      "text": "`{candidate}` versus `{incumbent}`: paired \u0394MAE {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {support} common targets; rule result `{status}`.",
+      "values": {
+        "candidate": {
+          "source": "selection",
+          "pointer": "/selection/steps/11/candidate",
+          "expected": "ensemble-stacked"
+        },
+        "incumbent": {
+          "source": "selection",
+          "pointer": "/selection/steps/11/incumbent",
+          "expected": "chronos-2-zero-shot-ctx720"
+        },
+        "support": {
+          "source": "selection",
+          "pointer": "/selection/steps/11/evidence/paired_points",
+          "expected": 1599
+        },
+        "delta": {
+          "source": "selection",
+          "pointer": "/selection/steps/11/evidence/paired_mae/value",
+          "expected": -0.014805503177603466
+        },
+        "lo": {
+          "source": "selection",
+          "pointer": "/selection/steps/11/evidence/paired_mae/confidence_interval/0",
+          "expected": -0.05887708761217896
+        },
+        "hi": {
+          "source": "selection",
+          "pointer": "/selection/steps/11/evidence/paired_mae/confidence_interval/1",
+          "expected": 0.02759684595075489
+        },
+        "status": {
+          "source": "selection",
+          "pointer": "/selection/steps/11/status",
+          "expected": "kept_incumbent"
+        }
+      },
+      "limit": "Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements."
+    },
+    {
+      "id": "equal-weight-negative",
+      "text": "`{candidate}` versus `{incumbent}`: paired \u0394MAE {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {support} common targets; rule result `{status}`. Its interval coverage is {coverage:.3f} [{clo:.3f}, {chi:.3f}], failing the coverage gate.",
+      "values": {
+        "candidate": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/candidate",
+          "expected": "ensemble-equal-weight"
+        },
+        "incumbent": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/incumbent",
+          "expected": "chronos-2-zero-shot-ctx720"
+        },
+        "support": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/evidence/paired_points",
+          "expected": 1599
+        },
+        "delta": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/evidence/paired_mae/value",
+          "expected": 0.5779946728027927
+        },
+        "lo": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/evidence/paired_mae/confidence_interval/0",
+          "expected": 0.34940056395093366
+        },
+        "hi": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/evidence/paired_mae/confidence_interval/1",
+          "expected": 0.8116227880747264
+        },
+        "status": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/status",
+          "expected": "kept_incumbent"
+        },
+        "coverage": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/evidence/coverage/value",
+          "expected": 0.3529801329389757
+        },
+        "clo": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/evidence/coverage/confidence_interval/0",
+          "expected": 0.3231183814360729
+        },
+        "chi": {
+          "source": "selection",
+          "pointer": "/selection/steps/10/evidence/coverage/confidence_interval/1",
+          "expected": 0.3870038344598151
+        }
+      },
+      "limit": "Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements."
+    },
+    {
+      "id": "steps-negative",
+      "text": "`{candidate}` versus `{incumbent}`: paired \u0394MAE {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {support} common targets; rule result `{status}`.",
+      "values": {
+        "candidate": {
+          "source": "selection",
+          "pointer": "/selection/steps/7/candidate",
+          "expected": "chronos-2-zero-shot-steps"
+        },
+        "incumbent": {
+          "source": "selection",
+          "pointer": "/selection/steps/7/incumbent",
+          "expected": "chronos-2-zero-shot-ctx720"
+        },
+        "support": {
+          "source": "selection",
+          "pointer": "/selection/steps/7/evidence/paired_points",
+          "expected": 1599
+        },
+        "delta": {
+          "source": "selection",
+          "pointer": "/selection/steps/7/evidence/paired_mae/value",
+          "expected": 0.9151957439786859
+        },
+        "lo": {
+          "source": "selection",
+          "pointer": "/selection/steps/7/evidence/paired_mae/confidence_interval/0",
+          "expected": 0.35608640756695664
+        },
+        "hi": {
+          "source": "selection",
+          "pointer": "/selection/steps/7/evidence/paired_mae/confidence_interval/1",
+          "expected": 1.393951624533447
+        },
+        "status": {
+          "source": "selection",
+          "pointer": "/selection/steps/7/status",
+          "expected": "kept_incumbent"
+        }
+      },
+      "limit": "Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements."
+    },
+    {
+      "id": "embedding-negative",
+      "text": "`{candidate}` versus `{incumbent}`: paired \u0394MAE {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {support} common targets; rule result `{status}`.",
+      "values": {
+        "candidate": {
+          "source": "selection",
+          "pointer": "/selection/steps/8/candidate",
+          "expected": "chronos-2-embedding-ridge"
+        },
+        "incumbent": {
+          "source": "selection",
+          "pointer": "/selection/steps/8/incumbent",
+          "expected": "chronos-2-zero-shot-ctx720"
+        },
+        "support": {
+          "source": "selection",
+          "pointer": "/selection/steps/8/evidence/paired_points",
+          "expected": 1599
+        },
+        "delta": {
+          "source": "selection",
+          "pointer": "/selection/steps/8/evidence/paired_mae/value",
+          "expected": 1.223577964385451
+        },
+        "lo": {
+          "source": "selection",
+          "pointer": "/selection/steps/8/evidence/paired_mae/confidence_interval/0",
+          "expected": 0.8117875726634561
+        },
+        "hi": {
+          "source": "selection",
+          "pointer": "/selection/steps/8/evidence/paired_mae/confidence_interval/1",
+          "expected": 1.6360055583856559
+        },
+        "status": {
+          "source": "selection",
+          "pointer": "/selection/steps/8/status",
+          "expected": "kept_incumbent"
+        }
+      },
+      "limit": "Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements."
+    },
+    {
+      "id": "selection-optimism",
+      "text": "The report explicitly warns: \u201c{quote}\u201d",
+      "values": {
+        "quote": {
+          "source": "selection-report",
+          "expected": "Thirteen candidates were compared on the same 12 participants and 7 days. The rule's confidence bounds are per comparison, not family-wise. Treat the selected model's validation numbers as optimistic until the sealed outer test is opened."
+        }
+      },
+      "limit": "Rule written after public baseline/zero-shot results; previously public representation heads are reported comparators only. Development selection is accepted; final test opening is not authorized."
+    },
+    {
+      "id": "simulation-metadata",
+      "text": "The standalone simulator declares `{status}`, `{task}`, `{mode}`, `{data}`, `{validation}` and `{snapshot}`.",
+      "values": {
+        "status": {
+          "source": "scenario-report",
+          "expected": "status=ok"
+        },
+        "task": {
+          "source": "scenario-report",
+          "expected": "task=alertness"
+        },
+        "mode": {
+          "source": "scenario-report",
+          "expected": "mode=simulation"
+        },
+        "data": {
+          "source": "scenario-report",
+          "expected": "data_mode=synthetic"
+        },
+        "validation": {
+          "source": "scenario-report",
+          "expected": "validation=null"
+        },
+        "snapshot": {
+          "source": "scenario-report",
+          "expected": "dataset_snapshot=null"
+        }
+      },
+      "limit": "Accepted conditional equations and CLI/SVG availability only. Synthetic comparisons are not measured KSS/PVT predictions, causal benefit, clinical probabilities, API integration or full-app acceptance."
+    },
+    {
+      "id": "simulation-parameters",
+      "text": "The pinned illustrative configuration is:\n\n```toml\n{config}\n```\n\n",
+      "values": {
+        "config": {
+          "source": "scenario-config",
+          "expected": "version = \"two-process-v1\"\ntau_wake_hours = 18.2\ntau_sleep_hours = 4.2\ninitial_pressure = 0.6\ncircadian_weight = 0.2\nanchor_local_hour = 15\nsample_minutes = 30"
+        }
+      },
+      "limit": "Literature-derived concept and original implementation; parameters include disclosed assumptions, not population/personal fits. Root checked implementation equations, not independent validation of paper timing constants. Caffeine/light effects are not modeled."
     }
   ]
 }

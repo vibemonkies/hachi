@@ -4,7 +4,9 @@
 demonstration; no live/replay dry run was executed by the #23 preparation worker.
 The existing source-bound independent rehearsal receipts are described in
 [the narrative](presentation/NARRATIVE.md). They are separate from the missing
-published root-app path and final selected artifact.
+published root-app path and final artifact freeze. Accepted development selection
+and the published standalone simulator are described in the updated narrative;
+neither supplies the missing whole-app rehearsal.
 
 ## Presenter sequence and roles
 
@@ -14,7 +16,7 @@ Proposals only; humans have not confirmed availability or assignments.
 |---|---|---|
 | Problem and supported physiology | Ezzy | Why personal signal history is useful; a real forecast, actual future observations and baseline comparison when approved. Show coverage and held-out limits. |
 | Sources, causal architecture and inference | Justin | Admission, native cutoff/availability, participant split, exact code/artifact/source identity, API provenance. |
-| Pretraining/training evidence and failures | Ezzy with Justin | Traceable paired results, actually trained head, no-gain representation result, abstention/burden and failure cases. Adaptation/ensemble results only after owner acceptance. |
+| Pretraining/training evidence and failures | Ezzy with Justin | Accepted development selection, actual fine-tuning/ensembles, paired negative results, no-gain representations, abstention/burden and selection optimism. |
 | Product and replay | CoffeeCoder | Published app import/status/error → quality → forecast/anomaly → check-ins → sleep comparison. Retain unavailable clinical states. Replay must remain labeled with original mode/time/artifact. |
 | Privacy, personal case and remaining gates | Team | Public aggregates/synthetic illustrations; separate consents and one-person retrospective limit. Name missing full-scope gates explicitly. |
 
@@ -43,15 +45,41 @@ blocks use of the numerical notes. Do not update hashes to bypass a source chang
 ## Gate the actual demonstration
 
 Before running the full path, obtain the accepted #20 packet/selection/freeze and
-selected export, Coffee's published #15/#17 app source and agreed wiring, #21's real
+selected export, Coffee's published #17 app source and agreed wiring, #21's real
 case/timeline/separate consent handoff, and #22's integration plan. Root controls
 scientific acceptance and any test opening; finalization tooling is not permission.
-These handoffs are missing. Stop full-demo acceptance here until they exist.
+These full-path handoffs are missing. #12's development-selected native loader and
+#15's standalone conditional simulator are accepted scoped inputs, with no final
+freeze/test or API/full-app acceptance. Stop full-demo acceptance here until the
+remaining handoffs exist.
 
 A deliberately reduced independent CPU research rehearsal may use only the approved
 PMData inner-validation packet and original frozen baseline. Its scope must say
 “independent rehearsal consumer; no final-selected model or full app acceptance.”
 It cannot be called the final system. Do not access reserved outer-test participants.
+
+## Optional standalone synthetic scenario exercise
+
+The accepted public simulator description and exact parameter/request bytes are
+pinned in the manifest. With the repository's existing dependencies available, use
+an owned external output directory for a future exercise:
+
+```sh
+SCENARIO_RUN=$(mktemp -d /tmp/hachi-23-scenario.XXXXXX)
+PYTHONPATH="$PWD/src" python3 -m hachi.scenarios.demo \
+  --request configs/scenarios/compare-bedtimes.toml \
+  --model configs/scenarios/two-process-v1.toml \
+  --output "$SCENARIO_RUN"
+```
+
+Inspect `result.json` and `curves.svg` against
+[the accepted source description](../src/hachi/scenarios/README.md). Keep the
+archived implementation/configuration artifact outside Git; do not copy its contents
+into public presentation docs. Preserve simulation/synthetic mode, null validation,
+disclosed prior-history/phase assumptions and unmodeled caffeine/light effects.
+Root's accepted CLI/equation/rendering checks are historical supplied evidence;
+the #23 worker has not run this exercise. This optional exercise does not validate
+ratings/PVT, integrate an API/app, or satisfy the full live/replay rehearsal.
 
 ## Isolated live baseline and offline consumer instructions
 
