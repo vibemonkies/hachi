@@ -453,6 +453,11 @@ def _report(
             "sleep_logs_kept": dist("sleep_logs"),
         },
         "table_rows": {name: table.num_rows for name, table in tables.items()},
+        "observations_by_metric": dict(
+            sorted(
+                sum((Counter(s["observations"]) for s in per_subject.values()), Counter()).items()
+            )
+        ),
         "sources": audit.source_table(counts, members),
         "missingness": audit.missingness(
             {

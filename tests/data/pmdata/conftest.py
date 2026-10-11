@@ -139,9 +139,10 @@ def build_members() -> dict[str, bytes]:
             {
                 "dateTime": f"{d} 00:00:00",
                 "value": {
-                    "date": date.fromisoformat(d).strftime("%m/%d/%y"),
+                    # Fitbit's "no estimate" row: null date, zero value and error.
+                    "date": date.fromisoformat(d).strftime("%m/%d/%y") if v else None,
                     "value": v,
-                    "error": 6.5,
+                    "error": 6.5 if v else 0.0,
                 },
             }
             for d, v in (("2020-03-27", 0.0), ("2020-03-28", 51.5), ("2020-03-29", 52.25))

@@ -7,7 +7,7 @@ is the only part fit for Git.
 
 import statistics
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import UTC
 from typing import Any
 
 from .clock import MINUTE, to_us
@@ -253,9 +253,17 @@ def source_table(counts: Counter, members: list) -> list[dict[str, Any]]:
             entry["matches_paper"] = entry["rows_parsed"] == PAPER_COUNTS[kind]
         if kind in EXCLUSION_REASONS:
             entry["excluded_reason"] = EXCLUSION_REASONS[kind]
+        if kind.startswith("fitbit/") and kind not in EXCLUSION_REASONS:
+            # Every parsed row lands in exactly one disposition.
+            settled = sum(n for outcome, n in outcomes.items() if _is_disposition(outcome))
+            entry["dispositions_reconcile"] = settled == (entry["rows_parsed"] or 0)
         out.append(entry)
     return out
 
 
-def built_at() -> str:
-    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+def _is_disposition(outcome: str) -> bool:
+    return outcome in {
+        "accepted",
+        "duplicate_identical_dropped",
+        "duplicate_conflicting_dropped",
+    } or outcome.startswith(("rejected_", "excluded_", "quarantined_"))

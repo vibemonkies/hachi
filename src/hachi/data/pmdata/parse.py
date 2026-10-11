@@ -153,11 +153,14 @@ def iter_resting_heart_rate(stream: BinaryIO) -> Iterator[DailyRestingHeartRate]
         value = row["value"]
         if not isinstance(value, dict) or set(value) != {"date", "value", "error"}:
             raise ParseError("resting HR value must hold date, value and error")
-        if value["date"] != day.strftime("%m/%d/%y"):
-            raise ParseError("resting HR date disagrees with its dateTime")
         number, error = value["value"], value["error"]
         if not isinstance(number, int | float) or isinstance(number, bool):
             raise ParseError("resting HR must be numeric")
+        # Fitbit writes "no estimate" as {date: null, value: 0, error: 0}; any real value
+        # must carry the same date as its row.
+        sentinel = value["date"] is None and number == 0
+        if not sentinel and value["date"] != day.strftime("%m/%d/%y"):
+            raise ParseError("resting HR date disagrees with its dateTime")
         if error is not None and (not isinstance(error, int | float) or isinstance(error, bool)):
             raise ParseError("resting HR error must be numeric")
         yield DailyRestingHeartRate(day, float(number), None if error is None else float(error))

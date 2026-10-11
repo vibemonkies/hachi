@@ -139,6 +139,8 @@ def test_quarantine_duplicates_and_exclusions_are_counted(built):
     assert hr["participants_missing_file"] == 1
     rhr = counts(built.report, "fitbit/resting_heart_rate.json")["outcomes"]
     assert rhr["excluded_zero_means_no_estimate"] == 1
+    for member in ("heart_rate", "steps", "distance", "resting_heart_rate", "sleep"):
+        assert counts(built.report, f"fitbit/{member}.json")["dispositions_reconcile"]
     calories = counts(built.report, "fitbit/calories.json")
     assert calories["excluded_reason"].startswith("Total energy expenditure")
     assert calories["rows_parsed"] == 66 * 60
