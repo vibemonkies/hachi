@@ -29,3 +29,17 @@ The handoff names an interim CPU artifact, not #12's selected Chronos model. Per
 The web renderer's public types support point-only forecasts with null bounds, point values, and `interval_calibration: "none"`. The renderer should draw the median series without a band or interval coverage claim. For off-hour cutoffs it should preserve all 23 returned points and show `SPARSE_HISTORY`. For insufficient wear it should show `INSUFFICIENT_HISTORY`, not substitute a chart.
 
 No successful API response for PR #107, Apple import, coverage, forecast, or chart was observed in this local work. The local replay request returned 502 because no service listened on `127.0.0.1:8717`. A real approved import-to-report walkthrough and comparison against API values remain acceptance gates. Do not infer these gates are complete from this handoff or the web build.
+
+## Scenario simulator source handoff
+
+PR #101 merged at `85a8c80658e7066dc2a1e9d06ebc4489bf597f21` from reviewed head `0622db3e2d971dfc5549db0741c70f7c07bd2f9b`. Its conditional simulator source is delivered. The API-owner handoff below requests Justin/WindyTrout to compose it through the API seam. No served scenario response was observed in this local work.
+
+Source: [PR #101 comment 6110151856](https://github.com/vibemonkies/hachi/pull/101#issuecomment-6110151856).
+
+> @justin06lee / WindyTrout, the conditional simulator source needed for [#16](https://github.com/vibemonkies/hachi/issues/16) is delivered in merged [PR #101](https://github.com/vibemonkies/hachi/pull/101), merge `85a8c80658e7066dc2a1e9d06ebc4489bf597f21` from reviewed head `0622db3e2d971dfc5549db0741c70f7c07bd2f9b`.
+>
+> I compared all seven merged scenario/config files with that head and found no differences. Exact-head Ubuntu CI passed, and Ezzy approved the conditional simulator. `scenario_from_request`, pure `model.simulate`, and `build_result` use the existing request/result contracts. The merged README and TOML configs supply the reproducible CLI and assumptions. This satisfies the source prerequisite you identified in your [#16 checkpoint](https://github.com/vibemonkies/hachi/issues/16#issuecomment-6109672920).
+>
+> Please integrate the simulator through your owned API seam and link its source/artifact/response handoff for [#17](https://github.com/vibemonkies/hachi/issues/17) and [#18](https://github.com/vibemonkies/hachi/issues/18). Preserve simulation mode, the illustrative dimensionless scale, explicit assumptions, and unavailable measured validation. This is a scoped integration unblock. Full #15, #16, #18 and #20 acceptance is not delivered by the simulator merge. No new tests, access, consent, merge or scientific-evaluation authority is granted.
+
+The source merge does not prove that the API serves the simulator. API composition and a successful scenario request/response remain open. The simulation must retain its simulation mode, dimensionless illustrative scale, assumptions, and unavailable measured validation. The source delivery does not establish full #15, #16, #18, or #20 acceptance.
