@@ -6,8 +6,19 @@ then. A backdated entry (ended before the cutoff, created after it) is excluded.
 
 from collections.abc import Iterable
 from datetime import datetime, timedelta
+from typing import Protocol
 
-from .tables import Observation, StatusUnknown, SymptomEpisode, TestResult
+from .tables import StatusUnknown, SymptomEpisode, TestResult
+
+
+class AvailableRecord(Protocol):
+    """Validated input types supply UTC timestamps; this helper checks the cutoff."""
+
+    @property
+    def end_utc(self) -> datetime: ...
+
+    @property
+    def available_at_utc(self) -> datetime: ...
 
 
 def _require_utc(cutoff: datetime) -> None:
@@ -15,14 +26,14 @@ def _require_utc(cutoff: datetime) -> None:
         raise ValueError("cutoff must be a UTC-aware datetime")
 
 
-def available_by(observation: Observation, cutoff: datetime) -> bool:
+def available_by(observation: AvailableRecord, cutoff: datetime) -> bool:
     _require_utc(cutoff)
     return observation.end_utc <= cutoff and observation.available_at_utc <= cutoff
 
 
-def observations_available_by(
-    observations: Iterable[Observation], cutoff: datetime
-) -> list[Observation]:
+def observations_available_by[Record: AvailableRecord](
+    observations: Iterable[Record], cutoff: datetime
+) -> list[Record]:
     return [o for o in observations if available_by(o, cutoff)]
 
 

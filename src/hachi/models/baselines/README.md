@@ -98,8 +98,13 @@ new isolated directories on generated Fitbit-format inputs. A documented palette
 alias/Agg shim accommodates modern plotting; computation is unchanged. The
 compatibility environment is separate from Hachi's model extra and recorded by
 its hash-locked package file, versions, source/runner/shim hashes and aggregate
-receipt. It does not reproduce the original NumPy 1.18.5/pandas 1.0.4 environment,
-real input examples, or the Apple Watch branch. The robust comparator has its own
+receipt. It does not reproduce the original NumPy 1.18.5/pandas 1.0.4 environment. A separate admitted-example run exercised
+both the Fitbit and Apple Watch branches privately; its aggregate receipt is
+[evidence/admitted-example-reproduction.json](evidence/admitted-example-reproduction.json).
+Both commands exited successfully and produced 305 output nights in total. This
+checks code/format execution, not healthy-period alert burden or accuracy. Raw
+inputs, dated predictions, and plots remain in private ignored storage with the
+source license notice. The robust comparator has its own
 id and is not presented as faithful NightSignal.
 
 ## Reproduce
@@ -127,3 +132,48 @@ artifact inference. No model promotion or real-data acceptance is implied here.
 Primary APIs: [tree regressor](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html),
 [persistence](https://scikit-learn.org/stable/model_persistence.html), and
 [NightSignal paper](https://www.nature.com/articles/s41591-021-01593-2).
+
+### Derived hourly features
+
+The hourly baseline and tree paths also accept #7's internal `HourlyFeature`,
+which retains its canonical aggregate, complete-bin readiness and source rule.
+Its value is already aggregated: the model preserves it and checks aggregation
+compatibility. Native observed count supplies the model sample-count threshold;
+#7's explicit policy checks coverage. Mixing raw and derived inputs for the same
+metric or giving duplicate derived bins is refused. Saved source receipts bind
+`evaluation/features.py`, `evaluation/serialization.py` and `contracts/causality.py`
+as well as baseline modules. Archived receipts describe their exact earlier code;
+new artifacts must be built for the new implementation.
+
+### Recorded overnight rest input
+
+`nightly_rest(observations, request, policy)` turns one participant's canonical
+point HR and complete aligned one-minute step totals into a cutoff-specific
+`NightlyRest`. The complete local midnight-to07:00 window follows DST; its minute
+denominator is 360/420/480 as appropriate. Filter event end and availability
+before computing anything. Query #5's raw reader for this small window; vendor
+daily RHR and final-day aggregates are incompatible inputs.
+
+Only actually recorded **zero** step minutes with enough available HR samples
+contribute. Missing step minutes remain unknown; positive steps exclude the
+minute. Take the median HR within each eligible minute, then the median across
+minutes, giving minutes equal weight regardless of sampling density. Prespecify
+`NightlyFeaturePolicy(min_hr_samples_per_minute=..., min_rest_minutes=...)`;
+these are experimental inclusion choices, not calibrated defaults. Incomplete
+nights or too few usable minutes have `rhr_bpm=None`.
+
+The result records the exact request/cutoff, policy, causal input hash and counts
+for observed/unobserved step minutes, recorded zero-step minutes lacking HR, low
+HR sample counts and usable rest minutes. Only usable HR/zero-step minutes feed
+`NightlyRest.observed_zero_step_minutes`, preventing step-only coverage from
+passing the robust baseline's gate. Duplicate native events and unsupported step
+spans are refused; resolve sources upstream. HR intervals are excluded and
+audited by this point-HR adapter. This PMData-compatible path does not claim to
+cover variable-duration Apple step records. Recompute for each cutoff; late
+records can change a later summary and must not retroactively alter an earlier
+summary. Store results privately with the source snapshot/run manifest.
+
+`nightly_deviation(result.night, prior_nights, robust_config, cutoff=...)` keeps
+its cold-start/missingness abstention and recorded-confounder policy. Neither
+this input nor its deviation score creates healthy labels, measured false-alert
+burden, illness probabilities or real-cohort validation evidence.

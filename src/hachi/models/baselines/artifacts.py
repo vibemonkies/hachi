@@ -31,10 +31,19 @@ class Receipt(Contract):
 
 
 def source_hashes() -> dict[str, str]:
-    return {
+    hashes = {
         p.name: hashlib.sha256(p.read_bytes()).hexdigest()
         for p in sorted(Path(__file__).parent.glob("*.py"))
     }
+    package = Path(__file__).parents[2]
+    # These shared helpers now affect feature selection and saved-model inference.
+    for relative in (
+        "evaluation/features.py",
+        "evaluation/serialization.py",
+        "contracts/causality.py",
+    ):
+        hashes[relative] = hashlib.sha256((package / relative).read_bytes()).hexdigest()
+    return hashes
 
 
 def save_artifact(output: Path, artifact: ForecastArtifact, *, artifact_id: str) -> ArtifactRef:

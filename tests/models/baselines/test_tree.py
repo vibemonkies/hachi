@@ -100,3 +100,48 @@ def test_tree_training_inclusion_abstains_without_a_fitted_model():
     cold = fit_tree(TrainingPrefix(BASE, ("train-a",), (row("train-a", -1, 60.0),)), config())
     assert cold.nodes == () and cold.training_examples == 0
     assert cold.predict(request()) == (None, None)
+
+
+def test_derived_hourly_tree_fit_and_saved_inference_match_raw_path(tmp_path):
+    from hachi.contracts.tables import Aggregate
+    from hachi.evaluation import HourlyFeature
+    from hachi.models.baselines import load_artifact, save_artifact
+
+    def derive(source):
+        return HourlyFeature(
+            aggregate=Aggregate(
+                dataset_id=source.dataset_id,
+                subject_id=source.subject_id,
+                metric=source.metric,
+                unit=source.unit,
+                resolution="hour",
+                interval_start_utc=source.start_utc,
+                interval_end_utc=source.start_utc + HOUR,
+                local_date=None,
+                tz_name="UTC",
+                aggregation="mean",
+                value=source.value,
+                null_reason=None,
+                observed_count=1,
+                coverage=0.25,
+                source_ids=[source.source_id],
+                pipeline_version="generated-1",
+            ),
+            available_at_utc=max(source.available_at_utc, source.start_utc + HOUR),
+            availability_rule="generated-bin-end-1",
+        )
+
+    raw_training = training()
+    derived_training = TrainingPrefix(
+        raw_training.fit_as_of,
+        raw_training.subjects,
+        tuple(derive(r) for r in raw_training.observations),
+    )
+    raw = fit_tree(raw_training, config())
+    derived = fit_tree(derived_training, config())
+    assert derived.nodes == raw.nodes and derived.training_examples == raw.training_examples
+    history = [row("held-out", h, 60.0 + h % 8) for h in range(-4, 0)]
+    inputs = request([derive(r) for r in history])
+    reference = save_artifact(tmp_path / "tree", derived, artifact_id="generated-derived-tree")
+    loaded = load_artifact(tmp_path / "tree", reference)
+    assert loaded.predict(inputs) == raw.predict(request(history))

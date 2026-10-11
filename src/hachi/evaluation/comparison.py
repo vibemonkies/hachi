@@ -6,8 +6,9 @@ from dataclasses import dataclass
 
 from hachi.contracts.base import DataMode
 from hachi.contracts.manifests import SplitManifest
-from hachi.contracts.tables import Aggregate, Observation
+from hachi.contracts.tables import Aggregate
 
+from .features import ForecastObservation
 from .forecast import (
     EvaluationConfig,
     EvaluationResult,
@@ -109,7 +110,7 @@ def _paired_metrics(
 
 def compare_forecasts(
     manifest: SplitManifest,
-    observations: Sequence[Observation],
+    observations: Sequence[ForecastObservation],
     targets: Sequence[Aggregate],
     baseline_factory: PredictorFactory,
     candidate_factory: PredictorFactory,

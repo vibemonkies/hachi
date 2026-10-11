@@ -12,10 +12,10 @@ from pydantic import Field, model_validator
 
 from hachi.contracts.base import Contract, Sha256, UtcDatetime
 from hachi.contracts.metrics import METRICS, Aggregation, Metric
-from hachi.contracts.tables import Observation
 from hachi.evaluation import (
     ForecastEstimate,
     ForecastInput,
+    ForecastObservation,
     Predictor,
     PredictorFactory,
     TrainingPrefix,
@@ -78,7 +78,10 @@ type Node = Annotated[Leaf | Branch, Field(discriminator="kind")]
 
 
 def _features(
-    observations: Sequence[Observation], config: TreeConfig, cutoff: datetime, target: datetime
+    observations: Sequence[ForecastObservation],
+    config: TreeConfig,
+    cutoff: datetime,
+    target: datetime,
 ) -> tuple[float, ...] | None:
     lead = (target - cutoff).total_seconds() / 3600
     if lead < 0 or lead > config.max_lead_hours or not lead.is_integer():
@@ -170,7 +173,7 @@ class TreeArtifact(Contract):
 def fit_tree(training: TrainingPrefix, config: TreeConfig) -> TreeArtifact:
     from sklearn.tree import DecisionTreeRegressor
 
-    by_subject: dict[str, list[Observation]] = defaultdict(list)
+    by_subject: dict[str, list[ForecastObservation]] = defaultdict(list)
     for row in training.observations:
         by_subject[row.subject_id].append(row)
     x: list[tuple[float, ...]] = []

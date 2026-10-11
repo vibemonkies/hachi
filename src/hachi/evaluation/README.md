@@ -7,7 +7,9 @@ software behavior, not forecast accuracy or real-data integration.
 ## Caller and boundaries
 
 Use the merged canonical `Observation`, `Aggregate`, `SplitManifest`, and
-`RunManifest` models. No shared schema, dependency, or root lockfile is changed.
+`RunManifest` models. No generated schema, fixture, dependency, or root lockfile is changed.
+The shared causal helper accepts a read-only timestamp Protocol with unchanged
+UTC cutoff guard and event-end/availability comparisons.
 The models in `forecast.py` are internal experiment configuration and estimates,
 not new API DTOs.
 
@@ -76,9 +78,10 @@ checks dataset IDs and roster membership, not upstream archive checksums.
   the prespecified minimum-history inclusion policy. Cohort-overlap status and
   its evidence/limitation note are required in the experiment config.
 - Forecast targets are hourly aggregates for one level metric/aggregation.
-  Aggregates lack availability timestamps, so they are deliberately **labels
-  only**. A PMData feature adapter must preserve raw/derived feature availability;
-  simply feeding the full precomputed aggregate table into a model is unsafe.
+  Bare aggregates lack availability timestamps and remain **labels only**.
+  `HourlyFeature` wraps an observed canonical hourly aggregate with readiness
+  and its documented source availability rule. Raw and derived inputs for the
+  selected metric cannot be mixed, and derived aggregation must match config.
 - Counts reconcile expected retained target bins to scored, missing-label,
   labeled abstention, or insufficient-history points. Scheduler purges are
   reported separately by origin. A missing label never becomes zero or healthy.
@@ -87,6 +90,102 @@ checks dataset IDs and roster membership, not upstream archive checksums.
   a single participant has no estimable between-participant CI. Interval coverage
   and width are conditional on scored points with supplied intervals. No nominal
   interval coverage or calibrated accuracy claim is invented.
+
+## Availability-preserving hourly view
+
+The internal `HourlyFeature` preserves the complete canonical `Aggregate`,
+including coverage, native observed count, source IDs, pipeline version and timezone.
+It requires a non-missing level value on a UTC whole-hour grid and UTC readiness
+at or after bin end. It is not a canonical source `Observation` or a new wire DTO.
+Its derived record ID hashes only that bin and its readiness/rule, never the whole
+snapshot: withheld future rows must not alter earlier input identities.
+
+```python
+from hachi.evaluation import HourlyFeaturePolicy, hourly_features
+from hachi.data.pmdata import iter_aggregates  # supplied by #5
+
+policy = HourlyFeaturePolicy(
+    metric="heart_rate",
+    aggregation="mean",
+    min_coverage=prespecified_coverage,
+    min_observed_count=prespecified_native_count,
+    availability_rule=documented_source_availability_rule,
+)
+view = hourly_features(iter_aggregates(snapshot, "hour", metrics=["heart_rate"]), policy)
+result = evaluate_forecast(split_manifest, view.features, targets, fit_model, config)
+# Persist view.policy and view.counts beside the private run packet.
+```
+
+The loader's `FeatureBin(aggregate, available_at_utc)` named tuple implements the
+structural input interface. It must guarantee that recomputation at **every** cutoff
+at or after readiness gives the stored value and coverage, including coverage-span
+availability. The consumer enforces timestamps; it cannot prove this upstream
+causal guarantee from a final aggregate alone. #5 owns its recomputation tests.
+
+The explicit inclusion policy gives exclusive counts for included, missing,
+low-coverage, low-count, other-metric and other-aggregation bins. Missingness stays
+missing. Duplicate selected bins are refused. Scientific thresholds remain to be
+frozen against the admitted real cohort; these tests establish software behavior.
+Canonical hourly labels retain missing bins separately from feature selection.
+
+Record exclusions in derived mode must identify derived feature IDs. Raw record
+quarantines must be applied **before** aggregation; the evaluator refuses unmatched
+record exclusions rather than pretending to subtract a raw row from a mean.
+Whole-participant exclusions retain their existing behavior. A pre-excluded snapshot
+must document raw exclusions in its processing provenance, with no leftover raw
+record exclusions in the derived-input split manifest.
+
+#9's simple and tree baselines preserve already-derived values and use native
+`observed_count` for their sample-count policy. They do not re-average hourly means
+with raw rows. Saved model source receipts also bind this feature adapter and
+shared causality/serialization helpers; prior artifacts require their prior code.
+
+## Nested participant folds
+
+`nested_participant_folds` builds deterministic, balanced grouped folds from
+participant IDs and explicit config/exclusions, without reading values or labels.
+Each eligible participant is held out in exactly one outer fold. Within each
+outer development cohort, every participant validates once across inner folds.
+Record exclusions travel with each split; whole-participant exclusions never
+enter any partition. Empty groups or a declared minimum training cohort violation
+are refused instead of silently reducing fold counts.
+
+```python
+from hachi.evaluation import NestedFoldConfig, nested_participant_folds
+
+plan = nested_participant_folds(
+    participant_roster,
+    NestedFoldConfig(
+        outer_folds=prespecified_outer_folds,
+        inner_folds=prespecified_inner_folds,
+        min_train_subjects=prespecified_minimum_training_cohort,
+        seed=prespecified_seed,
+    ),
+    exclusions=canonical_exclusions,
+)
+for fold in plan.folds:
+    # Canonical SplitManifest(..., fold=fold.outer_fold,
+    #     n_folds=plan.config.outer_folds, **fold.partitions())
+    # Use a manifest_id identifying BOTH outer and inner index.
+    # Fit preprocessing and model on train; select on validation; test stays sealed.
+    ...
+
+# Only after inner-only model/parameter selection is frozen for this outer fold:
+refit_partitions = plan.outer_partitions(outer_index)
+# Refit on all outer development participants. The same outer test remains held out.
+# Explicitly open a distinct test SplitManifest after recording selection/config hashes.
+```
+
+Persist the full nested plan privately and bind its `document_sha256` beside all
+canonical split/run hashes. The canonical fold field identifies the outer fold;
+inner indices live in the plan and distinct manifest IDs. Helpers never open test,
+choose models or assert that scientific selection occurred. Do not select global
+parameters from outer test performance. Combine outer-test predictions once per
+participant for the final report; inner validation results are selection evidence.
+Repeated episodes belonging to one participant follow that participant's partition;
+event-task window/ongoing-episode handling still needs the clinical #8 protocol.
+Fold counts and inclusion thresholds remain explicit scientific choices to freeze
+against the admitted cohort, with sensitivity reports rather than automatic defaults.
 
 ## Reproduce the software path
 
@@ -173,7 +272,7 @@ examples**, not validated physiological models or the full #9 baseline suite.
 
 - #5's admitted, reproducible PMData snapshot and availability-preserving adapter;
   representative source-to-feature reconciliation and a nonempty real cohort.
-- Cohort-appropriate grouped/nested cross-validation and scientific split/count,
+- Cohort-appropriate use of the nested grouped-fold helper and scientific split/count,
   coverage, lookback, embargo, and bootstrap sensitivity choices frozen before
   test opening. This implementation supports one explicit fold at a time.
 - The agreed real baseline report with code/data/split hashes. Current checks
@@ -196,13 +295,13 @@ or speculative PMData-specific parser is needed before that interface is agreed.
 2. The participant roster and explicit subject/record exclusions. Keep identifiers
    and the persisted split in approved private storage. The synthetic six-person
    split and October 2026 dates are demonstration settings, not PMData settings.
-3. Canonical `Observation` rows for model inputs, preserving metric/unit, event
+3. Canonical `Observation` rows or readiness-bearing `HourlyFeature` inputs, preserving metric/unit, event
    interval and `available_at_utc`. Where historical availability is not observed,
    provide the documented `availability_rule` and mark availability `assumed`.
    A complete aggregate table cannot safely substitute for these feature inputs:
    canonical `Aggregate` has no availability timestamp. If #5 exposes only
-   aggregates, agree an availability-preserving view with the contracts owner
-   before wiring it into this evaluator.
+   aggregates, use the agreed `FeatureBin` view and the explicit inclusion policy
+   above. Never invent availability from the final aggregate alone.
 4. Canonical hourly `Aggregate` labels for one agreed level metric/aggregation,
    with explicit missing bins, source exclusions and the pipeline version.
    Duplicate-source precedence and quarantined source contributions must already
@@ -220,7 +319,7 @@ the local synthetic packets establish none of its data-admission requirements.
 Once available: reconcile representative source records, define the real split
 and inclusion protocol, keep test sealed, run validation and a real baseline,
 then verify packet hashes and denominators against #5's audit. Scientific fold
-selection, full leakage/outcome coverage and teammate reproduction remain issue
+selection, full leakage/outcome coverage remain issue
 gates; a successful synthetic run does not close #7.
 
 No data acquisition, service, GPU job, publication, or GitHub state change is
@@ -250,3 +349,17 @@ The paired run scores all eight bins jointly. These are software-check counts on
 with test participants sealed. Packet and evaluator-source hashes and private
 0700/0600 storage modes are independently checked. Only the sanitized aggregate
 receipt is committed; predictions and split identifiers stay in ignored `runs/`.
+
+### Hourly adapter checkpoint
+
+On clean code commit `4cd9da72073e554b5ccb7ece3cf401630f3aaa9d`, the full suite
+passes 272 Python tests plus 5 coordination tests. All lint and generated schema,
+fixture, TypeScript staleness and compilation gates pass. The 70 focused
+evaluation/model/causality tests include derived/raw tree-fit parity, data-only
+artifact readback, future-readiness sentinels and explicit exclusion handling.
+A fresh generated-only four-model demo verifies saved-artifact prediction/count
+replay and all packet hashes/private modes under ignored
+`runs/issue-7-hourly-adapter-001`. The sanitized aggregate receipt is
+[`evidence/hourly-feature-adapter.json`](evidence/hourly-feature-adapter.json).
+It distinguishes the raw generated demo from derived-input tests and establishes
+no real-cohort accuracy or integration claim.

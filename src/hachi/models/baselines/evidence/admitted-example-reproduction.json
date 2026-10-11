@@ -1,0 +1,36 @@
+{
+  "compatibility_lock_sha256": "5ee31441d3203bcecc2546d3b2f2ecd2b5cb8312afa878243463023634f74400",
+  "data_mode": "real",
+  "example_inputs": 2,
+  "execution_exit_statuses": [
+    0,
+    0
+  ],
+  "input_hashes": {
+    "apple_hr": {
+      "bytes": 6459555,
+      "sha256": "2e7202ac30b5b8f5fb43cda1ccde0afcc69d0a0805a12ab5ed963e07f62b468c"
+    },
+    "apple_steps": {
+      "bytes": 946006,
+      "sha256": "fd8dc33513887fee313686f437bbe1d6f5087948d7acc0cbd7d902caa688d4db"
+    },
+    "fitbit": {
+      "bytes": 11083808,
+      "sha256": "da5f7bbfadeebec5c0fc7e12bc22258749ea52971f68eafb35187a002470a0c1"
+    },
+    "license": {
+      "bytes": 11373,
+      "sha256": "856f0d38a21a01231ffdac952ee359cc305beffbe33be4c25ccff195b604c02e"
+    }
+  },
+  "input_kind": "admitted_date_shifted_examples",
+  "plot_shim_sha256": "45d8b2f39a66bf1b07f5282a2dcb83677ad4a723b3f68621382e73e06571fff6",
+  "scope": "Code/format reproduction only; no healthy labels, alert burden, lead time, clinical accuracy or population performance established.",
+  "source": "stanford-wearable-infection",
+  "total_output_nights": 305,
+  "total_red_nights": 51,
+  "total_yellow_nights": 9,
+  "upstream_revision": "99b3bd7937e72d42c2670c7a259d9f9f8728dc06",
+  "upstream_source_sha256": "198487887166afa2c7f884d832c2c837d41f2973b684da0303ec5aa8ad54a999"
+}

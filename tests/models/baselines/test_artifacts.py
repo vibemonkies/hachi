@@ -22,7 +22,10 @@ def test_private_snapshot_readback_checks_reference_content_and_source(tmp_path)
         load_artifact(path, reference)
 
 
-def test_incompatible_source_is_refused_even_with_a_new_valid_content_reference(tmp_path):
+@pytest.mark.parametrize("changed_source", ["forecast.py", "evaluation/features.py"])
+def test_incompatible_source_is_refused_even_with_a_new_valid_content_reference(
+    tmp_path, changed_source
+):
     from hachi.contracts.base import ArtifactRef
     from hachi.evaluation.serialization import document_bytes, document_sha256
     from hachi.models.baselines.artifacts import Receipt
@@ -30,7 +33,7 @@ def test_incompatible_source_is_refused_even_with_a_new_valid_content_reference(
     path = tmp_path / "model"
     save_artifact(path, artifact("last_valid"), artifact_id="generated-last")
     sources = json.loads((path / "source-sha256.json").read_text())
-    sources["forecast.py"] = "a" * 64
+    sources[changed_source] = "a" * 64
     data = document_bytes(sources)
     (path / "source-sha256.json").write_bytes(data)
     receipt = Receipt.model_validate_json((path / "artifact.json").read_bytes())
