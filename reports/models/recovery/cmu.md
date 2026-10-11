@@ -1,8 +1,8 @@
-# Provisional CMU challenge-cohort recovery comparison
+# CMU challenge-cohort recovery comparison
 
 Research evidence only. Production recovery prediction abstains; no recovery date is displayed.
 
-CMU result integration remains provisional pending reconciliation of the source owner's existing submitted analysis scope and private-report publication interpretation. No source-permission or final clinical acceptance is inferred from this packet.
+The [owner-confirmed registration record](https://github.com/vibemonkies/hachi/issues/14#issuecomment-6109788020) covers recovery/survival modelling. This resolves the earlier submitted-scope contradiction; final clinical acceptance remains separate. OliveTower interprets private team-only reports as internal research records, not publications; this is its interpretation, not a ruling from Justin or CMU. Revisit publication-form requirements before any public demo or presentation of CMU results.
 
 ## Provenance and fixed protocol
 
@@ -97,4 +97,4 @@ The [label configuration](../../../configs/outcomes/cmu-common-cold-project.toml
 
 The [official daily-symptom methods](https://www.cmu.edu/common-cold-project/measures-by-study/assessment-of-infection-colds/daily-symptoms-in-quarantine.html) describe previous-day self-report collected at the end of quarantine days. This model consumes the supplied adjusted Jackson variable, not a recomputation from individual items. Hachi's score threshold and two-day symptom-free endpoint are prespecified research constructs, not a CMU-validated recovery criterion or clinical-cold diagnosis.
 
-The [recorded registration](../../../configs/outcomes/cmu-common-cold-project.toml) states all three teammates submitted the Data Analysis Form on 2026-10-11. Exact submitted recovery/survival scope and the private-report publication classification are being confirmed with the source owner; submission alone is not a claim that an unavailable form's wording was inspected. The [CCP agreement](https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html) requires analysis registration and references for publications. No new form, external publication or expanded data access is implied by this report.
+The [recorded registration](../../../configs/outcomes/cmu-common-cold-project.toml) states all three teammates submitted the Data Analysis Form on 2026-10-11. Justin [confirmed through OliveTower](https://github.com/vibemonkies/hachi/issues/14#issuecomment-6109788020) that his submitted description was the draft in [clinical-labels.md](../../data/clinical-labels.md); its item2 covers a discrete-time survival baseline for time to resolution, participant-level held-out splits and censoring-aware metrics. No reference number was returned. This report relies on that owner confirmation, not inspection of a separate submitted-form receipt. The [CCP agreement](https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html) requires analysis registration and references for publications. OliveTower's reading that these private team-only records are not publications is not a Justin or CMU ruling; revisit before external publication, including any public demo or presentation. No new form, external publication or expanded data access is implied by this report.
