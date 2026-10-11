@@ -4,6 +4,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import threading
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,7 @@ import pytest
 pytest.importorskip("fastapi")
 from hachi.api.gpu import (
     LOCAL_INFERENCE,
+    GpuCleanupFailed,
     GpuOutputRejected,
     GpuTimeout,
     GpuUnavailable,
@@ -92,6 +94,7 @@ class Remote:
         self.calls = []
         self.request_path = None
         self.run_dir = None
+        self.terminated = False
 
     def home(self):
         self.calls.append("home")
@@ -114,6 +117,15 @@ class Remote:
             for key, value in self.files.items()
             if key != path and not key.startswith(path + "/")
         }
+
+    def remove_tree(self, path):
+        self.remove(path)
+
+    def terminate(self, marker):
+        self.calls.append("terminate")
+        if self.cleanup_failure == "termination":
+            raise GpuUnavailable(SENTINEL)
+        self.terminated = True
 
     def read(self, path):
         self.calls.append("read")
@@ -156,6 +168,8 @@ class Remote:
             raise GpuTimeout("generated timeout")
         if self.mode == "unexpected":
             raise RuntimeError(SENTINEL)
+        if self.mode == "ssh_failure":
+            return 255
         if self.mode == "nonzero":
             return 1
         return 0
@@ -248,6 +262,7 @@ def invoke(remote):
         "read_failure",
         "integrity_failure",
         "unexpected",
+        "ssh_failure",
     ],
 )
 def test_complete_owned_remote_inventory_erased_on_every_exit(mode, remote_factory):
@@ -265,6 +280,7 @@ def test_complete_owned_remote_inventory_erased_on_every_exit(mode, remote_facto
             invoke(remote)
     # Count and sibling identity only: never print request/context or output contents.
     require_clean_inventory(remote)
+    assert remote.terminated == (mode in {"partial_write", "timeout", "unexpected", "ssh_failure"})
 
 
 @pytest.mark.parametrize("cleanup_failure", ["request", "output", "both"])
@@ -278,3 +294,93 @@ def test_cleanup_failure_is_safe_and_attempts_both_inventories(
     assert SENTINEL not in str(error.value)
     assert "remove_request" in remote.calls and "remove_output" in remote.calls
     assert "/generated/hachi/runs/privacy-test/unrelated/keep" in remote.files
+
+
+@pytest.mark.parametrize("termination_failure", [False, True])
+def test_late_queued_writer_stopped_or_explicitly_failed_before_cleanup(
+    tmp_path, termination_failure
+):
+    """Actual local files/thread; no SSH, GPU queue or other worker process is used."""
+
+    class LateRemote(FileRemote):
+        def __init__(self):
+            super().__init__(tmp_path / "generated-late-writer", "timeout")
+            self.release = threading.Event()
+            self.cancelled = threading.Event()
+            self.writer = None
+
+        def run(self, command, cwd, timeout):
+            try:
+                return super().run(command, cwd, timeout)
+            finally:
+
+                def late_write():
+                    assert self.release.wait(5)
+                    if not self.cancelled.is_set():
+                        destination = self.local(self.run_dir + "/late-context.bin")
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        destination.write_bytes(b"generated late context")
+
+                self.writer = threading.Thread(target=late_write, daemon=True)
+                self.writer.start()
+
+        def terminate(self, marker):
+            self.calls.append("terminate")
+            if termination_failure:
+                raise GpuUnavailable(SENTINEL)
+            self.cancelled.set()
+            self.release.set()
+            self.writer.join(1)
+            assert not self.writer.is_alive()
+            self.terminated = True
+
+    remote = LateRemote()
+    try:
+        expected = GpuCleanupFailed if termination_failure else GpuTimeout
+        with pytest.raises(expected) as error:
+            invoke(remote)
+        assert SENTINEL not in str(error.value)
+        assert "remove_request" in remote.calls and "remove_output" in remote.calls
+        remote.release.set()
+        remote.writer.join(1)
+        assert not remote.writer.is_alive()
+        if termination_failure:
+            # A late file is possible, which is why unknown termination must never be success.
+            assert remote.local(remote.run_dir + "/late-context.bin").is_file()
+        else:
+            require_clean_inventory(remote)
+    finally:
+        remote.cancelled.set()
+        remote.release.set()
+        if remote.writer is not None:
+            remote.writer.join(1)
+        shutil.rmtree(tmp_path)
+
+
+def test_ssh_cleanup_commands_confirm_absence_and_termination_excludes_itself(monkeypatch):
+    """Inspect the real SSH shell boundary without executing remote commands."""
+    import re
+    import shlex
+
+    calls = []
+
+    def capture(self, remote, **kwargs):
+        calls.append(remote)
+        return b""
+
+    monkeypatch.setattr(SshTransport, "_ssh", capture)
+    transport = SshTransport("generated@invalid")
+    request = "/generated/private path/request.jsonl"
+    run = "/generated/private path/api-chronos-20261011T010203Z-1234abcd"
+    transport.remove(request)
+    transport.remove_tree(run)
+    assert calls[0] == f"rm -f -- {shlex.quote(request)} && ! test -e {shlex.quote(request)}"
+    assert calls[1] == f"rm -rf -- {shlex.quote(run)} && ! test -e {shlex.quote(run)}"
+    marker = "api-chronos-20261011T010203Z-1234abcd"
+    transport.terminate(marker)
+    pattern = f"[{marker[0]}]{marker[1:]}"
+    assert "pkill -TERM" in calls[2] and "pkill -KILL" in calls[2] and "! pgrep" in calls[2]
+    assert re.search(pattern, "gpu-run --run-id " + marker)
+    assert re.search(pattern, "/requests/" + marker + ".jsonl")
+    assert re.search(pattern, calls[2]) is None
+    assert re.search(pattern, "api-chronos-20261011T010203Z-1234abce") is None

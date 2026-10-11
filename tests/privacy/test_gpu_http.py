@@ -113,12 +113,12 @@ def forecast(client, service, subject="p01", cutoff="2020-03-29T12:00:00Z"):
     return result
 
 
-@pytest.mark.parametrize("mode", ["ok", "integrity_failure"])
+@pytest.mark.parametrize("mode", ["ok", "integrity_failure", "timeout"])
 def test_cleanup_refusal_reaches_http_without_predictions_or_private_echo(
     live_api, tmp_path, caplog, mode
 ):
     client, service, _ = live_api
-    remote = Remote(mode, "both")
+    remote = Remote(mode, "termination" if mode == "timeout" else "both")
     _, pin = stage_generated_catalog(service, tmp_path, remote)
     assert client.get("/healthz").json()["artifacts"] == [pin.model_dump(mode="json")]
     response = forecast(client, service)
