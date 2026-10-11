@@ -49,6 +49,6 @@ The generated-type handoff from issues #3 and #16 is **PENDING**. Follow `../../
 
 ## Verification and remaining gate
 
-`npm run build` passed with Node 22.14.0, npm 11.6.0, TypeScript 7.0.2, and Vite 8.3.4. Vite transformed 23 modules and emitted the local asset bundle. No tests were created, modified, removed, or run. Rendered browser interaction evidence is pending.
+`npm ci` and `npm run build` passed with Node 22.14.0, npm 11.6.0, TypeScript 7.0.2, and Vite 8.3.4. Vite transformed 23 modules and emitted the local asset bundle. The coordinator exercised the rendered workflow, error fixtures, cutoff changes, keyboard controls, symptom previews, and sleep examples. Production preview checks covered desktop and phone layouts. See the [browser observations and screenshots](evidence/README.md). No tests were created, modified, removed, or run.
 
 Issue #4 closure still requires another teammate to complete the browser walkthrough. Build success and coordinator review do not replace that gate. Backend agreement, real inference, and predictive validation remain pending.
