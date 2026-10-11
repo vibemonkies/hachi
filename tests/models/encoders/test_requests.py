@@ -9,6 +9,7 @@ from hachi.models.encoders.requests import (  # noqa: E402
     feature_table,
     join_features,
     model_inputs,
+    moment_patch_support,
     read_requests,
 )
 
@@ -99,3 +100,26 @@ def test_join_attaches_private_fold_keys_and_drops_unmatched_requests():
     assert len(joined.to_pylist()[0]["vector"]) == 256 and joined.schema.metadata[b"k"] == b"v"
     with pytest.raises(ValueError, match="repeats"):
         join_features(table, pa.concat_tables([keys, keys]))
+
+
+def test_moment_without_a_full_patch_is_unsupported_and_its_vector_null(tmp_path):
+    hr = [70.0] * 168
+    for h in range(7, 168, 8):  # >= 24 observed hours, but every 8-hour patch has a gap
+        hr[h] = None
+    hashes, values, _ = read_requests(write(tmp_path, [request(hr), request([70.0] * 168)]))
+    arrays = model_inputs(values, MEANS, STDS)
+    support = moment_patch_support(arrays["moment_mask"])
+    assert support[:, 0].tolist() == [False, True]
+    table = feature_table(
+        np.asarray(hashes),
+        {"moment_hr": np.zeros((2, 1024)), "wbm_hr": np.ones((2, 256))},
+        {},
+        {"moment_hr": support[:, 0]},
+    )
+    rows = {(r["request_sha256"], r["model"]): r for r in table.to_pylist()}
+    gap = rows[(hashes[0], "moment_hr")]
+    assert gap["supported"] is False and gap["vector"] is None and gap["finite"] is True
+    assert rows[(hashes[1], "moment_hr")]["supported"] is True
+    assert all(rows[(h, "wbm_hr")]["supported"] for h in hashes)
+    nan = feature_table(np.asarray(["x"]), {"wbm_hr": np.full((1, 256), np.nan)}, {})
+    assert nan.to_pylist()[0]["supported"] is False and nan.to_pylist()[0]["vector"] is None

@@ -12,6 +12,10 @@ selected, no outer test was opened, and no clinical/product gate is waived.
 
 ## Private replay consumer follow-up
 
+[PR86](https://github.com/vibemonkies/hachi/pull/86) merged at `91bc669` from
+CI-passing head `825799f`. It delivers the standalone private replay consumer;
+the source-bound receipts below do not prove Coffee's app integration.
+
 The corrected current-source receipts are [API](api-e76626b.json),
 [replay](replay-e76626b.json) and [browser](replay-browser-e76626b.json), produced
 at clean `e76626b` after main through #72/#80/#84/#85. The real API again matched
@@ -249,21 +253,47 @@ and independent review before merge.
   real report/chart path and privately compare displayed values, artifact, units,
   mode and quality with the API. Its checkpoint is currently unpublished.
   Coffee's [confirmed local checkpoint](https://github.com/vibemonkies/hachi/issues/17#issuecomment-6108831979)
-  is `659415b`; his authorization reserves CI-triggering publication. It proxies
-  to 8717 with no API-base setting and has no existing-PMData-subject entry seam.
+  is `659415b`; his authorization reserves CI-triggering publication. That older
+  reported checkpoint proxies to 8717 with no API-base setting and has no
+  existing-PMData-subject entry seam. Its code and any later local changes remain
+  unavailable here; these are reported constraints, not a fresh source review.
   A local proxy override would not by itself create a supported import path.
-- The API currently imports Apple XML/ZIP, while this comparator consumes PMData
-  hourly features. A real Apple upload with it returns unavailable. An existing
-  admitted PMData report is not proof of upload → forecast compatibility.
+- Apple input is admitted **per artifact**. This rehearsal's frozen PMData
+  comparator has no Apple admission and returns `unavailable` /
+  `NO_ARTIFACT_FOR_TASK` for that source. PR85/91 support an explicit serving
+  admission with `apple-hour-end-sealed-native-v1`, the model's unchanged metric,
+  aggregation and density gates, and an unvalidated-transfer rationale.
+  Successful Apple forecasts carry `DEVICE_SHIFT`; sparse history can abstain
+  with `INSUFFICIENT_HISTORY`. PR87 excludes real personal Apple imports from
+  shared-GPU models pending an approved transfer/retention design.
+  [PR90's generated HTTP proof](../../../src/hachi/data/apple_health/README.md#generated-http-transport-against-the-original-frozen-cpu-artifact)
+  staged the original `hourly-last-valid-v1-141306001b16e168` artifact with an
+  explicit Apple profile, retaining its 0.5/30 HR gates and original receipt
+  `e7666ef0f4665006822f9ee9c0988a6de0df1633175ff217a27666ce6f66fa3b`:
+  dense generated input matched 24/24 direct points per report;
+  sparse input abstained. Successful responses were `synthetic`, point-only and
+  carried the unvalidated-transfer `DEVICE_SHIFT` warning. This is generated CPU transport
+  evidence, not actual Apple source validation, compatibility for every artifact,
+  or real import → app chart evidence. The permitted actual source/app path is
+  still required; an admitted PMData report alone does not satisfy it.
+  [PR97's thinned-PMData validation](../../models/apple-density-pmdata-hourly-validation.md)
+  evaluates a separate predeclared density variant; it is not real-Apple
+  validation, artifact selection or an admission change to this pinned rehearsal.
 - #18's real check-in/scenario UI and later validated episode/scenario models
   still need their own integration evidence. #19's storage/demo gates, #20's
   final selected artifact/calibration and #21's separately consented held-out
   case remain prerequisites. No friend case, export or consent was created.
-- A real live response is privately saved; **offline replay is not implemented
-  or rendered**. It must visibly identify replay mode, recorded timestamp and
-  artifact and reproduce saved values with networking unavailable.
+- Standalone offline replay is delivered by PR86 and privately rendered with
+  the live API stopped: [the current receipt](replay-browser-e76626b.json) verifies
+  24 points, all 48 interval endpoints, cutoff, elapsed UTC geometry and source
+  provenance. Original `real`/`synthetic` mode is retained; `ReplayInfo`, recorded
+  and generated timestamps are visible. No point-only band is invented.
+  **Replay through the actual app remains unverified** and must preserve those
+  same values, times, units, artifact/snapshot/code, quality, warnings and replay
+  provenance with the live API stopped, including visible failure boundaries.
 - Network/job failures, full responsive/keyboard accessibility and all required
   real product states remain part of the final integrated rehearsal.
 
-Keep #22 open. This PR delivers runnable groundwork and real backend receipts;
-it does not close the full end-to-end acceptance issue.
+Keep #22 and the reopened [#26 full-delivery tracker](https://github.com/vibemonkies/hachi/issues/26)
+open until their acceptance evidence is delivered. PR69/86 deliver runnable
+backend/replay groundwork; they do not close the full app end-to-end gates.

@@ -1,0 +1,51 @@
+{
+  "archive_sha256": "52ca976e6c08daa0cf34b6b82f4fc69b8894c1eef66e598efa40197df4e380f4",
+  "boundary_verification": {
+    "chronos_requests_checked": 147,
+    "encoder_content_hashes_checked": 147,
+    "git_dirty": false,
+    "inference_run": false,
+    "outer_test_join_rows": 0,
+    "packet_files_sha256": {
+      "clinical-protocol.json": "60a4345a6feb8f4a192e6aec718e4b364d2f22a93ad8d227e1645d092ec6e82c",
+      "encoder-requests.jsonl": "e7b77364bdf82a9359b3b7ff47024351dcedaee1b4db961e97b94db055e3841b",
+      "fold-plan.json": "13dd73b4b3f2b6beabe105c5e577e86e935fa68edfdc117d8e9ebdc7c772fa5e",
+      "joins.json": "37f3ca65161739d0949db872b6f57170c71acdca28dec8c8d3becc1259f04252",
+      "protocol.json": "ca00446cc83ce84f2343b05730f0e06dc859ab3c2806264dbe702de63638a7d6",
+      "requests.jsonl": "92ecddf2cb878bf9355cb656ba63a31f6f9b5c60c22eb6eecf8da8747719627f",
+      "sources.json": "3de0f3a0427f0057c28871c1d2d3514860aa37b2552e883e121c4b45414e7581",
+      "summary.json": "7def684a32b2ea231cbb717132cb26897733fd23b97b5949c49bb344b8dedd21"
+    },
+    "private_directory_mode": "0700",
+    "private_files_mode": "0600",
+    "private_fold_joins_checked": 720,
+    "producing_commit": "2046c9cb3c8559be59e5e50f911f2ea608502b88",
+    "request_context_hours": 168,
+    "source_sha256": "2cecb6253af5d1a25c8c8ab42d09a499998d8cc2407765961ee204b2fd4bb168"
+  },
+  "clock": "floating_local_shifted",
+  "comparison_status": "pending",
+  "counts": {
+    "eligible_cutoffs": 240,
+    "heart_rate:bounded_points": 2567972,
+    "heart_rate:outside_requested_windows": 15699308,
+    "heart_rate:source_rows": 18267280,
+    "insufficient_hourly_context": 93,
+    "requested_cutoffs": 147,
+    "steps:bounded_points": 500287,
+    "steps:outside_requested_windows": 3020208,
+    "steps:source_rows": 3520495
+  },
+  "development_subjects_with_eligible_cutoffs": 30,
+  "encoder_request_file_sha256": "e7b77364bdf82a9359b3b7ff47024351dcedaee1b4db961e97b94db055e3841b",
+  "fold_plan_sha256": "13dd73b4b3f2b6beabe105c5e577e86e935fa68edfdc117d8e9ebdc7c772fa5e",
+  "git_sha": "1132c41a39092eadb99a088bfb597f1234ba2fc5",
+  "inference_status": "not_run",
+  "outer_test_status": "sealed",
+  "protocol_sha256": "ca00446cc83ce84f2343b05730f0e06dc859ab3c2806264dbe702de63638a7d6",
+  "request_file_sha256": "92ecddf2cb878bf9355cb656ba63a31f6f9b5c60c22eb6eecf8da8747719627f",
+  "request_rows_have_identities_or_labels": false,
+  "shared_protocol_sha256": "60a4345a6feb8f4a192e6aec718e4b364d2f22a93ad8d227e1645d092ec6e82c",
+  "unique_encoder_requests": 147,
+  "unique_requests": 147
+}

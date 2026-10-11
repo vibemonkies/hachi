@@ -20,6 +20,7 @@ import hashlib
 import json
 import math
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -106,22 +107,48 @@ def model_inputs(values: np.ndarray, means: np.ndarray, stds: np.ndarray) -> dic
     return arrays
 
 
+def moment_patch_support(mask: np.ndarray, patch: int = 8) -> np.ndarray:
+    """(n, channels) whether each series has one fully observed MOMENT patch (CPU recompute)."""
+    n, channels, length = mask.shape
+    return (mask.reshape(n, channels, length // patch, patch).sum(-1) == patch).any(-1)
+
+
 def feature_table(
-    hashes: np.ndarray, arrays: dict[str, np.ndarray], metadata: dict[str, str]
+    hashes: np.ndarray,
+    arrays: dict[str, np.ndarray],
+    metadata: dict[str, str],
+    support: dict[str, np.ndarray] | None = None,
 ) -> pa.Table:
+    """One row per request and model. ``supported`` is false when the encoder had no valid
+    input (MOMENT: no fully observed 8-hour patch) or the output is not finite; the vector is
+    then null, never a zero sentinel."""
     rows = []
     for model, matrix in sorted(arrays.items()):
-        for request, vector in zip(hashes, matrix, strict=True):
+        flags = (support or {}).get(model, np.ones(len(hashes), dtype=bool))
+        for request, vector, flag in zip(hashes, matrix, flags, strict=True):
+            finite = bool(np.isfinite(vector).all())
+            supported = bool(flag) and finite
             rows.append(
                 {
                     "request_sha256": str(request),
                     "model": model,
                     "dim": int(vector.shape[0]),
-                    "finite": bool(np.isfinite(vector).all()),
-                    "vector": vector.astype(np.float32).tolist(),
+                    "supported": supported,
+                    "finite": finite,
+                    "vector": vector.astype(np.float32).tolist() if supported else None,
                 }
             )
-    table = pa.Table.from_pylist(rows)
+    schema = pa.schema(
+        [
+            ("request_sha256", pa.string()),
+            ("model", pa.string()),
+            ("dim", pa.int64()),
+            ("supported", pa.bool_()),
+            ("finite", pa.bool_()),
+            ("vector", pa.list_(pa.float32())),
+        ]
+    )
+    table = pa.Table.from_pylist(rows, schema=schema)
     return table.replace_schema_metadata({k.encode(): v.encode() for k, v in metadata.items()})
 
 
@@ -194,6 +221,8 @@ def main() -> int:
             hashes = data["request_sha256"]
             channels = [str(c) for c in data["moment_channels"]]
             arrays = {k: data[k] for k in data.files if k.startswith("meanpool_")}
+            expected = moment_patch_support(data["moment_mask"])
+        support: dict[str, np.ndarray] = {}
         for path in (args.wbm, args.moment):
             with np.load(path, allow_pickle=False) as data:
                 if not np.array_equal(data["request_sha256"], hashes):
@@ -202,11 +231,20 @@ def main() -> int:
                     if name in WBM_VARIANTS:
                         arrays[name] = data[name]
                 if "moment" in data.files:
+                    ok = data["moment_ok"]
+                    if not np.array_equal(ok, expected):
+                        raise ValueError("runtime moment_ok differs from the inputs' patch support")
                     width = data["moment"].shape[1] // len(channels)
                     for i, channel in enumerate(channels):
                         name = {"heart_rate": "moment_hr", "steps": "moment_steps"}[channel]
                         arrays[name] = data["moment"][:, i * width : (i + 1) * width]
+                        support[name] = ok[:, i]
         metadata = {
+            "support_rule": (
+                "supported = finite output and, for MOMENT, a fully observed 8-hour patch "
+                "(runtime moment_ok, checked against the inputs' mask); "
+                "unsupported vectors are null"
+            ),
             "inputs_sha256": _sha(args.inputs),
             "wbm_sha256": _sha(args.wbm),
             "moment_sha256": _sha(args.moment),
@@ -214,7 +252,7 @@ def main() -> int:
             "moment_checkpoint": _checkpoint("moment"),
             "encoders": "frozen; never fitted on the requesting cohort",
         }
-        table = feature_table(hashes, arrays, metadata)
+        table = feature_table(hashes, arrays, metadata, support)
         pq.write_table(table, args.output)
         summary = {"rows": table.num_rows, "output_sha256": _sha(args.output)}
         if args.join_map is not None:
@@ -222,7 +260,20 @@ def main() -> int:
             target = args.output.with_name("oof-features.parquet")
             pq.write_table(joined, target)
             summary.update({"joined_rows": joined.num_rows, "oof_sha256": _sha(target)})
-        summary["finite"] = bool(all(table.column("finite").to_pylist()))
+        summary["supported_by_model"] = dict(
+            Counter(
+                r["model"]
+                for r in table.select(["model", "supported"]).to_pylist()
+                if r["supported"]
+            )
+        )
+        summary["unsupported_by_model"] = dict(
+            Counter(
+                r["model"]
+                for r in table.select(["model", "supported"]).to_pylist()
+                if not r["supported"]
+            )
+        )
         print(json.dumps(summary, indent=2))
         return 0
     except Exception as error:

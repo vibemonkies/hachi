@@ -170,3 +170,18 @@ def test_render_does_not_claim_unchecked_previous_runs():
     assert "not checked; no prior packets supplied" in rendered
     assert "722f51a after" not in rendered
     assert "-001" not in rendered
+
+
+def test_report_render_matches_canonical_json_order():
+    import json
+
+    from hachi.models.illness.evidence import render
+
+    report = json.loads(Path("reports/models/illness/phase1.json").read_bytes())
+    reordered = dict(reversed(list(report.items())))
+    reordered["past_survey_distribution_by_label"] = {
+        h: dict(reversed(list(groups.items())))
+        for h, groups in reversed(list(report["past_survey_distribution_by_label"].items()))
+    }
+    assert render(reordered) == render(report)
+    assert render(report) == Path("reports/models/illness/phase1.md").read_text()
