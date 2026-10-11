@@ -138,6 +138,11 @@ export default function App() {
             : workflow.kind === "uploading" || workflow.kind === "import-error"
               ? workflow.submission.dataMode
               : null;
+  const navigation = sections.map((item, index) => (
+    <a key={item} href={`#${item}`} onClick={(event) => event.currentTarget.closest("details")?.removeAttribute("open")} aria-current={section === item ? "page" : undefined}>
+      <span className="nav-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>{labels[item]}
+    </a>
+  ));
   const replaying = workflow.kind === "replay-loading" || workflow.kind === "replay-report";
   return (
     <>
@@ -156,27 +161,24 @@ export default function App() {
           <a className="brand" href="#import" aria-label="Hachi import">
             <span className="brand-mark">h</span>hachi
           </a>
-          <nav aria-label="Workspace sections">
-            {sections.map((item) => (
-              <a
-                key={item}
-                href={`#${item}`}
-                aria-current={section === item ? "page" : undefined}
-              >
-                {labels[item]}
-              </a>
-            ))}
-          </nav>
+          <p className="sidebar-label">YOUR WORKSPACE</p>
+          <nav className="desktop-navigation" aria-label="Workspace sections">{navigation}</nav>
+          <details className="section-menu">
+            <summary>Sections <span>{labels[section]}</span></summary>
+            <nav aria-label="Mobile workspace sections">{navigation}</nav>
+          </details>
+          <div className="sidebar-note"><span className="sidebar-dot" />Research workspace<p>Understand your signals.<br />Keep the context.</p><a href="#import">Manage your data <span aria-hidden="true">↗</span></a></div>
         </aside>
         <div className="main-column">
           <header className="topbar">
-            <span>Wearable research prototype</span>
+            <span>Personal health <span className="breadcrumb-divider">/</span> {labels[section]}</span>
             {replaying ? <span className="mode-badge">REPLAY</span> : dataMode ? <span className={`mode-badge mode-${dataMode}`}>{dataMode} data</span> : <span className="mode-badge">No data loaded</span>}
           </header>
-          <div className="synthetic-banner">Reports use the selected subject and UTC cutoff. Check source mode and provenance before interpreting results.</div>
+          <div className="synthetic-banner">Research prototype · Reports reflect the selected subject and UTC cutoff.</div>
           <main id="main" tabIndex={-1}>
+            <p className="eyebrow page-eyebrow">{section === "replay" ? "THE DEMO WORKSPACE" : "YOUR HEALTH, IN CONTEXT"}</p>
             <h1 ref={heading} tabIndex={-1}>
-              {labels[section]}
+              {section === "replay" ? "Your signals, in view." : labels[section]}
             </h1>
             <p
               className={["uploading", "importing", "coverage-loading", "reporting", "replay-loading"].includes(workflow.kind) ? "phase" : "sr-only"}

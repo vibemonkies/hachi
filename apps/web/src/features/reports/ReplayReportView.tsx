@@ -12,13 +12,11 @@ export function ReplayReportView({ job }: { job: ReportJob }) {
   const isAnomaly = result.task === "anomaly";
   return (
     <>
+      <p className="lead replay-intro">{isAnomaly ? "Explore the saved baseline deviation report." : "Explore the saved forecast, one signal at a time."} {result.data_mode === "synthetic" ? "This demo uses synthetic data, not your personal health measurements." : "This report is a saved replay, not a new model run."}</p>
       <div className="report-meta">
-        <p>Offline replay · recorded <strong>{result.replay.recorded_at_utc}</strong></p>
-        <p>Source report · <code>{result.replay.source_report_id}</code></p>
-        <p>Source mode · <strong>{result.data_mode}</strong></p>
-        <p>Subject · <code>{result.subject_id}</code> · cutoff {result.as_of}</p>
+        <span className="replay-label">SAVED REPORT</span><p>{isAnomaly ? "Report cutoff" : "Forecast from"} <strong>{result.as_of.slice(0, 16).replace("T", " ")}</strong> UTC</p>
       </div>
-      <TaskResultPanel title={isAnomaly ? "Baseline deviation" : "Forecast"} task={{ kind: "result", result }} expectedTask={isAnomaly ? "anomaly" : "physiology_forecast"} expanded />
+      <TaskResultPanel title={isAnomaly ? "Baseline deviation" : "Forecast"} task={{ kind: "result", result }} expectedTask={isAnomaly ? "anomaly" : "physiology_forecast"} expanded={false} />
     </>
   );
 }

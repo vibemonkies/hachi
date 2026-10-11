@@ -50,20 +50,20 @@ export function ReportView({
   return (
     <>
       <div className="report-meta">
-        <p>As of <strong>{asOf}</strong></p>
+        <p>UTC cutoff <strong>{asOf}</strong></p>
         <span className={`mode-badge mode-${coverage.data_mode}`}>{coverage.data_mode} data</span>
         <span>{subject.imported ? `Import · ${subject.imported.import_id}` : `Subject · ${subject.subjectId}`}</span>
         <a href="#import">Review coverage or change cutoff</a>
       </div>
-      {section === "overview" && (
-        <div className="reading-list">
-          <a href="#forecast"><span>Forecast report</span><strong>{resultTitle(reports.forecast, "physiology_forecast")}</strong><span>Open forecast values and provenance</span></a>
-          <a href="#anomaly"><span>Baseline deviation</span><strong>{resultTitle(reports.anomaly, "anomaly")}</strong><span>Open anomaly timeline and alert state</span></a>
-        </div>
-      )}
       {taskResults.map(({ title, task, kind, expectedTask }) => (
         <TaskResultPanel key={kind} title={title} task={task} expectedTask={expectedTask} expanded={design === "analysis"} />
       ))}
+      {section === "overview" && (
+        <div className="reading-list">
+          <a href="#forecast"><span>Forecast report</span><strong>{resultTitle(reports.forecast, "physiology_forecast")}</strong><span>Explore the next 24 hours</span></a>
+          <a href="#anomaly"><span>Baseline deviation</span><strong>{resultTitle(reports.anomaly, "anomaly")}</strong><span>Explore deviation from baseline</span></a>
+        </div>
+      )}
       {(section === "overview" || section === "anomaly") && (
         <UnavailableTasks coverage={coverage} />
       )}
@@ -101,15 +101,7 @@ export function TaskResultPanel({
         <h2>{title} unavailable</h2>
         <p>{result.requirements[0]}</p>
         <p>Reason · <code>{result.reason_code}</code></p>
-        <div className="result-identity">
-          <span className={`mode-badge mode-${result.data_mode}`}>{result.data_mode} data</span>
-          {result.replay && <span>REPLAY · {result.replay.recorded_at_utc}</span>}
-          <span>Report · {result.report_id}</span>
-          {result.provenance?.artifact && <span>Model · {result.provenance.artifact.artifact_id} · {result.provenance.artifact.artifact_sha256}</span>}
-          {result.provenance?.dataset_snapshot && <span>Dataset · {result.provenance.dataset_snapshot.dataset_id} / {result.provenance.dataset_snapshot.dataset_version}</span>}
-          {result.provenance?.feature_coverage.map((feature) => <span key={feature.metric}>Input coverage · {labels[feature.metric] ?? feature.metric} {Math.round(feature.coverage * 100)}%</span>)}
-          <span>Code · {result.git_sha}</span>
-        </div>
+        <ResultIdentity result={result} />
         {result.warnings.map((warning) => <p key={warning.code} className="warning-line"><strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}</p>)}
         {result.requirements.length > 1 && <ul>{result.requirements.slice(1).map((requirement) => <li key={requirement}>{requirement}</li>)}</ul>}
       </div>
@@ -126,7 +118,26 @@ export function TaskResultPanel({
     const forecastSeries = result.forecast.series;
     const pointOnly = forecastSeries.length > 0 && forecastSeries.every(isPointOnly);
     return (
-      <section className="result-card">
+      <section className="forecast-dashboard" aria-label="Forecast report">
+        <div className="signal-summaries">
+          {forecastSeries.map((series, index) => {
+            const values = series.points.map((point) => point.median);
+            const minimum = values.length ? Math.min(...values) : null;
+            const maximum = values.length ? Math.max(...values) : null;
+            return <button type="button" className={`signal-summary${index === 0 ? " signal-primary" : ""}`} key={series.metric} onClick={() => {
+              const chart = document.getElementById(`forecast-signal-${series.metric}`);
+              chart?.focus({ preventScroll: true });
+              chart?.scrollIntoView({ behavior: "auto", block: "start" });
+            }}>
+              <span className="signal-label">{labels[series.metric] ?? series.metric.replaceAll("_", " ")} <span aria-hidden="true">↗</span></span>
+              <strong>{minimum === null ? "—" : minimum === maximum ? minimum : `${minimum}–${maximum}`} <small>{series.unit}</small></strong>
+              <span className="signal-caption">{values.length ? `Median range · ${values.length} supplied points` : "No forecast points"}</span>
+            </button>;
+          })}
+          {result.forecast.unavailable_metrics.map((item) => <div className="signal-summary signal-unavailable" key={item.metric}><span className="signal-label">{labels[item.metric] ?? item.metric.replaceAll("_", " ")}</span><strong>Unavailable</strong><span className="signal-caption">Not included in this forecast</span></div>)}
+        </div>
+        <div className="chart-section-heading"><h2>The forecast</h2><span>Next 24 hours · UTC</span></div>
+        <div className="result-card">
         <ResultIdentity result={result} />
         {result.warnings.filter((warning) => !(pointOnly && warning.code === "UNCALIBRATED_INTERVALS")).map((warning) => <p key={warning.code} className={`warning-line${warning.code === "DEVICE_SHIFT" ? " device-shift-warning" : ""}`}>
           {warning.code === "DEVICE_SHIFT" && <strong className="device-shift-label">Unvalidated device transfer</strong>}
@@ -139,6 +150,7 @@ export function TaskResultPanel({
             <ul>{result.forecast.unavailable_metrics.map((item) => <li key={item.metric}>{labels[item.metric] ?? item.metric} · {item.reason_code}</li>)}</ul>
           </div>
         )}
+        </div>
       </section>
     );
   }
@@ -159,20 +171,27 @@ export function TaskResultPanel({
   );
 }
 
-function ResultIdentity({ result }: { result: Extract<ReportResult, { status: "ok" | "error" }> }) {
-  const artifact = result.status === "ok" ? result.provenance.artifact : null;
-  const snapshot = result.status === "ok" ? result.provenance.dataset_snapshot : null;
+function ResultIdentity({ result }: { result: ReportResult }) {
+  const provenance = "provenance" in result ? result.provenance : null;
+  const artifact = provenance?.artifact;
+  const snapshot = provenance?.dataset_snapshot;
   return (
     <div className="result-identity">
       <span className={`mode-badge mode-${result.data_mode}`}>{result.data_mode} data</span>
-      {result.replay && <span className="mode-badge">REPLAY · {result.replay.recorded_at_utc}</span>}
-      <span>Report · {result.report_id}</span>
-      <span>Model · {artifact ? `${artifact.artifact_id} · ${artifact.artifact_sha256}` : "not available"}</span>
-      {snapshot && <span>Dataset · {snapshot.dataset_id} / {snapshot.dataset_version}</span>}
-      <span>Code · {result.git_sha}</span>
-      {result.status === "ok" && result.provenance.feature_coverage.length > 0 && (
-        <span>Input coverage · {result.provenance.feature_coverage.map((feature) => `${labels[feature.metric] ?? feature.metric} ${Math.round(feature.coverage * 100)}%`).join(" · ")}</span>
-      )}
+      {result.replay && <span className="mode-badge">Offline replay</span>}
+      <details className="source-details">
+        <summary>Source &amp; methods</summary>
+        <div className="source-fields">
+          <span>Report | {result.report_id}</span>
+          <span>Subject | {result.subject_id}</span>
+          <span>UTC cutoff | {result.as_of}</span>
+          {result.replay && <><span>Replay recorded | {result.replay.recorded_at_utc}</span><span>Source report | {result.replay.source_report_id}</span></>}
+          <span>Model | {artifact ? `${artifact.artifact_id} | ${artifact.artifact_sha256}` : "not available"}</span>
+          {snapshot && <span>Dataset | {snapshot.dataset_id} / {snapshot.dataset_version}</span>}
+          <span>Code | {result.git_sha}</span>
+          {provenance?.feature_coverage.map((feature) => <span key={feature.metric}>Input coverage | {labels[feature.metric] ?? feature.metric} {Math.round(feature.coverage * 100)}%</span>)}
+        </div>
+      </details>
     </div>
   );
 }
@@ -202,10 +221,10 @@ function ForecastChart({ series, expanded, asOf }: { series: ForecastSeries; exp
   const path = series.points.map((point, index) => `${index ? "L" : "M"}${x(point.interval_start_utc)},${y(point.median)}`).join(" ");
   const metricName = labels[series.metric] ?? series.metric.replaceAll("_", " ");
   return (
-    <figure className="plot api-plot">
+    <figure className="plot api-plot" id={`forecast-signal-${series.metric}`} tabIndex={-1}>
       <figcaption>
         <h2>{metricName} forecast · {series.unit}</h2>
-        <p>Values and timestamps come directly from the hourly report response. Missing or unsupported signals remain unavailable instead of receiving a fabricated series.</p>
+        <p>{series.points.length} supplied forecast points · {asOf.slice(0, 16).replace("T", " ")} to {new Date(end).toISOString().slice(0, 16).replace("T", " ")} UTC</p>
       </figcaption>
       {pointOnly ? (
         <p className="warning-line"><strong>Point estimates only.</strong> No interval bounds or coverage claim are supplied.</p>
@@ -220,10 +239,10 @@ function ForecastChart({ series, expanded, asOf }: { series: ForecastSeries; exp
         <svg viewBox="0 0 680 270" role="img" aria-label={`${metricName} median forecast${pointOnly ? " points without intervals" : " with interval bounds"}`}>
           {[low, (low + high) / 2, high].map((value) => <g key={value}><line x1="58" x2="640" y1={y(value)} y2={y(value)} className="grid-line" /><text x="8" y={y(value) + 4}>{value.toFixed(1)}</text></g>)}
           <text x="8" y="18">{series.unit}</text>
-          {ticks.map((timestamp) => {
+          {ticks.map((timestamp, index) => {
             const iso = new Date(timestamp).toISOString();
             const position = x(iso);
-            return <g key={timestamp}><line x1={position} x2={position} y1="42" y2="220" className="grid-line" /><text x={position} y="254" textAnchor={timestamp === ticks[0] ? "start" : timestamp === ticks.at(-1) ? "end" : "middle"}>{iso.slice(5, 16).replace("T", " ")}</text></g>;
+            return <g key={timestamp} className={index % 2 ? "alternate-tick" : undefined}><line x1={position} x2={position} y1="42" y2="220" className="grid-line" /><text x={position} y="254" textAnchor={timestamp === ticks[0] ? "start" : timestamp === ticks.at(-1) ? "end" : "middle"}>{iso.slice(11, 16)}</text></g>;
           })}
           {series.points.map((point) => <g key={point.interval_start_utc}>
             {showBounds && point.lower !== null && point.upper !== null && <line x1={x(point.interval_start_utc)} x2={x(point.interval_start_utc)} y1={y(point.lower)} y2={y(point.upper)} className="interval" />}
@@ -277,9 +296,9 @@ function AnomalyChart({ result, expanded }: { result: AnomalyResult; expanded: b
           {[min, (min + max) / 2, max].map((value) => <g key={value}><line x1="58" x2="640" y1={y(value)} y2={y(value)} className="grid-line" /><text x="8" y={y(value) + 4}>{value.toFixed(2)}</text></g>)}
           <line x1="58" x2="640" y1={y(anomaly.alert_threshold)} y2={y(anomaly.alert_threshold)} className="threshold" />
           <text x="8" y="18">score</text>
-          {ticks.map((timestamp) => {
+          {ticks.map((timestamp, index) => {
             const iso = new Date(timestamp).toISOString();
-            return <g key={timestamp}><line x1={x(iso)} x2={x(iso)} y1="42" y2="220" className="grid-line" /><text x={x(iso)} y="254" textAnchor={timestamp === ticks[0] ? "start" : timestamp === ticks.at(-1) ? "end" : "middle"}>{iso.slice(5, 16).replace("T", " ")}</text></g>;
+            return <g key={timestamp} className={index % 2 ? "alternate-tick" : undefined}><line x1={x(iso)} x2={x(iso)} y1="42" y2="220" className="grid-line" /><text x={x(iso)} y="254" textAnchor={timestamp === ticks[0] ? "start" : timestamp === ticks.at(-1) ? "end" : "middle"}>{iso.slice(5, 16).replace("T", " ")}</text></g>;
           })}
           <path d={path} className="series" />
           {anomaly.timeline.map((point) => point.score === null ? <text key={point.interval_start_utc} x={x(point.interval_start_utc)} y="238" textAnchor="middle">abstained</text> : <circle key={point.interval_start_utc} cx={x(point.interval_start_utc)} cy={y(point.score)} r="4" className={point.alert ? "alert-dot" : "dot"} />)}
