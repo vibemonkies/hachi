@@ -1,0 +1,182 @@
+{
+  "baseline_run_index_sha256": "0391757bfd7d35a8a358d23cc14cbde4d537013de49b326598791adb08dd91f4",
+  "candidate": "causal-hourly-tree-v1",
+  "comparisons": {
+    "hourly-last-valid-v1": {
+      "counts": {
+        "baseline_only_points": 118,
+        "baseline_scored_points": 1599,
+        "both_abstained_points": 0,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "differences": {
+        "mae": {
+          "confidence_interval": [
+            -3.1418677600362828,
+            -0.45813750037335194
+          ],
+          "participants": 12,
+          "value": -1.804626490602546
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -1.5709338800181414,
+            -0.22906875018667597
+          ],
+          "participants": 12,
+          "value": -0.902313245301273
+        },
+        "rmse": {
+          "confidence_interval": [
+            -4.383649001032871,
+            -1.4365338245604655
+          ],
+          "participants": 12,
+          "value": -2.984398182048109
+        }
+      }
+    },
+    "train-population-mean-v1": {
+      "counts": {
+        "baseline_only_points": 118,
+        "baseline_scored_points": 1599,
+        "both_abstained_points": 0,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "differences": {
+        "mae": {
+          "confidence_interval": [
+            -2.9807753264899546,
+            0.11963124896730672
+          ],
+          "participants": 12,
+          "value": -1.5329417887877312
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -1.4903876632449773,
+            0.05981562448365336
+          ],
+          "participants": 12,
+          "value": -0.7664708943938656
+        },
+        "rmse": {
+          "confidence_interval": [
+            -2.6000531535038065,
+            0.1350329811779082
+          ],
+          "participants": 12,
+          "value": -1.319243359277454
+        }
+      }
+    },
+    "utc-seasonal-naive-v1": {
+      "counts": {
+        "baseline_only_points": 77,
+        "baseline_scored_points": 1464,
+        "both_abstained_points": 41,
+        "candidate_only_points": 94,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1387
+      },
+      "differences": {
+        "mae": {
+          "confidence_interval": [
+            -2.3619053542303674,
+            0.6738689879176788
+          ],
+          "participants": 12,
+          "value": -0.8109287576755347
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -1.1809526771151837,
+            0.3369344939588394
+          ],
+          "participants": 12,
+          "value": -0.40546437883776737
+        },
+        "rmse": {
+          "confidence_interval": [
+            -3.8730351200413202,
+            -0.8715927060712096
+          ],
+          "participants": 12,
+          "value": -2.3897516828405294
+        }
+      }
+    }
+  },
+  "data_mode": "real",
+  "definition": "candidate minus baseline, equal participant paired differences",
+  "git_dirty": false,
+  "git_sha": "88c7375913560b9c5463791c74899e67cdf455bc",
+  "outer_test_sealed": true,
+  "private_packet_refs": [
+    {
+      "comparison_sha256": "1be1ee2a8df49369e84f15f5b905b4847ee4270d673ddb06de79f99f7564e6dc",
+      "path": "outer-0-inner-0/hourly-last-valid-v1"
+    },
+    {
+      "comparison_sha256": "b12a391ac9d342d65922d799c2e60e0ddc4594b71a0c5eb92a1044c0106e10a6",
+      "path": "outer-0-inner-0/train-population-mean-v1"
+    },
+    {
+      "comparison_sha256": "6f744cde73c2647f7ba6918dfa78f625f2989349c3f80639977309b29e89c704",
+      "path": "outer-0-inner-0/utc-seasonal-naive-v1"
+    },
+    {
+      "comparison_sha256": "72df5fee18fb74c28aa2675b019b5bc4e51121d96d46b72356a02dc2c20f7fcf",
+      "path": "outer-0-inner-1/hourly-last-valid-v1"
+    },
+    {
+      "comparison_sha256": "f2ab14085b7079708f2ec742770d9f86db51acd4eac02dd0795ac74a79513cdc",
+      "path": "outer-0-inner-1/train-population-mean-v1"
+    },
+    {
+      "comparison_sha256": "c72157635034d50d465c114120ec59c2738da563984e13351d0c6c72d65d3a2c",
+      "path": "outer-0-inner-1/utc-seasonal-naive-v1"
+    },
+    {
+      "comparison_sha256": "496e05323e6031bffb2bcfa08be5a1256f6982796b17023e94faa83e35b75ce9",
+      "path": "outer-0-inner-2/hourly-last-valid-v1"
+    },
+    {
+      "comparison_sha256": "f624efbebfce560e4b60d68d262e9dfd971694b64fca8bfaf5b0c8d5ceb56f9c",
+      "path": "outer-0-inner-2/train-population-mean-v1"
+    },
+    {
+      "comparison_sha256": "082c91d5587afe2e1098853efa0647aa383d2846251b6f583fd7560521b11115",
+      "path": "outer-0-inner-2/utc-seasonal-naive-v1"
+    }
+  ],
+  "promotion": "none; paired error is conditional on joint coverage; inner validation only",
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "resources": {
+    "elapsed_seconds": 26.5872417089995,
+    "peak_rss_bytes": 633503744,
+    "scope": "whole comparison process, including verification and saved-model replay"
+  }
+}
