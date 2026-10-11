@@ -6,9 +6,94 @@ assignee remains CoffeeCoder1015. Parent SnowyFortress confirmed the delegated
 tooling scope through hachi-mail. Work chat:
 `t3-thread://v1/mcp:7a352bae-fe61-4baf-8d94-fdc8ae1db703`.
 
-The real baseline **backend** and independent private replay consumer paths passed.
-The product's real import → report → chart and app replay remain unverified. No final model is
-selected, no outer test was opened, and no clinical/product gate is waived.
+The original CPU PMData backend, actual PR111 existing-subject → report → chart,
+and private app replay paths passed at the exact producing source below. Real
+Apple import → chart, selected-product-artifact parity and the full rehearsal
+remain incomplete. This lane did not select a model, open outer test or waive a
+clinical/product gate.
+
+## Actual app runtime at PR111 0b58f4e
+
+JadeOx exercised public [PR111](https://github.com/vibemonkies/hachi/pull/111) at
+clean `0b58f4e7358a1bcc1f29c036eac98c954a808449` in an owned detached review checkout,
+with fresh private operator/SQLite/artifact roots outside Git. Coffee's app,
+Misty's check-ins and Windy's API source were not edited. The prior T3 branch
+remains preserved; this evidence follow-up uses `issue-22-app-runtime-evidence`.
+The exact [launch runbook](../../../scripts/rehearsal/README.md#browser-integration-and-honest-gates)
+uses loopback API8720, web5180 and a separate replay8729. No tunnel or deployment
+was created. The original CPU artifact and frozen inner-validation packet remain
+pinned; PR107's corrected Apple artifact and the selected 720-hour artifact were
+not staged in this run.
+
+[API receipt](api-0b58f4e.json), [cache projection receipt](replay-0b58f4e.json)
+and [actual app aggregate receipt](app-runtime-0b58f4e.json) record separate proof:
+
+- API: all 25 frozen validation origins / 600 points match both the packet and
+  independent evaluator, with zero missing/extra/value differences. Original
+  artifact, snapshot, code, units, real mode, quality and null interval bounds
+  remain intact; outer test is sealed. Local report latency was 0.079–0.158 s,
+  mean 0.125 s, for this comparator/run, not a product performance benchmark.
+- Actual app live: **one** frozen validation origin, 24 points / 48 interval
+  endpoints, zero numeric/time/geometry mismatches. Existing-subject coverage,
+  cutoff, review, request and forecast navigation use the real app/API path.
+  The whole live result equals the frozen saved response. The separate 600-point
+  API proof establishes packet/direct correspondence; the app did not display
+  all 600 points. Private input values came from the trusted saved response via
+  ordinary field input events; buttons/navigation were native controls. No report
+  or React-state injection occurred.
+- Actual app replay: the same 24 points / 48 endpoints match with API8720
+  physically stopped. Original real mode, artifact/snapshot/code, units, quality,
+  cutoff and replay recorded/source metadata are visible. The response is
+  unchanged except `ReplayInfo`. The recorded replay phase made zero
+  `/v1/reports` requests and two `/replay/report` requests, including the oracle.
+  A missing-cache provider returns HTTP409 `CACHE_MISSING`: the actual app shows
+  an alert/retry, zero chart points and no live substitution.
+- Generated Apple transport: actual native file upload/import polling/coverage/
+  report controls consumed 576 generated HR records and rendered truthful
+  `unavailable / NO_ARTIFACT_FOR_TASK`. This staged artifact has no Apple
+  admission. The generated XML, fictional source dates and synthetic mode are
+  distinct from a real export; no real Apple upload or accuracy is claimed.
+- Generated staggered replay: five points / ten endpoints match on a shared UTC
+  scale, leaving three target-gap windows and the unavailable HRV reason intact.
+  The actual app positions interval starts; the PR86 standalone viewer positions
+  midpoints. Neither stretches series over missing target windows. Point-only
+  output has no invented interval band. At 390px the body does not overflow;
+  chart/table regions scroll locally and are keyboard focusable. This is scoped
+  responsive evidence, not a complete accessibility audit.
+
+[`app_compare.js`](../../../scripts/rehearsal/app_compare.js) is the reusable
+read-only local DOM/API oracle. Its hash, source/build/locks, exact served-index
+match, aggregate comparisons, owned PIDs/sessions and exit statuses are in the
+app receipt. It intentionally refuses interval-bearing model comparisons; a
+separate selected-720-hour oracle remains required. TypeScript/Vite build and
+all 19 focused runtime/replay tests passed. The build's >500kB chunk warning is
+nonblocking and unchanged. No full repository check or scientific comparison
+was rerun for this evidence follow-up.
+
+These fresh T3 browser screenshots contain generated synthetic content or an
+empty error only; exact hashes, viewport and original capture-file times are
+recorded in the app receipt:
+
+- [Generated Apple coverage review](app-0b58-synthetic-apple-coverage.png)
+- [Generated Apple unavailable response, phone](app-0b58-synthetic-apple-unavailable-phone.png)
+- [Missing-cache refusal, phone](app-0b58-missing-cache-phone.png)
+- [Generated gap replay, desktop](app-0b58-synthetic-gap-replay-desktop.png)
+- [Generated replay provenance, phone](app-0b58-synthetic-gap-replay-phone.png)
+
+No real page was snapshotted/screenshot or raw DOM/network response emitted.
+Saved responses, actual values/times and private oracle inputs remain outside
+Git. All owned API/web/replay sessions and tabs are stopped/closed; no listener
+remains on8720/5180/8729. Exit130 records intentional SIGINT of retained shells,
+not a hidden failed request.
+
+The run detected an invalid native HTML subject-ID pattern and reported it to
+[Coffee](https://github.com/vibemonkies/hachi/pull/111#issuecomment-6111003942).
+Coffee subsequently published `8ee2c12`; that correction is not part of this
+tested source. A separately reported fractional-cutoff control defect remains
+in Coffee's lane. Later source needs fresh binding before merge readiness is
+claimed. The historical API receipt's gate notes reflect its API-only scope;
+this app receipt supersedes those notes for the observed app paths. Full #22
+acceptance, actual Apple case/consent and selected-artifact parity remain open.
 
 ## Private replay consumer follow-up
 
@@ -249,15 +334,12 @@ and independent review before merge.
 
 ## Outstanding acceptance gates
 
-- #17's owner must publish the actual UI implementation so this lane can run its
-  real report/chart path and privately compare displayed values, artifact, units,
-  mode and quality with the API. Its checkpoint is currently unpublished.
-  Coffee's [confirmed local checkpoint](https://github.com/vibemonkies/hachi/issues/17#issuecomment-6108831979)
-  is `659415b`; his authorization reserves CI-triggering publication. That older
-  reported checkpoint proxies to 8717 with no API-base setting and has no
-  existing-PMData-subject entry seam. Its code and any later local changes remain
-  unavailable here; these are reported constraints, not a fresh source review.
-  A local proxy override would not by itself create a supported import path.
+- #17's unpublished-source gate is resolved by public PR111. Actual existing-
+  PMData app and offline replay pass at `0b58f4e` as recorded above. Coffee owns
+  subsequent app corrections and source integration; a newer passing build is
+  not this producing head's rendered evidence. The native HTML pattern defect
+  has a subsequent source correction, while fractional-cutoff fidelity has a
+  separately reported correction request. Root owns merge readiness.
 - Apple input is admitted **per artifact**. This rehearsal's frozen PMData
   comparator has no Apple admission and returns `unavailable` /
   `NO_ARTIFACT_FOR_TASK` for that source. PR85/91 support an explicit serving
@@ -274,26 +356,32 @@ and independent review before merge.
   sparse input abstained. Successful responses were `synthetic`, point-only and
   carried the unvalidated-transfer `DEVICE_SHIFT` warning. This is generated CPU transport
   evidence, not actual Apple source validation, compatibility for every artifact,
-  or real import → app chart evidence. The permitted actual source/app path is
-  still required; an admitted PMData report alone does not satisfy it.
+  or real Apple import → app chart evidence. The permitted real Apple source/app
+  path is still required; the observed admitted PMData app report does not
+  satisfy that distinct case gate.
   [PR97's thinned-PMData validation](../../models/apple-density-pmdata-hourly-validation.md)
   evaluates a separate predeclared density variant; it is not real-Apple
   validation, artifact selection or an admission change to this pinned rehearsal.
-- #18's real check-in/scenario UI and later validated episode/scenario models
-  still need their own integration evidence. #19's storage/demo gates, #20's
-  final selected artifact/calibration and #21's separately consented held-out
-  case remain prerequisites. No friend case, export or consent was created.
+- #18's complete check-in/scenario UI and later validated episode/scenario models
+  still need their own integration evidence. PR112's history cutoff fix is
+  mounted in the producing app; it is not full #18 acceptance. #19 is accepted
+  and closed. #20's selected-artifact/calibration/test/freeze parity and #21's
+  separately consented held-out case remain prerequisites. The real Apple export
+  and illness timeline are unavailable and consent is unconfirmed. No friend
+  case, export or consent was created.
 - Standalone offline replay is delivered by PR86 and privately rendered with
   the live API stopped: [the current receipt](replay-browser-e76626b.json) verifies
   24 points, all 48 interval endpoints, cutoff, elapsed UTC geometry and source
   provenance. Original `real`/`synthetic` mode is retained; `ReplayInfo`, recorded
   and generated timestamps are visible. No point-only band is invented.
-  **Replay through the actual app remains unverified** and must preserve those
-  same values, times, units, artifact/snapshot/code, quality, warnings and replay
-  provenance with the live API stopped, including visible failure boundaries.
+  Actual app replay now passes the separately pinned `0b58f4e` comparison,
+  retaining the original CPU response with the API stopped and showing an
+  explicit missing-cache error. Selected-artifact replay, subsequent app source
+  and all required product failure states need their own evidence.
 - Network/job failures, full responsive/keyboard accessibility and all required
   real product states remain part of the final integrated rehearsal.
 
 Keep #22 and the reopened [#26 full-delivery tracker](https://github.com/vibemonkies/hachi/issues/26)
 open until their acceptance evidence is delivered. PR69/86 deliver runnable
-backend/replay groundwork; they do not close the full app end-to-end gates.
+backend/replay groundwork; the PR111 original-CPU app proof adds a real existing-
+subject path, but does not close the full app/case/scientific gates.
