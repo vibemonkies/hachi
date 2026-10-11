@@ -1,0 +1,117 @@
+{
+  "checks": [
+    {
+      "fitted_state_identical": true,
+      "inner": 0,
+      "model": "last_valid",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 0,
+      "model": "seasonal_naive",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 0,
+      "model": "train_population_mean",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 0,
+      "model": "tree",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 1,
+      "model": "last_valid",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 1,
+      "model": "seasonal_naive",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 1,
+      "model": "train_population_mean",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 1,
+      "model": "tree",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 2,
+      "model": "last_valid",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 2,
+      "model": "seasonal_naive",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 2,
+      "model": "train_population_mean",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    },
+    {
+      "fitted_state_identical": true,
+      "inner": 2,
+      "model": "tree",
+      "mutated_input_bins": 32236,
+      "outer": 0,
+      "planned_origins": 4,
+      "predictions_and_counts_identical": true
+    }
+  ],
+  "data_mode": "real_input_sentinel",
+  "executed_git_sha": "26bd84f656b6814216c697fb6931c96e80719c6a",
+  "outer_test_sealed": true,
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "script_sha256": "56be1ac859f128db1265d4976741ef2d33cc54fc25b565082fa560365680b7b3"
+}

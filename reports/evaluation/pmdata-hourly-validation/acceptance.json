@@ -1,0 +1,25 @@
+{
+  "dataset_snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47",
+  "packet_integrity": {
+    "baseline_files_verified": 124,
+    "embargo_files_verified": 124,
+    "lookback_files_verified": 124,
+    "paired_files_verified": 145,
+    "participant_intersections": 0,
+    "private_modes_verified": true,
+    "split_counts_each": {
+      "test": 4,
+      "train": 8,
+      "validation": 4
+    }
+  },
+  "raw_reconciliation": {
+    "distinct_checks": 15,
+    "mismatches": 0,
+    "ok": true,
+    "subjects_sampled": 4,
+    "values_checked": 2400
+  },
+  "source_archive_sha256": "53a49d94a2e9713fb8a0fc57d4d9dec3e1e4d2ae866969cd1f7537a5bc125357",
+  "source_build_seconds": 386.2
+}
