@@ -50,7 +50,14 @@ def _issue(location: tuple, message: str) -> FieldIssue:
 
 def validation_problem(error: ValidationError, prefix: tuple = ()) -> ApiProblem:
     """Field issues name the location and rule only; submitted values are never echoed."""
-    issues = [_issue(prefix + tuple(e["loc"]), e["msg"]) for e in error.errors()]
+    issues = []
+    for issue in error.errors(include_input=False, include_context=False):
+        location = tuple(issue["loc"])
+        # Extra field names are user input too. Contract-generated locations are safe;
+        # drop the untrusted key for extra_forbidden instead of echoing it as a path.
+        if issue["type"] == "extra_forbidden":
+            location = location[:-1]
+        issues.append(_issue(prefix + location, "Invalid value for this field or contract rule."))
     return ApiProblem(
         "VALIDATION_FAILED", "The request does not match the contract.", issues=issues
     )

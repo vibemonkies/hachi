@@ -3,6 +3,8 @@
 import logging
 
 import pytest
+
+pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
 from hachi.api.app import create_app
@@ -114,3 +116,68 @@ def test_cross_subject_resolution_cannot_reference_another_subject(private_api):
     assert response.status_code == 422
     assert not client.app.state.service.metadata.self_reports("synthetic-b")
     assert len(client.app.state.service.metadata.self_reports("synthetic-a")) == 1
+
+
+def test_streaming_upload_limit_leaves_no_raw_staging(private_api):
+    from dataclasses import replace
+
+    from hachi.data.apple_health import ImportLimits
+
+    client, settings = private_api
+    service = client.app.state.service
+    service.settings = replace(settings, import_limits=ImportLimits(upload_bytes=64))
+    response = client.post(
+        "/v1/imports",
+        params={
+            "subject_id": "synthetic-limit",
+            "tz_name": "UTC",
+            "source_format": "apple_health_export_xml",
+            "data_mode": "synthetic",
+        },
+        content=iter([b"x" * 40, b"x" * 40]),
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    assert response.status_code == 413
+    assert not list(settings.workspace.uploads.iterdir())
+    assert not list(settings.workspace.imports.iterdir())
+    assert not service.metadata.subject_known("synthetic-limit")
+
+
+def test_failed_file_deletion_keeps_metadata_for_retry(private_api, monkeypatch):
+    import hachi.api.service as module
+
+    client, settings = private_api
+    uploaded = client.post(
+        "/v1/imports",
+        params={
+            "subject_id": "synthetic-retry",
+            "tz_name": "UTC",
+            "source_format": "apple_health_export_xml",
+            "data_mode": "synthetic",
+        },
+        content=b"<HealthData></HealthData>",
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    assert uploaded.status_code == 202
+    service = client.app.state.service
+    assert service.runner.wait_idle()
+    iid = uploaded.json()["import_id"]
+    original = module.remove_tree
+
+    def refused(path):
+        raise OSError("generated deletion fault")
+
+    monkeypatch.setattr(module, "remove_tree", refused)
+    response = client.delete("/v1/subjects/synthetic-retry", params={"confirm": "synthetic-retry"})
+    assert response.status_code == 500
+    assert settings.workspace.import_directory(iid).exists()
+    assert service.metadata.subject_known("synthetic-retry")
+    monkeypatch.setattr(module, "remove_tree", original)
+    assert (
+        client.delete(
+            "/v1/subjects/synthetic-retry", params={"confirm": "synthetic-retry"}
+        ).status_code
+        == 204
+    )
+    assert not settings.workspace.import_directory(iid).exists()
+    assert not service.metadata.subject_known("synthetic-retry")

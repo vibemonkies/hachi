@@ -22,6 +22,21 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+# Controlled fault injection exercises the production CLI's Uvicorn traceback filter.
+# Only this generated subject fails; upload/delete/report paths are unmodified.
+FAULT_PROBE = """
+import sys
+from hachi.api.service import Service
+from hachi.api.__main__ import main
+original = Service.coverage
+def coverage(self, subject_id, params):
+    if subject_id == 'synthetic-fault':
+        raise RuntimeError('SYNTHETIC-PRIVATE-SENTINEL-19')
+    return original(self, subject_id, params)
+Service.coverage = coverage
+raise SystemExit(main(sys.argv[1:]))
+"""
+
 SENTINEL = "SYNTHETIC-PRIVATE-SENTINEL-19"
 XML = (
     '<HealthData><Record type="HKQuantityTypeIdentifierHeartRate" sourceName="'
@@ -106,6 +121,30 @@ def verify(base: str, root: Path, git_sha: str) -> dict:
         status == 200 and health["git_sha"] == git_sha and health["artifacts"] == [],
         "fresh_exact_checkout_no_models",
     )
+    status, _, raw = request("GET", "/v1/subjects/synthetic-fault/coverage")
+    require(status == 500 and SENTINEL.encode() not in raw, "unexpected_fault_safe_response")
+    status, _, raw = request(
+        "POST",
+        "/v1/scenarios",
+        {
+            "schema_version": "0.1",
+            "subject_id": "synthetic-fault",
+            "tz_name": "UTC",
+            "schedules": [
+                {
+                    "schedule_id": SENTINEL,
+                    "bedtime_local": "2026-10-10T22:00:00",
+                    "wake_time_local": "2026-10-10T21:00:00",
+                }
+            ],
+            "assumptions": {
+                "prior_sleep_hours": 7.0,
+                "caffeine": "none",
+                "light_exposure": "not_modeled",
+            },
+        },
+    )
+    require(status == 422 and SENTINEL.encode() not in raw, "validation_error_safe_response")
     keep_status, keep, _ = upload("synthetic-keep", XML)
     require(keep_status == 202, "second_subject_upload")
     require(
@@ -273,6 +312,7 @@ def main() -> int:
     args = parser.parse_args()
     # Refuse to contact or stop someone else's listener.
     with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         probe.bind(("127.0.0.1", args.port))
     repo = Path(__file__).resolve().parents[2]
     sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
@@ -296,8 +336,8 @@ def main() -> int:
                 [
                     sys.executable,
                     "-I",
-                    "-m",
-                    "hachi.api",
+                    "-c",
+                    FAULT_PROBE,
                     "serve",
                     "--host",
                     "127.0.0.1",
