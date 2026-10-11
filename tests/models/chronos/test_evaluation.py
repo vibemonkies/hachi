@@ -22,7 +22,7 @@ def fake_forecaster(contexts, length):
     """Last observed value plus a fixed spread: a stand-in for the GX10 model."""
     output = []
     for context in contexts:
-        last = next(v for v in reversed(context) if v is not None)
+        last = next(v for v in reversed(context.context) if v is not None)
         output.append([[last + 10 * (q - 0.5) for q in LEVELS] for _ in range(length)])
     return output
 

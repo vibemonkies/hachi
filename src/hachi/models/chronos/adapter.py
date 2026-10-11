@@ -7,7 +7,7 @@ harness did not produce has no forecast, so nothing outside the causal prefix ca
 """
 
 from collections import Counter
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Annotated, Literal, Self
@@ -25,6 +25,7 @@ from hachi.evaluation import (
     PredictorFactory,
     TrainingPrefix,
 )
+from hachi.evaluation.context import ContextIndex, hourly_grid
 
 from .inference import MODEL_CONTEXT_LIMIT, MODEL_HORIZON_LIMIT, request_id
 
@@ -81,14 +82,18 @@ class ContextRequest:
     context: tuple[float | None, ...]
     prediction_length: int
     steps: tuple[int, ...]
+    past_covariates: tuple[tuple[str, tuple[float | None, ...]], ...] = ()
 
     def row(self) -> dict[str, object]:
-        """What the GX10 receives: the context and horizon only, no steps or identities."""
-        return {
+        """What the GX10 receives: context, past covariates and horizon; no identities."""
+        row: dict[str, object] = {
             "request_id": self.request_id,
             "context": list(self.context),
             "prediction_length": self.prediction_length,
         }
+        if self.past_covariates:
+            row["past_covariates"] = {k: list(v) for k, v in self.past_covariates}
+        return row
 
 
 def _hour_aligned(value: datetime) -> bool:
@@ -196,14 +201,66 @@ def estimates(
     return tuple(output), tuple(kept)
 
 
+type Builder = Callable[[ForecastInput], ContextRequest | None]
+
+
+def extended_builder(
+    config: ChronosConfig,
+    index: ContextIndex,
+    *,
+    context_hours: int,
+    harness_lookback_hours: int,
+    covariates: Sequence[Metric] = (),
+) -> Builder:
+    """A longer context and/or past-only covariates from the shared causal context index.
+
+    The index's last `harness_lookback_hours` of the target metric must equal the
+    harness's own history exactly, so the variant sees a superset of the same data.
+    """
+    if config.metric not in {c.metric for c in index.policy.channels}:
+        raise ValueError("the context index must carry the forecast metric")
+    if context_hours > index.policy.hours or harness_lookback_hours > context_hours:
+        raise ValueError("context must cover the harness lookback and fit the index window")
+    missing = set(covariates) - {c.metric for c in index.policy.channels}
+    if missing or config.metric in covariates:
+        raise ValueError("covariates must be other channels of the context index")
+
+    def build(request: ForecastInput) -> ContextRequest | None:
+        base = build_request(request, config)
+        window = index.window(request.subject_id, request.cutoff)
+        recent = {
+            r.record_id
+            for r in window[config.metric]
+            if r.start_utc >= request.cutoff - harness_lookback_hours * HOUR
+        }
+        if recent != {r.record_id for r in request.history}:
+            raise ValueError("context index disagrees with the harness history")
+        if base is None:
+            return None
+        context = hourly_grid(window[config.metric], request.cutoff, context_hours)
+        extra = tuple(
+            (metric, hourly_grid(window[metric], request.cutoff, context_hours))
+            for metric in covariates
+        )
+        covariate_map = {k: list(v) for k, v in extra}
+        rid = request_id(context, base.prediction_length, covariate_map)
+        return ContextRequest(rid, context, base.prediction_length, base.steps, extra)
+
+    return build
+
+
 def recording_factory(
-    config: ChronosConfig, sink: MutableMapping[str, ContextRequest], log: AdapterLog
+    config: ChronosConfig,
+    sink: MutableMapping[str, ContextRequest],
+    log: AdapterLog,
+    builder: Builder | None = None,
 ) -> PredictorFactory:
     """Export pass: record each causal context and abstain; no forecast exists yet."""
+    build = builder or (lambda request: build_request(request, config))
 
     def fit(_: TrainingPrefix) -> Predictor:
         def predict(request: ForecastInput) -> tuple[None, ...]:
-            built = build_request(request, config)
+            built = build(request)
             if built is None:
                 log.counts["abstained_origins_short_context"] += 1
             else:
@@ -221,12 +278,14 @@ def replay_factory(
     forecasts: Mapping[str, Sequence[Sequence[float]]],
     levels: Sequence[float],
     log: AdapterLog,
+    builder: Builder | None = None,
 ) -> PredictorFactory:
     """Scoring pass: zero-shot, so the training prefix is unused; look up by content hash."""
+    build = builder or (lambda request: build_request(request, config))
 
     def fit(_: TrainingPrefix) -> Predictor:
         def predict(request: ForecastInput) -> tuple[ForecastEstimate | None, ...]:
-            built = build_request(request, config)
+            built = build(request)
             if built is None:
                 log.counts["abstained_origins_short_context"] += 1
                 return (None,) * len(request.targets)
