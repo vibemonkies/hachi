@@ -22,7 +22,7 @@ from pathlib import Path
 from hachi.api.__main__ import serving_from_protocol
 from hachi.api.artifacts import load_served_artifact, stage_artifact
 from hachi.api.catalog import Catalog
-from hachi.api.handoff import direct_inference, expected_medians, load_packet
+from hachi.api.handoff import direct_inference, expected_points, load_packet
 from hachi.api.settings import Settings, git_dirty, git_sha, parse_pin
 from hachi.contracts.api import Coverage, HealthStatus, ImportStatus, ReportJob, SelfReportHistory
 from hachi.contracts.base import SCHEMA_VERSION, Contract
@@ -45,6 +45,11 @@ def require(ok: bool, message: str) -> None:
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def expected_medians(cutoff: datetime, estimates) -> dict:
+    """Medians only, as handoff returned them before #76 widened its points to tuples."""
+    return {start: point[0] for start, point in expected_points(cutoff, estimates).items()}
 
 
 def write_private(path: Path, value: object) -> None:
