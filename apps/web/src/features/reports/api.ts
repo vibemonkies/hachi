@@ -57,6 +57,14 @@ export async function readSavedReplay(
   if (job.state !== "completed" || !job.result?.replay) {
     throw new ApiRequestError("The saved report is incomplete or lacks replay provenance.");
   }
+  if (
+    job.result.report_id !== job.report_id ||
+    job.result.subject_id !== job.request.subject_id ||
+    job.result.as_of !== job.request.as_of ||
+    job.result.task !== job.request.task
+  ) {
+    throw new ApiRequestError("The saved report does not match its request.");
+  }
   return job;
 }
 
@@ -92,7 +100,7 @@ async function requestReport(
     job.result.report_id !== job.report_id ||
     job.result.subject_id !== request.subject_id ||
     job.result.as_of !== request.as_of ||
-    ((job.result.status === "ok" || job.result.status === "unavailable") && job.result.task !== request.task)
+    job.result.task !== request.task
   ) {
     throw new Error("The Hachi API returned a result that does not match its report request.");
   }
