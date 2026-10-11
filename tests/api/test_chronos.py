@@ -575,3 +575,70 @@ def test_the_handoff_rebuilds_the_exact_gpu_request_for_an_export_check(chronos_
     export = tmp_path / "requests.jsonl"
     export.write_text(json.dumps({"request_id": rebuilt, "context": []}) + "\n")
     assert rebuilt in export_request_ids(export)
+
+
+def test_run_handoff_checks_the_apis_requests_against_an_export(
+    chronos_client, monkeypatch, tmp_path
+):
+    from hachi.api import handoff
+    from hachi.api.handoff import served_request_id
+
+    client, fake, _ = chronos_client()
+
+    def through_client(base_url, method, path, body=None):
+        response = client.request(method, path, json=body)
+        return response.status_code, response.content
+
+    monkeypatch.setattr(handoff, "_call", through_client)
+    service = client.app.state.service
+    served = service.catalog.artifacts[0]
+    subject = service.catalog.subject("p01", service.metadata, service.workspace)
+    covered, uncovered = "2020-03-29T12:00:00Z", "2020-03-25T12:00:00Z"  # before any data
+    shown = report(client, FORECAST | {"as_of": covered}).result.root.forecast.series[0].points
+
+    def packet(estimates_for_uncovered):
+        directory = tmp_path / f"packet-{len(list(tmp_path.glob('packet-*')))}"
+        directory.mkdir()
+        for name in ("run.json", "split.json", "config.json"):
+            (directory / name).write_bytes((served.path / name).read_bytes())
+        targets = [{"hour": i} for i in range(24)]
+        evaluated = [{"median": p.median, "lower": p.lower, "upper": p.upper} for p in shown]
+        predictions = [{"origin": {"subject_id": "p01", "cutoff": covered, "targets": targets},
+                        "estimates": evaluated}]  # fmt: skip
+        if estimates_for_uncovered is not None:
+            predictions.append({
+                "origin": {"subject_id": "p01", "cutoff": uncovered, "targets": targets},
+                "estimates": estimates_for_uncovered,
+            })  # fmt: skip
+        (directory / "evaluation.json").write_text(json.dumps({"predictions": predictions}))
+        hashes = {
+            name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            for name in ("run.json", "split.json", "config.json", "evaluation.json")
+        }
+        (directory / "sha256.json").write_text(json.dumps(hashes))
+        return directory
+
+    def export(*ids):
+        path = tmp_path / f"export-{len(list(tmp_path.glob('export-*')))}.jsonl"
+        path.write_text("".join(json.dumps({"request_id": i, "context": []}) + "\n" for i in ids))
+        return path
+
+    def run(packet_dir, export_path):
+        return handoff.run_handoff(
+            "http://test", packet_dir, served, {"p01": subject}, direct=False,
+            tolerance=1e-9, export_requests=export_path,
+        )  # fmt: skip
+
+    request_id = served_request_id(served, subject, datetime(2020, 3, 29, 12, tzinfo=UTC), 24)
+    assert request_id == fake.requests[0]["request_id"]
+    matched = run(packet(None), export(request_id))
+    assert matched["agrees"] and matched["vs_export_requests"] == {"compared": 1, "in_export": 1}
+    assert not run(packet(None), export("0" * 64))["agrees"]  # not the evaluator's input
+    assert not run(packet([None] * 24), export())["agrees"]  # nothing compared at all
+    abstained = run(packet([None] * 24), export(request_id))
+    assert abstained["vs_export_requests"]["api_abstained"] == 1 and abstained["agrees"]
+    evaluated = run(
+        packet([{"median": 70.0, "lower": 66.0, "upper": 74.0}] * 24), export(request_id)
+    )
+    assert evaluated["vs_export_requests"]["api_abstained_but_evaluated"] == 1
+    assert not evaluated["agrees"]

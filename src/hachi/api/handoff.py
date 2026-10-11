@@ -241,6 +241,9 @@ def run_handoff(
             request_id = served_request_id(served, subject, cutoff, horizon)
             if request_id is None:
                 vs_export["api_abstained"] += 1
+                # The evaluator forecast this origin, so its export holds a request for it.
+                evaluated = any(e is not None for e in prediction["estimates"])
+                vs_export["api_abstained_but_evaluated"] += evaluated
             else:
                 vs_export["compared"] += 1
                 vs_export["in_export"] += request_id in exported
@@ -283,7 +286,14 @@ def run_handoff(
     agrees = (
         vs_packet.agrees
         and (vs_direct.agrees or not direct)
-        and (exported is None or vs_export["in_export"] == vs_export["compared"])
+        and (
+            exported is None
+            or (
+                vs_export["compared"] > 0
+                and vs_export["in_export"] == vs_export["compared"]
+                and not vs_export["api_abstained_but_evaluated"]
+            )
+        )
         and not provenance_mismatches
         and not outcomes["api_missing_forecast"]
         and served.ref in health.artifacts

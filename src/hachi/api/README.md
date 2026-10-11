@@ -246,7 +246,10 @@ A Chronos-2 artifact from #10/#12 is staged like a baseline. `stage-artifact --p
 `interval_nominal_coverage: 0.8` (q0.1-q0.9). Only zero-shot, univariate artifacts are served,
 with a context equal to the protocol lookback or a longer one from a context policy.
 
-Like a CPU artifact, a Chronos artifact must be staged with `--protocol`. Its model pins the
+Like a CPU artifact, a Chronos artifact must be staged with `--protocol`. Folders staged
+before this are refused at load: restage existing Chronos pins (#10's 48 h
+`chronos-2-zero-shot-315c2fe4…` and #12's `chronos-2-zero-shot-ctx720-5ed7c6cb…`) with the
+run's `protocol.json`. Their pins don't change. Its model pins the
 protocol's hash, so the staged file must be that exact committed document (the run's
 `protocol.json`). The served feature gate must be the protocol's own. Without the protocol, a
 48 h Chronos artifact's gate would be whatever `serving.json` says.
@@ -300,7 +303,8 @@ For a GPU model, `--export-requests <requests.jsonl>` also checks the API's own 
 construction against the evaluator's export, without a GPU job. For each origin it rebuilds the
 exact request the API would send (inputs, targets and longer context, as in a report) and checks
 that its content-hash `request_id` is among the export's. Contexts are read and dropped; only
-counts are printed. Unlike the direct reference, this doesn't reuse the API's outputs:
+counts are printed. Agreement needs at least one comparison, and no origin the evaluator
+forecast (so its export holds a request) where the API abstained. Unlike the direct reference, this doesn't reuse the API's outputs:
 
 ```sh
 uv run --extra api python -I -m hachi.api handoff \
