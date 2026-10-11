@@ -1,0 +1,18 @@
+{
+  "baselines": [
+    {"method":"last_valid","metric":"heart_rate","aggregation":"mean","max_age_hours":48},
+    {"method":"seasonal_naive","metric":"heart_rate","aggregation":"mean","max_age_hours":48},
+    {"method":"train_population_mean","metric":"heart_rate","aggregation":"mean"}
+  ],
+  "tree": {
+    "metric":"heart_rate","aggregation":"mean","lookback_hours":48,
+    "min_history_hours":24,"max_age_hours":2,"max_lead_hours":23,
+    "max_depth":5,"min_samples_leaf":20,"min_training_examples":100,"seed":42
+  },
+  "evaluation": {
+    "data_mode":"synthetic","metric":"heart_rate","aggregation":"mean",
+    "history_policy":"causal_prefix","pretrained_cohort_overlap":"not_applicable",
+    "overlap_note":"Generated software walkthrough; no pretrained or real cohort used.",
+    "bootstrap_samples":200,"confidence":0.95
+  }
+}

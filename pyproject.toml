@@ -9,6 +9,12 @@ dependencies = [
     "tzdata>=2026.5",
 ]
 
+[project.optional-dependencies]
+models = []
+baselines = [
+    "scikit-learn>=1.9.1,<1.10",
+]
+
 [dependency-groups]
 dev = [
     "jsonschema>=4.26.0",

@@ -55,7 +55,7 @@ Python 3.12 (matching the GX10) is pinned in `.python-version` and installed by 
 
 Never edit generated contract files by hand. Change the models in `src/hachi/contracts/` (or fixture definitions in `contracts/scripts/build_fixtures.py`), run `make build`, and commit the source and generated files together.
 
-The base install and the `dev` group are CPU-only. Lane dependencies go in optional groups (`uv add --optional data …`, `--optional api …`, `--optional models …`). GPU and model packages belong only in `models`, so CPU development and CI never install them.
+The base install and the `dev` group are CPU-only. Lane dependencies go in optional groups (`uv add --optional data …`, `--optional api …`, `--optional baselines …`, `--optional models …`). The `baselines` extra contains CPU tree fitting and is exercised separately in CI. GPU/foundation-model packages belong in `models` or the isolated GX10 runtime lock; CPU baseline CI does not install those environments.
 
 ## Branch and PR workflow
 
