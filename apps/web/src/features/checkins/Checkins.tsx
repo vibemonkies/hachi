@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   ReportJob,
   ReportResult,
@@ -52,6 +52,8 @@ function CheckinWorkspace({
   const [editing, setEditing] = useState<SelfReportEntry>();
   const [formSequence, setFormSequence] = useState(0);
   const [deleting, setDeleting] = useState<SelfReportEntry>();
+  const deletionTrigger = useRef<HTMLButtonElement | null>(null);
+  const historyReload = useRef<HTMLButtonElement | null>(null);
   async function loadHistory() {
     const history = await api.history(subjectId);
     const versions = supportsCorrections
@@ -81,6 +83,7 @@ function CheckinWorkspace({
         "This entry and every version were deleted from the backend.",
       );
       await reload();
+      requestAnimationFrame(() => historyReload.current?.focus());
     } catch (error) {
       setError({ kind: "delete", message: message(error) });
     } finally {
@@ -156,11 +159,6 @@ function CheckinWorkspace({
           {feedback}
         </p>
       )}
-      {error?.kind === "delete" && (
-        <p className="error-text" role="alert">
-          {error.message}
-        </p>
-      )}
       <>
         <div className="checkin-layout">
           <EntryForm
@@ -183,6 +181,7 @@ function CheckinWorkspace({
             <button
               type="button"
               className="secondary"
+              ref={historyReload}
               disabled={busy || state.kind === "loading"}
               onClick={() => void reload()}
             >
@@ -230,7 +229,11 @@ function CheckinWorkspace({
                         type="button"
                         className="secondary"
                         disabled={busy}
-                        onClick={() => setDeleting(entry)}
+                        onClick={(event) => {
+                          deletionTrigger.current = event.currentTarget;
+                          setError(null);
+                          setDeleting(entry);
+                        }}
                       >
                         Delete this {label(entry.kind)}
                       </button>
@@ -254,6 +257,7 @@ function CheckinWorkspace({
         {deleting && (
           <section
             className="checkin-delete"
+            key={deleting.entry_id}
             aria-label="Confirm entry deletion"
           >
             <h2>Delete {label(deleting.kind)} and its versions?</h2>
@@ -263,11 +267,17 @@ function CheckinWorkspace({
               deleting their resolution first.
             </p>
             <form onSubmit={deleteEntry}>
+              {error?.kind === "delete" && (
+                <p role="alert" className="error-text">
+                  {error.message}
+                </p>
+              )}
               <label htmlFor="confirm-entry">
                 Type {deleting.entry_id} to confirm
               </label>
               <input
                 id="confirm-entry"
+                autoFocus
                 name="confirm-entry"
                 autoComplete="off"
                 required
@@ -279,7 +289,11 @@ function CheckinWorkspace({
                   type="button"
                   className="secondary"
                   disabled={busy}
-                  onClick={() => setDeleting(undefined)}
+                  onClick={() => {
+                    setDeleting(undefined);
+                    setError(null);
+                    deletionTrigger.current?.focus();
+                  }}
                 >
                   Cancel deletion
                 </button>
