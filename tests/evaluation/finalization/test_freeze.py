@@ -38,7 +38,24 @@ def freeze_inputs(tmp_path, manifest):
         update={"candidate_order": ["generated-model"], "ablations_not_candidates": []}
     )
     log = SelectionLog(document_sha256(rule), "generated-model", ())
-    split = manifest.model_copy(update={"dataset_snapshot": protocol.expected_snapshot})
+    split = manifest.model_copy(
+        update={
+            "dataset_snapshot": protocol.expected_snapshot,
+            "fold": protocol.active_outer_fold,
+            "n_folds": protocol.folds.outer_folds,
+            **{
+                k: getattr(protocol, k)
+                for k in (
+                    "lookback_hours",
+                    "horizon_hours",
+                    "embargo_hours",
+                    "cutoff_stride_hours",
+                    "min_history_hours",
+                    "evaluation_window",
+                )
+            },
+        }
+    )
     run = RunManifest(
         schema_version="0.1",
         run_id="generated-selected",
@@ -194,3 +211,50 @@ def test_no_task_can_be_omitted_or_promoted_without_evidence(freeze_inputs, tmp_
     changed = request.model_copy(update={"task_support": supported})
     with pytest.raises(EvidenceRefused, match="no verified development"):
         freeze_decisions(root, changed, tmp_path / "unsupported")
+
+
+@pytest.mark.parametrize("mutation", ["history", "horizon", "exclusions", "fold"])
+def test_freeze_binds_full_operational_protocol(freeze_inputs, tmp_path, mutation):
+    root, request = freeze_inputs
+    name = "selected_config" if mutation == "history" else "selected_split"
+    ref = getattr(request, name)
+    doc = json.loads((root / ref.path).read_bytes())
+    if mutation == "history":
+        doc["history_policy"] = "population_only"
+    elif mutation == "horizon":
+        doc["horizon_hours"] += 1
+    elif mutation == "exclusions":
+        doc["exclusions"] = [
+            {
+                "subject_id": doc["train_subjects"][0],
+                "record_id": "changed-training-row",
+                "reason": "different preprocessing",
+            }
+        ]
+    else:
+        doc["fold"] = (doc["fold"] + 1) % doc["n_folds"]
+    raw = document_bytes(doc)
+    (root / ref.path).write_bytes(raw)
+    ref = DocumentRef(path=ref.path, sha256=digest(raw))
+    request = request.model_copy(update={name: ref})
+    run = RunManifest.model_validate_json((root / request.selected_run.path).read_bytes())
+    from hachi.contracts.manifests import SplitManifest
+    from hachi.evaluation.forecast import EvaluationConfig
+
+    if mutation == "history":
+        run = run.model_copy(
+            update={"config_sha256": document_sha256(EvaluationConfig.model_validate_json(raw))}
+        )
+    else:
+        run = run.model_copy(
+            update={
+                "split_manifest_sha256": document_sha256(SplitManifest.model_validate_json(raw))
+            }
+        )
+    raw = document_bytes(run)
+    (root / request.selected_run.path).write_bytes(raw)
+    request = request.model_copy(
+        update={"selected_run": DocumentRef(path=request.selected_run.path, sha256=digest(raw))}
+    )
+    with pytest.raises(EvidenceRefused):
+        freeze_decisions(root, request, tmp_path / "operational-mismatch")

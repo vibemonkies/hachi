@@ -4,6 +4,7 @@ import json
 import shutil
 import subprocess
 from dataclasses import replace
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -164,6 +165,74 @@ def test_source_omission_and_duplicate_run_reference(generated_bundle):
     del doc["forecast.py"]
     (packet / "source-sha256.json").write_bytes(document_bytes(doc))
     with pytest.raises(EvidenceRefused, match="omits"):
+        validate_development(root, reindex(root), repo)
+
+
+@pytest.mark.parametrize("mutation", ["missing_predictions", "duplicate_metric_subject"])
+def test_prediction_support_cannot_be_fabricated_after_rehash(generated_bundle, mutation):
+    root, _, repo, packet, result = generated_bundle
+    if mutation == "missing_predictions":
+        changed = replace(result, predictions=())
+    else:
+        subjects = (*result.metrics.subjects, result.metrics.subjects[0])
+        changed = replace(
+            result,
+            metrics=replace(result.metrics, subjects=subjects),
+            counts={**result.counts, "scored_points": sum(s.scored_points for s in subjects)},
+        )
+    (packet / "evaluation.json").write_bytes(document_bytes(changed))
+    with pytest.raises(EvidenceRefused):
+        validate_development(root, reindex(root), repo)
+
+
+def test_exported_artifact_cannot_fit_after_its_prediction_cutoff(generated_bundle):
+    import hachi.models.baselines.artifacts as implementation
+    from hachi.evaluation import TrainingPrefix
+    from hachi.models.baselines import BaselineConfig, fit_baseline, save_artifact
+
+    root, _, repo, packet, _ = generated_bundle
+    package = Path(implementation.__file__).parents[2]
+    shutil.copytree(
+        package / "models/baselines",
+        repo / "src/hachi/models/baselines",
+        ignore=shutil.ignore_patterns("__pycache__"),
+    )
+    (repo / "src/hachi/contracts").mkdir()
+    shutil.copyfile(package / "contracts/causality.py", repo / "src/hachi/contracts/causality.py")
+    subprocess.run(["git", "add", "src"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Generated Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-qm",
+            "Generated artifact implementation",
+        ],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+    model = fit_baseline(
+        TrainingPrefix(BASE, ("generated-train",), ()),
+        BaselineConfig(method="last_valid", metric="heart_rate", aggregation="mean"),
+    ).model_copy(update={"fit_as_of": BASE + timedelta(hours=100)})
+    pin = save_artifact(
+        root / "fold/models/generated-artifact", model, artifact_id="generated-artifact"
+    )
+    run = RunManifest.model_validate_json((packet / "run.json").read_bytes())
+    run = run.model_copy(
+        update={
+            "artifact": pin,
+            "git_sha": sha,
+            "model": run.model.model_copy(update={"model_id": model.model_id}),
+        }
+    )
+    (packet / "run.json").write_bytes(document_bytes(run))
+    with pytest.raises(EvidenceRefused, match="fit cutoff"):
         validate_development(root, reindex(root), repo)
 
 

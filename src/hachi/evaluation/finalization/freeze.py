@@ -135,6 +135,17 @@ def freeze_decisions(root: Path, request: FreezeRequest, output: Path) -> Freeze
     from hachi.evaluation.forecast import EvaluationConfig
 
     config = EvaluationConfig.model_validate_json(_read(root, request.selected_config))
+    # Only pretrained-overlap disclosures vary by candidate. Bind every other
+    # setting, including future contract fields, to the frozen experiment.
+    shared_config = EvaluationConfig.model_fields.keys() - {
+        "pretrained_cohort_overlap",
+        "overlap_note",
+    }
+    schedule = PMDataProtocol.model_fields.keys() & SplitManifest.model_fields.keys()
+    if any(getattr(config, k) != getattr(protocol.evaluation, k) for k in shared_config) or any(
+        getattr(split, k) != getattr(protocol, k) for k in schedule
+    ):
+        raise EvidenceRefused("selected configuration or schedule differs from the frozen protocol")
     if (
         run.git_dirty
         or run.artifact is None
@@ -147,6 +158,8 @@ def freeze_decisions(root: Path, request: FreezeRequest, output: Path) -> Freeze
         or run.task != "physiology_forecast"
         or run.seed != split.seed
         or run.seed != protocol.folds.seed
+        or split.fold != protocol.active_outer_fold
+        or split.n_folds != protocol.folds.outer_folds
         or run.config_sha256 != document_sha256(config)
         or config.data_mode != "real"
         or (config.metric, config.aggregation)

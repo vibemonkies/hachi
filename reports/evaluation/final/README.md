@@ -36,7 +36,9 @@ and symlinks. Forecast packets must bind clean code, real mode, exact configurat
 task, snapshot, seed, sealed split, validation-only origin schedule, scored support,
 metric definition and source identity. Exported baseline models must resolve their
 receipt, target and feature order. Paired packets must bind both evaluations and
-the same split/origin schedule. It checks identity and internal consistency;
+the same split/origin schedule. Prediction-origin coverage and scored support
+must reconcile; exported fit time must match the evaluator's training cutoff.
+It checks identity and internal consistency;
 it does not recompute scientific metrics from source labels or certify source access.
 
 The aggregate `development.json` contains digests and support counts, without
@@ -48,6 +50,12 @@ limited coverage; it does not produce illness probabilities. Use `--kind stanfor
 with the approved #9 packet index. Illness, recovery and measured alertness stay
 blocked until their own adapters and evidence land. The CLI emits aggregate status
 only, including on failures.
+
+The initial #14 recovery packet produced at `af7e26b` is superseded pending the
+owner's corrected source-bound rerun: its censoring could overstate observed
+event-free follow-up, and report-wide totals could expose sealed-test outcome
+counts by subtraction. Preserve it only as audit provenance, never as accepted
+final evidence. No recovery adapter in this release accepts that packet.
 
 ## Freeze exact decisions
 
@@ -70,7 +78,9 @@ It checks the recorded incumbent chain and gates against the owner's rule; it
 does not invent a rule or choose a different model. It preserves exact selection,
 calibration and manifest hashes, plus the decision documents, in exclusive output.
 The selected split must retain the development/test membership digests from the
-verified input. Changing thresholds, calibration, selection, or preprocessing
+verified input, active outer fold, exclusions and every shared operational
+protocol field. Candidate-specific pretrained-overlap disclosures may differ.
+Changing thresholds, calibration, selection, or preprocessing
 requires a new freeze, never mutation of an existing one.
 
 Supported transitions are `development_verified` → `decisions_frozen`.

@@ -1,6 +1,8 @@
 """Validate the existing #7 forecast/comparison packets and #9 artifact receipts."""
 
+from collections import Counter
 from collections.abc import Sequence
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
@@ -109,8 +111,21 @@ def _packet(root: Path, repo: Path) -> tuple[EvaluationIdentity, EvaluationResul
         raise EvidenceRefused("origin document differs from the evaluation")
     validation = set(split.validation_subjects)
     scored = {s.subject_id for s in result.metrics.subjects}
+    scheduled_keys = {(o.subject_id, o.cutoff): o for o in scheduled.origins}
+    predicted_keys = {(p.origin.subject_id, p.origin.cutoff) for p in result.predictions}
+    history_keys = {
+        (e.subject_id, e.cutoff)
+        for e in result.plan.exclusions
+        if e.reason == "insufficient_history"
+    }
+    estimates_by_subject: Counter[str] = Counter()
+    for p in result.predictions:
+        estimates_by_subject[p.origin.subject_id] += sum(e is not None for e in p.estimates)
     if (
         not scored <= validation
+        or len(scored) != len(result.metrics.subjects)
+        or not history_keys <= set(scheduled_keys)
+        or predicted_keys != set(scheduled_keys) - history_keys
         or any(p.origin not in scheduled.origins for p in result.predictions)
         or len({(p.origin.subject_id, p.origin.cutoff) for p in result.predictions})
         != len(result.predictions)
@@ -123,6 +138,26 @@ def _packet(root: Path, repo: Path) -> tuple[EvaluationIdentity, EvaluationResul
         or result.counts.get("scored_points")
         != sum(s.scored_points for s in result.metrics.subjects)
         or result.counts.get("evaluation_participants") != len(validation)
+        or result.counts.get("predicted_origins") != len(result.predictions)
+        or result.counts.get("expected_points") != sum(len(o.targets) for o in scheduled.origins)
+        or result.counts.get("insufficient_history_points")
+        != sum(len(scheduled_keys[key].targets) for key in history_keys)
+        or result.counts.get("expected_points")
+        != sum(
+            result.counts.get(k, -1)
+            for k in (
+                "scored_points",
+                "missing_labels",
+                "abstained_points",
+                "insufficient_history_points",
+            )
+        )
+        or any(
+            s.scored_points <= 0
+            or s.scored_points > estimates_by_subject[s.subject_id]
+            or not 0 <= s.interval_points <= s.scored_points
+            for s in result.metrics.subjects
+        )
         or any(v < 0 for v in result.counts.values())
         or result.metrics.metric != config.metric
         or result.metrics.confidence != config.confidence
@@ -158,7 +193,9 @@ def _packet(root: Path, repo: Path) -> tuple[EvaluationIdentity, EvaluationResul
     return identity, result, split
 
 
-def _artifact(root: Path, repo: Path, run: RunManifest, config: EvaluationConfig) -> None:
+def _artifact(
+    root: Path, repo: Path, run: RunManifest, config: EvaluationConfig, fit_as_of: datetime
+) -> None:
     receipt = Receipt.model_validate_json(read_file(root, "artifact.json"))
     if run.artifact != ArtifactRef(
         artifact_id=receipt.artifact_id, artifact_sha256=document_sha256(receipt)
@@ -168,6 +205,8 @@ def _artifact(root: Path, repo: Path, run: RunManifest, config: EvaluationConfig
         if digest(read_file(root, name)) != sha:
             raise EvidenceRefused("artifact file differs from its receipt")
     model = ARTIFACT.validate_json(read_file(root, "model.json"))
+    if model.fit_as_of != fit_as_of:
+        raise EvidenceRefused("artifact fit cutoff differs from its evaluation training cutoff")
     if model.model_id != run.model.model_id or (model.config.metric, model.config.aggregation) != (
         config.metric,
         config.aggregation,
@@ -198,7 +237,7 @@ def validate_development(
     packets = sorted({str(Path(name).parent) for name in index if name.endswith("/run.json")})
     evaluations: dict[str, EvaluationIdentity] = {}
     for relative in packets:
-        identity, _, _ = _packet(root / relative, repo)
+        identity, result, _ = _packet(root / relative, repo)
         run = RunManifest.model_validate_json(read_file(root, f"{relative}/run.json"))
         if run.artifact is not None:
             matches = [
@@ -216,6 +255,7 @@ def validate_development(
                 repo,
                 run,
                 EvaluationConfig.model_validate_json(read_file(root, f"{relative}/config.json")),
+                min(o.cutoff for o in result.plan.origins),
             )
         previous = evaluations.get(identity.run_sha256)
         if previous is not None and previous != identity:
