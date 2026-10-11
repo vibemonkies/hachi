@@ -1,0 +1,165 @@
+{
+  "protocol": {
+    "path": "configs/evaluation/pmdata-hourly-validation.json",
+    "sha256": "d7bca15083b6496ce4d913ad8cdcf67b2875e284e68a6b578a55e1188ddd6b6a"
+  },
+  "window": {
+    "days": 7,
+    "as_of_delay_hours": 16,
+    "min_observed_hours": 24,
+    "local_timezone": "Europe/Oslo"
+  },
+  "head": {
+    "tree": {
+      "metric": "heart_rate",
+      "aggregation": "mean",
+      "lookback_hours": 48,
+      "min_history_hours": 24,
+      "min_samples_per_hour": 30,
+      "max_age_hours": 2,
+      "max_lead_hours": 23,
+      "max_depth": 5,
+      "min_samples_leaf": 20,
+      "min_training_examples": 100,
+      "seed": 42
+    },
+    "ridge_alpha": 10.0,
+    "pca_components": 16,
+    "phase_interactions": true,
+    "max_staleness_hours": 48
+  },
+  "tables": [
+    "meanpool",
+    "wbm_full",
+    "wbm_hr_only",
+    "wbm_no_sleep",
+    "wbm_sleep_records_only",
+    "wbm_workouts_zero",
+    "moment",
+    "moment_hr_only"
+  ],
+  "baseline": "ridge-handcrafted",
+  "candidates": [
+    {
+      "name": "ridge-handcrafted",
+      "blocks": [
+        "handcrafted"
+      ],
+      "role": "primary",
+      "pretrained_cohort_overlap": "not_applicable"
+    },
+    {
+      "name": "ridge-handcrafted-meanpool",
+      "blocks": [
+        "handcrafted",
+        "meanpool"
+      ],
+      "role": "primary",
+      "pretrained_cohort_overlap": "not_applicable"
+    },
+    {
+      "name": "ridge-handcrafted-wbm",
+      "blocks": [
+        "handcrafted",
+        "wbm_full"
+      ],
+      "role": "primary",
+      "pretrained_cohort_overlap": "none"
+    },
+    {
+      "name": "ridge-wbm",
+      "blocks": [
+        "wbm_full"
+      ],
+      "role": "primary",
+      "pretrained_cohort_overlap": "none"
+    },
+    {
+      "name": "ridge-handcrafted-moment",
+      "blocks": [
+        "handcrafted",
+        "moment"
+      ],
+      "role": "primary",
+      "pretrained_cohort_overlap": "unknown"
+    },
+    {
+      "name": "ridge-moment",
+      "blocks": [
+        "moment"
+      ],
+      "role": "primary",
+      "pretrained_cohort_overlap": "unknown"
+    },
+    {
+      "name": "ridge-handcrafted-wbm-hr-only",
+      "blocks": [
+        "handcrafted",
+        "wbm_hr_only"
+      ],
+      "role": "ablation",
+      "pretrained_cohort_overlap": "none"
+    },
+    {
+      "name": "ridge-handcrafted-wbm-no-sleep",
+      "blocks": [
+        "handcrafted",
+        "wbm_no_sleep"
+      ],
+      "role": "ablation",
+      "pretrained_cohort_overlap": "none"
+    },
+    {
+      "name": "ridge-handcrafted-wbm-sleep-records-only",
+      "blocks": [
+        "handcrafted",
+        "wbm_sleep_records_only"
+      ],
+      "role": "ablation",
+      "pretrained_cohort_overlap": "none"
+    },
+    {
+      "name": "ridge-handcrafted-wbm-workouts-zero",
+      "blocks": [
+        "handcrafted",
+        "wbm_workouts_zero"
+      ],
+      "role": "ablation",
+      "pretrained_cohort_overlap": "none"
+    },
+    {
+      "name": "ridge-handcrafted-wbm-k4",
+      "blocks": [
+        "handcrafted",
+        "wbm_full"
+      ],
+      "role": "ablation",
+      "pretrained_cohort_overlap": "none",
+      "pca_components": 4
+    },
+    {
+      "name": "ridge-handcrafted-wbm-k32",
+      "blocks": [
+        "handcrafted",
+        "wbm_full"
+      ],
+      "role": "ablation",
+      "pretrained_cohort_overlap": "none",
+      "pca_components": 32
+    },
+    {
+      "name": "ridge-handcrafted-moment-hr-only",
+      "blocks": [
+        "handcrafted",
+        "moment_hr_only"
+      ],
+      "role": "ablation",
+      "pretrained_cohort_overlap": "unknown"
+    }
+  ],
+  "overlap_notes": {
+    "not_applicable": "No pretrained component: the shared ridge head on #9 handcrafted inputs, or on OpenMHC's MeanPool summary of the same week.",
+    "none": "Frozen OpenMHC WBM, pretrained on the My Heart Counts training split (iPhone/Apple Watch); PMData (Fitbit Versa 2, Norway) is not part of it. PMData clock mapping and availability are documented assumptions.",
+    "unknown": "Frozen MOMENT-1-large, pretrained on the Time-series Pile, whose full provenance was not audited for PMData. PMData clock mapping and availability are documented assumptions."
+  }
+}

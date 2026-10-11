@@ -1,0 +1,48 @@
+{
+  "model_id": "moment-1-large",
+  "description": "MOMENT-1-large: T5-large encoder over 8-step patches of a 512-step univariate series, with masked reversible instance normalization; embeddings average patch outputs where the input mask is fully observed.",
+  "checkpoint": {
+    "repository": "AutonLab/MOMENT-1-large",
+    "revision": "ca58581bc7bea2ebed4e80dc0a3e4b8b609c6ecc",
+    "files": {
+      "model.safetensors": "a56928052ac6f5d09b97c3834bea6ce3aef9f02b513b5fac98954e7377801572",
+      "config.json": "b0111650e8718e31d7e89575666aa3e140747d35279ec1a7c9f6ed7616c29433",
+      "README.md": "3b00cbfdecd6b64c96558eb3bd39049405aee6497c7e4788da4bc78db17611de"
+    },
+    "load": "momentfm.MOMENTPipeline.from_pretrained(repository, revision, model_kwargs={'task_name': 'embedding'}); safetensors only"
+  },
+  "code": {
+    "package": "momentfm",
+    "version": "0.1.5",
+    "repository": "https://github.com/moment-timeseries-foundation-model/moment",
+    "commit": "38f7310ad594100747ca2a8357e9c7ca7d323e0e"
+  },
+  "input": {
+    "seq_len": 512,
+    "patch_len": 8,
+    "layout": "one univariate series per native channel (n, 1, 512), left-padded; input_mask 1 = observed, 0 = padding or unknown hour",
+    "window": "the same 168-hour local week as WBM, placed in the last 168 steps (21 whole patches)",
+    "channels": [
+      "heart_rate",
+      "steps",
+      "walking_running_distance",
+      "sleep_asleep",
+      "sleep_in_bed"
+    ],
+    "output": "per channel 1024-d (reduction 'mean' over fully observed patches), concatenated in channel order; a channel with no fully observed patch is zeros with its ok flag false"
+  },
+  "license": {
+    "declared": [
+      {
+        "where": "Hugging Face model card at the pinned revision",
+        "terms": "MIT"
+      },
+      {
+        "where": "momentfm repository",
+        "terms": "MIT (LICENSE file)"
+      }
+    ],
+    "relied_on": "MIT"
+  },
+  "pretraining_cohort": "Time-series Pile (public benchmark series). Not known to include PMData; recorded as 'unknown' because the Pile's full provenance was not audited."
+}
