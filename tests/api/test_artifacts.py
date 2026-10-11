@@ -34,12 +34,12 @@ def writable_copy(root, pin: ArtifactRef):
 
 def test_staged_artifact_loads_and_is_read_only(staged):
     root, packet = staged()
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     served = load_served_artifact(root, pin)
     assert served.metric == "heart_rate" and served.model.model_id == "hourly-last-valid-v1"
     assert all(not p.stat().st_mode & 0o222 for p in (root / pin.artifact_id).rglob("*"))
     with pytest.raises(FileExistsError):
-        stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+        stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
 
 
 @pytest.mark.parametrize(
@@ -59,7 +59,7 @@ def test_staged_artifact_loads_and_is_read_only(staged):
 )
 def test_altered_or_incomplete_artifacts_are_refused(staged, damage, code):
     root, packet = staged()
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     damage(writable_copy(root, pin))
     with pytest.raises(ArtifactRefused) as refused:
         load_served_artifact(root, pin)
@@ -68,7 +68,7 @@ def test_altered_or_incomplete_artifacts_are_refused(staged, damage, code):
 
 def test_a_pin_must_match_the_artifact(staged):
     root, packet = staged()
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     wrong = ArtifactRef(artifact_id=pin.artifact_id, artifact_sha256="0" * 64)
     with pytest.raises(ArtifactRefused, match="pin"):
         load_served_artifact(root, wrong)
@@ -79,7 +79,7 @@ def test_a_pin_must_match_the_artifact(staged):
 
 def test_symlinked_artifacts_are_refused(staged, tmp_path):
     root, packet = staged()
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     approved = tmp_path / "approved"
     approved.mkdir()
     (approved / pin.artifact_id).symlink_to(root / pin.artifact_id)
@@ -109,14 +109,14 @@ def test_symlinked_artifacts_are_refused(staged, tmp_path):
 def test_feature_mismatch_is_incompatible(staged, options):
     root, packet = staged(**options)
     with pytest.raises(ArtifactRefused) as refused:
-        stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+        stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     assert refused.value.code == "ARTIFACT_INCOMPATIBLE"
     assert not any(root.iterdir())  # nothing half-staged is left behind
 
 
 def test_changed_model_code_is_incompatible(staged, monkeypatch):
     root, packet = staged()
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     import hachi.models.baselines.artifacts as baseline_artifacts
 
     real = baseline_artifacts.source_hashes
@@ -149,7 +149,7 @@ def test_refused_artifacts_degrade_health_and_are_never_used(open_client, make_s
 def test_gpu_artifacts_report_the_gpu_honestly(open_client, make_settings, tmp_path, staged):
     root, packet = staged(artifact_id="synthetic-gpu-model")
     serving = packet.serving.model_copy(update={"requires_gpu": True})
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, serving, packet.protocol)
     client = open_client(make_settings(artifact_root=root, served_artifacts=(pin,)))
     body = {
         "schema_version": "0.1",

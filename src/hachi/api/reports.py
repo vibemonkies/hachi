@@ -5,6 +5,7 @@ gets an `unavailable` result naming what is missing. Failures are `error` result
 stable code. Only a served artifact's own prediction becomes an `ok` result.
 """
 
+import importlib.util
 import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -179,6 +180,16 @@ def personal(subject: SubjectData | None) -> bool:
     return subject is not None and subject.kind == "apple_import" and subject.data_mode == "real"
 
 
+def thinning_supported(artifact: ServedArtifact, subject: SubjectData | None) -> bool:
+    """Thinning snapshot history needs numpy (the baselines extra); Apple history needs none."""
+    return (
+        artifact.serving.history_thinning is None
+        or subject is None
+        or subject.kind == "apple_import"
+        or importlib.util.find_spec("numpy") is not None
+    )
+
+
 def forecast_artifacts(catalog: Catalog, subject: SubjectData | None) -> list[ServedArtifact]:
     """Served hourly forecasters whose declared input this subject's data can supply.
 
@@ -190,6 +201,7 @@ def forecast_artifacts(catalog: Catalog, subject: SubjectData | None) -> list[Se
         for a in hourly_forecasters(catalog)
         if (a.serving.input == "observations" or (subject and input_policy(a, subject)))
         and not (a.serving.requires_gpu and personal(subject))
+        and thinning_supported(a, subject)
     ]
 
 
@@ -360,7 +372,9 @@ def model_inputs(
     if artifact.serving.input == "hourly_features":
         policy = input_policy(artifact, subject)
         assert policy is not None, "selection admits only sources with a policy"
-        rows: list = subject.hourly_features(policy, cutoff, start)
+        rows: list = subject.hourly_features(
+            policy, cutoff, start, artifact.serving.history_thinning
+        )
     else:
         rows = subject.observations(artifact.metric, cutoff, start)
     rows.sort(key=lambda o: (o.end_utc, o.available_at_utc, o.record_id))
@@ -410,6 +424,14 @@ def _forecast(
             requirement = (
                 "An approved transfer and retention design before personal data goes to the "
                 "shared GPU; until then GPU models serve research and generated data only"
+            )
+        elif any(
+            input_policy(a, subject) and not thinning_supported(a, subject)
+            for a in hourly_forecasters(context.catalog)
+        ):
+            requirement = (
+                "An API installed with the baselines extra: the served model was evaluated on "
+                "thinned history, which this install cannot rebuild for dataset subjects"
             )
         elif subject.source == "apple_health" and evaluated:
             requirement = (

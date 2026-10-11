@@ -31,7 +31,8 @@ class HourAudit:
     """Known unique native candidates, attributed once to their start hour.
 
     Reasons are exclusive: late creation first, then crossing, then precedence
-    loss or inclusion. All counts require creation AND event end <= audit_as_of.
+    loss, then thinning (only when a thinning slot is requested), or inclusion.
+    All counts require creation AND event end <= audit_as_of.
     Audit receipts can grow after closure; they are never feature identity inputs.
     """
 
@@ -46,6 +47,7 @@ class HourAudit:
     sample_minutes: int
     interval_seconds: float
     source_counts: tuple[tuple[str, int], ...]
+    excluded_by_thinning: int = 0
 
 
 @dataclass(frozen=True)
@@ -63,6 +65,7 @@ class _AppleFeatureBin:
     sample_minutes: int
     interval_seconds: float
     source_counts: tuple[tuple[str, int], ...]
+    selected_records: int
 
 
 def _interval_seconds(rows: Iterable[Observation]) -> float:
@@ -82,8 +85,14 @@ def _aggregate_hour(
     metric: NativeMetric,
     aggregation: Aggregation,
     start: datetime,
+    thin_slot_seconds: int | None = None,
 ) -> _AppleFeatureBin:
-    """Pure transform of selected rows already eligible at this hour's end."""
+    """Pure transform of selected rows already eligible at this hour's end.
+
+    With `thin_slot_seconds`, heart rate is thinned by the Apple-density rule (#97, #102):
+    the earliest-starting sample, then lowest record_id, per UTC slot. Only rows are
+    dropped; value, count and sampled-minute coverage are then computed as always.
+    """
     end = start + HOUR
     included: list[Observation] = []
     for row in rows:
@@ -93,6 +102,19 @@ def _aggregate_hour(
             continue
         included.append(row)
     included.sort(key=lambda r: (r.start_utc, r.record_id))
+    selected = len(included)
+    pipeline_version = PIPELINE_VERSION
+    if thin_slot_seconds is not None:
+        slot_us = thin_slot_seconds * 1_000_000
+        slots: set[int] = set()
+        kept: list[Observation] = []
+        for row in included:
+            slot = timestamp_us(row.start_utc) // slot_us
+            if slot not in slots:
+                slots.add(slot)
+                kept.append(row)
+        included = kept
+        pipeline_version = f"{PIPELINE_VERSION}+thin{thin_slot_seconds}s"
     minutes = len({r.start_utc.minute for r in included}) if metric == "heart_rate" else 0
     seconds = _interval_seconds(included) if metric == "steps" else 0.0
     coverage = minutes / 60 if metric == "heart_rate" else seconds / 3600
@@ -129,12 +151,13 @@ def _aggregate_hour(
             observed_count=len(included),
             coverage=coverage,
             source_ids=sorted({r.source_id for r in included}),
-            pipeline_version=PIPELINE_VERSION,
+            pipeline_version=pipeline_version,
         ),
         end,
         minutes,
         seconds,
         tuple(sorted(Counter(r.source_id for r in included).items())),
+        selected,
     )
 
 
@@ -151,6 +174,7 @@ def _iter_hourly_bins(
     aggregation: Aggregation,
     as_of: datetime,
     start: datetime | None = None,
+    thin_slot_seconds: int | None = None,
 ) -> Iterator[tuple[_AppleFeatureBin, HourAudit]]:
     """Replay native precedence at every completed hour end, never at a later cutoff.
 
@@ -192,7 +216,7 @@ def _iter_hourly_bins(
         while hour < cutoff:
             _set_hour_window(connection, hour, hour + HOUR)
             selected = (row for _, row in select_candidates(connection, hour + HOUR))
-            item = _aggregate_hour(selected, config, metric, aggregation, hour)
+            item = _aggregate_hour(selected, config, metric, aggregation, hour, thin_slot_seconds)
             yield item, _audit_hour(connection, item, audit_as_of)
             hour += HOUR
 
@@ -276,11 +300,12 @@ def _audit_hour(
         known,
         late,
         crossing,
-        known - late - crossing - row.observed_count,
+        known - late - crossing - item.selected_records,
         row.observed_count,
         item.sample_minutes,
         item.interval_seconds,
         item.source_counts,
+        item.selected_records - row.observed_count,
     )
 
 
@@ -289,20 +314,35 @@ def apple_hourly_features(
     policy: HourlyFeaturePolicy,
     as_of: datetime,
     start: datetime | None = None,
+    *,
+    thin_slot_seconds: int | None = None,
 ) -> AppleHourlyView:
     """Apply the existing model gates with an explicitly Apple-specific policy.
 
     Never silently rewrite a frozen PMData policy or claim its availability rule.
     Source compatibility must be declared by the serving/model owner separately.
+    `thin_slot_seconds` applies the thinning a serving profile declares, after sealing
+    and source precedence, so a thinned artifact sees Apple bins built its own way.
     """
     if policy.availability_rule != AVAILABILITY_RULE:
         raise ValueError("Apple hourly inputs require their source-specific availability rule")
     if policy.metric not in ("heart_rate", "steps"):
         raise ValueError("Apple hourly inputs support only native heart_rate and steps")
+    if thin_slot_seconds is not None and (
+        policy.metric != "heart_rate"
+        or not 0 < thin_slot_seconds <= 3600
+        or 3600 % thin_slot_seconds
+    ):
+        raise ValueError("thinning applies to heart rate, with slots that tile the hour")
     bins: list[_AppleFeatureBin] = []
     audits: list[HourAudit] = []
     for item, audit in _iter_hourly_bins(
-        path, metric=policy.metric, aggregation=policy.aggregation, as_of=as_of, start=start
+        path,
+        metric=policy.metric,
+        aggregation=policy.aggregation,
+        as_of=as_of,
+        start=start,
+        thin_slot_seconds=thin_slot_seconds,
     ):
         bins.append(item)
         audits.append(audit)
