@@ -22,9 +22,41 @@ if (!object(schema) || !object(schema.$defs))
   throw new Error("Contract schema is missing definitions.");
 const definitions = schema.$defs;
 
+// Temporary until the coordinated Ajv dependency lands. Refuse new validation
+// keywords rather than accepting a shape this reader does not understand.
+const supportedKeywords = new Set([
+  "$ref",
+  "type",
+  "anyOf",
+  "oneOf",
+  "const",
+  "enum",
+  "minLength",
+  "maxLength",
+  "pattern",
+  "format",
+  "minimum",
+  "maximum",
+  "exclusiveMinimum",
+  "exclusiveMaximum",
+  "minItems",
+  "maxItems",
+  "items",
+  "properties",
+  "required",
+  "additionalProperties",
+  "title",
+  "description",
+  "default",
+  "discriminator",
+]);
 // The committed generated schema owns response shapes; the API owns cross-field domain rules.
 function matches(value: unknown, rule: unknown): boolean {
-  if (!object(rule)) return false;
+  if (
+    !object(rule) ||
+    Object.keys(rule).some((keyword) => !supportedKeywords.has(keyword))
+  )
+    return false;
   if (typeof rule.$ref === "string")
     return matches(value, definitions[rule.$ref.replace("#/$defs/", "")]);
   if (
