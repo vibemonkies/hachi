@@ -259,9 +259,10 @@ def _load_directory(
 
 
 def _check_chronos(model: ChronosServed, split: SplitManifest, serving: ServingSpec) -> None:
-    """Serve only what the API path reproduces exactly: zero-shot, one series, 48 h context."""
+    """Serve only what the API path reproduces exactly: zero-shot, one series, and either the
+    protocol's 48 h context or a longer context policy (#12's ctx720) over the same channel."""
     artifact, config = model.artifact, model.config
-    if artifact.context_policy or artifact.past_covariates or artifact.finetuned_weights_sha256:
+    if artifact.past_covariates or artifact.finetuned_weights_sha256:
         raise ArtifactRefused(
             "ARTIFACT_INCOMPATIBLE", "only zero-shot univariate Chronos artifacts are served yet"
         )
@@ -269,8 +270,28 @@ def _check_chronos(model: ChronosServed, split: SplitManifest, serving: ServingS
         raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "Chronos serves hourly features on a GPU")
     if serving.interval_nominal_coverage != config.nominal_coverage:
         raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "declared coverage differs from the model's")
-    if not artifact.harness_lookback_hours == config.context_hours == split.lookback_hours:
+    if artifact.harness_lookback_hours != split.lookback_hours:
         raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "context window differs from the protocol")
+    policy = artifact.context_policy
+    if policy is None:
+        if config.context_hours != artifact.harness_lookback_hours:
+            raise ArtifactRefused(
+                "ARTIFACT_INCOMPATIBLE", "context window differs from the protocol"
+            )
+    else:
+        if not artifact.harness_lookback_hours <= config.context_hours <= policy.hours:
+            raise ArtifactRefused(
+                "ARTIFACT_INCOMPATIBLE", "the longer context does not fit its declared window"
+            )
+        target = next((c for c in policy.channels if c.metric == config.metric), None)
+        if target != serving.feature_policy:
+            raise ArtifactRefused(
+                "ARTIFACT_INCOMPATIBLE", "the context's target channel is not the served policy"
+            )
+        if serving.accepted_sources:
+            raise ArtifactRefused(
+                "ARTIFACT_INCOMPATIBLE", "longer contexts are built from the evaluated dataset only"
+            )
     if serving.protocol_sha256 not in (None, artifact.protocol_sha256):
         raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "serving and model name other protocols")
 

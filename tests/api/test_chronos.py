@@ -2,14 +2,23 @@
 
 import hashlib
 import json
+from datetime import timedelta
 
 import pytest
 
-from hachi.api.artifacts import ArtifactRefused, ServingSpec, load_served_artifact, stage_artifact
+from hachi.api.artifacts import (
+    ArtifactRefused,
+    ServingSpec,
+    SourceAdmission,
+    load_served_artifact,
+    stage_artifact,
+)
 from hachi.api.gpu import LOCAL_INFERENCE, GpuTimeout, GpuUnavailable, Gx10Target
 from hachi.contracts.api import ReportJob
 from hachi.contracts.manifests import ModelRef, RunManifest
+from hachi.data.apple_health.hourly import AVAILABILITY_RULE
 from hachi.data.pmdata import dataset_snapshot_ref
+from hachi.evaluation.context import ContextPolicy
 from hachi.evaluation.serialization import document_bytes
 from hachi.models.chronos import ChronosConfig, ChronosModelPin
 from hachi.models.chronos.artifacts import ChronosArtifact, save_artifact
@@ -117,13 +126,17 @@ class FakeGx10:
 def chronos_pin(tmp_path, data_root, snapshot_id):
     """A staged zero-shot Chronos artifact with its packet, like SwiftGorge's receipt."""
 
-    def build(**serving_changes):
-        config = ChronosConfig(model=PIN, metric="heart_rate", aggregation="mean", context_hours=48)
+    def build(*, context=None, context_hours=48, covariates=(), **serving_changes):
+        config = ChronosConfig(
+            model=PIN, metric="heart_rate", aggregation="mean", context_hours=context_hours
+        )
         artifact = ChronosArtifact(
             model_id="chronos-2-zero-shot",
             chronos=config,
             protocol_sha256="a" * 64,
             harness_lookback_hours=48,
+            context_policy=context,
+            past_covariates=list(covariates),
         )
         base = tmp_path / f"chronos-{len(list(tmp_path.glob('chronos-*')))}"
         base.mkdir()
@@ -179,13 +192,13 @@ def chronos_pin(tmp_path, data_root, snapshot_id):
 
 @pytest.fixture
 def chronos_client(open_client, make_settings, chronos_pin, monkeypatch):
-    def factory(mode: str = "ok", *, configured: bool = True, serving_changes=None):
+    def factory(mode: str = "ok", *, configured: bool = True, serving_changes=None, artifact=None):
         fake = FakeGx10(mode)
         target = Gx10Target(transport=fake, owner="tester", checkout="/remote/api-serving")
         monkeypatch.setattr(
             "hachi.api.catalog.gx10_target", lambda _s: target if configured else None
         )
-        root, pin = chronos_pin(**(serving_changes or {}))
+        root, pin = chronos_pin(**(serving_changes or {}), **(artifact or {}))
         client = open_client(make_settings(artifact_root=root, served_artifacts=(pin,)))
         return client, fake, pin
 
@@ -374,3 +387,77 @@ def test_personal_imports_never_reach_the_shared_gpu(chronos_client, chronos_pin
         client, FORECAST | {"subject_id": "synthetic-apple-gpu", "as_of": "2026-09-03T12:00:00Z"}
     )
     assert generated.result.root.status == "ok" and len(fake.jobs) == 1
+
+
+STEPS = HR_POLICY.model_copy(update={"metric": "steps", "aggregation": "sum"})
+CONTEXT = ContextPolicy(hours=96, channels=[HR_POLICY, STEPS])
+APPLE = SourceAdmission(
+    source="apple_health",
+    rationale="generated probe",
+    feature_policy=HR_POLICY.model_copy(update={"availability_rule": AVAILABILITY_RULE}),
+)
+
+
+def forecast_windows(cutoff):
+    from hachi.contracts.manifests import TimeWindow
+
+    return tuple(
+        TimeWindow(start_utc=cutoff + timedelta(hours=i), end_utc=cutoff + timedelta(hours=i + 1))
+        for i in range(24)
+    )
+
+
+def test_a_longer_context_is_built_exactly_as_12_evaluated_it(chronos_client):
+    """#12's ctx720 shape: the 48 h harness history plus a longer context from the index."""
+    from hachi.api.handoff import Tally, api_points, direct_inference, expected_points
+    from hachi.data.pmdata import iter_aggregates
+    from hachi.evaluation import ForecastInput
+    from hachi.evaluation.context import context_index
+    from hachi.models.chronos.adapter import extended_builder
+
+    client, fake, _ = chronos_client(artifact={"context": CONTEXT, "context_hours": 96})
+    # Late enough that the synthetic data reaches past the 48 h harness window.
+    job = report(client, FORECAST | {"as_of": "2020-03-30T12:00:00Z"})
+    result = job.result.root
+    assert result.status == "ok", result
+    sent = fake.requests[0]
+    assert len(sent["context"]) == 96
+    assert set(sent) == {"request_id", "context", "prediction_length"}
+
+    # The evaluator's construction: one index over the whole snapshot, then extended_builder.
+    service = client.app.state.service
+    served = service.catalog.artifacts[0]
+    subject = service.catalog.subject("p01", service.metadata, service.workspace)
+    cutoff = result.as_of
+    everyone = context_index(iter_aggregates(subject.path, "hour"), CONTEXT)
+    history = subject.hourly_features(HR_POLICY, cutoff, cutoff - timedelta(hours=48))
+    model_input = ForecastInput("p01", cutoff, forecast_windows(cutoff), tuple(history))
+    expected = extended_builder(
+        served.model.config, everyone, context_hours=96, harness_lookback_hours=48
+    )(model_input)
+    assert (sent["context"], sent["request_id"]) == (list(expected.context), expected.request_id)
+    assert sum(v is not None for v in sent["context"][:48]) > 0  # hours beyond the harness
+    tally = Tally()
+    tally.add(
+        api_points(job),
+        expected_points(result.as_of, direct_inference(served, subject, result.as_of, 24)),
+    )
+    assert tally.agrees and tally.compared == 24
+
+
+@pytest.mark.parametrize(
+    ("changes", "refusal"),
+    [
+        ({"context": CONTEXT, "context_hours": 96, "covariates": ["steps"]},
+         "zero-shot univariate"),
+        ({"context": CONTEXT, "context_hours": 120}, "declared window"),
+        ({"context": ContextPolicy(hours=96, channels=[
+            HR_POLICY.model_copy(update={"min_observed_count": 2}), STEPS]),
+          "context_hours": 96}, "target channel"),
+        ({"context": CONTEXT, "context_hours": 96, "accepted_sources": [APPLE]},
+         "evaluated dataset only"),
+    ],
+)  # fmt: skip
+def test_longer_contexts_are_served_only_as_evaluated(chronos_pin, changes, refusal):
+    with pytest.raises(ArtifactRefused, match=refusal):
+        chronos_pin(**changes)

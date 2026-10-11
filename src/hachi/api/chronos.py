@@ -4,13 +4,19 @@ The API builds `ForecastInput` exactly as `evaluate_forecast` does; this wrapper
 the same committed functions #10's validation runs used: `build_request` turns the causal
 hourly history into one context request, the GX10 runs `inference.py` under `gpu-run`,
 and `estimates` maps the verified quantiles to median and q0.1-q0.9 intervals.
+
+An artifact with a longer context (#12's selected `ctx720`) keeps the 48 h harness history
+and builds its request with #12's `extended_builder` over the subject's `ContextIndex`, so
+the context the GPU sees is the one #12 evaluated.
 """
 
 from dataclasses import dataclass
 from datetime import datetime
 
 from hachi.evaluation import ForecastEstimate, ForecastInput
+from hachi.evaluation.context import ContextIndex
 from hachi.models.chronos import ChronosConfig, build_request, estimates
+from hachi.models.chronos.adapter import extended_builder
 from hachi.models.chronos.artifacts import ChronosArtifact
 
 from .gpu import GpuUnavailable, Gx10Target, chronos_quantiles
@@ -35,8 +41,23 @@ class ChronosServed:
     def model_id(self) -> str:
         return self.artifact.model_id
 
-    def predict(self, request: ForecastInput) -> tuple[ForecastEstimate | None, ...]:
-        built = build_request(request, self.config)
+    def predict(
+        self, request: ForecastInput, context: ContextIndex | None = None
+    ) -> tuple[ForecastEstimate | None, ...]:
+        """`context` is the subject's index, required when the artifact has a longer context."""
+        if self.artifact.context_policy is None:
+            built = build_request(request, self.config)
+        elif context is None:
+            raise ValueError("this artifact's longer context needs the subject's context index")
+        else:
+            build = extended_builder(
+                self.config,
+                context,
+                context_hours=self.config.context_hours,
+                harness_lookback_hours=self.artifact.harness_lookback_hours,
+                covariates=self.artifact.past_covariates,
+            )
+            built = build(request)
         if built is None:  # too little context: abstain, as the evaluator does
             return (None,) * len(request.targets)
         if self.target is None:

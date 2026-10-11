@@ -26,6 +26,7 @@ from hachi.contracts.results import PhysiologyForecastResult
 from hachi.evaluation import ForecastEstimate, evaluate_forecast
 
 from .artifacts import ServedArtifact
+from .reports import predictor
 from .sources import SubjectData
 
 HOUR = timedelta(hours=1)
@@ -63,9 +64,8 @@ def direct_inference(
         seed=served.split.seed,
         test_opened_at_utc=None,
     )
-    result = evaluate_forecast(
-        split, history, [], lambda _training: served.model.predict, served.evaluation
-    )
+    predict = predictor(served.model, subject, cutoff)
+    result = evaluate_forecast(split, history, [], lambda _training: predict, served.evaluation)
     return result.predictions[0].estimates if result.predictions else None
 
 

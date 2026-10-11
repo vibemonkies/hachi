@@ -6,7 +6,7 @@ an as-of only if it had ended and become available by then.
 
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -16,6 +16,7 @@ from hachi.contracts.tables import Observation, SourceKind
 from hachi.data import pmdata
 from hachi.data.apple_health import iter_observations as apple_observations
 from hachi.data.apple_health.hourly import apple_hourly_features
+from hachi.evaluation.context import ContextIndex, ContextPolicy, context_index
 from hachi.evaluation.features import HourlyFeature, HourlyFeaturePolicy, hourly_features
 from hachi.storage import child
 
@@ -128,6 +129,28 @@ class SubjectData:
         )
         view = hourly_features(bins, policy)
         return [f for f in view.features if start is None or f.start_utc >= start]
+
+    def context_index(self, policy: ContextPolicy, cutoff: datetime) -> ContextIndex:
+        """Each policy channel's bins in [cutoff - hours, cutoff), final by the cutoff (#12).
+
+        Built exactly as the evaluator's `context_index`, for one subject: a longer model
+        context reads these, while the harness history stays the protocol's lookback.
+        """
+        if self.kind == "apple_import":
+            raise ValueError("longer contexts are built from dataset snapshots only")
+        start = cutoff - timedelta(hours=policy.hours)
+        bins = [
+            b
+            for b in pmdata.iter_aggregates(
+                self.path,
+                "hour",
+                as_of=cutoff,
+                subjects=[self.subject_id],
+                metrics=[c.metric for c in policy.channels],
+            )
+            if b.aggregate.interval_start_utc >= start
+        ]
+        return context_index(bins, policy)
 
     def presence(self, as_of: datetime | None) -> Iterator[Presence]:
         """Spans with usable data, for coverage. Snapshots use their hourly and daily bins."""
