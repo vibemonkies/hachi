@@ -2,7 +2,6 @@
 
 from collections import Counter
 from collections.abc import Sequence
-from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Literal, Self
 
@@ -14,10 +13,11 @@ from hachi.evaluation.comparison import ComparisonSummary
 from hachi.evaluation.forecast import EvaluationConfig, EvaluationResult
 from hachi.evaluation.serialization import document_sha256
 from hachi.evaluation.splits import rolling_origins
-from hachi.models.baselines.artifacts import ARTIFACT, Receipt
-from hachi.models.baselines.tree import FEATURES, TreeArtifact
+from hachi.models.baselines.artifacts import Receipt
 
+from .exports import verify_forecast_export
 from .integrity import EvidenceRefused, digest, read_file, verify_index, verify_sources
+from .paired import verify_paired_summary
 
 TASKS: tuple[TaskName, ...] = (
     "physiology_forecast",
@@ -193,33 +193,6 @@ def _packet(root: Path, repo: Path) -> tuple[EvaluationIdentity, EvaluationResul
     return identity, result, split
 
 
-def _artifact(
-    root: Path, repo: Path, run: RunManifest, config: EvaluationConfig, fit_as_of: datetime
-) -> None:
-    receipt = Receipt.model_validate_json(read_file(root, "artifact.json"))
-    if run.artifact != ArtifactRef(
-        artifact_id=receipt.artifact_id, artifact_sha256=document_sha256(receipt)
-    ):
-        raise EvidenceRefused("artifact receipt differs from its run reference")
-    for name, sha in receipt.files.items():
-        if digest(read_file(root, name)) != sha:
-            raise EvidenceRefused("artifact file differs from its receipt")
-    model = ARTIFACT.validate_json(read_file(root, "model.json"))
-    if model.fit_as_of != fit_as_of:
-        raise EvidenceRefused("artifact fit cutoff differs from its evaluation training cutoff")
-    if model.model_id != run.model.model_id or (model.config.metric, model.config.aggregation) != (
-        config.metric,
-        config.aggregation,
-    ):
-        raise EvidenceRefused("artifact model and evaluation target disagree")
-    expected_features = list(FEATURES) if isinstance(model, TreeArtifact) else [config.metric]
-    if run.feature_order != expected_features:
-        raise EvidenceRefused("artifact features differ from their run manifest")
-    verify_sources(
-        read_file(root, "source-sha256.json"), repo, run.git_sha, "src/hachi/models/baselines"
-    )
-
-
 def validate_development(
     root: Path,
     expected_index_sha256: str,
@@ -237,7 +210,7 @@ def validate_development(
     packets = sorted({str(Path(name).parent) for name in index if name.endswith("/run.json")})
     evaluations: dict[str, EvaluationIdentity] = {}
     for relative in packets:
-        identity, result, _ = _packet(root / relative, repo)
+        identity, result, split = _packet(root / relative, repo)
         run = RunManifest.model_validate_json(read_file(root, f"{relative}/run.json"))
         if run.artifact is not None:
             matches = [
@@ -250,12 +223,13 @@ def validate_development(
             ]
             if len(matches) != 1:
                 raise EvidenceRefused("run must resolve exactly one indexed model artifact")
-            _artifact(
+            verify_forecast_export(
                 matches[0],
+                root,
                 repo,
                 run,
-                EvaluationConfig.model_validate_json(read_file(root, f"{relative}/config.json")),
-                min(o.cutoff for o in result.plan.origins),
+                split,
+                result,
             )
         previous = evaluations.get(identity.run_sha256)
         if previous is not None and previous != identity:
@@ -281,6 +255,7 @@ def validate_development(
             raise EvidenceRefused(
                 "paired comparison does not bind the same model results and split"
             )
+        verify_paired_summary(summary, b_result, c_result, b_split)
         comparisons.append(index[name])
     return DevelopmentReceipt(
         bundle_index_sha256=expected_index_sha256,

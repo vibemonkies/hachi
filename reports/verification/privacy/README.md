@@ -1,5 +1,48 @@
 # #19 private storage and demo evidence
 
+## Complete remote cleanup acceptance follow-up
+
+The required remote privacy tests replace the earlier observed-retention assertions.
+The initial PR87 candidate `6b0a7a7` fixed personal-source refusal and surfaced removal
+errors but still failed fifteen independent cases: logs/metadata/nested outputs remained,
+partial writes were outside the cleanup guard and unexpected exceptions bypassed it.
+The updated source `9e2e891` resolves those findings and adds owned-job termination
+confirmation before treating unknown SSH/timeout outcomes as cleaned.
+
+Independent tests now require whole-owned-run erasure and sibling preservation on
+success, busy/nonzero/timeout/SSH errors, partial writes, read/integrity failures and
+unexpected exceptions. Failures in either/both removals must attempt both inventories,
+withhold the forecast and surface safe errors. Actual local files and a controlled
+late-writer thread verify that unknown termination is explicitly failed, never claimed
+complete. SSH command checks confirm quoting/absence checks and marker self-exclusion;
+no remote command is executed by these tests.
+
+Actual TCP HTTP checks stage and checksum/code-verify a generated Chronos artifact,
+serve generated PMData-layout history, and confirm safe cleanup/termination errors with
+no prediction payload. An entirely generated Apple export deliberately classified
+`real`, with a synthetic-looking ID and explicitly admitted source profile, is refused
+before any remote call. This proves the guard uses resolved source mode rather than IDs,
+profile admission or the forecast's synthetic label. Nothing reads or transfers a
+human's export. Fixtures stop their own socket service and erase only their generated
+roots, including unsealing self-created artifact directories for teardown.
+
+[remote-cleanup-receipt.json](remote-cleanup-receipt.json) binds the clean tested source
+`5a1d0b7` to 71 focused checks (44 independent remote, ten TCP correction, seventeen
+owner Chronos), production CLI37 and private-roster scan680/zero findings. After
+integrating merged PR87 (`ecad5ec`), clean `5f8b225` repeated those 71 focused
+checks and CLI37 with matched served SHA, safe logs and empty model refs; its
+current-tree/private-roster scan covered 688 files with zero findings and lint passed. Parent
+SnowyFortress separately executed the exact source SSH removal commands on newly
+generated GX10 files: seven of seven absent, whole owned run absent, sibling preserved
+and then cleaned. No GPU or existing worker state was touched; authenticated PTY
+execution does not prove BatchMode authentication or inference.
+
+The complete contract run has 44 independent checks. It uses fake transports
+and actual local files/HTTP; the runtime owner's separate generated SSH removal smoke
+binds remote execution. No GPU parity/scientific accuracy, participant authentication,
+physical-media erasure, real personal transfer or display consent is implied. See the
+[runbook](../../../infra/demo/README.md) for failure recovery and personal GPU refusal.
+
 ## Correction/concurrency follow-up after PR79/PR76
 
 [corrections-receipt.json](corrections-receipt.json) records the clean checkout
@@ -24,7 +67,7 @@ private source inspection were retained as historical evidence, not rerun.
 The cheap GPU checks invoke no SSH/GPU. They refuse wrong request identity,
 duplicated results, request hash, model revision and weights without echoing
 submitted values; the transport captures stderr and disables password prompts.
-An in-memory run also confirms a concrete retention limitation: request cleanup
+At that historical checkpoint, an in-memory run confirmed a concrete retention limitation: request cleanup
 leaves remote prediction/evidence files outside the subject deletion inventory.
 Personal GPU use remains gated on explicit source transfer/account consent and
 verified remote retention/cleanup, including failures. This is a current privacy

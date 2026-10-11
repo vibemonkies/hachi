@@ -4,6 +4,7 @@ Only generated subjects and this fixture's disposable database are mutated. Barr
 pause storage boundaries to make otherwise timing-dependent races reproducible.
 """
 
+import shutil
 import socket
 import subprocess
 import threading
@@ -78,6 +79,12 @@ def live_api(tmp_path):
         worker.join(10)
         listener.close()
         assert not worker.is_alive()
+        # Staging seals generated artifacts read-only. Unseal only this test's own
+        # directories so teardown can erase them; no real input is under tmp_path.
+        for directory in tmp_path.rglob("*"):
+            if directory.is_dir() and not directory.is_symlink():
+                directory.chmod(0o700)
+        shutil.rmtree(tmp_path)
 
 
 def post(client, *entries, path=PATH):
