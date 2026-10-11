@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@fontsource/inter": "5.3.0",
+    "@hachi/contracts": "file:../../contracts",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

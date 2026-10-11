@@ -1,8 +1,11 @@
 import { useState, type Dispatch, type FormEvent } from "react";
-import { cutoffs, scenarios, sleepPresets } from "./fixtures";
-import type { Design } from "./App";
+import { ImportPanel } from "./features/import/ImportPanel";
+import { ReportView } from "./features/reports/ReportView";
 import { Plot } from "./components";
-import type { Action, Cutoff, Scenario, Section, Workflow } from "./workflow";
+import { sleepPresets } from "./fixtures";
+import type { Action, Section, Workflow } from "./workflow";
+import type { Design } from "./App";
+
 export function SectionView({
   section,
   workflow,
@@ -14,378 +17,30 @@ export function SectionView({
   workflow: Workflow;
   dispatch: Dispatch<Action>;
 }) {
-  if (section === "import")
-    return <ImportSection workflow={workflow} dispatch={dispatch} />;
+  if (section === "import") return <ImportPanel workflow={workflow} dispatch={dispatch} />;
   if (section === "symptoms") return <Symptoms />;
   if (section === "sleep") return <Sleep />;
-  if (workflow.kind !== "report")
+  if (workflow.kind !== "report") {
     return (
       <div className="notice">
         <h2>No report yet</h2>
-        <p>Load a history and review coverage first.</p>
-        <a className="button" href="#import">
-          Go to import & coverage
-        </a>
+        <p>Import a history, review coverage, and run the forecast and anomaly reports first.</p>
+        <a className="button" href="#import">Go to import & coverage</a>
       </div>
     );
-  const { report, history } = workflow;
+  }
   return (
-    <>
-      <div className="report-meta">
-        <p>
-          Cutoff <strong>{report.cutoff}</strong>
-        </p>
-        <a href="#import">Change cutoff</a>
-      </div>
-      <div
-        className={design === "analysis" && section !== "overview" ? "analysis-detail" : undefined}
-      >
-        <div className="report-content">
-          {section === "overview" ? (
-            <>
-              <div className="overview-layout">
-                <div className="overview-results">
-                  <div className="reading-list">
-                    <a href="#forecast">
-                      <span>Forecast</span>
-                      <strong>{report.forecast.kind === "illustrative" ? "Illustrative heart rate" : "Unavailable"}</strong>
-                      <span>{report.forecast.kind === "illustrative" ? "Six selected hourly bins within 24 hours · Open forecast →" : report.forecast.reason}</span>
-                    </a>
-                    <a href="#anomaly">
-                      <span>Baseline deviation</span>
-                      <strong>{report.anomaly.kind === "illustrative" ? "Illustrative baseline deviation" : "Unavailable"}</strong>
-                      <span>{report.anomaly.kind === "illustrative" ? "Historical fixture scores · View deviation →" : report.anomaly.reason}</span>
-                    </a>
-                  </div>
-                  {design === "analysis" && (
-                    <div className="overview-plots">
-                      <Plot
-                        panel={report.forecast}
-                        title="Heart rate · hourly mean"
-                        unit="bpm"
-                        expanded
-                        description="Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range."
-                      />
-                      <Plot
-                        panel={report.anomaly}
-                        title="Historical baseline deviation"
-                        unit="score"
-                        expanded
-                        description="Hand-authored scores: zero means baseline-like; larger means greater deviation. Not illness probability. No validated alert threshold."
-                      />
-                    </div>
-                  )}
-                </div>
-                {design === "analysis" && <EvidenceRegister workflow={workflow} />}
-              </div>
-              <UnavailableTasks />
-            </>
-          ) : section === "forecast" ? (
-            <>
-              <Plot
-                panel={report.forecast}
-                title="Heart rate · hourly mean"
-                unit="bpm"
-                expanded={design === "analysis"}
-                description="Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range."
-              />
-              {design !== "analysis" && (
-                <p className="method">
-                  Import-wide count · {history.coverage[0].observed}/
-                  {history.coverage[0].expected} hourly bins. Reports are
-                  pre-authored examples for the selected cutoff; no observations
-                  are analyzed.
-                </p>
-              )}
-            </>
-          ) : (
-            <>
-              <Plot
-                panel={report.anomaly}
-                expanded={design === "analysis"}
-                title="Historical baseline deviation"
-                unit="score"
-                description="Synthetic standardized absolute deviation from a personal historical baseline. Zero means baseline-like; larger scores mean greater deviation. Not illness probability. No validated alert threshold or measured alert burden."
-              />
-              <details className="method">
-                <summary>Baseline method and coverage</summary>
-                <p>
-                  Baseline window · {report.baseline} labels the final illustrative
-                  point. Earlier points use windows ending at their own timestamps.
-                  Scores and windows are static fixture metadata; no baseline
-                  calculation runs.
-                </p>
-                <p>
-                  Changed features · hourly heart-rate mean and resting heart rate.
-                  Coverage ·{" "}
-                  {history.coverage[1].observed}/{history.coverage[1].expected}{" "}
-                  daily resting-HR values. Missing points are gaps, never zero.
-                </p>
-              </details>
-            </>
-          )}
-        </div>
-        {design === "analysis" && section !== "overview" && (
-          <EvidenceRegister workflow={workflow} />
-        )}
-      </div>
-    </>
+    <ReportView
+      section={section}
+      design={design}
+      imported={workflow.imported}
+      coverage={workflow.coverage}
+      asOf={workflow.asOf}
+      reports={workflow.reports}
+    />
   );
 }
-function EvidenceRegister({
-  workflow,
-}: {
-  workflow: Extract<Workflow, { kind: "report" }>;
-}) {
-  const { history, report } = workflow;
-  return (
-    <aside className="evidence-register" aria-label="Source and coverage">
-      <h2>Source & coverage</h2>
-      <dl>
-        <dt>Import period · UTC</dt>
-        <dd>{history.start}<br />to {history.end}<br />(end excluded)</dd>
-        {history.coverage.map((row) => (
-          <div key={row.metric}>
-            <dt>{row.metric}</dt>
-            <dd>
-              {row.observed} / {row.expected}
-              <span>observations / expected · signal unit: {row.unit}</span>
-            </dd>
-          </div>
-        ))}
-        <dt>Baseline window · final illustrative point</dt>
-        <dd>{report.baseline}</dd>
-      </dl>
-      <p>
-        Import-wide counts. Reports are pre-authored examples for the selected
-        cutoff; no observations are analyzed.
-      </p>
-    </aside>
-  );
-}
-function ImportSection({
-  workflow,
-  dispatch,
-}: {
-  workflow: Workflow;
-  dispatch: Dispatch<Action>;
-}) {
-  const [scenario, setScenario] = useState<Scenario>("complete");
-  const busy = workflow.kind === "importing" || workflow.kind === "reporting";
-  const history = "history" in workflow ? workflow.history : undefined;
-  const cutoff =
-    workflow.kind === "report"
-      ? workflow.report.cutoff
-      : "cutoff" in workflow
-        ? workflow.cutoff
-        : "";
-  return (
-    <>
-      <section className="import-panel">
-        <div>
-          <h2>Synthetic history</h2>
-          <p>
-            No files are read or uploaded.
-          </p>
-        </div>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            dispatch({ type: "load", scenario });
-          }}
-        >
-          <label htmlFor="scenario">Demonstration scenario</label>
-          <select
-            id="scenario"
-            value={scenario}
-            disabled={busy}
-            onChange={(event) => setScenario(event.target.value as Scenario)}
-          >
-            {scenarios.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-          <button disabled={busy}>
-            {workflow.kind === "importing"
-              ? "Loading history…"
-              : "Load synthetic history"}
-          </button>
-          <button
-            className="text-button"
-            type="button"
-            onClick={() => dispatch({ type: "reset" })}
-          >
-            {busy ? "Cancel operation" : "Reset workspace"}
-          </button>
-        </form>
-      </section>
-      {workflow.kind === "import-error" && (
-        <div className="notice error" role="alert">
-          <h2>History could not be loaded.</h2>
-          <p>{workflow.message}</p>
-          <button
-            onClick={() =>
-              dispatch({ type: "load", scenario: workflow.scenario })
-            }
-          >
-            Retry import
-          </button>
-        </div>
-      )}
-      {workflow.kind === "no-observations" && (
-        <div className="notice">
-          <h2>No observations in this fixture.</h2>
-          <p>
-            Missing observations are not zero values. Select Complete history to
-            explore coverage and reports.
-          </p>
-          <button
-            onClick={() =>
-              dispatch({ type: "load", scenario: workflow.scenario })
-            }
-          >
-            Retry empty import
-          </button>
-        </div>
-      )}
-      {history && (
-        <section className="coverage">
-          <h2>Coverage</h2>
-          <p>
-            Synthetic device fixture · {history.start} to {history.end} (end
-            excluded).
-          </p>
-          <div
-            className="table-scroll"
-            tabIndex={0}
-            role="region"
-            aria-label="Coverage table"
-          >
-            <table>
-              <caption>
-                Import coverage. Expected counts use hourly bins or completed
-                daily windows.
-              </caption>
-              <thead>
-                <tr>
-                  <th>Signal</th>
-                  <th>Unit</th>
-                  <th>Observed / expected</th>
-                  <th>Missing</th>
-                  <th>Coverage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.coverage.map((row) => (
-                  <tr key={row.metric}>
-                    <th scope="row">{row.metric}</th>
-                    <td>{row.unit}</td>
-                    <td>
-                      {row.observed} / {row.expected}
-                    </td>
-                    <td>{row.expected - row.observed}</td>
-                    <td>
-                      <span
-                        className="coverage-bar"
-                        style={
-                          {
-                            "--coverage": `${(row.observed / row.expected) * 100}%`,
-                          } as React.CSSProperties
-                        }
-                      />
-                      {Math.round((row.observed / row.expected) * 100)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="caption">
-            Import-wide counts; they do not describe observations analyzed by
-            the pre-authored report examples. Sleep duration and resting heart
-            rate are distinct daily signals.
-          </p>
-          {workflow.kind === "coverage" && (
-            <button onClick={() => dispatch({ type: "acknowledge" })}>
-              I have reviewed the coverage
-            </button>
-          )}
-        </section>
-      )}
-      {history && workflow.kind !== "coverage" && (
-        <section className="cutoff-section">
-          <h2>Report cutoff</h2>
-          <p>
-            Changing the cutoff clears the current report.
-          </p>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              dispatch({ type: "request" });
-            }}
-          >
-            <label htmlFor="cutoff">Explicit UTC cutoff</label>
-            <select
-              id="cutoff"
-              value={cutoff}
-              disabled={busy}
-              onChange={(event) =>
-                dispatch({
-                  type: "cutoff",
-                  cutoff: event.target.value as Cutoff | "",
-                })
-              }
-            >
-              <option value="">Select a supported UTC example</option>
-              {cutoffs.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-            <button disabled={!cutoff || busy || workflow.kind === "report"}>
-              {workflow.kind === "reporting"
-                ? "Preparing report…"
-                : workflow.kind === "report-error"
-                  ? "Retry synthetic report"
-                  : "Request synthetic report"}
-            </button>
-          </form>
-          {workflow.kind === "report-error" && (
-            <p className="error-text" role="alert">
-              {workflow.message}
-            </p>
-          )}
-          {workflow.kind === "report" && (
-            <p className="success">
-              Report ready at {workflow.report.cutoff}.{" "}
-              <a className="button" href="#forecast">Open forecast →</a>{" "}<a href="#overview">Overview</a>
-            </p>
-          )}
-        </section>
-      )}
-    </>
-  );
-}
-function UnavailableTasks() {
-  return (
-    <section className="method">
-      <h2>Unavailable outputs</h2>
-      <h3>Illness onset · unavailable</h3>
-      <p>
-        Needs symptom-onset labels and evaluation on people excluded from
-        training.
-      </p>
-      <h3>Recovery · unavailable</h3>
-      <p>
-        Needs a defined recovery endpoint and follow-up data.
-      </p>
-    </section>
-  );
-}
-function Symptoms() {
+export function Symptoms() {
   const [preview, setPreview] = useState<{
     event: string;
     entry: string;
@@ -446,7 +101,7 @@ function Symptoms() {
     </>
   );
 }
-function Sleep() {
+export function Sleep() {
   const [preset, setPreset] = useState("steady");
   const selected =
     preset === "steady"
