@@ -20,7 +20,6 @@ import json
 import math
 import os
 import platform
-import resource
 import subprocess
 import sys
 import time
@@ -371,6 +370,8 @@ def pipeline_forecaster(pipeline, batch_size: int) -> Forecaster:
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    import resource
+
     import torch
 
     started = time.monotonic()
