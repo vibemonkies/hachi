@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "mechanism": "actual Linux flock; real CUDA preflight",
+  "independent_teammate_rerun": false,
+  "checks": [
+    {
+      "check": "two_owners_serialize",
+      "passed": true,
+      "first_seconds": 1.50971084000048,
+      "second_started_after_first_ended": true
+    },
+    {
+      "check": "error_exit_releases_lock_and_preserves_status",
+      "passed": true
+    },
+    {
+      "check": "sigterm_forwards_to_job_before_unlock",
+      "passed": true
+    },
+    {
+      "check": "sigkill_keeps_lock_in_live_child",
+      "passed": true
+    },
+    {
+      "check": "uncoordinated_cuda_job_refused_without_interference",
+      "passed": true
+    },
+    {
+      "check": "duplicate_run_id_cannot_overwrite",
+      "passed": true
+    }
+  ],
+  "source_base_commit": "a7e44d225229d77c9663c65c966dcd053a582fed",
+  "source_sha256": {
+    "scripts/gx10/gpu-run": "8bfcf7eb6f9bb20270468d4b26ed38a9f6d22a3b81b8e5da7f1a1825422570fa",
+    "scripts/gx10/supervise.py": "78d4ad00fbd2afed77cb5cfabc3740c9fb1a3c19677e551b9577a9774b5c1773",
+    "scripts/gx10/verify-queue.py": "6017d6b2730b2b4f199843984073d841e58225405a663bb263e840911f2da7a4"
+  }
+}

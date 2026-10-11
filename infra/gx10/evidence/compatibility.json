@@ -1,0 +1,32 @@
+{
+  "target": "5ASB / Linux aarch64 / CPython 3.12.3 / GB10",
+  "observed_during_issue": 1,
+  "failed_candidates": [
+    {
+      "candidate": "torch 2.9.1+cu130 / nvidia-cusparselt-cu13 0.8.0",
+      "check": "python -m pip --isolated check",
+      "exit_code": 1,
+      "message": "nvidia-cusparselt-cu13 0.8.0 is not supported on this platform",
+      "wheel_internal_tag": "py3-none-manylinux2014_sbsa",
+      "vendor_aarch64_filename": "nvidia_cusparselt_cu13-0.8.0-py3-none-manylinux2014_aarch64.whl",
+      "vendor_wheel_sha256": "400c6ed1cf6780fc6efedd64ec9f1345871767e6a1a0a552a1ea0578117ea77c",
+      "decision": "reject for reproducible environment; no metadata patch or skipped check"
+    },
+    {
+      "candidate": "nvidia-cusparselt-cu13 0.8.1 and nvidia-cusparselt-cu12 0.7.1",
+      "check": "inspect official NVIDIA ARM64 wheel WHEEL metadata",
+      "wheel_internal_tag": "py3-none-manylinux2014_sbsa",
+      "decision": "same packaging issue; not used"
+    },
+    {
+      "candidate": "torch 2.8.0+cu129 using only PyPI for dependencies",
+      "message": "No matching distribution found for triton==3.4.0; platform_system == Linux",
+      "decision": "pin actual CPython 3.12 ARM64 Triton 3.4.0 wheel from official PyTorch index"
+    }
+  ],
+  "download_client": {
+    "observed": "PyTorch CDN returned HTTP Error 403: Forbidden to Python urllib default user agent",
+    "resolution": "explicit hachi-gx10/1.0 user agent; original wheel SHA-256 verified"
+  },
+  "wbm_mamba": "not attempted; no WBM kernel compatibility claim"
+}

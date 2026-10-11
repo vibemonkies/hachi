@@ -1,0 +1,7 @@
+{
+  "model_id": "amazon/chronos-2",
+  "revision": "29ec3766d36d6f73f0696f85560a422f50e8498c",
+  "weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+  "license": "Apache-2.0",
+  "source": "https://huggingface.co/amazon/chronos-2"
+}

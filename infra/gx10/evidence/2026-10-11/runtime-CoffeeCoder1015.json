@@ -1,0 +1,60 @@
+{
+  "status": "passed",
+  "data": "synthetic sine wave; no participant data",
+  "owner": "CoffeeCoder1015",
+  "python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "python_executable": "/home/asus/hachi/workspaces/CoffeeCoder1015/envs/8e30ab7405c3087d/bin/python",
+  "architecture": "aarch64",
+  "torch": "2.8.0+cu129",
+  "torch_cuda": "12.9",
+  "compiled_cuda_arches": [
+    "sm_80",
+    "sm_90",
+    "sm_100",
+    "sm_120"
+  ],
+  "gpu": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "gpu_identity": "GPU-c2d98b03-3f79-daea-e47c-1b8e6a88b7c2, NVIDIA GB10, 580.142",
+  "packages": {
+    "chronos-forecasting": "2.3.2",
+    "transformers": "4.57.6",
+    "accelerate": "1.15.0",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6"
+  },
+  "source_base_commit": "a7e44d225229d77c9663c65c966dcd053a582fed",
+  "source_sha256": {
+    "scripts/gx10/verify-runtime.py": "e085afce777b8b4b32a44d235e9a4b3a4326ba53f4dd9afc05bd49b23a347f3b",
+    "infra/gx10/model.json": "10f64c75eefa6c3033d4a5ae1586504b5f30a15e88d3cf63a69774540465bb1a",
+    "scripts/gx10/gpu-run": "8bfcf7eb6f9bb20270468d4b26ed38a9f6d22a3b81b8e5da7f1a1825422570fa",
+    "scripts/gx10/supervise.py": "78d4ad00fbd2afed77cb5cfabc3740c9fb1a3c19677e551b9577a9774b5c1773"
+  },
+  "lock_sha256": "8e30ab7405c3087d73bc489dbdcb3912cba2298f1a2fd4b7fda57b1548ab5f8a",
+  "model": {
+    "model_id": "amazon/chronos-2",
+    "revision": "29ec3766d36d6f73f0696f85560a422f50e8498c",
+    "weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+    "license": "Apache-2.0",
+    "source": "https://huggingface.co/amazon/chronos-2"
+  },
+  "weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+  "tensor_matmul_seconds": 0.1724139939979068,
+  "download_seconds": 18.42763639400073,
+  "inference_seconds": 0.013258277998829726,
+  "forward_backward_update_seconds": 0.2238645799952792,
+  "loss": 0.5436044931411743,
+  "prediction_shape": [
+    1,
+    21,
+    16
+  ],
+  "peak_cuda_allocated_bytes": 996802048,
+  "peak_cuda_reserved_bytes": 1063256064,
+  "peak_process_rss_kib": 1768352,
+  "total_seconds": 23.35905635900417,
+  "wbm_mamba": "not attempted; separate admission gate remains open"
+}

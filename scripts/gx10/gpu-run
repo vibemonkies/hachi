@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# --no-fork preserves the lock descriptor across the supervisor and its job.
+# Never unlink gpu.lock: waiters must all refer to the same inode.
+root="${HACHI_HOME:-$HOME/hachi}"
+mkdir -p "$root/coordination"
+export HACHI_HOME="$root"
+export HACHI_QUEUED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+printf 'Waiting for Hachi GPU lock: %s\n' "$root/coordination/gpu.lock" >&2
+exec flock --exclusive --no-fork "$root/coordination/gpu.lock" \
+  python3 "$(dirname "$0")/supervise.py" "$@"
