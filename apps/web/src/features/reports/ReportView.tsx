@@ -135,7 +135,7 @@ export function TaskResultPanel({
           {warning.code === "DEVICE_SHIFT" && <strong className="device-shift-label">Unvalidated device transfer</strong>}
           <strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}
         </p>)}
-        {forecastSeries.map((series) => <ForecastChart key={series.metric} series={series} expanded={expanded} />)}
+        {forecastSeries.map((series) => <ForecastChart key={series.metric} series={series} expanded={expanded} asOf={result.as_of} />)}
         {result.forecast.unavailable_metrics.length > 0 && (
           <div className="notice">
             <h3>Requested signals unavailable</h3>
@@ -185,7 +185,7 @@ function isPointOnly(series: ForecastSeries) {
     series.points.every((point) => point.lower === null && point.upper === null);
 }
 
-function ForecastChart({ series, expanded }: { series: ForecastSeries; expanded: boolean }) {
+function ForecastChart({ series, expanded, asOf }: { series: ForecastSeries; expanded: boolean; asOf: string }) {
   const pointOnly = isPointOnly(series);
   const showBounds = series.interval_calibration !== "none" &&
     series.points.every((point) => point.lower !== null && point.upper !== null);
@@ -197,9 +197,9 @@ function ForecastChart({ series, expanded }: { series: ForecastSeries; expanded:
   const range = max === min ? Math.max(1, Math.abs(max) * 0.05) : (max - min) * 0.12;
   const low = min - range;
   const high = max + range;
-  const start = Date.parse(series.points[0].interval_start_utc);
-  const end = Date.parse(series.points.at(-1)!.interval_start_utc);
-  const x = (timestamp: string) => 58 + (Date.parse(timestamp) - start) * 560 / Math.max(1, end - start);
+  const start = Date.parse(asOf);
+  const end = start + 24 * 60 * 60 * 1000;
+  const x = (timestamp: string) => 58 + (Date.parse(timestamp) - start) * 560 / (end - start);
   const y = (value: number) => 220 - (value - low) / (high - low) * 170;
   const path = series.points.map((point, index) => `${index ? "L" : "M"}${x(point.interval_start_utc)},${y(point.median)}`).join(" ");
   const metricName = labels[series.metric] ?? series.metric.replaceAll("_", " ");
