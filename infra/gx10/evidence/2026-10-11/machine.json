@@ -1,0 +1,35 @@
+{
+  "captured_at": "2026-10-11T06:24:50.150761+00:00",
+  "hostname": "5ASB",
+  "architecture": "aarch64",
+  "kernel": "6.17.0-1014-nvidia",
+  "os_release": "PRETTY_NAME=\"Ubuntu 24.04.4 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.4 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n",
+  "system_python": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "gpu": {
+    "exit_code": 0,
+    "stdout": "GPU-c2d98b03-3f79-daea-e47c-1b8e6a88b7c2, NVIDIA GB10, 580.142",
+    "stderr": ""
+  },
+  "installed_toolkit": {
+    "exit_code": 0,
+    "stdout": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Aug_20_01:57:39_PM_PDT_2025\nCuda compilation tools, release 13.0, V13.0.88\nBuild cuda_13.0.r13.0/compiler.36424714_0",
+    "stderr": ""
+  },
+  "memory": {
+    "exit_code": 0,
+    "stdout": "total        used        free      shared  buff/cache   available\nMem:     130596773888  4653993984 76914491392    18407424 50001657856 125942779904\nSwap:    17179865088           0 17179865088",
+    "stderr": ""
+  },
+  "disk": {
+    "total_bytes": 982819848192,
+    "used_bytes": 308236775424,
+    "free_bytes": 624583036928
+  },
+  "compute_processes": {
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "existing_venv_config_sha256": "4e950505b54507cb6c75254ab55fd3c4012f73b783f85d3b9d52003d30a4f414",
+  "existing_environment_policy": "~/venv and ~/unsloth remain untouched; no system or service changes"
+}

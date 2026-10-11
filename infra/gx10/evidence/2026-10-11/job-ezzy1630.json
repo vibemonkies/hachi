@@ -1,0 +1,13 @@
+{
+  "owner": "ezzy1630",
+  "run_id": "issue1-runtime-20261011T0623",
+  "supervisor_pid": 374883,
+  "queued_at": "2026-10-11T06:20:53Z",
+  "started_at": "2026-10-11T06:20:53.245158+00:00",
+  "run_directory": "/home/asus/hachi/runs/ezzy1630/issue1-runtime-20261011T0623",
+  "state": "finished",
+  "job_pid": 374889,
+  "ended_at": "2026-10-11T06:21:00.245923+00:00",
+  "exit_code": 0,
+  "elapsed_seconds": 7.000685999002599
+}

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="${HACHI_HOME:-$HOME/hachi}"
+mkdir -p "$root/coordination"
+export HACHI_HOME="$root"
+# Serialize wheel downloads and environment creation; this does not reserve GPU.
+exec flock --exclusive --no-fork "$root/coordination/provision.lock" \
+  python3 "$(dirname "$0")/provision.py" "$@"
