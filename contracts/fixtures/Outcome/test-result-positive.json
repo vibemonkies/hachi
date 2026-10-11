@@ -1,0 +1,14 @@
+{
+  "dataset_id": "synthetic",
+  "subject_id": "synthetic-001",
+  "label_source": "study_survey",
+  "kind": "test_result",
+  "test_id": "synthetic-test-01",
+  "episode_id": "synthetic-episode-00",
+  "pathogen": "sars_cov_2",
+  "method": "pcr",
+  "result": "positive",
+  "collected_earliest_utc": "2026-09-29T07:00:00Z",
+  "collected_latest_utc": "2026-09-30T07:00:00Z",
+  "observed_at_utc": "2026-10-01T07:00:00Z"
+}

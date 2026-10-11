@@ -1,0 +1,38 @@
+{
+  "schema_version": "0.1",
+  "subject_id": "synthetic-001",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:00Z",
+  "dataset_snapshot": null,
+  "history": "empty",
+  "span_start_utc": null,
+  "span_end_utc": null,
+  "metrics": [],
+  "task_support": [
+    {
+      "task": "physiology_forecast",
+      "supported": false,
+      "reason_code": "INSUFFICIENT_HISTORY"
+    },
+    {
+      "task": "anomaly",
+      "supported": false,
+      "reason_code": "INSUFFICIENT_HISTORY"
+    },
+    {
+      "task": "illness_onset",
+      "supported": false,
+      "reason_code": "INSUFFICIENT_HISTORY"
+    },
+    {
+      "task": "recovery",
+      "supported": false,
+      "reason_code": "NO_ONGOING_EPISODE"
+    },
+    {
+      "task": "alertness",
+      "supported": true,
+      "reason_code": null
+    }
+  ]
+}

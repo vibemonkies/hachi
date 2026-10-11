@@ -1,0 +1,9 @@
+{
+  "dataset_id": "synthetic",
+  "subject_id": "synthetic-001",
+  "kind": "status_unknown",
+  "start_utc": "2026-09-18T07:00:00Z",
+  "end_utc": "2026-09-21T07:00:00Z",
+  "reason": "no_survey",
+  "note": null
+}

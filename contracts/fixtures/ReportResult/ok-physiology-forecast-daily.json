@@ -1,0 +1,75 @@
+{
+  "schema_version": "0.1",
+  "report_id": "synthetic-report-forecast-daily",
+  "subject_id": "synthetic-001",
+  "as_of": "2026-10-10T07:00:00Z",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:05Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "warnings": [],
+  "replay": null,
+  "status": "ok",
+  "task": "physiology_forecast",
+  "provenance": {
+    "dataset_snapshot": {
+      "dataset_id": "synthetic",
+      "dataset_version": "0.1",
+      "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+    },
+    "artifact": {
+      "artifact_id": "synthetic-fixture-artifact",
+      "artifact_sha256": "cbc2a1fa300a95a9b516ea36bf8bf1d024ecdb13051fc8e52247822408b0a336"
+    },
+    "feature_coverage": [
+      {
+        "metric": "resting_heart_rate_vendor",
+        "coverage": 0.97
+      },
+      {
+        "metric": "sleep_asleep_unspecified",
+        "coverage": 0.9
+      }
+    ]
+  },
+  "forecast": {
+    "resolution": "day",
+    "tz_name": "America/Los_Angeles",
+    "series": [
+      {
+        "metric": "resting_heart_rate_vendor",
+        "unit": "bpm",
+        "nominal_coverage": 0.8,
+        "interval_calibration": "uncalibrated",
+        "baseline": null,
+        "points": [
+          {
+            "interval_start_utc": "2026-10-10T07:00:00Z",
+            "interval_end_utc": "2026-10-11T07:00:00Z",
+            "local_date": "2026-10-10",
+            "median": 58.0,
+            "lower": 55.0,
+            "upper": 62.0
+          }
+        ]
+      },
+      {
+        "metric": "sleep_asleep_unspecified",
+        "unit": "s",
+        "nominal_coverage": 0.8,
+        "interval_calibration": "uncalibrated",
+        "baseline": null,
+        "points": [
+          {
+            "interval_start_utc": "2026-10-10T07:00:00Z",
+            "interval_end_utc": "2026-10-11T07:00:00Z",
+            "local_date": "2026-10-10",
+            "median": 25200.0,
+            "lower": 21600.0,
+            "upper": 28800.0
+          }
+        ]
+      }
+    ],
+    "unavailable_metrics": []
+  }
+}

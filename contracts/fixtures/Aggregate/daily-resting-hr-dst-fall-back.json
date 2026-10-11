@@ -1,0 +1,20 @@
+{
+  "dataset_id": "synthetic",
+  "subject_id": "synthetic-001",
+  "metric": "resting_heart_rate_vendor",
+  "unit": "bpm",
+  "resolution": "day",
+  "interval_start_utc": "2026-11-01T07:00:00Z",
+  "interval_end_utc": "2026-11-02T08:00:00Z",
+  "local_date": "2026-11-01",
+  "tz_name": "America/Los_Angeles",
+  "aggregation": "mean",
+  "value": 57.0,
+  "null_reason": null,
+  "observed_count": 1,
+  "coverage": 1.0,
+  "source_ids": [
+    "synthetic-source-watch"
+  ],
+  "pipeline_version": "0.1.0"
+}

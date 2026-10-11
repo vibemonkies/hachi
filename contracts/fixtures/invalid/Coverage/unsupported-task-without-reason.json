@@ -1,0 +1,92 @@
+{
+  "schema_version": "0.1",
+  "subject_id": "synthetic-001",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:00Z",
+  "dataset_snapshot": {
+    "dataset_id": "synthetic",
+    "dataset_version": "0.1",
+    "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+  },
+  "history": "sufficient",
+  "span_start_utc": "2026-06-01T07:00:00Z",
+  "span_end_utc": "2026-10-10T07:00:00Z",
+  "metrics": [
+    {
+      "metric": "heart_rate",
+      "unit": "bpm",
+      "first_utc": "2026-06-01T07:00:00Z",
+      "last_utc": "2026-10-10T06:00:00Z",
+      "days_with_data": 129,
+      "coverage": 0.91,
+      "longest_gap_hours": 31.5,
+      "source_kinds": [
+        "watch"
+      ]
+    },
+    {
+      "metric": "resting_heart_rate_vendor",
+      "unit": "bpm",
+      "first_utc": "2026-06-01T07:00:00Z",
+      "last_utc": "2026-10-10T06:00:00Z",
+      "days_with_data": 126,
+      "coverage": 0.96,
+      "longest_gap_hours": 48.0,
+      "source_kinds": [
+        "watch"
+      ]
+    },
+    {
+      "metric": "steps",
+      "unit": "count",
+      "first_utc": "2026-06-01T07:00:00Z",
+      "last_utc": "2026-10-10T06:00:00Z",
+      "days_with_data": 131,
+      "coverage": 0.88,
+      "longest_gap_hours": 22.0,
+      "source_kinds": [
+        "watch",
+        "phone"
+      ]
+    },
+    {
+      "metric": "sleep_asleep_core",
+      "unit": "s",
+      "first_utc": "2026-06-01T07:00:00Z",
+      "last_utc": "2026-10-10T06:00:00Z",
+      "days_with_data": 112,
+      "coverage": 0.83,
+      "longest_gap_hours": 72.0,
+      "source_kinds": [
+        "watch"
+      ]
+    }
+  ],
+  "task_support": [
+    {
+      "task": "physiology_forecast",
+      "supported": true,
+      "reason_code": null
+    },
+    {
+      "task": "anomaly",
+      "supported": true,
+      "reason_code": null
+    },
+    {
+      "task": "illness_onset",
+      "supported": false,
+      "reason_code": null
+    },
+    {
+      "task": "recovery",
+      "supported": false,
+      "reason_code": "NO_ONGOING_EPISODE"
+    },
+    {
+      "task": "alertness",
+      "supported": true,
+      "reason_code": null
+    }
+  ]
+}

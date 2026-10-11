@@ -1,0 +1,19 @@
+{
+  "dataset_id": "synthetic",
+  "subject_id": "synthetic-001",
+  "record_id": "fac70307309c884613345282f35d8fe3",
+  "source_kind": "watch",
+  "source_id": "synthetic-source-watch",
+  "device_model": "Watch7,1",
+  "metric": "heart_rate",
+  "value": 61.0,
+  "unit": "bpm",
+  "start_utc": "2026-10-09T21:00:00Z",
+  "end_utc": "2026-10-09T21:00:00Z",
+  "available_at_utc": "2026-10-09T21:04:00Z",
+  "availability": "observed",
+  "availability_rule": null,
+  "tz_name": null,
+  "utc_offset_minutes": -420,
+  "tz_provenance": "record_offset"
+}

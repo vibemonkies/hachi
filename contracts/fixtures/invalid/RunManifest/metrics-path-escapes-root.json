@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1",
+  "run_id": "synthetic-run-baseline-last-value",
+  "created_at_utc": "2026-10-10T07:00:00Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "git_dirty": false,
+  "config_sha256": "c7375948cc05269ff8643754615d605a6a54c7f5a0ef83c118a8f3adb7245e0a",
+  "dataset_snapshot": {
+    "dataset_id": "synthetic",
+    "dataset_version": "0.1",
+    "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+  },
+  "split_manifest_sha256": "99ded7824befaaf92ac3feea585f5fb301944a90350c8f3d669ff39d3d3dcd41",
+  "task": "physiology_forecast",
+  "feature_order": [
+    "heart_rate:mean:1h",
+    "steps:sum:1h"
+  ],
+  "model": {
+    "model_id": "synthetic-last-value",
+    "checkpoint_source": null,
+    "checkpoint_revision": null,
+    "license": null
+  },
+  "environment_sha256": "67febb0eceb360a6616d27757c4c48439707a215af1788109d75bb1152889260",
+  "seed": 20261010,
+  "artifact": {
+    "artifact_id": "synthetic-fixture-artifact",
+    "artifact_sha256": "cbc2a1fa300a95a9b516ea36bf8bf1d024ecdb13051fc8e52247822408b0a336"
+  },
+  "metrics_paths": [
+    "metrics/../../secrets.json",
+    "metrics/summary.json"
+  ]
+}

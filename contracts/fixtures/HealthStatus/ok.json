@@ -1,0 +1,11 @@
+{
+  "schema_version": "0.1",
+  "status": "ok",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "artifacts": [
+    {
+      "artifact_id": "synthetic-fixture-artifact",
+      "artifact_sha256": "cbc2a1fa300a95a9b516ea36bf8bf1d024ecdb13051fc8e52247822408b0a336"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "schema_version": "0.1",
+  "subject_id": "synthetic-001",
+  "as_of": "2026-10-10T07:00:00Z",
+  "task": "illness_onset",
+  "horizon_hours": 168
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": "0.1",
+  "report_id": "synthetic-report-illness",
+  "subject_id": "synthetic-001",
+  "as_of": "2026-10-10T07:00:00Z",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:05Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "warnings": [],
+  "replay": null,
+  "status": "ok",
+  "task": "illness_onset",
+  "provenance": {
+    "dataset_snapshot": {
+      "dataset_id": "synthetic",
+      "dataset_version": "0.1",
+      "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+    },
+    "artifact": {
+      "artifact_id": "synthetic-fixture-artifact",
+      "artifact_sha256": "cbc2a1fa300a95a9b516ea36bf8bf1d024ecdb13051fc8e52247822408b0a336"
+    },
+    "feature_coverage": [
+      {
+        "metric": "heart_rate",
+        "coverage": 0.95
+      },
+      {
+        "metric": "resting_heart_rate_vendor",
+        "coverage": 1.0
+      }
+    ]
+  },
+  "illness_onset": {
+    "horizon_hours": 48,
+    "onset_probability": 0.12,
+    "target_definition": "New symptom onset within 48 hours after as_of, for people without an ongoing episode (synthetic fixture; no validated illness artifact exists)",
+    "calibration": {
+      "cohort": "synthetic",
+      "version": "0.1",
+      "method": "none (fixture)"
+    },
+    "distribution_status": "unknown"
+  }
+}

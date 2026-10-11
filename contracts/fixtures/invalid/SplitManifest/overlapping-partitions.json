@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.1",
+  "manifest_id": "synthetic-split-fold-0",
+  "created_at_utc": "2026-10-10T07:00:00Z",
+  "dataset_snapshot": {
+    "dataset_id": "synthetic",
+    "dataset_version": "0.1",
+    "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+  },
+  "task": "physiology_forecast",
+  "fold": 0,
+  "n_folds": 5,
+  "train_subjects": [
+    "synthetic-001",
+    "synthetic-002",
+    "synthetic-003",
+    "synthetic-004",
+    "synthetic-005",
+    "synthetic-006"
+  ],
+  "validation_subjects": [
+    "synthetic-007",
+    "synthetic-008"
+  ],
+  "test_subjects": [
+    "synthetic-001",
+    "synthetic-010"
+  ],
+  "exclusions": [
+    {
+      "subject_id": "synthetic-011",
+      "record_id": null,
+      "reason": "Fewer than 14 days of data"
+    }
+  ],
+  "lookback_hours": 336,
+  "horizon_hours": 24,
+  "embargo_hours": 0,
+  "cutoff_stride_hours": 24,
+  "min_history_hours": 336,
+  "evaluation_window": null,
+  "seed": 20261010,
+  "test_opened_at_utc": null
+}

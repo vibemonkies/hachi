@@ -1,0 +1,26 @@
+{
+  "schema_version": "0.1",
+  "report_id": "synthetic-report-recovery-unavailable",
+  "subject_id": "synthetic-001",
+  "as_of": "2026-10-10T07:00:00Z",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:05Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "warnings": [],
+  "replay": null,
+  "status": "unavailable",
+  "task": "recovery",
+  "reason_code": "NO_ONGOING_EPISODE",
+  "requirements": [
+    "A recorded symptom onset without a recorded resolution"
+  ],
+  "provenance": {
+    "dataset_snapshot": {
+      "dataset_id": "synthetic",
+      "dataset_version": "0.1",
+      "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+    },
+    "artifact": null,
+    "feature_coverage": []
+  }
+}

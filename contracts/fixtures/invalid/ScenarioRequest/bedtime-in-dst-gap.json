@@ -1,0 +1,22 @@
+{
+  "schema_version": "0.1",
+  "subject_id": "synthetic-001",
+  "tz_name": "America/Los_Angeles",
+  "schedules": [
+    {
+      "schedule_id": "early",
+      "bedtime_local": "2027-03-14T02:30:00",
+      "wake_time_local": "2027-03-14T09:30:00"
+    },
+    {
+      "schedule_id": "late",
+      "bedtime_local": "2026-10-11T01:00:00",
+      "wake_time_local": "2026-10-11T09:00:00"
+    }
+  ],
+  "assumptions": {
+    "prior_sleep_hours": 7.0,
+    "caffeine": "none",
+    "light_exposure": "not_modeled"
+  }
+}
