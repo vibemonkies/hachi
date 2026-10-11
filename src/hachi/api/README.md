@@ -243,8 +243,15 @@ without echoing values.
 
 A Chronos-2 artifact from #10/#12 is staged like a baseline. `stage-artifact --protocol` sees the
 `chronos-2-artifact-1` model and writes a serving spec with `requires_gpu: true` and
-`interval_nominal_coverage: 0.8` (q0.1-q0.9). Only zero-shot, univariate artifacts whose context
-equals the protocol lookback are served for now.
+`interval_nominal_coverage: 0.8` (q0.1-q0.9). Only zero-shot, univariate artifacts are served,
+with a context equal to the protocol lookback or a longer one from a context policy.
+
+#12's selected `chronos-2-zero-shot-ctx720` is the longer kind. Stage it with the run's
+`protocol.json` (its `protocol_sha256`). A report keeps the 48 h harness history and builds
+the subject's `ContextIndex` at the cutoff (`SubjectData.context_index`, #12's own
+`context_index`). It then makes the request with #12's `extended_builder`, so the GPU sees the
+720 h context #12 evaluated. The context policy's target channel must equal the served feature
+policy. Covariates, fine-tunes and source admissions are refused for these artifacts.
 
 Each forecast is one GX10 job:
 
