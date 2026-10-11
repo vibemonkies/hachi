@@ -107,14 +107,71 @@ def _quantile_at(levels: Sequence[float], values: Sequence[float], level: float)
 
 
 @dataclass(frozen=True)
+class SubjectQuantiles:
+    """One participant's paired decile losses and Chronos interval hits (private)."""
+
+    subject_id: str
+    paired_points: int
+    baseline_loss: float | None
+    candidate_loss: float | None
+    calibration_points: int
+    calibration: dict[str, float]
+
+
+@dataclass(frozen=True)
 class QuantileReport:
     definition: str
+    subjects: tuple[SubjectQuantiles, ...]
     paired_points: int
     participants: int
     baseline: Estimate | None
     candidate: Estimate | None
     difference: Estimate | None
     calibration: dict[str, Estimate | None]
+
+
+QUANTILE_DEFINITION = (
+    "mean pinball loss over deciles 0.1..0.9 on paired targets; point forecasts as "
+    "degenerate distributions; equal participant weighting; candidate minus baseline. "
+    "Calibration: share of Chronos-scored targets inside each central interval."
+)
+
+
+def summarize_quantiles(
+    subjects: Sequence[SubjectQuantiles], config: EvaluationConfig, seed: int
+) -> QuantileReport:
+    """Bootstrap per-participant values; pooling folds requires disjoint participants."""
+    ids = [s.subject_id for s in subjects]
+    if len(set(ids)) != len(ids):
+        raise ValueError("quantile summaries need disjoint participants")
+    ordered = sorted(subjects, key=lambda s: s.subject_id)
+
+    def boot(values: Sequence[float]) -> Estimate | None:
+        return bootstrap_participant_mean(
+            values, samples=config.bootstrap_samples, confidence=config.confidence, seed=seed
+        )
+
+    paired = [s for s in ordered if s.baseline_loss is not None and s.candidate_loss is not None]
+    nominal = sorted({name for s in ordered for name in s.calibration})
+    return QuantileReport(
+        QUANTILE_DEFINITION,
+        tuple(ordered),
+        sum(s.paired_points for s in paired),
+        len(paired),
+        boot([s.baseline_loss for s in paired if s.baseline_loss is not None]),
+        boot([s.candidate_loss for s in paired if s.candidate_loss is not None]),
+        boot(
+            [
+                s.candidate_loss - s.baseline_loss
+                for s in paired
+                if s.candidate_loss is not None and s.baseline_loss is not None
+            ]
+        ),
+        {
+            name: boot([s.calibration[name] for s in ordered if name in s.calibration])
+            for name in nominal
+        },
+    )
 
 
 def paired_quantile_report(
@@ -140,7 +197,7 @@ def paired_quantile_report(
         and target_quality_eligible(t, config)
     }
     baseline = {(p.origin.subject_id, p.origin.cutoff): p for p in result.baseline.predictions}
-    per_subject: dict[str, list[tuple[float, float]]] = defaultdict(list)
+    losses: dict[str, list[tuple[float, float]]] = defaultdict(list)
     hits: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
     for prediction in result.candidate.predictions:
         key: tuple[str, datetime] = (prediction.origin.subject_id, prediction.origin.cutoff)
@@ -167,27 +224,16 @@ def paired_quantile_report(
                 pinball(truth, _quantile_at(levels, values, q), q) for q in DECILES
             )
             baseline_loss = fmean(pinball(truth, b_est.median, q) for q in DECILES)
-            per_subject[key[0]].append((baseline_loss, candidate_loss))
-
-    def boot(values: Sequence[float]) -> Estimate | None:
-        return bootstrap_participant_mean(
-            values, samples=config.bootstrap_samples, confidence=config.confidence, seed=seed
+            losses[key[0]].append((baseline_loss, candidate_loss))
+    subjects = [
+        SubjectQuantiles(
+            subject,
+            len(losses[subject]),
+            fmean(b for b, _ in losses[subject]) if losses[subject] else None,
+            fmean(c for _, c in losses[subject]) if losses[subject] else None,
+            len(next(iter(hits[subject].values()), [])),
+            {name: fmean(values) for name, values in sorted(hits[subject].items())},
         )
-
-    subjects = sorted(per_subject)
-    b_means = [fmean(b for b, _ in per_subject[s]) for s in subjects]
-    c_means = [fmean(c for _, c in per_subject[s]) for s in subjects]
-    nominal = sorted({name for subject in hits.values() for name in subject})
-    return QuantileReport(
-        "mean pinball loss over deciles 0.1..0.9 on paired targets; point forecasts as "
-        "degenerate distributions; equal participant weighting; candidate minus baseline",
-        sum(len(v) for v in per_subject.values()),
-        len(subjects),
-        boot(b_means),
-        boot(c_means),
-        boot([c - b for b, c in zip(b_means, c_means, strict=True)]),
-        {
-            name: boot([fmean(hits[s][name]) for s in sorted(hits) if hits[s][name]])
-            for name in nominal
-        },
-    )
+        for subject in sorted(set(losses) | set(hits))
+    ]
+    return summarize_quantiles(subjects, config, seed)

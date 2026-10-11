@@ -14,9 +14,11 @@ from .adapter import (
 from .evaluation import (
     Forecasts,
     QuantileReport,
+    SubjectQuantiles,
     export_requests,
     load_forecasts,
     paired_quantile_report,
+    summarize_quantiles,
     write_requests,
 )
 
@@ -27,6 +29,7 @@ __all__ = [
     "ContextRequest",
     "Forecasts",
     "QuantileReport",
+    "SubjectQuantiles",
     "UnsupportedInput",
     "build_request",
     "estimates",
@@ -35,5 +38,6 @@ __all__ = [
     "paired_quantile_report",
     "recording_factory",
     "replay_factory",
+    "summarize_quantiles",
     "write_requests",
 ]
