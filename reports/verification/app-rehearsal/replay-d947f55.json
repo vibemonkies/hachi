@@ -1,0 +1,24 @@
+{
+  "format_version": "hachi-replay-evidence-1",
+  "consumer_git_sha": "d947f55bbf03ae945bdcc8526abffbbf9a5069a8",
+  "script_sha256": "d2e4df1cea6c0caaa18e9f65d03621c7bc5fc5bfe0b1dce43959baec0b5b45ff",
+  "uv_lock_sha256": "1b290745f51cf459018c95226823b49db1422e08817402bfc111fef0c30b1297",
+  "cache_sha256": "7135d0c5d4f05687ed1028732c56eda80dff37e26882f9e4e687c2994da148a6",
+  "source_response_sha256": "9d16af3bc0fa7240495c9f3b2c0326eed47fd00f84beb258a8fedd9c2d0fbb63",
+  "contract_schema_sha256": "1a4acb1aed6ed6dc677221b7fc5af6bd69d7f6ccafdfebec27a748abcf3eb07a",
+  "original_data_mode": "real",
+  "replay_metadata_present": true,
+  "entire_response_equal_except_replay": true,
+  "forecast_points_compared": 24,
+  "source_git_sha": "d947f55bbf03ae945bdcc8526abffbbf9a5069a8",
+  "artifact": {
+    "artifact_id": "hourly-last-valid-v1-141306001b16e168",
+    "artifact_sha256": "e7666ef0f4665006822f9ee9c0988a6de0df1633175ff217a27666ce6f66fa3b"
+  },
+  "dataset_snapshot": {
+    "dataset_id": "pmdata",
+    "dataset_version": "simula-2020-04-24",
+    "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+  },
+  "live_api_used": false
+}
