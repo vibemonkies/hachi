@@ -42,7 +42,7 @@ def main():
         for config in [*protocol.baselines, protocol.tree]:
             fitted = []
 
-            def factory(training, config=config):
+            def factory(training, config=config, fitted=fitted):
                 model = (
                     fit_tree(training, config)
                     if isinstance(config, TreeConfig)
