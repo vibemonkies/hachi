@@ -131,7 +131,10 @@ export function TaskResultPanel({
     return (
       <section className="result-card">
         <ResultIdentity result={result} />
-        {result.warnings.filter((warning) => !(pointOnly && warning.code === "UNCALIBRATED_INTERVALS")).map((warning) => <p key={warning.code} className="warning-line"><strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}</p>)}
+        {result.warnings.filter((warning) => !(pointOnly && warning.code === "UNCALIBRATED_INTERVALS")).map((warning) => <p key={warning.code} className={`warning-line${warning.code === "DEVICE_SHIFT" ? " device-shift-warning" : ""}`}>
+          {warning.code === "DEVICE_SHIFT" && <strong className="device-shift-label">Unvalidated device transfer</strong>}
+          <strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}
+        </p>)}
         {forecastSeries.map((series) => <ForecastChart key={series.metric} series={series} expanded={expanded} />)}
         {result.forecast.unavailable_metrics.length > 0 && (
           <div className="notice">
@@ -150,7 +153,10 @@ export function TaskResultPanel({
   return (
     <section className="result-card">
       <ResultIdentity result={result} />
-      {result.warnings.map((warning) => <p key={warning.code} className="warning-line"><strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}</p>)}
+      {result.warnings.map((warning) => <p key={warning.code} className={`warning-line${warning.code === "DEVICE_SHIFT" ? " device-shift-warning" : ""}`}>
+        {warning.code === "DEVICE_SHIFT" && <strong className="device-shift-label">Unvalidated device transfer</strong>}
+        <strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}
+      </p>)}
       <AnomalyChart result={result} expanded={expanded} />
     </section>
   );
@@ -202,7 +208,7 @@ function ForecastChart({ series, expanded }: { series: ForecastSeries; expanded:
         <p>Values and timestamps come directly from the hourly report response. Missing or unsupported signals remain unavailable instead of receiving a fabricated series.</p>
       </figcaption>
       {pointOnly ? (
-        <p className="warning-line"><strong>Point forecast only.</strong> Lower, median, and upper values are equal. No interval band or coverage claim is shown.</p>
+        <p className="warning-line"><strong>Point estimates only.</strong> No interval bounds or coverage claim are supplied.</p>
       ) : series.interval_calibration === "none" ? (
         <p className="warning-line"><strong>No interval bounds.</strong> Median points are shown without an interval band or coverage claim.</p>
       ) : series.interval_calibration === "uncalibrated" ? (
