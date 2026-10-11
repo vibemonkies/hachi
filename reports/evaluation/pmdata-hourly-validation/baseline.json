@@ -1,0 +1,306 @@
+{
+  "active_outer_fold": 0,
+  "counts_note": "Counts sum disjoint validation folds; roster and training counts repeat per fold.",
+  "data_mode": "real",
+  "dataset_snapshot": {
+    "dataset_id": "pmdata",
+    "dataset_version": "simula-2020-04-24",
+    "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+  },
+  "environment_sha256": "2fa7fc3ccb8453e5403a2aebe00ef7b8176f2a281e2ffd3546928b892a65f8bc",
+  "feature_counts": {
+    "included": 46406,
+    "input_bins": 164997,
+    "low_count": 0,
+    "low_coverage": 0,
+    "missing": 8593,
+    "other_aggregation": 109998,
+    "other_metric": 0
+  },
+  "git_dirty": false,
+  "git_sha": "bca82fdd2a15d42c5da14ce5c9d897a4f7c58a37",
+  "healthy_alert_burden": "unestimable: PMData has only unknown illness status",
+  "inner_folds": 3,
+  "models": {
+    "causal-hourly-tree-v1": {
+      "artifact_replay_verified": true,
+      "artifacts": [
+        {
+          "artifact_id": "causal-hourly-tree-v1-a17a713d6bdc618d",
+          "artifact_sha256": "4c66a95116bc8cf568d3f979f6632eb10d99bf7cc67b37bd792d7561f1ddf16e"
+        },
+        {
+          "artifact_id": "causal-hourly-tree-v1-b0d9d2c98289d6e3",
+          "artifact_sha256": "0042ec0cff4e2182b4d9d5b57b1c86df070cc47302d0f0b997f6a779d13a38db"
+        },
+        {
+          "artifact_id": "causal-hourly-tree-v1-27faf12dbea6f5de",
+          "artifact_sha256": "28476ff0c217f764e90962eef87ceed45f4710482a9c581a627582b9c87d42d8"
+        }
+      ],
+      "counts": {
+        "abstained_points": 118,
+        "assigned_participants": 48,
+        "evaluation_participants": 12,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 7,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "excluded_target_quality_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "planned_origins": 84,
+        "predicted_origins": 77,
+        "roster_participants": 48,
+        "scored_participants": 12,
+        "scored_points": 1481,
+        "training_observations": 28340
+      },
+      "elapsed_seconds": 12.88592895900365,
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            9.380857323875746,
+            11.302113281852039
+          ],
+          "participants": 12,
+          "value": 10.323923219908261
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.690428661937873,
+            5.6510566409260194
+          ],
+          "participants": 12,
+          "value": 5.161961609954131
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.977478058816462,
+            15.848604476327944
+          ],
+          "participants": 12,
+          "value": 14.385815029087288
+        }
+      }
+    },
+    "hourly-last-valid-v1": {
+      "artifact_replay_verified": true,
+      "artifacts": [
+        {
+          "artifact_id": "hourly-last-valid-v1-141306001b16e168",
+          "artifact_sha256": "e7666ef0f4665006822f9ee9c0988a6de0df1633175ff217a27666ce6f66fa3b"
+        },
+        {
+          "artifact_id": "hourly-last-valid-v1-ef1c22790aa40268",
+          "artifact_sha256": "5d55a99ee14c719ec865edcdf70d02c136274f84af2a02454b0e5edb37c9ea45"
+        },
+        {
+          "artifact_id": "hourly-last-valid-v1-462f16047cfd4bc1",
+          "artifact_sha256": "5f524bdcfe4c87bc72873d0e8dc6de8d9bdbcb95f1ee63de97a967913abc8c3b"
+        }
+      ],
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 48,
+        "evaluation_participants": 12,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 7,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "excluded_target_quality_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "planned_origins": 84,
+        "predicted_origins": 77,
+        "roster_participants": 48,
+        "scored_participants": 12,
+        "scored_points": 1599,
+        "training_observations": 28340
+      },
+      "elapsed_seconds": 8.642399500007741,
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            10.942346892345657,
+            13.011816214955356
+          ],
+          "participants": 12,
+          "value": 12.025532450745864
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            5.471173446172829,
+            6.505908107477678
+          ],
+          "participants": 12,
+          "value": 6.012766225372932
+        },
+        "rmse": {
+          "confidence_interval": [
+            15.144231375211465,
+            19.168482533210028
+          ],
+          "participants": 12,
+          "value": 17.214322318087323
+        }
+      }
+    },
+    "train-population-mean-v1": {
+      "artifact_replay_verified": true,
+      "artifacts": [
+        {
+          "artifact_id": "train-population-mean-v1-ee4ce6760c3b636b",
+          "artifact_sha256": "e60942083ce8d85decde1cb85cb539e38cebe70ee4b19b5351641fe3643cfee9"
+        },
+        {
+          "artifact_id": "train-population-mean-v1-c1ee92b1fdea4789",
+          "artifact_sha256": "559b526c044fa6f950c76c06fde57460148cd1932a74ebb631d2cf422fa139fb"
+        },
+        {
+          "artifact_id": "train-population-mean-v1-5229f85dc94f168c",
+          "artifact_sha256": "0e71c9d1eda462f18dd257548c0242a29c08879107256a3a5590e79da6ffe9bb"
+        }
+      ],
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 48,
+        "evaluation_participants": 12,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 7,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "excluded_target_quality_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "planned_origins": 84,
+        "predicted_origins": 77,
+        "roster_participants": 48,
+        "scored_participants": 12,
+        "scored_points": 1599,
+        "training_observations": 28340
+      },
+      "elapsed_seconds": 8.506699085060973,
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            10.269457472183735,
+            14.191326593356614
+          ],
+          "participants": 12,
+          "value": 12.195703254092995
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            5.134728736091867,
+            7.095663296678307
+          ],
+          "participants": 12,
+          "value": 6.097851627046498
+        },
+        "rmse": {
+          "confidence_interval": [
+            13.941232746512032,
+            18.388086393904043
+          ],
+          "participants": 12,
+          "value": 16.138935367634073
+        }
+      }
+    },
+    "utc-seasonal-naive-v1": {
+      "artifact_replay_verified": true,
+      "artifacts": [
+        {
+          "artifact_id": "utc-seasonal-naive-v1-20495e0e7cd93d8f",
+          "artifact_sha256": "3493fa54d7af7f9c5079a56a76f8b2ce746c374b1fbbe94de02164ce14c5eb9f"
+        },
+        {
+          "artifact_id": "utc-seasonal-naive-v1-31fdb13ba9712658",
+          "artifact_sha256": "21c5cdedfb7ffd917fc0f37a2ee40b3a6dff854e99d5ae4b56c049e25d427bc2"
+        },
+        {
+          "artifact_id": "utc-seasonal-naive-v1-4e52b2198cf74e8e",
+          "artifact_sha256": "032e6c6463de36c5e36a15c14fad98122a54dbd74abd5681d699f10553849d5d"
+        }
+      ],
+      "counts": {
+        "abstained_points": 135,
+        "assigned_participants": 48,
+        "evaluation_participants": 12,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 7,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "excluded_target_quality_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "planned_origins": 84,
+        "predicted_origins": 77,
+        "roster_participants": 48,
+        "scored_participants": 12,
+        "scored_points": 1464,
+        "training_observations": 28340
+      },
+      "elapsed_seconds": 8.792300041997805,
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            9.422525238518059,
+            12.942661497061493
+          ],
+          "participants": 12,
+          "value": 11.15451767800426
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.7112626192590294,
+            6.471330748530747
+          ],
+          "participants": 12,
+          "value": 5.57725883900213
+        },
+        "rmse": {
+          "confidence_interval": [
+            14.561298240095145,
+            19.73120794790601
+          ],
+          "participants": 12,
+          "value": 17.11349695988759
+        }
+      }
+    }
+  },
+  "nested_plan_sha256": "df6fd2b36daf9514b7e2e1c16eb32de414c65712601371a9e08fc0b17b741c06",
+  "outer_test_participants": 4,
+  "outer_test_sealed": true,
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "python": "3.12.13",
+  "resources": {
+    "elapsed_seconds": 41.61680304101901,
+    "peak_rss_bytes": 619053056,
+    "scope": "whole process, including snapshot verification and artifact replay"
+  },
+  "source_sha256": {
+    "__init__.py": "89fe1f38cd6fe8110c6de3c3c5aaf0337ca96d38fae8b564b956fec8462de859",
+    "artifacts.py": "dd78536155fc43ab9b735334db17597e4f5da2ad42eeb1cb82b7b7509b58d92c",
+    "contracts/causality.py": "88d16cf15818cdbbb2d3ad7910f698fbe74d1b9da1f12916d628d2975d316093",
+    "demo.py": "fecd79deef72197606a47e153b9ea8be24fd194aa03e86b5785968611bb5f010",
+    "evaluation/features.py": "c7a966dca31b335a72a23caa17b36d37327891015d668329a58fafcbfbffd40b",
+    "evaluation/serialization.py": "483680723b4dae29758a8a6bde4ebaeadcb00aeaf97b425f8d73817d65cd7052",
+    "forecast.py": "50ebbb089115427f0784e721155ea8916ba633c3729a49901e3db976aaa11859",
+    "nightly.py": "938bc1484328d2178566fc2657fd0c0941c5a5c028a95c98408184efa00f9477",
+    "nightsignal_reproduction.py": "0949ab9433bd3e4f6d1d235aa4f1cca776d8d24aee6ad3cfbe53d65502bef001",
+    "robust.py": "cea96d1b5bb1b909682071f205e0ae912bee12cb6dd7048fd29e3341f1bfdfb1",
+    "tree.py": "5dc5d07e6a19ab932f023894a9aff98a5f46ffba3ded8bd338375d74ff3c7878"
+  },
+  "validation_participants": 12
+}
