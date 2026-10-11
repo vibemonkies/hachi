@@ -24,9 +24,10 @@ hours, with an extra final endpoint when necessary.
 `model-artifact.json` archives the exact configuration and original implementation
 sources plus this description. The provenance SHA-256 hashes those exact UTF-8 bytes;
 the artifact id is the model version. `git_sha` identifies the checkout HEAD, while
-the artifact captures local uncommitted source. Generation time changes between runs;
-simulation points are deterministic for identical inputs. The command requires Git
-to resolve HEAD. Request JSON is accepted as well as TOML. Keep TOML local timestamps
+the artifact records the configuration and source files read at generation time,
+including uncommitted changes. Generation time changes between runs; simulation points
+are deterministic for identical inputs. The command requires Git to resolve HEAD.
+Request JSON is accepted as well as TOML. Keep TOML local timestamps
 quoted as strings, as in the example. Contract validation rejects unknown fields,
 duplicate ids, nonexistent local times, and invalid inputs. Ambiguous times resolve
 to fold=0. The domain additionally enforces actual UTC sleep duration in (0,16] hours.
