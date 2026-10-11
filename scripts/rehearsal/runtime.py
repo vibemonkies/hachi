@@ -119,7 +119,7 @@ def prepare(args) -> dict:
     run, _ = validation_packet(args.packet)
     root = private_directory(args.runtime_root.resolve())
     spec = serving_from_protocol(args.protocol)
-    pin = stage_artifact(root / "artifacts", args.model, args.packet, spec)
+    pin = stage_artifact(private_directory(root / "artifacts"), args.model, args.packet, spec)
     require(pin == run.artifact, "Staged pin differs from frozen packet")
     operator = Operator(
         format_version="hachi-rehearsal-1",
