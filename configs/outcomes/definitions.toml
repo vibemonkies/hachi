@@ -1,0 +1,60 @@
+# Locked outcome definitions for illness onset, positive tests and recovery (#8).
+# #13 (onset) and #14 (recovery) consume labels built from this file. Any change here changes
+# every label snapshot hash; a change in meaning also bumps definitions_version.
+# Source-specific mappings (columns, codes, thresholds read from codebooks) live beside this file
+# in one TOML per dataset.
+schema_version = "0.1"
+definitions_version = "outcomes-1"
+
+[onset]
+# Incident symptom onset within H hours of a cutoff, for a participant with no ongoing episode.
+horizons_hours = [24, 48, 72]
+# Cutoffs fall at local midnight, so a horizon of H hours covers the next H/24 local days.
+# A reported onset day is the local-day interval [day 00:00, next day 00:00).
+#   positive: an episode's whole onset interval lies inside [cutoff, cutoff + H).
+#   uncertain_partial_onset: an onset interval overlaps the window without lying inside it
+#     (only possible off the midnight grid); excluded from the primary target.
+#   negative: no onset in the window, and every day of the window has a completed daily survey
+#     reporting no symptoms. No survey is unknown, never healthy.
+#   uncertain_unexplained_symptoms: no reported onset, but a survey in the window reports symptoms.
+#   unknown_no_survey: no reported onset and incomplete survey coverage. Not a negative; usable
+#     only in a declared sensitivity analysis.
+#   unknown_follow_up_ended: the window runs past the participant's last day of outcome data.
+#   excluded_ongoing_episode / excluded_washout / excluded_infection_without_onset: see below.
+# A further reported onset this many days or fewer after the previous one, with no accepted
+# recovery between, continues the same episode (relapse) rather than starting a new one.
+episode_merge_days = 14
+# After an accepted resolution, the participant is not at risk again for this many days.
+washout_after_resolution_days = 7
+# An episode with no accepted resolution blocks onset prediction this long after its onset.
+washout_after_censored_onset_days = 28
+# A positive test with no symptom episode (asymptomatic or unreported onset) blocks the window
+# from this many days before the test to this many days after it.
+infection_without_onset_days_before = 14
+infection_without_onset_days_after = 28
+
+[test]
+# A positive test is a separate target, never an onset. It belongs to an episode when it was
+# collected from this many days before onset to this many days after; otherwise it is unlinked.
+link_days_before_onset = 7
+link_days_after_onset = 14
+# Test target: positive_test when a positive test's collection day lies inside the window.
+# Released cohorts publish only positive tests, so the alternative is no_reported_positive_test,
+# never a confirmed negative. Cutoffs within this many days after a positive test are
+# excluded_recent_positive: that infection is not a new event.
+exclude_days_after_positive = 90
+
+[recovery]
+# Time origin: the episode's onset interval. Follow-up ends at the last day with outcome data
+# for the episode; anything unresolved by then is right-censored there.
+#
+# sustained_symptom_free: the episode resolves at the first run of `sustained_days` consecutive
+# local days, each with a completed survey reporting no symptoms (source thresholds in the
+# dataset file). The resolution interval runs from the day after the last symptomatic survey day
+# before the run to the run's first day, so a gap between surveys widens it.
+sustained_days = 2
+# self_reported_recovery: a recovery date the participant reported. Kept as a distinct outcome:
+# feeling recovered is not the same as being symptom-free. A date is rejected (and the episode
+# censored) when it precedes onset, falls after the next episode's onset, or a survey within
+# `contradiction_days` after it reports symptoms.
+contradiction_days = 7
