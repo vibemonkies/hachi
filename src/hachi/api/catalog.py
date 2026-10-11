@@ -2,6 +2,7 @@
 
 import logging
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from hachi.storage import Metadata, Workspace
 
@@ -10,6 +11,9 @@ from .gpu import Gx10Target, SshTransport
 from .settings import Settings
 from .sources import DatasetSnapshot, SnapshotRefused, SubjectData, open_dataset_snapshot
 
+if TYPE_CHECKING:
+    from .scenarios import ScenarioModel
+
 log = logging.getLogger("hachi.api")
 
 
@@ -17,6 +21,7 @@ log = logging.getLogger("hachi.api")
 class Catalog:
     datasets: tuple[DatasetSnapshot, ...] = ()
     artifacts: tuple[ServedArtifact, ...] = ()
+    scenario_model: "ScenarioModel | None" = None
     # Sanitized reasons a configured snapshot or artifact is not served; health is degraded.
     problems: list[str] = field(default_factory=list)
     gx10: Gx10Target | None = None
@@ -53,6 +58,12 @@ class Catalog:
             except (ArtifactRefused, OSError, ValueError) as exc:
                 catalog.problems.append(f"artifact {pin.artifact_id}: {exc}")
         catalog.artifacts = tuple(artifacts)
+        from .scenarios import load_scenario_model
+
+        try:
+            catalog.scenario_model = load_scenario_model(settings.scenario_model)
+        except (OSError, ValueError) as exc:
+            catalog.problems.append(f"scenario model: {exc}")
         for problem in catalog.problems:
             log.warning("not served: %s", problem)
         return catalog
