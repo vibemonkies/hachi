@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1",
+  "entries": [
+    {
+      "kind": "symptom_onset",
+      "entry_id": "synthetic-entry-08",
+      "entered_at_utc": "2026-10-09T16:00:00Z",
+      "supersedes": "synthetic-entry-08",
+      "onset_earliest_utc": "2026-10-07T01:00:00Z",
+      "onset_latest_utc": "2026-10-07T13:00:00Z",
+      "symptoms": [
+        "sore_throat",
+        "fatigue",
+        "congestion",
+        "headache"
+      ],
+      "severity": 3
+    }
+  ]
+}

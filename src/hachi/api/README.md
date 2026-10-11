@@ -53,8 +53,9 @@ reason is logged, and that snapshot or artifact is not used.
 | `GET /v1/subjects/{id}/coverage[?as_of=]` | → `Coverage` | With `as_of`, only data available by then is counted. |
 | `POST /v1/reports` | `ReportRequest` → `ReportJob` | A new job returns 202 `queued`. An identical request on the same data, artifact and code returns 200 and the same job. |
 | `GET /v1/reports/{id}` | → `ReportJob` | `queued` → `running` → `completed`. A failure is a completed job with an `error` result. |
-| `POST /v1/subjects/{id}/observations` | `SelfReportRequest` → the same | 201 when an entry was stored. Re-sending an entry exactly is a no-op. Re-sending a changed entry returns 409. |
-| `GET /v1/subjects/{id}/observations` | → `SelfReportHistory` | Every stored entry, in recording order. An empty list for a known subject with none; 404 for an unknown subject. |
+| `POST /v1/subjects/{id}/observations` | `SelfReportRequest` → the same | 201 when an entry was stored. Re-sending an entry exactly is a no-op. Re-sending a changed entry returns 409. A correction is a new `entry_id` with `supersedes` naming the current version: same `kind`, entered no earlier. Forks, deleted ids and wrong episode references are refused. |
+| `GET /v1/subjects/{id}/observations[?as_of=&versions=all]` | → `SelfReportHistory` | Current version of each entry, in recording order. `as_of` shows what was known then; `versions=all` lists every version. An empty list for a known subject with none; 404 for an unknown subject. |
+| `DELETE /v1/subjects/{id}/observations/{entry_id}?confirm={entry_id}` | → 204 | Erases every version of the entry (SQLite secure delete plus a WAL scrub) and leaves a content-free tombstone, so the ids are never reused. Invalidates the subject's illness/recovery reports. Returns 409 for an onset a recorded resolution refers to. |
 | `POST /v1/scenarios` | `ScenarioRequest` → `ReportResult` | `unavailable` until #15's frozen two-process artifact is served. |
 | `DELETE /v1/subjects/{id}?confirm={id}` | → 204 | Removes private files first, then the records: if a file can't be removed it answers 500 and keeps every record, so the deletion can be retried. Running jobs, or writes for a subject being deleted, return 409. |
 | `GET /healthz` | → `HealthStatus` | Code identity and the served artifact refs. |
