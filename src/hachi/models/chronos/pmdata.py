@@ -569,3 +569,87 @@ def score(inputs: Inputs, export_dir: Path, gx10_dir: Path, output: Path) -> dic
         },
     )
     return summary
+
+
+def zero_shot_receipt(
+    inputs: Inputs,
+    export_dir: Path,
+    gx10_dir: Path,
+    output: Path,
+    *,
+    fold_index: int,
+    expected_evaluation_sha256: str,
+) -> dict[str, Any]:
+    """A served zero-shot artifact bound to a re-scored #10 packet with an identical result.
+
+    The fold's Chronos evaluation is rebuilt from the saved GX10 forecasts and must hash
+    to the value #10 recorded, so the packet the artifact names is that evaluation.
+    """
+    from hachi.evaluation import evaluate_forecast, write_packet
+
+    from .artifacts import ChronosArtifact, artifact_id_for, load_artifact, save_artifact
+
+    protocol, config = inputs.protocol, inputs.config
+    forecasts = load_forecasts(export_dir / "requests.jsonl", gx10_dir)
+    pin = config.chronos.model
+    if forecasts.evidence["weights_sha256"] != pin.weights_sha256:
+        raise ValueError("GX10 run used a different checkpoint than the pinned one")
+    artifact = ChronosArtifact(
+        model_id=CHRONOS_MODEL_ID,
+        chronos=config.chronos,
+        protocol_sha256=document_sha256(protocol),
+        harness_lookback_hours=protocol.lookback_hours,
+    )
+    artifact_id = artifact_id_for(artifact)
+    output.mkdir(mode=0o700, parents=True, exist_ok=False)
+    reference = save_artifact(output / "model", artifact, artifact_id=artifact_id)
+    reloaded = load_artifact(output / "model", reference)
+    if reloaded != artifact:
+        raise RuntimeError("reloaded artifact differs from the saved one")
+    split = inputs.splits[fold_index]
+    result = evaluate_forecast(
+        split,
+        inputs.view.features,
+        inputs.labels,
+        replay_factory(reloaded.chronos, forecasts.quantiles, forecasts.levels, AdapterLog()),
+        inputs.evaluation,
+    )
+    if document_sha256(result) != expected_evaluation_sha256:
+        raise ValueError("re-scored evaluation differs from the recorded #10 evaluation")
+    fold = inputs.folds[fold_index]
+    run = RunManifest(
+        schema_version="0.1",
+        run_id=f"outer{fold.outer_fold}-inner{fold.inner_fold}-{CHRONOS_MODEL_ID}",
+        created_at_utc=datetime.now(UTC),
+        **_git(),
+        config_sha256=document_sha256(inputs.evaluation),
+        dataset_snapshot=protocol.expected_snapshot,
+        split_manifest_sha256=document_sha256(split),
+        task="physiology_forecast",
+        feature_order=[protocol.evaluation.metric],
+        model=ModelRef(
+            model_id=CHRONOS_MODEL_ID,
+            checkpoint_source=pin.model_id,
+            checkpoint_revision=pin.revision,
+            license=pin.license,
+        ),
+        environment_sha256=pin.runtime_lock_sha256,
+        seed=protocol.folds.seed,
+        artifact=reference,
+        metrics_paths=["evaluation.json"],
+    )
+    hashes = write_packet(output / "packet", split, run, result)
+    receipt = {
+        "artifact": reference.model_dump(),
+        "pin": f"{reference.artifact_id}@{reference.artifact_sha256}",
+        "fold": _fold_name(fold),
+        "evaluation_sha256": document_sha256(result),
+        "matches_recorded_10_evaluation": True,
+        "packet_sha256": hashes,
+        "model_files": sorted(p.name for p in (output / "model").iterdir()),
+        "weights_sha256": reloaded.weights_sha256,
+        "runtime_lock_sha256": pin.runtime_lock_sha256,
+        "config_sha256": document_sha256(config),
+    }
+    _write_private(output / "receipt.json", receipt)
+    return receipt

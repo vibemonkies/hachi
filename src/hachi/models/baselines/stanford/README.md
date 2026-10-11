@@ -22,9 +22,14 @@ native values are excluded. Minute HR medians receive equal weight, then the nig
 is their median. Only usable HR/zero-step minutes count toward minimum rest. A night
 before 07:00 or without enough support is unavailable, never a fabricated value.
 
-The parser must enforce participant/member/source selection and checksum admission
-before this function. It must audit multiple-device and overlapping long-term
-files. Clinical control-time joins, raw source execution, source reconciliation,
-policy freezing and healthy alert burden remain the real-data integration work.
+`source.read_native_nights` selects standard HR/step pairs only, without merging
+multiple devices or overlapping long-term files. `burden.run` verifies admitted
+archive/snapshot checksums, freezes the clinical split before task eligibility,
+scores surveyed symptom-free validation days, saves causal histories and canonical
+manifests, and verifies inference from its data-only configuration artifact.
+See `reports/evaluation/stanford-anomaly-validation` for the real-source execution,
+independent CSV reconciliation and substantial coverage limitations.
+
 The generated tests establish edge semantics, missingness/conflicts, future-input
-invariance, boundary readiness and floating-clock enforcement only.
+invariance, boundary readiness, floating-clock enforcement, sealed-test/unknown-label
+exclusion, episode grouping, coverage denominators, private permissions and replay.

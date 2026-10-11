@@ -4,7 +4,7 @@ The Pydantic models here are the single source of truth. `contracts/schema/hachi
 and the TypeScript types in `contracts/typescript/` are generated from them.
 """
 
-from .api import ApiError, Coverage, HealthStatus, ImportStatus, ReportJob
+from .api import ApiError, Coverage, HealthStatus, ImportStatus, ReportJob, SelfReportHistory
 from .base import SCHEMA_VERSION, ArtifactRef, DatasetSnapshotRef, local_day_bounds
 from .causality import available_by, label_known_by, observations_available_by
 from .manifests import RunManifest, SplitManifest
@@ -31,6 +31,7 @@ __all__ = [
     "ReportResult",
     "RunManifest",
     "ScenarioRequest",
+    "SelfReportHistory",
     "SelfReportRequest",
     "SplitManifest",
     "StatusUnknown",

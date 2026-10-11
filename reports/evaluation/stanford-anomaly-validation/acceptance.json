@@ -1,0 +1,54 @@
+{
+  "aggregate_summary_sha256": "c9261fe0ee24cae1a71f1ae8597234990a527eb7ccd0719a004e0aff894c2106",
+  "artifact_file_sha256": "a2a68abc93ab0ef760b5e5529491c11aa67b946a7af03b79aa88c8279bc9e747",
+  "existing_cpu_forecast_source_receipts_unchanged": true,
+  "folds": [
+    {
+      "inner_fold": "inner-0",
+      "metrics_sha256": "3d4a4ab40bef26288cc66c2fa340e3dc96a6bdf1684a098a74c2fca87cc6f3e4",
+      "run_sha256": "f16e5589bab4d3ed47987ab72090474b96d673e9f9d2c7fe882ab264a5ed7f09",
+      "split_sha256": "8598e046cdd7acc70735872e27d89f9df132c0c8132c844eb55294fe9b19d50f",
+      "test_opened_at_utc": null,
+      "test_participants": 31,
+      "train_participants": 60,
+      "validation_participants": 30
+    },
+    {
+      "inner_fold": "inner-1",
+      "metrics_sha256": "9d49186d6f8d6ed769af5039b08606597fa50043d32c1338f1f987eaa7ff2e87",
+      "run_sha256": "fd10e48a102c04e2f8380d031eaa6795380ec58a7a94cdff25045cb7e4966baf",
+      "split_sha256": "2e37284946a1468953273f8fe19115826aec67aecebbaa6880714e6a8fbc8819",
+      "test_opened_at_utc": null,
+      "test_participants": 31,
+      "train_participants": 60,
+      "validation_participants": 30
+    },
+    {
+      "inner_fold": "inner-2",
+      "metrics_sha256": "3b0367e8d34afb3ac969300eea3de9fe938b11c1758e4721b2ba5fc3fcb4d624",
+      "run_sha256": "2100f375e49f3e8637cc67d300b9a176bf781534c5b35ca3b3d9d03c94b1827a",
+      "split_sha256": "ff5b0ef0b183325f9b7a2a5e1743d3477100c6d0779f7dbfc14b16aa0724b23d",
+      "test_opened_at_utc": null,
+      "test_participants": 31,
+      "train_participants": 60,
+      "validation_participants": 30
+    }
+  ],
+  "git_dirty": false,
+  "packet_files_checked": 40,
+  "packet_hash_mismatches": 0,
+  "packet_index_sha256": "ccfadc7c86b3c46576886c14b3f8681ea901d5a00f4c01bc98214bc9782eb80d",
+  "packet_permissions": "directories0700/files0600",
+  "private_packet_contains_subject_results": true,
+  "public_packet_contains_only_aggregates": true,
+  "raw_reconciliation": {
+    "checks": 72,
+    "mismatches": 0,
+    "script": "scripts/evaluation/stanford_reconcile.py",
+    "script_git_sha": "23a7323",
+    "script_sha256": "6407b255c52b07bd9d3d06c869d93c6b91760a44f561654f9bfe53cb2d41a29b"
+  },
+  "run_git_sha": "ea09c7c5b473171695584cabcc4a63fd5b33b08b",
+  "run_id": "stanford-burden-20261011-001",
+  "schema_version": "stanford-anomaly-acceptance-1"
+}
