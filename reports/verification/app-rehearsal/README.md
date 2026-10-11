@@ -6,9 +6,58 @@ assignee remains CoffeeCoder1015. Parent SnowyFortress confirmed the delegated
 tooling scope through hachi-mail. Work chat:
 `t3-thread://v1/mcp:7a352bae-fe61-4baf-8d94-fdc8ae1db703`.
 
-The real baseline **backend** path passed. The product's real
-import → report → chart and offline replay remain unverified. No final model is
+The real baseline **backend** and independent private replay consumer paths passed.
+The product's real import → report → chart and app replay remain unverified. No final model is
 selected, no outer test was opened, and no clinical/product gate is waived.
+
+## Private replay consumer follow-up
+
+On branch `issue-22-private-replay`, source `849bff2` ran the current API after
+PR76/77/79. [API receipt](api-849bff2.json) repeats all 25 origins and 600 points
+exactly against both references. It now records the owner and public packet key
+with matching evaluation/origin/split digests. The actual launch caught a second
+PR76 caller break (`serving_from_protocol` needs the model directory); the owned
+caller was fixed before any inference. The failed run root remains private.
+
+The live API was stopped. At consumer `d812e94`, the versioned private cache
+projected that actual saved completed response through authoritative contracts.
+[Replay receipt](replay-d812e94.json) checks the entire response unchanged except
+`ReplayInfo`: 24 forecast points, original `real` mode, original generated time,
+code, artifact, snapshot, quality and warning state retained. The separately pinned
+cache digest prevents a rehashed substitute from passing. No API request or fresh
+inference happens in the replay provider.
+
+[Rendered aggregate receipt](replay-browser-d812e94.json) binds the cache and
+`browser_compare.js` hash. T3's actual DOM/SVG/table had 24/24 equal medians and
+correct point geometry, unit, quality, timestamps and source provenance. Null
+bounds appeared as unavailable, and no interval band/coverage claim appeared.
+The page omitted subject/report identifiers. No snapshot or screenshot of the
+real chart was taken. Browser observation returned aggregates only; external
+resource requests were disallowed by CSP and the live API port had no listener.
+This establishes the **dedicated rehearsal viewer**, not Coffee's app path.
+
+Separate synthetic contract-fixture replay passed the same 24-point rendered
+comparison. These screenshots are illustrations, not real-data evidence:
+
+- [Synthetic desktop replay](replay-synthetic-desktop.png)
+- [Synthetic 390×844 replay](replay-synthetic-phone.png), body width 390 with no overflow
+- [Missing private cache error](replay-missing-cache.png), actual HTTP 409,
+  `CACHE_MISSING`, visible alert/action and no fallback; no overflow on mobile
+
+Local `make check` passed 580 tests, three subtests, five coordination tests and
+generated schema/fixture/TypeScript checks. Twelve focused integrity/replay tests
+pass, including original response preservation, tampering after rehash, missing
+and corrupt cache, changed schema, public files/symlinks, pending/already replayed
+sources, point-only/unavailable/error rendering and actual loopback HTTP behavior.
+All owned services/tabs were stopped after capture. Private cache/responses stay
+outside Git. Historical receipts below retain the gates that existed at their
+producing commits.
+
+Coffee's [#17 response](https://github.com/vibemonkies/hachi/issues/17#issuecomment-6109148723)
+says a local review package is being prepared, publication is withheld, and the
+replay module/root wiring is not yet agreed. No Coffee code was copied or published.
+Full #22 still requires #17/#18/#19/#20/#21 and actual source-specific Apple/API
+integration; there is no final-model, held-out-test or friend-case claim.
 
 ## What was observed
 
@@ -20,6 +69,8 @@ Both comparisons had zero missing/extra points, zero mismatches and max |Δ| 0.
 The API result had the actual artifact/snapshot/code identity, `data_mode: real`,
 HR in bpm, null bounds and nominal coverage, and `interval_calibration: none`.
 Report retry returned the same job. All original private artifacts were preserved.
+This earliest receipt predates the public packet-index gate and has no
+`published_packet_index_sha256`; the later receipts enforce that gate.
 
 After integrating main through PR65, at clean
 `e17f825d636b5902549e7821c21f3a751f4f6dd4`, the stricter check also bound the

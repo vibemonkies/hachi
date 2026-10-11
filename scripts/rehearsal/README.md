@@ -151,6 +151,12 @@ Never snapshot/screenshot a real replay page. Use only aggregate-returning priva
 DOM/API comparisons. Use a distinctly synthetic cache for browser illustrations.
 No browser storage, service worker, mutation route or external asset is used.
 
+For a replay forecast, evaluate the text of `browser_compare.js` (trim its trailing
+newline) with T3 `preview_evaluate`, `awaitPromise: true`. It reads the actual
+same-origin replay transport and compares rendered SVG geometry/table numbers,
+units, quality and provenance; output contains booleans/counts only. Keep it out
+of snapshots of private real content. A false `ok` is a failed comparison.
+
 This viewer proves the independent consumer path. App replay integration remains
 pending Coffee's concrete #17 source handoff and narrowly agreed module/root wiring.
 Offline replay from a saved real result must pass the numeric/rendered comparison
