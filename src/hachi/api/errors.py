@@ -48,9 +48,45 @@ def _issue(location: tuple, message: str) -> FieldIssue:
     return FieldIssue(path=path[:200], message=(message or "invalid")[:2000])
 
 
+# These built-in messages describe fixed schema constraints, never submitted values.
+# Other types (especially custom value/assertion/tag errors) remain generic.
+_SAFE_RULE_MESSAGES = frozenset(
+    {
+        "missing",
+        "extra_forbidden",
+        "literal_error",
+        "string_type",
+        "int_type",
+        "float_type",
+        "bool_type",
+        "list_type",
+        "dict_type",
+        "greater_than",
+        "greater_than_equal",
+        "less_than",
+        "less_than_equal",
+        "string_too_short",
+        "string_too_long",
+        "string_pattern_mismatch",
+    }
+)
+
+
 def validation_problem(error: ValidationError, prefix: tuple = ()) -> ApiProblem:
     """Field issues name the location and rule only; submitted values are never echoed."""
-    issues = [_issue(prefix + tuple(e["loc"]), e["msg"]) for e in error.errors()]
+    issues = []
+    for issue in error.errors(include_input=False, include_context=False):
+        location = tuple(issue["loc"])
+        # Extra field names are user input too. Contract-generated locations are safe;
+        # drop the untrusted key for extra_forbidden instead of echoing it as a path.
+        if issue["type"] == "extra_forbidden":
+            location = location[:-1]
+        message = (
+            issue["msg"]
+            if issue["type"] in _SAFE_RULE_MESSAGES
+            else "Invalid value for this field or contract rule."
+        )
+        issues.append(_issue(prefix + location, message))
     return ApiProblem(
         "VALIDATION_FAILED", "The request does not match the contract.", issues=issues
     )
