@@ -153,6 +153,7 @@ def test_finetune_series_end_before_and_inside_the_holdout():
 
 @pytest.mark.parametrize("kind", ["handcrafted-personal", "handcrafted-population"])
 def test_ridge_fits_selects_alpha_and_replays_from_its_artifact(kind):
+    pytest.importorskip("numpy", reason="ridge fitting requires the optional baselines extra")
     config = RidgeConfig(kind=kind, metric="heart_rate", alphas=[0.1, 10.0, 1000.0])
     artifact = fit_ridge(prefix(), config)
     assert artifact.alpha in config.alphas and any(

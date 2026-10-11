@@ -27,6 +27,8 @@ def keys(n=120):
 
 
 def test_lp_recovers_the_member_that_carries_the_signal():
+    pytest.importorskip("numpy", reason="LP stacking requires the optional baselines extra")
+    pytest.importorskip("scipy", reason="LP stacking requires the optional baselines extra")
     rng = random.Random(3)
     truth, good, bad = {}, {}, {}
     for key in keys():
