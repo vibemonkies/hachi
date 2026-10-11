@@ -409,17 +409,17 @@ Scope: Source-bound aggregate replay/independent raw reconciliation acceptance.
 
 ### illness
 
-[reports/models/illness/phase1.json](https://github.com/vibemonkies/hachi/blob/7db3baafcf0f8a0c3f615c69443a102b58dc4eee/reports/models/illness/phase1.json)
+[reports/models/illness/phase1.json](https://github.com/vibemonkies/hachi/blob/65091ea619d367cef74a77504b744fca9d7875ef/reports/models/illness/phase1.json)
 
-File SHA256: `8f12966fd2fc1d7e69253dafcf1b6bdc5757f3edbb70f71616cd03e72fe33788`.
+File SHA256: `6e3ab0b2c25629845be5890e947eaab4f7f8f6fb8eed46061fbca50c96fe5519`.
 
 Scope: Selected retrospective cohort development, survey-observation selection; no validated product probabilities.
 
 ### illness-report
 
-[reports/models/illness/phase1.md](https://github.com/vibemonkies/hachi/blob/7db3baafcf0f8a0c3f615c69443a102b58dc4eee/reports/models/illness/phase1.md)
+[reports/models/illness/phase1.md](https://github.com/vibemonkies/hachi/blob/65091ea619d367cef74a77504b744fca9d7875ef/reports/models/illness/phase1.md)
 
-File SHA256: `04eeea9371f4f35ec449e422e42a7569aa434a36b725b86041ef2feb77f0a848`.
+File SHA256: `fd3aef86555534e6b55f9c279bd4ee35d6d146ec476163cb705ab0549de959e3`.
 
 Scope: Research-only ablation and remaining calibration/negative-cohort/feature/final-selection gates.
 
@@ -457,17 +457,17 @@ Scope: Original separate replay consumer numeric/time/geometry evidence; full ap
 
 ### rehearsal-report
 
-[reports/verification/app-rehearsal/README.md](https://github.com/vibemonkies/hachi/blob/7db3baafcf0f8a0c3f615c69443a102b58dc4eee/reports/verification/app-rehearsal/README.md)
+[reports/verification/app-rehearsal/README.md](https://github.com/vibemonkies/hachi/blob/155b1aae6e9960cb2e017865f1f3195360e29af7/reports/verification/app-rehearsal/README.md)
 
-File SHA256: `7e1f80990a8c018189e63a29f13fb4dd40c985eb41ca3e3549f32b247ac99421`.
+File SHA256: `12ebd8fcb51460030d792a826f82070f741c9ed836720259ac0df5b4daeea5db`.
 
 Scope: Current versus historical replay receipts; missing #17/#20/#21/full #22 gates.
 
 ### runbook
 
-[scripts/rehearsal/README.md](https://github.com/vibemonkies/hachi/blob/7db3baafcf0f8a0c3f615c69443a102b58dc4eee/scripts/rehearsal/README.md)
+[scripts/rehearsal/README.md](https://github.com/vibemonkies/hachi/blob/155b1aae6e9960cb2e017865f1f3195360e29af7/scripts/rehearsal/README.md)
 
-File SHA256: `a2fc3af5ff637cf1f8661d310e8a95fb97f044ad673a4c8cf19731b170fda607`.
+File SHA256: `65ff8c00936d9436a0bcb7d4d30151e249bcca170b7107de3733024fbc8b4f10`.
 
 Scope: Source runbook; commands are future rehearsal instructions, not execution proof.
 
