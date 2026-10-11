@@ -250,6 +250,18 @@
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
         },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
+        },
         "kind": {
           "const": "alertness_rating",
           "type": "string"
@@ -736,6 +748,18 @@
         "entered_at_utc": {
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
         },
         "kind": {
           "const": "confounder",
@@ -1553,6 +1577,11 @@
       ],
       "type": "string"
     },
+    "LocalDateTime": {
+      "description": "Local wall-clock time, without an offset.",
+      "format": "local-date-time",
+      "type": "string"
+    },
     "Metric": {
       "enum": [
         "heart_rate",
@@ -2126,6 +2155,18 @@
         "entered_at_utc": {
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
         },
         "kind": {
           "const": "pvt_result",
@@ -2769,14 +2810,10 @@
           "$ref": "#/$defs/Identifier"
         },
         "bedtime_local": {
-          "description": "Local wall-clock time, without an offset.",
-          "format": "date-time",
-          "type": "string"
+          "$ref": "#/$defs/LocalDateTime"
         },
         "wake_time_local": {
-          "description": "Local wall-clock time, without an offset.",
-          "format": "date-time",
-          "type": "string"
+          "$ref": "#/$defs/LocalDateTime"
         }
       },
       "required": [
@@ -3040,6 +3077,18 @@
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
         },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
+        },
         "kind": {
           "const": "symptom_checkin",
           "type": "string"
@@ -3194,6 +3243,18 @@
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
         },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
+        },
         "kind": {
           "const": "symptom_onset",
           "type": "string"
@@ -3236,6 +3297,18 @@
         "entered_at_utc": {
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
         },
         "kind": {
           "const": "symptom_resolution",
@@ -3393,6 +3466,18 @@
         "entered_at_utc": {
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
         },
         "kind": {
           "const": "test_result",

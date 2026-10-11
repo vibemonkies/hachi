@@ -29,6 +29,7 @@
   "ScenarioRequest/missing-assumptions.json": "Field required",
   "SelfReportRequest/entered-before-event.json": "cannot be recorded before",
   "SelfReportRequest/checkin-present-without-symptoms.json": "exactly when symptoms are present",
+  "SelfReportRequest/entry-supersedes-itself.json": "cannot supersede itself",
   "SelfReportHistory/duplicate-entry-ids.json": "entry ids must not contain duplicates",
   "ImportStatus/failed-without-failure.json": "failure is present exactly when",
   "ImportStatus/counts-do-not-add-up.json": "must add up to records_seen",

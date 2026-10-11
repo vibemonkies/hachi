@@ -1,0 +1,108 @@
+{
+  "real": {
+    "ok": true,
+    "pointsCompared": 24,
+    "numericMismatch": 0,
+    "geometryMismatch": 0,
+    "intervalTimesCompared": 48,
+    "intervalTimeMismatch": 0,
+    "cutoffVisible": true,
+    "elapsedUtcCommonScale": true,
+    "targetGapWindows": 0,
+    "originalDataMode": "real",
+    "replayMetadataPresent": true,
+    "provenanceVisible": true,
+    "qualityVisible": true,
+    "identifiersOmitted": true,
+    "timestampsVisible": true,
+    "unitsVisible": true,
+    "unavailableMetricsVisible": true,
+    "pointOnly": true,
+    "noIntervalBand": true,
+    "onlyLocalResources": true
+  },
+  "synthetic": {
+    "ok": true,
+    "pointsCompared": 5,
+    "numericMismatch": 0,
+    "geometryMismatch": 0,
+    "intervalTimesCompared": 10,
+    "intervalTimeMismatch": 0,
+    "cutoffVisible": true,
+    "elapsedUtcCommonScale": true,
+    "targetGapWindows": 3,
+    "originalDataMode": "synthetic",
+    "replayMetadataPresent": true,
+    "provenanceVisible": true,
+    "qualityVisible": true,
+    "identifiersOmitted": true,
+    "timestampsVisible": true,
+    "unitsVisible": true,
+    "unavailableMetricsVisible": true,
+    "pointOnly": true,
+    "noIntervalBand": true,
+    "onlyLocalResources": true
+  },
+  "mobile": {
+    "viewportWidth": 390,
+    "bodyWidth": 390,
+    "noBodyOverflow": true,
+    "tablesLocallyScrollable": true
+  },
+  "consumer_git_sha": "e76626bcc7842cc37ca5e2d089eb6ff6636d5ddd",
+  "source_git_sha": "e76626bcc7842cc37ca5e2d089eb6ff6636d5ddd",
+  "cache_sha256": "7985dd75b6272b995b51435981f0a30cf8ea8d33ee502e6f9792ff974cb21f2a",
+  "browser_compare_sha256": "19c3820066d928e23c1ec27ecfc7927fafdfcfc58d5bcca4971380bcb3b9ae1f",
+  "synthetic_generator_sha256": "d805c0a68058772ca370e2a3cebb53b3917fec99dfcf7e86cd476ecf7eb2bc4b",
+  "live_api_port_8720_stopped": true,
+  "private_real_page_screenshots_taken": false,
+  "page_external_resource_requests_disallowed_by_csp": true,
+  "app_ui_integration_proven": false,
+  "viewport": {
+    "desktop": [
+      1280,
+      1600
+    ],
+    "phone": [
+      390,
+      844
+    ]
+  },
+  "error_boundary": {
+    "missing_cache": "HTTP409 CACHE_MISSING",
+    "visible": true,
+    "no_body_overflow": true
+  },
+  "screenshots": {
+    "replay-utc-synthetic-desktop.png": {
+      "sha256": "b277a9452a8c905f9558fa7930d6511a65bc284d23500d9f2b06e5dfa6206b9d",
+      "captured_at_utc": "2026-10-11T13:14:22.655377+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)",
+      "data": "synthetic or empty error only"
+    },
+    "replay-utc-synthetic-phone-cutoff.png": {
+      "sha256": "11cd7bc3818d8744cd55b3ae360505c8b06d4a481436e999e3c73480ea6e25ee",
+      "captured_at_utc": "2026-10-11T13:14:32.035813+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)",
+      "data": "synthetic or empty error only"
+    },
+    "replay-utc-synthetic-phone-intervals.png": {
+      "sha256": "5f9226dff098065021f690239e3d2e5bea596139f8a7d3b735d87c8066ddc34d",
+      "captured_at_utc": "2026-10-11T13:14:32.079930+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)",
+      "data": "synthetic or empty error only"
+    },
+    "replay-utc-synthetic-phone-bounds.png": {
+      "sha256": "363a830888bcea46c68fcaf17f19b26fa09ca2ecf4ec33cc37a4e67fe19f0626",
+      "captured_at_utc": "2026-10-11T13:15:07.409693+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)",
+      "data": "synthetic or empty error only"
+    },
+    "replay-utc-synthetic-missing-cache.png": {
+      "sha256": "f6d1bbf8457ddbd3d3871f32f37e05b745ebef6d4c96dce2162e0b75605762ab",
+      "captured_at_utc": "2026-10-11T13:15:08.655204+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)",
+      "data": "synthetic or empty error only"
+    }
+  }
+}

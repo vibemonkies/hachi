@@ -1,0 +1,22 @@
+{
+  "protocol_sha256": "4aad3a87fa7fd390304031bd5e49b31ed2affe23edcfe6a6a9ea987323f7ee27",
+  "chronos": {
+    "model": {
+      "model_id": "amazon/chronos-2",
+      "revision": "29ec3766d36d6f73f0696f85560a422f50e8498c",
+      "weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+      "license": "Apache-2.0",
+      "runtime_lock_sha256": "8e30ab7405c3087d73bc489dbdcb3912cba2298f1a2fd4b7fda57b1548ab5f8a"
+    },
+    "metric": "heart_rate",
+    "aggregation": "mean",
+    "context_hours": 48,
+    "min_context_values": 1,
+    "interval_lower": 0.1,
+    "interval_upper": 0.9,
+    "covariates": "none",
+    "batch_size": 256
+  },
+  "pretrained_cohort_overlap": "unknown",
+  "overlap_note": "Zero-shot amazon/chronos-2; its pretraining corpus is not enumerated against PMData, so cohort overlap is unknown. Personal history enters only as the causal 48 h context; PMData clock mapping and historical availability are documented assumptions. Apple-density variant: the 48 h context is hourly means of PMData heart rate thinned to one sample per UTC 5-minute slot (configs/evaluation/pmdata-hourly-validation-apple-density.json); targets stay full density."
+}

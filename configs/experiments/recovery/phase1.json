@@ -1,0 +1,20 @@
+{
+  "protocol_version": "recovery-phase1-research-1",
+  "shared_protocol_path": "configs/evaluation/stanford-phase1-clinical.json",
+  "expected_shared_protocol_sha256": "60a4345a6feb8f4a192e6aec718e4b364d2f22a93ad8d227e1645d092ec6e82c",
+  "expected_snapshot_sha256": "6a864b03b2d3ddf05abc42b699679dba39f1909bad2c3053c4b8adf4108faf09",
+  "expected_fold_plan_sha256": "13dd73b4b3f2b6beabe105c5e577e86e935fa68edfdc117d8e9ebdc7c772fa5e",
+  "endpoint": "outcomes-1-sustained-symptom-free-2d",
+  "landmark": "first-observed-symptomatic-survey-end-of-day-per-episode",
+  "feature_order": ["symptom_count", "max_severity", "severity_sum"],
+  "primary_horizon_days": 7,
+  "maximum_export_days": 14,
+  "minimum_followed_training_subjects": 5,
+  "ridge": 0.1,
+  "max_iterations": 3000,
+  "tolerance": 0.000001,
+  "bootstrap_replicates": 1000,
+  "selection": "none-fixed-comparison-no-refit-no-serving",
+  "calibration": "unmodified-probabilities-interval-identification-bounds",
+  "wearables": "none-symptom-only-primary"
+}

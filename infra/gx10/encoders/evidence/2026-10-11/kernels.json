@@ -1,0 +1,134 @@
+{
+  "host": {
+    "machine": "aarch64",
+    "python": "3.12.3"
+  },
+  "device": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "versions": {
+    "torch": "2.8.0+cu129",
+    "triton": "3.4.0",
+    "mamba-ssm": "2.2.4",
+    "causal-conv1d": "1.5.0.post8",
+    "einops": "0.8.2"
+  },
+  "torch_cuda": "12.9",
+  "triton_launcher_cpath": "/home/asus/hachi/workspaces/justin06lee/toolchains/python-headers-3.12.3-1ubuntu0.17/usr/include/python3.12:/home/asus/hachi/workspaces/justin06lee/toolchains/python-headers-3.12.3-1ubuntu0.17/usr/include",
+  "triton_ptxas": "/home/asus/hachi/workspaces/justin06lee/toolchains/cuda-12.9.1-linux-sbsa/bin/ptxas",
+  "tolerances": {
+    "forward": 0.002,
+    "backward": 0.01
+  },
+  "cases": {
+    "causal_conv1d_cuda": {
+      "output_shape": [
+        2,
+        768,
+        168
+      ],
+      "forward_relative_error": 6.943011001964663e-08,
+      "gradient_relative_errors": {
+        "0": 1.9736131864201993e-07,
+        "1": 1.4348653629958267e-07,
+        "2": 1.2150434283859782e-07
+      },
+      "finite": true,
+      "kernel_forward_ms_first_call": 2.512,
+      "kernel_backward_ms_first_call": 240.283,
+      "passed": true
+    },
+    "selective_scan_cuda": {
+      "output_shape": [
+        2,
+        64,
+        168
+      ],
+      "forward_relative_error": 1.3170626342306336e-06,
+      "gradient_relative_errors": {
+        "0": 1.712984144246373e-06,
+        "1": 8.889731489871274e-07,
+        "2": 1.7376278788808075e-06,
+        "3": 1.1447492498315073e-06,
+        "4": 9.96854875398837e-07,
+        "5": 1.511209776318285e-07
+      },
+      "finite": true,
+      "kernel_forward_ms_first_call": 13.441,
+      "kernel_backward_ms_first_call": 22.328,
+      "passed": true
+    },
+    "ssd_chunk_scan_triton": {
+      "output_shape": [
+        2,
+        512,
+        8,
+        64
+      ],
+      "forward_relative_error": 0.0013627605330209754,
+      "gradient_relative_errors": {
+        "0": 0.0014692060187827302,
+        "1": 0.0014099117845978175,
+        "2": 0.0011851141021120388,
+        "3": 0.0013364253994174926,
+        "4": 0.0016718647591927136,
+        "5": 1.1282292318101524e-07
+      },
+      "finite": true,
+      "kernel_forward_ms_first_call": 29626.303,
+      "kernel_backward_ms_first_call": 51075.484,
+      "passed": true
+    },
+    "mamba2_fused_conv_scan_norm_triton": {
+      "output_shape": [
+        2,
+        168,
+        256
+      ],
+      "forward_relative_error": 0.0002723365932203226,
+      "gradient_relative_errors": {
+        "0": 0.00024945646937196925,
+        "1": 0.00017688218716728024,
+        "2": 0.00014981844746901534,
+        "3": 0.0018441234384383109,
+        "4": 0.0016293821747161157,
+        "5": 0.00018573062813112253,
+        "6": 0.00010876699261723904,
+        "7": 0.0002779983961090205
+      },
+      "finite": true,
+      "kernel_forward_ms_first_call": 862.057,
+      "kernel_backward_ms_first_call": 830.653,
+      "passed": true
+    },
+    "mamba2_module_fused_vs_unfused": {
+      "output_shape": [
+        2,
+        168,
+        256
+      ],
+      "forward_relative_error": 0.0,
+      "gradient_relative_errors": {
+        "0": 0.0
+      },
+      "finite": true,
+      "kernel_forward_ms_first_call": 1.728,
+      "kernel_backward_ms_first_call": 5.039,
+      "passed": true
+    }
+  },
+  "extensions": {
+    "selective_scan_cuda": {
+      "file": "selective_scan_cuda.cpython-312-aarch64-linux-gnu.so",
+      "sha256": "d4decbaea078813704f926b8de0f567a8ddd6dda91d5f36e06cf75b74c95765e"
+    },
+    "causal_conv1d_cuda": {
+      "file": "causal_conv1d_cuda.cpython-312-aarch64-linux-gnu.so",
+      "sha256": "c033a669aeaf2162e82d246d8df1886160f05337d52bd0e9a25264173667cfab"
+    }
+  },
+  "peak_cuda_allocated_mib": 364.2,
+  "passed": true
+}

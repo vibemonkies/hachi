@@ -1,0 +1,71 @@
+{
+  "format_version": "hachi-rehearsal-evidence-1",
+  "recorded_at_utc": "2026-10-11T12:01:40.672466+00:00",
+  "git_sha": "e17f825d636b5902549e7821c21f3a751f4f6dd4",
+  "script_sha256": "1eac24547bfddf27eded5b3b54dc82b44326993c678453b9c3efcfb91658c7dc",
+  "uv_lock_sha256": "1b290745f51cf459018c95226823b49db1422e08817402bfc111fef0c30b1297",
+  "python": "3.12.13",
+  "artifact": {
+    "artifact_id": "hourly-last-valid-v1-141306001b16e168",
+    "artifact_sha256": "e7666ef0f4665006822f9ee9c0988a6de0df1633175ff217a27666ce6f66fa3b"
+  },
+  "dataset_snapshot": {
+    "dataset_id": "pmdata",
+    "dataset_version": "simula-2020-04-24",
+    "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+  },
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "packet_sha256": "689bdfc32995a37b9f4867f7ca1eb221a024306255dfad5885639d1408e55315",
+  "published_packet_index_sha256": "65b9de2982d2c0032d95ad034aecb989d6a1c58628fe0f1a7ce993032fabef1f",
+  "api_port": 8720,
+  "web_port": 5180,
+  "real": {
+    "origins": 25,
+    "outcomes": {
+      "ok": 25
+    },
+    "comparison": {
+      "packet": {
+        "points_compared": 600,
+        "points_mismatched": 0,
+        "missing_api_points": 0,
+        "extra_api_points": 0,
+        "max_abs_difference": 0
+      },
+      "direct": {
+        "points_compared": 600,
+        "points_mismatched": 0,
+        "missing_api_points": 0,
+        "extra_api_points": 0,
+        "max_abs_difference": 0
+      }
+    },
+    "warnings": {},
+    "point_only": true,
+    "report_retry_idempotent": true,
+    "latency_seconds": {
+      "min": 0.15327979199355468,
+      "max": 0.21826095803407952,
+      "mean": 0.17453244651434943
+    },
+    "unavailable": {
+      "anomaly": "NO_ARTIFACT_FOR_TASK",
+      "illness_onset": "NO_VALIDATED_ILLNESS_ARTIFACT",
+      "recovery": "NO_ONGOING_EPISODE"
+    },
+    "outer_test_opened": false
+  },
+  "synthetic_api_lifecycle": {
+    "data_mode": "synthetic",
+    "import": "succeeded",
+    "coverage": "insufficient",
+    "checkin_readback_entries": 1,
+    "malformed_import": "MALFORMED_XML",
+    "scenario": "NO_ARTIFACT_FOR_TASK"
+  },
+  "gates": {
+    "real_import_to_chart": "pending #17",
+    "offline_replay": "saved response only; not rendered",
+    "full_issue_22": "blocked #17/#18/#19/#20/#21"
+  }
+}

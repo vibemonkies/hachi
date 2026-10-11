@@ -70,3 +70,237 @@ The fresh subprocess memory measurement uses Python 3.12.13, Expat 2.6.3, SQLite
 Security and domain cases cover malformed/entity/external XML, depth/token limits, safe internal DTD, archive traversal/symlink/ambiguity/corruption/ratio/directory/entry limits, known/unknown units, exact/overlap deduplication, future availability, missing steps, distinct temperature/HRV semantics, cross-midnight and DST sleep, private provenance, CLI readback, timezone tie ordering, timestamp overflow, and overwrite refusal. The timezone-order and timestamp-overflow regressions failed before their fixes and passed afterward. Real Apple export reconciliation and live API integration are unverified and remain #21/#16 respectively.
 
 Primary semantics: [HealthKit percent units](https://developer.apple.com/documentation/healthkit/hkunit/percent()), [sleeping wrist temperature](https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/applesleepingwristtemperature), [sleep state identifiers](https://developer.apple.com/documentation/healthkit/hkcategoryvaluesleepanalysis), and [Expat parsing/security controls](https://docs.python.org/3/library/pyexpat.html).
+
+## Native hourly inputs — #16/#22 compatibility subtask
+
+`hourly.py` bridges the immutable importer snapshot to the evaluator's structural
+`FeatureBin` interface. The importer/parser/normalization/selection policy is unchanged.
+The API consumes this seam only for artifacts with an explicitly recorded Apple
+source admission ([PR85](https://github.com/vibemonkies/hachi/pull/85)). WindyTrout
+owns that serving metadata and API wiring. Original PMData receipts remain intact;
+every admitted Apple forecast carries a warning about the unvalidated source transfer.
+
+```python
+from hachi.data.apple_health.hourly import AVAILABILITY_RULE, apple_hourly_features
+from hachi.evaluation.features import HourlyFeaturePolicy
+
+# The serving owner must explicitly admit this source protocol. Do not replace
+# a frozen PMData receipt or treat its evaluation as Apple validation.
+apple_policy = HourlyFeaturePolicy(
+    metric="heart_rate",
+    aggregation="mean",
+    min_coverage=0.5,
+    min_observed_count=30,
+    availability_rule=AVAILABILITY_RULE,
+)
+view = apple_hourly_features(database, apple_policy, cutoff, history_start)
+history = view.features  # canonical HourlyFeature, with source-specific readiness
+```
+
+The public entry point returns `AppleHourlyView`, retaining `.policy`, `.features`
+and `.counts` and adding `.audits`. Native bins and replay are private; callers must
+use the guarded Apple entry point, which refuses foreign readiness rules before
+building features. Serving must not feed private Apple bins through the shared
+selector with a PMData policy. The original policy is not rewritten.
+
+Each `HourAudit` is a separate receipt bound to hour start, fixed closure and the
+actual audit cutoff. It reports unique normalized native candidates whose starts
+belong to that hour and whose creation **and event end** are at or before the audit
+cutoff. Exact canonical duplicates count once; importer raw-record disposition
+counts are separate. The following reasons are exclusive and reconcile to
+`known_candidates`:
+
+1. `excluded_created_after_seal`: creation after fixed hour closure. This includes
+   late crossing records, which are attributed here only.
+2. `excluded_cross_hour`: remaining on-time candidates ending outside their start
+   hour; excluded whole, with no proration.
+3. `excluded_by_precedence`: remaining on-time contained candidates not selected
+   by the importer's source/overlap rules at closure.
+4. `included_records`: selected contained native records used in the aggregate.
+
+Audits also report sampled HR minutes, recorded step interval seconds and private
+source-ID/count pairs. A late candidate stays excluded even when its audit count
+becomes visible later. Records created or ending after an earlier audit cutoff are
+invisible to that receipt. Audit counts/time never enter feature value, identity,
+coverage or readiness. All-late history produces missing bins with visible late
+counts after the candidates become known; it does not manufacture usable history.
+`.counts` retains the existing inclusion/missing/density/count gate outcomes.
+
+| Property | Apple source protocol |
+| --- | --- |
+| Readiness | `apple-hour-end-sealed-native-v1`: bin available at completed UTC hour end |
+| Native eligibility | Event end **and** observed Apple creation time at or before that hour end |
+| Precedence | Replay audited importer selection at each hour end, before aggregation |
+| HR value | Arithmetic mean, median, min or max of selected native HR records wholly inside the hour |
+| HR coverage | Distinct UTC minutes containing selected HR starts divided by 60; sampled-minute **density**, not continuously observed duration |
+| Step value | Sum selected whole recorded amounts; no cross-hour proration |
+| Step coverage | Union of explicitly recorded intervals divided by 3600 seconds, including intervals with measured zero totals; instantaneous totals have zero duration support |
+| Missingness | No record means null/unknown, never zero; vendor resting HR is excluded from native HR |
+| Model gates | Original metric/aggregation/minimum density/minimum count remain in force |
+
+These bins intentionally seal at hour end. A record created later stays queryable
+through `iter_observations` but never revises that hour's model input. A late watch
+record cannot suppress an earlier eligible phone record or move its readiness into
+the future. This differs from PMData's latest-input closure; passing a PMData
+availability rule to this helper raises an error. Both value and source lineage
+are deterministic under source-declared future/late additions, independent of XML
+order. This is source creation-time causality, not an independently observed online
+ingestion time; backdated source metadata is not proof of historical receipt.
+
+Only fully contained native records contribute. Interval HR contributes one level
+sample at its start, without claiming continuous duration. Cross-hour amounts are
+excluded whole, leaving their portions unknown. Source precedence runs first: a
+crossing winner can suppress a contained loser and then be excluded itself; both
+contributions stay unknown. The loser is counted as a precedence exclusion in its
+start hour; the crossing winner is counted once in its own start hour. Bins cover
+completed UTC hours from the earliest known native candidate, or the requested
+lower bound, to the cutoff;
+an unaligned lower bound excludes its partial first hour. Empty metric history
+returns an empty view. Timezone offsets are normalized by the importer; no source
+calendars or individuals are joined. Source IDs and per-source audit counts stay
+private with the imported snapshot.
+
+The source protocol is authored and repository-tested using generated hostile
+records. It is **not** scientific readiness or real Apple forecast validation.
+Serving must retain the original frozen artifact/protocol receipt and separately
+declare any accepted Apple input rule. Low-density history abstains at the existing
+0.5/30 HR gates; no friend export or held case was used to choose them. Generated
+Apple HTTP-to-artifact evidence is synthetic transport proof; #21's
+actual consented export and source-transfer validation remain separate gates.
+
+The focused tests exercise density versus duration, unchanged gates, late higher
+priority updates, exact duplicates, native precedence, creation/end boundaries,
+UTC offsets, whole cross-hour exclusion, zero-step intervals, instant step totals,
+missing/vendor-only history and foreign policy refusal. Additional sentinels verify
+known-only late counts, exclusive reason reconciliation, exact-duplicate counting,
+all-late missingness, crossing-winner suppression, read-only snapshots and native
+oracle agreement. Feature identity/readiness stay fixed while later audit receipts
+show newly known exclusions.
+
+### Exact windowed replay and performance
+
+Serving should pass its declared lookback `start`. The helper opens one read-only
+snapshot connection and builds a numeric index of the requested metric's candidates
+known by the audit cutoff. Each hour starts with its own `[start, closure)` window.
+It repeatedly extends the left edge across closure-eligible overlapping intervals,
+retaining transitive dependencies even before the model lookback. Candidates ending
+after closure are ineligible, so the right edge cannot extend. Disconnected overlap
+components cannot affect each other's greedy winners. A connection-local view feeds
+that window to the **unchanged importer `select_candidates`** ordering and overlap
+rules. Exact integer predicates decide edges; outward-rounded RTree bounds only
+narrow the search. This avoids parsing the entire historical import once per hour
+without applying a naive date filter that would change precedence.
+
+Numeric metadata and selector state use connection-local in-memory SQLite TEMP
+tables (`temp_store=MEMORY`); health payloads are read from the original snapshot.
+No temporary participant file is created. Closing the connection releases state on
+success, failure or interruption, and process termination leaves no temp file.
+Tests pin equality to the independent full `iter_observations(as_of=closure)` oracle,
+including a transitive pre-lookback suppressor chain, half-open edges, late/future
+records, other metric families and randomized hostile intervals. Failure injection
+checks read-only source hashes, memory-only TEMP storage and closed connections.
+
+Measured on MacBook-Air-4.local, macOS arm64, Python 3.12.13 / SQLite 3.50.4, with
+105,120 **generated** native HR points (8,760 hours × 12/hour) in a 137,154,560-byte
+snapshot; context 48 hours / 576 points. Baseline was merged helper `0662bef`
+(SHA256 `06a4b378c7258a93fac7d474c2b9d8d7a4c24f4f0341ff6cdfde268b7068c891`).
+The optimized helper SHA256 is
+`7987e96e77a6a349722d6e44532a93cbb39c5d372b7e0ad3991b09d5fe9cd820`.
+
+| Replay | Process-cold | Warm | Process peak RSS |
+| --- | ---: | ---: | ---: |
+| Full-history baseline | 60.376 s | 67.860 s | 55.5 MB |
+| Windowed, initial measurement | 0.406 s | 0.430 s | 68.3 MB |
+| Windowed, repeat measurement | 0.777 s | 0.775 s | 69.1 MB |
+
+“Process-cold” means the first call in a fresh Python process; the OS filesystem
+cache was **not** evicted. Each warm call rebuilds its own index; no participant
+cache is shared. Native iteration once took 1.976 s in the baseline process.
+All 48 bins **and audits**, including sub-threshold values, match the merged full
+replay exactly (serialized receipt SHA256
+`4397a59847a382ce969c32ae0e5114ec3e18e2532ef97dd2bc3463170a48edca`).
+The unchanged 0.5/30 gates yield zero features for this sparse fixture; faster
+abstention is not increased source readiness or a physiological coverage claim.
+
+A second generated year at 60 samples/hour (525,600 native points; 685,486,080-byte
+snapshot) took 4.974 s process-cold and 2.764 s warm for the same 48-hour lookback,
+with 149.8 MB process peak RSS. Its 2,880 context points produced 48 features at
+the original gates; feature and audit hashes were identical cold/warm. This measures
+larger-history scaling and memory, not source-transfer accuracy. Numeric index
+memory scales with known candidates; a pathological connected interval chain can
+still require historical replay to preserve exact precedence.
+The importer permits up to 2,000,000 records. Peak API memory at that cap is
+unmeasured; the 525,600-record result is the largest measured fixture here. This
+sizing limit is handed to the serving owner rather than claimed as a cap-scale
+latency or memory guarantee.
+
+The generated-only runner refuses real-source metadata and emits counts, timings
+and hashes. Use a fresh private owner/run root and the project's Python environment:
+
+```sh
+python tests/data/apple_health/hourly_benchmark.py prepare --run-root /private/owner/hourly-bench
+python tests/data/apple_health/hourly_benchmark.py measure --run-root /private/owner/hourly-bench --output /private/owner/hourly-bench/timing.json
+```
+
+These are helper measurements. The separate actual HTTP measurements below address
+the prior ~70-second API-path gate for the tested CPU artifact. No parser/store,
+evaluation-contract, artifact descriptor or model-gate changes are part of this
+performance change.
+
+A separate generated 48-hour dense/sparse probe loaded the actual frozen PMData
+`hourly-last-valid-v1-141306001b16e168` artifact with receipt
+`e7666ef0f4665006822f9ee9c0988a6de0df1633175ff217a27666ce6f66fa3b`
+from the validation packet, checking its code/content hashes. Native import →
+Apple feature policy → direct model inference produced 24/24 expected synthetic
+points; the unchanged gates yielded 24/24 abstentions for sparse input. This proves
+the helper's structural input compatibility with that immutable artifact. It does
+not prove HTTP integration, Apple source transfer, calibration or population accuracy.
+
+After the audit update, the same checksum/code-verified artifact again produced
+24/24 expected generated points. Thirty withheld future watch updates were invisible
+at the earlier cutoff; their later audit receipt counted 30 late exclusions while
+every prior feature, identity and readiness remained identical. The original CPU
+receipt verified without a descriptor or shared feature-contract override.
+
+### Generated HTTP transport against the original frozen CPU artifact
+
+At producing integration `a31f247`, a fresh isolated loopback API on port 8722
+staged that **same original** checksum/code-verified #9 artifact and evaluation
+packet. Its serving profile retained the PMData policy and protocol hash and added
+an explicit Apple policy with identical metric, aggregation and 0.5/30 gates, the
+sealed Apple rule, and rationale “Generated transport proof only; not validated
+on Apple data.” No PMData observations or source calendar dates entered these
+generated Apple inputs.
+
+| Generated native volume | Import through HTTP | First report | Uncached second report | Result |
+| --- | ---: | ---: | ---: | --- |
+| 105,120 points, 12/hour | 8.742 s | 0.705 s | 0.645 s | `INSUFFICIENT_HISTORY` at original gates |
+| 525,600 points, 60/hour | 49.339 s | 2.799 s | 2.918 s | 24/24 exact points per report versus direct inference |
+
+Both use a 48-hour context. The second request uses a distinct subsecond `as_of`
+with the same floored native cutoff, so report idempotency cannot supply a cached
+result. These are wall times from POST to completed report, including polling;
+the first sparse report is the fresh API process's first forecast, while the first
+dense report follows its separate upload in that process. The OS cache was not
+evicted. Every successful response stays `synthetic`, point-only with null bounds,
+and carries `DEVICE_SHIFT` with the explicit unvalidated rationale. The private
+aggregate receipt SHA256 is
+`4157ff85e8fbdc595ad324ce29ede8ad1e71783114f10cef9eb020f536f62a8d`.
+
+A separate HTTP append sentinel imported 2,880 generated records, then a new batch
+for the same synthetic subject with 30 future-created higher-priority updates and
+one record whose event end was still in the future. A new uncached report at the
+original native cutoff kept all 24 forecast points identical. All 48 prior features,
+identities, readiness and earlier audit receipts matched exactly. At a later audit
+cutoff the 30 creations were counted as permanently excluded late inputs; the
+future-end record stayed unknown. The original model receipt verified throughout.
+Owned services were stopped and port 8722 released after each probe.
+After integrating the same-gate validator fix from PR91 (`182a7b8`), the HTTP append
+sentinel passed again at `e7dfdc0` with the original artifact receipt unchanged.
+Independent boundary probes now refuse lowered coverage and count admissions.
+
+This proves generated upload → imported snapshot → source-admitted hourly inputs
+→ the actual frozen CPU artifact over HTTP. It does not establish Apple clinical
+or population accuracy, calibration, #21's actual consented case, or compatibility
+for every artifact. Source admissions remain per artifact; the serving owner owns
+metadata validation and the separate scientific/source-transfer gate.

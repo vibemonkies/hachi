@@ -1,0 +1,14 @@
+{
+  "device": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "torch": "2.8.0+cu129",
+  "causal_conv1d": "1.5.0.post8",
+  "import": "ok",
+  "kernel": {
+    "ran": true,
+    "finite": true
+  }
+}

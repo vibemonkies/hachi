@@ -3,7 +3,7 @@ schema_version = "0.1"
 dataset_id = "homekit2020"
 name = "Homekit2020 (Evidation, University of Washington, Sage Bionetworks)"
 version = "1.0"
-status = "candidate"
+status = "rejected_for_task"
 access = "credentialed"
 primary_url = "https://www.synapse.org/#!Synapse:syn22803188"
 catalog_checked_on = 2026-10-11
@@ -19,6 +19,7 @@ access_owner = "justin06lee"
 storage = "Only accounts of approved users; not the shared GX10 account unless all three are approved."
 checksum_strategy = "Record Synapse's MD5 for the archive, then pin SHA-256."
 notes = [
+  "Not available for this project (recorded 2026-10-11, Justin's decision): Synapse certification and profile validation were never completed, so no access was requested and no data was obtained.",
   "5,034 US adults, 206 influenza-positive by lab PCR (influenza A/B, RSV), Dec 2019 to Jul 2020: minute-level Fitbit HR, steps and sleep plus day-level resting HR and sleep features; 120-day daily ILI surveys with symptom onset and severity; a recovery follow-up about 14 days after testing.",
   "The conditions grant Evidation a royalty-free licence to resulting IP; read them before accepting.",
   "Recommended application: the only verified open-process cohort with lab-confirmed respiratory infections and minute-level consumer wearable data.",

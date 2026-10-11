@@ -1,0 +1,63 @@
+{
+  "model": "moment-1-large",
+  "checkpoint": {
+    "repository": "AutonLab/MOMENT-1-large",
+    "revision": "ca58581bc7bea2ebed4e80dc0a3e4b8b609c6ecc",
+    "files": {
+      "model.safetensors": "a56928052ac6f5d09b97c3834bea6ce3aef9f02b513b5fac98954e7377801572",
+      "config.json": "b0111650e8718e31d7e89575666aa3e140747d35279ec1a7c9f6ed7616c29433",
+      "README.md": "3b00cbfdecd6b64c96558eb3bd39049405aee6497c7e4788da4bc78db17611de"
+    },
+    "load": "momentfm.MOMENTPipeline.from_pretrained(repository, revision, model_kwargs={'task_name': 'embedding'}); safetensors only",
+    "parameters": 341240320
+  },
+  "config_sha256": "30df828422c53bfa5228733c30941d17ebb6a9400771ea652beddc5527b5abbb",
+  "device": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "versions": {
+    "torch": "2.8.0+cu129",
+    "triton": "3.4.0",
+    "numpy": "2.5.4",
+    "huggingface-hub": "0.36.2",
+    "momentfm": "0.1.5",
+    "transformers": "4.57.6"
+  },
+  "host": {
+    "machine": "aarch64",
+    "python": "3.12.3"
+  },
+  "load_seconds": 10.33,
+  "triton_launcher_cpath": "/home/asus/hachi/workspaces/justin06lee/toolchains/python-headers-3.12.3-1ubuntu0.17/usr/include/python3.12:/home/asus/hachi/workspaces/justin06lee/toolchains/python-headers-3.12.3-1ubuntu0.17/usr/include",
+  "triton_ptxas": "/home/asus/hachi/workspaces/justin06lee/toolchains/cuda-12.9.1-linux-sbsa/bin/ptxas",
+  "proof": {
+    "output_shape": [
+      4,
+      1024
+    ],
+    "losses": [
+      0.010968776419758797,
+      0.009977851063013077
+    ],
+    "loss_finite": true,
+    "trainable_tensors": 221,
+    "gradients_finite": true,
+    "tensors_without_gradient": [
+      "encoder.embed_tokens.weight"
+    ],
+    "tensors_with_zero_gradient": [
+      "patch_embedding.mask_embedding"
+    ],
+    "tensors_changed_by_update": 219,
+    "tensors_update_below_float32_resolution": [],
+    "forward_backward_update_ms": {
+      "first_with_jit": 1093.2,
+      "warm": 195.5
+    },
+    "passed": true
+  },
+  "peak_cuda_allocated_mib": 4054.8,
+  "peak_cuda_reserved_mib": 4198.0
+}

@@ -1,0 +1,25 @@
+[
+  {
+    "attempt": 1,
+    "source": "PyPI sdist causal_conv1d-1.5.0.post8.tar.gz (sha256 b3dc31fa...)",
+    "variants": [
+      "upstream",
+      "blackwell"
+    ],
+    "log": "built-wheels/upstream-20261011T110409Z/causal-conv1d.log, built-wheels/blackwell-20261011T110415Z/causal-conv1d.log",
+    "error": "ninja: error: '<build>/csrc/causal_conv1d.cpp', needed by '<build>/build/temp.linux-aarch64-cpython-312/csrc/causal_conv1d.o', missing and no known rule to make it",
+    "cause": "The sdist contains no csrc/ (CUDA sources); it expects to download a prebuilt GitHub wheel, and none exists for aarch64. Same for mamba_ssm-2.2.4.tar.gz.",
+    "fix": "Build both from their release tag commits (sources.json)."
+  },
+  {
+    "attempt": 2,
+    "source": "Git v1.5.0.post8 (82867a9)",
+    "variants": [
+      "upstream"
+    ],
+    "log": "built-wheels/upstream-20261011T111217Z/causal-conv1d.log",
+    "error": "/home/asus/hachi/workspaces/justin06lee/build-venvs/76f5c677c6b1c0e8/lib/python3.12/site-packages/torch/include/torch/csrc/python_headers.h:12:10: fatal error: Python.h: No such file or directory",
+    "cause": "The GX10 system CPython 3.12.3 has no development headers; installing python3.12-dev system-wide is out of bounds.",
+    "fix": "apt-get download libpython3.12-dev (no root), SHA256 checked against the signed apt index, unpacked into the owner workspace, CPATH set (build.py)."
+  }
+]

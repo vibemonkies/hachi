@@ -12,7 +12,8 @@
         "fatigue",
         "congestion"
       ],
-      "severity": 2
+      "severity": 2,
+      "supersedes": null
     },
     {
       "kind": "symptom_checkin",
@@ -22,7 +23,8 @@
       "period_end_utc": "2026-10-10T07:00:00Z",
       "symptoms_present": true,
       "symptoms": [],
-      "severity": 1
+      "severity": 1,
+      "supersedes": null
     },
     {
       "kind": "test_result",
@@ -32,7 +34,8 @@
       "method": "antigen",
       "result": "negative",
       "collected_earliest_utc": "2026-10-08T15:00:00Z",
-      "collected_latest_utc": "2026-10-08T16:00:00Z"
+      "collected_latest_utc": "2026-10-08T16:00:00Z",
+      "supersedes": null
     },
     {
       "kind": "alertness_rating",
@@ -40,7 +43,8 @@
       "entered_at_utc": "2026-10-10T00:01:00Z",
       "rated_at_utc": "2026-10-10T00:00:00Z",
       "scale": "kss_1_9",
-      "value": 6
+      "value": 6,
+      "supersedes": null
     },
     {
       "kind": "pvt_result",
@@ -50,7 +54,8 @@
       "duration_seconds": 180,
       "trials": 31,
       "mean_reaction_time_ms": 312.5,
-      "lapses": 2
+      "lapses": 2,
+      "supersedes": null
     },
     {
       "kind": "confounder",
@@ -58,7 +63,8 @@
       "entered_at_utc": "2026-10-07T03:00:00Z",
       "factor": "intense_exercise",
       "occurred_earliest_utc": "2026-10-06T22:00:00Z",
-      "occurred_latest_utc": "2026-10-07T00:00:00Z"
+      "occurred_latest_utc": "2026-10-07T00:00:00Z",
+      "supersedes": null
     },
     {
       "kind": "symptom_resolution",
@@ -66,7 +72,8 @@
       "entered_at_utc": "2026-10-10T17:00:00Z",
       "onset_entry_id": "synthetic-entry-01",
       "resolved_earliest_utc": "2026-10-10T07:00:00Z",
-      "resolved_latest_utc": "2026-10-10T15:00:00Z"
+      "resolved_latest_utc": "2026-10-10T15:00:00Z",
+      "supersedes": null
     }
   ]
 }
