@@ -45,7 +45,7 @@ await tab.playwright.getByLabel('Demonstration scenario', {exact:true}).selectOp
 await tab.playwright.getByRole('button', {name:'Load synthetic history',exact:true}).click();
 ```
 
-Inspect the pending state immediately, then wait for `I have reviewed the coverage` to become visible through the harness's locator wait. Click it; select `October 10, 07:00 UTC · latest fixture` with `getByLabel('Explicit UTC cutoff',{exact:true}).selectOption({label:...})`; click `Request synthetic report`. Observe `Synthetic report ready.` before navigating. Scope section links to `getByRole('navigation',{name:'Workspace sections'})` and use name regexes such as `/Forecast/`: desktop prefixes disappear at narrower widths. Never use internal state setters or evaluate mutations. Browser evaluation is only for read-only DOM observations, such as focus and scroll dimensions.
+Inspect the pending state immediately, then wait for the button `I have reviewed the coverage` to become visible through the harness's locator wait. Click it; select `October 10, 07:00 UTC · latest fixture` with `getByLabel('Explicit UTC cutoff',{exact:true}).selectOption({label:...})`; click `Request synthetic report`. Wait for the link `Open forecast →` before navigating. The live-region announcement is separate from visible report status. Scope unnumbered section links to `getByRole('navigation',{name:'Workspace sections'})` and use exact names such as `Forecast` or `Baseline deviation`. Never use internal state setters or evaluate mutations. Browser evaluation is only for read-only DOM observations, such as focus and scroll dimensions.
 
 ## Evidence
 
