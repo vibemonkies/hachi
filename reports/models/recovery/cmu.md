@@ -1,6 +1,8 @@
-# CMU challenge-cohort recovery comparison
+# Provisional CMU challenge-cohort recovery comparison
 
 Research evidence only. Production recovery prediction abstains; no recovery date is displayed.
+
+CMU result integration remains provisional pending reconciliation of the source owner's existing submitted analysis scope and private-report publication interpretation. No source-permission or final clinical acceptance is inferred from this packet.
 
 ## Provenance and fixed protocol
 
