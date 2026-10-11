@@ -17,6 +17,7 @@ from hachi.models.chronos.inference import (
     write_run,
 )
 from hachi.models.training import pmdata as training_pmdata
+from hachi.models.training.artifact import export_chronos, verify_reproduction
 from hachi.models.training.pmdata import export, load_experiment, prepare
 from hachi.models.training.score import run_score
 
@@ -60,21 +61,21 @@ def bins(subjects):
     return rows
 
 
+def forecaster(items, length):
+    output = []
+    for item in items:
+        last = next(v for v in reversed(item.context) if v is not None)
+        nudge = 0.5 if item.past_covariates else 0.0
+        output.append([[last + nudge + 8 * (q - 0.5) for q in LEVELS] for _ in range(length)])
+    return output
+
+
 def fake_gx10(export_dir, root, experiment):
     pin = experiment.chronos.chronos.model
     zeroshot, embed = root / "zeroshot", root / "embed"
     zeroshot.mkdir()
     embed.mkdir()
     requests = read_requests(export_dir / "forecast-requests.jsonl")
-
-    def forecaster(items, length):
-        output = []
-        for item in items:
-            last = next(v for v in reversed(item.context) if v is not None)
-            nudge = 0.5 if item.past_covariates else 0.0
-            output.append([[last + nudge + 8 * (q - 0.5) for q in LEVELS] for _ in range(length)])
-        return output
-
     rows, _, crossed = forecast_rows(requests, forecaster, batch_size=128, levels=LEVELS)
     memory = {
         "peak_process_rss_kib": 1024,
@@ -182,3 +183,50 @@ def test_export_and_score_select_on_identical_origins_without_identifiers(monkey
     evaluations = list((tmp_path / "score" / "candidates").glob("*/inner-*/split.json"))
     assert all(json.loads(p.read_text())["test_opened_at_utc"] is None for p in evaluations)
     assert len({document_sha256(m) for m in inputs.splits}) == 3
+
+    # Export and verify a Chronos variant as if the rule had selected it.
+    chosen = tmp_path / "chosen"
+    chosen.mkdir()
+    forced = {
+        **summary,
+        "selection": {**summary["selection"], "selected": "chronos-2-zero-shot-ctx720"},
+    }
+    (chosen / "aggregate-summary.json").write_text(json.dumps(forced, default=str))
+    receipt = export_chronos(
+        inputs,
+        "chronos-2-zero-shot-ctx720",
+        export_dir=tmp_path / "export",
+        zeroshot_dir=zeroshot,
+        score_dir=chosen,
+        output=tmp_path / "artifact",
+    )
+    assert all(c["reproduced"] for c in receipt["reload_checks"].values())
+    assert (
+        json.loads((tmp_path / "artifact" / "packet" / "run.json").read_text())["artifact"]
+        == (receipt["artifact"])
+    )
+    fresh = tmp_path / "fresh"
+    fresh.mkdir()
+    again = read_requests(tmp_path / "artifact" / "reproduce-requests.jsonl")
+    rows, _, crossed = forecast_rows(again, forecaster, batch_size=64, levels=LEVELS)
+    pin = experiment.chronos.chronos.model
+    write_run(
+        fresh,
+        tmp_path / "artifact" / "reproduce-requests.jsonl",
+        again,
+        rows,
+        LEVELS,
+        crossed,
+        {"weights_sha256": pin.weights_sha256, "environment": {}},
+    )
+    checked = verify_reproduction(tmp_path / "artifact", zeroshot, fresh)
+    assert checked["bit_identical_requests"] == checked["requests"] == len(again)
+    with pytest.raises(ValueError, match="selected"):
+        export_chronos(
+            inputs,
+            "chronos-2-zero-shot",
+            export_dir=tmp_path / "export",
+            zeroshot_dir=zeroshot,
+            score_dir=chosen,
+            output=tmp_path / "other",
+        )

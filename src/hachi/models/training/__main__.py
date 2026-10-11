@@ -12,6 +12,7 @@ from hachi.evaluation.serialization import document_bytes
 
 from ..chronos.adapter import AdapterLog, replay_factory
 from ..chronos.evaluation import load_forecasts
+from .artifact import export_chronos, verify_reproduction
 from .pmdata import VARIANTS, export, load_experiment, prepare
 from .score import measure_cpu, run_score
 
@@ -51,15 +52,23 @@ def choose_context(snapshot: Path, export_dir: Path, zeroshot_dir: Path) -> dict
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("export", "choose-context", "score", "cost"):
+    for name in ("export", "choose-context", "score", "cost", "artifact", "verify-reproduction"):
         command = commands.add_parser(name)
         command.add_argument("--snapshot", required=True, type=Path)
         if name == "export":
             command.add_argument("--output", required=True, type=Path)
         if name in ("choose-context", "score", "cost"):
             command.add_argument("--export", required=True, type=Path)
-        if name in ("choose-context", "score"):
+        if name in ("choose-context", "score", "artifact", "verify-reproduction"):
             command.add_argument("--zeroshot", required=True, type=Path)
+        if name in ("artifact", "verify-reproduction"):
+            command.add_argument("--artifact-dir", required=True, type=Path)
+        if name == "artifact":
+            command.add_argument("--export", dest="export_dir", required=True, type=Path)
+            command.add_argument("--score", required=True, type=Path)
+            command.add_argument("--selected", required=True)
+        if name == "verify-reproduction":
+            command.add_argument("--fresh", required=True, type=Path)
         if name in ("score", "cost"):
             command.add_argument("--embed", required=True, type=Path)
         if name == "score":
@@ -76,6 +85,17 @@ def main() -> int:
             result = export(prepare(args.snapshot, load_experiment()), args.output)
         elif args.command == "choose-context":
             result = choose_context(args.snapshot, args.export, args.zeroshot)
+        elif args.command == "artifact":
+            result = export_chronos(
+                prepare(args.snapshot, load_experiment()),
+                args.selected,
+                export_dir=args.export_dir,
+                zeroshot_dir=args.zeroshot,
+                score_dir=args.score,
+                output=args.artifact_dir,
+            )
+        elif args.command == "verify-reproduction":
+            result = verify_reproduction(args.artifact_dir, args.zeroshot, args.fresh)
         elif args.command == "cost":
             result = measure_cpu(args.candidate, args.snapshot, args.export, args.embed)
         else:
