@@ -742,6 +742,11 @@ export interface ForecastPayload {
   unavailable_metrics: MetricUnavailable[];
 }
 /**
+ * A forecast with intervals, or a point-only forecast (`interval_calibration: "none"`).
+ *
+ * A point-only series has no interval and makes no coverage claim: every point's `lower` and
+ * `upper` and the series' `nominal_coverage` are null. Draw it as points, never as a band.
+ *
  * This interface was referenced by `HachiContracts`'s JSON-Schema
  * via the `definition` "ForecastSeries".
  */
@@ -749,13 +754,13 @@ export interface ForecastSeries {
   metric: Metric;
   unit: Unit;
   /**
-   * Intended probability that the outcome falls in [lower, upper].
+   * Intended probability that the outcome falls in [lower, upper]. Null exactly for a point-only forecast.
    */
-  nominal_coverage: number;
+  nominal_coverage: number | null;
   /**
-   * 'validated' only when held-out coverage was measured for this artifact.
+   * 'validated' only when held-out coverage was measured for this artifact; 'none' for a point-only forecast, which has no interval.
    */
-  interval_calibration: "validated" | "uncalibrated";
+  interval_calibration: "validated" | "uncalibrated" | "none";
   baseline: PersonalBaseline | null;
   /**
    * @minItems 1
@@ -784,8 +789,14 @@ export interface ForecastPoint {
    */
   local_date: string | null;
   median: number;
-  lower: number;
-  upper: number;
+  /**
+   * Null exactly for a point-only forecast.
+   */
+  lower: number | null;
+  /**
+   * Null exactly for a point-only forecast.
+   */
+  upper: number | null;
 }
 /**
  * This interface was referenced by `HachiContracts`'s JSON-Schema
@@ -1365,6 +1376,20 @@ export interface TestResultEntry {
   result: "positive" | "negative" | "inconclusive";
   collected_earliest_utc: UtcDatetime;
   collected_latest_utc: UtcDatetime;
+}
+/**
+ * GET /v1/subjects/{id}/observations response: every stored entry, in recording order.
+ *
+ * The whole history comes in one response and may be empty. The 1-200 bound applies only
+ * to a single POST batch (`SelfReportRequest`). Entries are immutable once recorded.
+ *
+ * This interface was referenced by `HachiContracts`'s JSON-Schema
+ * via the `definition` "SelfReportHistory".
+ */
+export interface SelfReportHistory {
+  schema_version: SchemaVersion;
+  subject_id: SubjectId;
+  entries: SelfReportEntry[];
 }
 /**
  * POST /v1/subjects/{id}/observations body.

@@ -1,6 +1,6 @@
 """Coverage, self-reports, scenarios, deletion, health and the request boundary."""
 
-from hachi.contracts.api import ApiError, Coverage, HealthStatus
+from hachi.contracts.api import ApiError, Coverage, HealthStatus, SelfReportHistory
 from hachi.contracts.results import ReportResult
 
 from .conftest import hourly_export, private_files, upload, wait
@@ -109,8 +109,14 @@ def test_self_reports_are_persisted_idempotently(client, open_client, make_setti
     backdated = ONSET | {"entry_id": "onset-2", "entered_at_utc": "2026-09-01T00:00:00Z"}
     rejected = client.post("/v1/subjects/synthetic-001/observations", json=entries(backdated))
     assert rejected.status_code == 422  # an entry cannot precede the event it describes
-    rows = client.app.state.service.metadata.self_reports("synthetic-001")
-    assert [r.entry_id for r in rows] == ["onset-1", "resolved-1"]
+    history = SelfReportHistory.model_validate_json(
+        client.get("/v1/subjects/synthetic-001/observations").content
+    )
+    assert [e.entry_id for e in history.entries] == ["onset-1", "resolved-1"]
+    assert history.subject_id == "synthetic-001"
+    empty = client.get("/v1/subjects/p01/observations").json()
+    assert empty["entries"] == []  # a known subject with no entries is an empty history
+    assert client.get("/v1/subjects/nobody/observations").status_code == 404
 
     client.__exit__(None, None, None)
     reopened = open_client(make_settings())  # persisted across restarts

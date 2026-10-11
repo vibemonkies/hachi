@@ -52,9 +52,6 @@ log = logging.getLogger("hachi.api")
 
 HOUR = timedelta(hours=1)
 ENTRY = TypeAdapter(SelfReportEntry)
-# A degenerate point interval claims no coverage. This value only satisfies the contract's
-# open interval; it is always paired with an UNCALIBRATED_INTERVALS warning saying so.
-POINT_FORECAST_NOMINAL_COVERAGE = 0.5
 
 REQUIREMENTS: dict[UnavailableReason, str] = {
     "NO_ARTIFACT_FOR_TASK": "A validated, frozen artifact for this task served by this API",
@@ -407,32 +404,31 @@ def _forecast_result(
             "Recent enough observations for the model; it abstained for every target hour",
             partial,
         )
+    # An interval is shown only when the model gives one for every hour AND its artifact
+    # declares the interval's nominal coverage; otherwise the forecast is point-only.
     declared = artifact.serving.interval_nominal_coverage
     intervals = declared is not None and all(e is None or e.lower is not None for e in estimates)
     points: list[ForecastPoint] = []
     for target, estimate in zip(targets[first:], estimates[first:], strict=True):
         if estimate is None:
             break  # points must be contiguous; later hours are reported as abstained
-        lower = estimate.lower if intervals else None
-        upper = estimate.upper if intervals else None
         points.append(
             ForecastPoint(
                 interval_start_utc=target.start_utc,
                 interval_end_utc=target.end_utc,
                 local_date=None,
                 median=estimate.median,
-                lower=estimate.median if lower is None else lower,
-                upper=estimate.median if upper is None else upper,
+                lower=estimate.lower if intervals else None,
+                upper=estimate.upper if intervals else None,
             )
         )
-    warnings = [
-        _warning(
-            "UNCALIBRATED_INTERVALS",
-            "Interval coverage was not measured on held-out data."
-            if intervals
-            else "Point forecast: lower = median = upper and no interval coverage is claimed.",
+    warnings = []
+    if intervals:
+        warnings.append(
+            _warning(
+                "UNCALIBRATED_INTERVALS", "Interval coverage was not measured on held-out data."
+            )
         )
-    ]
     if len(points) < len(targets):
         warnings.append(
             _warning(
@@ -457,8 +453,8 @@ def _forecast_result(
     series = ForecastSeries(
         metric=artifact.metric,
         unit=METRICS[artifact.metric].unit,
-        nominal_coverage=declared if intervals and declared else POINT_FORECAST_NOMINAL_COVERAGE,
-        interval_calibration="uncalibrated",
+        nominal_coverage=declared if intervals else None,
+        interval_calibration="uncalibrated" if intervals else "none",
         baseline=None,
         points=points,
     )

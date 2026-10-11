@@ -21,6 +21,7 @@ from hachi.contracts.api import (
     ImportFailure,
     ImportStatus,
     ReportJob,
+    SelfReportHistory,
 )
 from hachi.contracts.base import (
     SCHEMA_VERSION,
@@ -421,6 +422,14 @@ class Service:
         if rows:
             self.metadata.insert_self_reports(subject_id, rows)
         return request, bool(rows)
+
+    def self_report_history(self, subject_id: str) -> SelfReportHistory:
+        self._require_known(subject_id)
+        return SelfReportHistory(
+            schema_version=SCHEMA_VERSION,
+            subject_id=subject_id,
+            entries=reports.self_report_entries(self.metadata, subject_id),
+        )
 
     # Scenarios --------------------------------------------------------------------------
 

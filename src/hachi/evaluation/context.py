@@ -64,10 +64,9 @@ class ContextIndex:
         for channel in self.policy.channels:
             key = (subject_id, channel.metric)
             rows = self._rows.get(key, ())
-            first = bisect_left(self._starts.get(key, ()), start)
-            output[channel.metric] = tuple(
-                row for row in rows[first:] if row.start_utc < cutoff and available_by(row, cutoff)
-            )
+            starts = self._starts.get(key, ())
+            first, last = bisect_left(starts, start), bisect_left(starts, cutoff)
+            output[channel.metric] = tuple(r for r in rows[first:last] if available_by(r, cutoff))
         return output
 
 
