@@ -144,3 +144,36 @@ metric or giving duplicate derived bins is refused. Saved source receipts bind
 `evaluation/features.py`, `evaluation/serialization.py` and `contracts/causality.py`
 as well as baseline modules. Archived receipts describe their exact earlier code;
 new artifacts must be built for the new implementation.
+
+### Recorded overnight rest input
+
+`nightly_rest(observations, request, policy)` turns one participant's canonical
+point HR and complete aligned one-minute step totals into a cutoff-specific
+`NightlyRest`. The complete local midnight-to07:00 window follows DST; its minute
+denominator is 360/420/480 as appropriate. Filter event end and availability
+before computing anything. Query #5's raw reader for this small window; vendor
+daily RHR and final-day aggregates are incompatible inputs.
+
+Only actually recorded **zero** step minutes with enough available HR samples
+contribute. Missing step minutes remain unknown; positive steps exclude the
+minute. Take the median HR within each eligible minute, then the median across
+minutes, giving minutes equal weight regardless of sampling density. Prespecify
+`NightlyFeaturePolicy(min_hr_samples_per_minute=..., min_rest_minutes=...)`;
+these are experimental inclusion choices, not calibrated defaults. Incomplete
+nights or too few usable minutes have `rhr_bpm=None`.
+
+The result records the exact request/cutoff, policy, causal input hash and counts
+for observed/unobserved step minutes, recorded zero-step minutes lacking HR, low
+HR sample counts and usable rest minutes. Only usable HR/zero-step minutes feed
+`NightlyRest.observed_zero_step_minutes`, preventing step-only coverage from
+passing the robust baseline's gate. Duplicate native events and unsupported step
+spans are refused; resolve sources upstream. HR intervals are excluded and
+audited by this point-HR adapter. This PMData-compatible path does not claim to
+cover variable-duration Apple step records. Recompute for each cutoff; late
+records can change a later summary and must not retroactively alter an earlier
+summary. Store results privately with the source snapshot/run manifest.
+
+`nightly_deviation(result.night, prior_nights, robust_config, cutoff=...)` keeps
+its cold-start/missingness abstention and recorded-confounder policy. Neither
+this input nor its deviation score creates healthy labels, measured false-alert
+burden, illness probabilities or real-cohort validation evidence.
