@@ -16,8 +16,14 @@ from hachi.models.chronos.artifacts import ChronosArtifact
 from .integrity import EvidenceRefused, digest, read_file, read_producing_file, verify_sources
 
 
-def _protocol(bundle: Path, split: SplitManifest, config: EvaluationConfig) -> PMDataProtocol:
-    protocol = PMDataProtocol.model_validate_json(read_file(bundle, "protocol.json"))
+def _protocol(
+    bundle: Path,
+    split: SplitManifest,
+    config: EvaluationConfig,
+    *,
+    document: PMDataProtocol | None = None,
+) -> PMDataProtocol:
+    protocol = document or PMDataProtocol.model_validate_json(read_file(bundle, "protocol.json"))
     fields = PMDataProtocol.model_fields.keys() & SplitManifest.model_fields.keys()
     scoring_fields = EvaluationConfig.model_fields.keys() - {
         "pretrained_cohort_overlap",
@@ -42,6 +48,8 @@ def verify_forecast_export(
     run: RunManifest,
     split: SplitManifest,
     result: EvaluationResult,
+    *,
+    protocol_document: PMDataProtocol | None = None,
 ) -> None:
     """The immutable bundle index must have been checked by the caller first.
 
@@ -63,7 +71,7 @@ def verify_forecast_export(
     config: EvaluationConfig = result.config
     if version == "chronos-2-artifact-1":
         model = ChronosArtifact.model_validate_json(raw)
-        protocol = _protocol(bundle, split, config)
+        protocol = _protocol(bundle, split, config, document=protocol_document)
         pin = model.chronos.model
         if (
             model.model_id != run.model.model_id
@@ -71,7 +79,7 @@ def verify_forecast_export(
             or model.harness_lookback_hours != split.lookback_hours
             or (model.chronos.metric, model.chronos.aggregation)
             != (config.metric, config.aggregation)
-            or run.feature_order != [config.metric]
+            or run.feature_order != [config.metric, *model.past_covariates]
             or (run.model.checkpoint_source, run.model.checkpoint_revision, run.model.license)
             != (pin.model_id, pin.revision, pin.license)
             or run.environment_sha256 != pin.runtime_lock_sha256
@@ -85,7 +93,22 @@ def verify_forecast_export(
             or model.past_covariates
             or (model.chronos.context_hours != split.lookback_hours)
         ):
-            raise EvidenceRefused("extended Chronos export requires its owner context evidence")
+            from .owner12 import owner_experiment
+
+            owner = owner_experiment(repo, run.git_sha)
+            variant = owner.variants.get(model.model_id)
+            if variant is None:
+                raise EvidenceRefused("extended Chronos variant is absent from its owner source")
+            hours, covariates = variant
+            expected_config = owner.chronos.chronos.model_copy(update={"context_hours": hours})
+            if (
+                owner.protocol != protocol
+                or model.context_policy != owner.context
+                or model.chronos != expected_config
+                or model.past_covariates != list(covariates)
+                or run.feature_order != [config.metric, *covariates]
+            ):
+                raise EvidenceRefused("extended Chronos context differs from its owner experiment")
         required = frozenset(
             {
                 *(

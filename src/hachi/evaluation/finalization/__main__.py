@@ -13,6 +13,8 @@ from .development import validate_development
 from .evidence import assemble_forecast_evidence
 from .freeze import FreezeRequest, freeze_decisions
 from .integrity import EvidenceRefused, require_separate_output, verify_index, write_private
+from .selected_export import validate_selected_export
+from .selection import validate_selection_links
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -23,9 +25,18 @@ def main(argv: list[str] | None = None) -> int:
     evidence = commands.add_parser(
         "evidence", help="assemble aggregate forecast development evidence"
     )
-    for command in (dev, evidence):
+    selection = commands.add_parser(
+        "selection", help="verify original owner selection packet links"
+    )
+    selection.add_argument("--expected-summary-sha256", required=True)
+    selection.add_argument("--originals-root", type=Path)
+    selection.add_argument("--expected-transport-index-sha256")
+    selection.add_argument("--expected-export-receipt-sha256")
+    selection.add_argument("--expected-export-verification-sha256")
+    for command in (dev, evidence, selection):
         command.add_argument("--bundle", type=Path, required=True)
         command.add_argument("--expected-index-sha256", required=True)
+        command.add_argument("--index-file", type=Path)
         command.add_argument("--artifact-bundle", type=Path, action="append", default=[])
         command.add_argument("--artifact-index-sha256", action="append", default=[])
         command.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[4])
@@ -41,12 +52,63 @@ def main(argv: list[str] | None = None) -> int:
     freeze.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command in {"development", "evidence"}:
+        if args.command in {"development", "evidence", "selection"}:
             artifacts = list(zip(args.artifact_bundle, args.artifact_index_sha256, strict=True))
             require_separate_output(args.output, [args.bundle, *args.artifact_bundle])
+            if args.command == "selection":
+                if args.index_file is None or artifacts:
+                    raise EvidenceRefused(
+                        "owner selection requires its original external score index"
+                    )
+                assembled = validate_selection_links(
+                    args.bundle,
+                    args.expected_index_sha256,
+                    args.repo,
+                    index_path=args.index_file,
+                    expected_summary_sha256=args.expected_summary_sha256,
+                )
+                payloads = {"selection-evidence.json": document_bytes(assembled)}
+                export_inputs = [
+                    args.originals_root,
+                    args.expected_transport_index_sha256,
+                    args.expected_export_receipt_sha256,
+                    args.expected_export_verification_sha256,
+                ]
+                if any(v is not None for v in export_inputs):
+                    if not all(v is not None for v in export_inputs):
+                        raise EvidenceRefused("selected export requires all original handoff pins")
+                    require_separate_output(args.output, [args.originals_root])
+                    selected = validate_selected_export(
+                        args.originals_root,
+                        args.expected_transport_index_sha256,
+                        args.repo,
+                        assembled,
+                        expected_receipt_sha256=args.expected_export_receipt_sha256,
+                        expected_verification_sha256=args.expected_export_verification_sha256,
+                    )
+                    payloads["selected-export-evidence.json"] = document_bytes(selected)
+                hashes = write_private(args.output, payloads)
+                print(
+                    json.dumps(
+                        {
+                            "ok": True,
+                            "state": assembled.state,
+                            "files": hashes,
+                            "receipt_sha256": document_sha256(assembled),
+                            "steps": len(assembled.steps),
+                            "final_test_authorized": False,
+                            "scientific_selection_accepted": False,
+                        }
+                    )
+                )
+                return 0
             if args.command == "evidence":
                 assembled = assemble_forecast_evidence(
-                    args.bundle, args.expected_index_sha256, args.repo, artifact_bundles=artifacts
+                    args.bundle,
+                    args.expected_index_sha256,
+                    args.repo,
+                    artifact_bundles=artifacts,
+                    index_path=args.index_file,
                 )
                 hashes = write_private(args.output, {"evidence.json": document_bytes(assembled)})
                 print(
@@ -64,14 +126,18 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 return 0
             if args.kind == "stanford-burden":
-                if artifacts:
+                if artifacts or args.index_file is not None:
                     raise EvidenceRefused("Stanford burden stores its own algorithm artifact")
                 receipt = validate_stanford_burden(
                     args.bundle, args.expected_index_sha256, args.repo
                 )
             else:
                 receipt = validate_development(
-                    args.bundle, args.expected_index_sha256, args.repo, artifact_bundles=artifacts
+                    args.bundle,
+                    args.expected_index_sha256,
+                    args.repo,
+                    artifact_bundles=artifacts,
+                    index_path=args.index_file,
                 )
             hashes = write_private(args.output, {"development.json": document_bytes(receipt)})
             print(
