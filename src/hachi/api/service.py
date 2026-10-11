@@ -587,11 +587,8 @@ class Service:
     # Scenarios --------------------------------------------------------------------------
 
     def scenario(self, request: ScenarioRequest) -> ReportResult:
-        subject = self.catalog.subject(request.subject_id, self.metadata, self.workspace)
-        data_mode: DataMode = (
-            subject.data_mode if subject else reports.fallback_data_mode(request.subject_id)
-        )
-        return scenario_result(request, data_mode, self.settings.git_sha)
+        """A synthetic simulation: nothing about the subject is read or stored."""
+        return scenario_result(request, self.catalog.scenario_model, self.settings.git_sha)
 
     # Deletion ---------------------------------------------------------------------------
 

@@ -199,13 +199,14 @@ def validate_development(
     repo: Path,
     *,
     artifact_bundles: Sequence[tuple[Path, str]] = (),
+    index_path: Path | None = None,
 ) -> DevelopmentReceipt:
     """Validate a complete existing run without running inference or consulting test labels.
 
     The external index pin is mandatory. Hash integrity proves identity, not that a
     scientific protocol is adequate or that its historical availability is observed.
     """
-    index = verify_index(root, expected_index_sha256)
+    index = verify_index(root, expected_index_sha256, index_path=index_path)
     indexes = [(root, index)] + [(p, verify_index(p, sha)) for p, sha in artifact_bundles]
     packets = sorted({str(Path(name).parent) for name in index if name.endswith("/run.json")})
     evaluations: dict[str, EvaluationIdentity] = {}

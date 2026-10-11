@@ -49,10 +49,9 @@ def render(manifest):
         # Read only explicitly reviewed repository sources, never arbitrary local paths.
         if Path(path).is_absolute() or ".." in Path(path).parts:
             raise ValueError("unsafe source path")
-        if (
-            not path.startswith(("reports/", "docs/", "configs/", "src/hachi/data/"))
-            and path != "scripts/rehearsal/README.md"
-        ):
+        if not path.startswith(
+            ("reports/", "docs/", "configs/", "src/hachi/data/")
+        ) and path not in ("scripts/rehearsal/README.md", "src/hachi/scenarios/README.md"):
             raise ValueError("source outside public evidence scope")
         if path.startswith("reports/models/recovery/"):
             raise ValueError("superseded recovery evidence is excluded")

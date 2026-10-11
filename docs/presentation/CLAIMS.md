@@ -325,6 +325,204 @@ Limit: Development-validation uncertainty conditional on this protocol/cohort, n
 
 - `quote`: source `chronos-report`, selector `exact text anchor`, exact value `"95% intervals are participant-level bootstrap (1,000 resamples, seed 42)."`.
 
+## selected-support
+
+Development-selected `chronos-2-zero-shot-ctx720` uses 12 validation participants across 3 inner folds. Of 2016 expected hourly targets, 168 lack sufficient history and 249 lack labels, leaving 1599 scored points; 0 eligible points are abstained.
+
+Limit: One outer fold, same development cutoffs and causal source assumptions. Zero eligible abstentions does not imply complete expected-target coverage. No final test, clinical or Apple transfer claim.
+
+- `model`: source `selection`, selector `/selection/selected`, exact value `"chronos-2-zero-shot-ctx720"`.
+- `people`: source `selection`, selector `/validation_participants`, exact value `12`.
+- `folds`: source `selection`, selector `/inner_folds`, exact value `3`.
+- `expected`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/counts/expected_points`, exact value `2016`.
+- `history`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/counts/insufficient_history_points`, exact value `168`.
+- `missing`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/counts/missing_labels`, exact value `249`.
+- `scored`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/counts/scored_points`, exact value `1599`.
+- `abstained`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/counts/abstained_points`, exact value `0`.
+
+## selected-errors
+
+The selected development model reports MAE 8.05 bpm [7.15, 9.15] and RMSE 13.01 bpm [11.47, 14.56].
+
+Limit: Equal participant weighting and participant-bootstrap uncertainty, not independent post-selection test estimates. Selection on these same participants makes the selected error optimistic.
+
+- `mae`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/mae/value`, exact value `8.052100447913935`.
+- `maelo`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/mae/confidence_interval/0`, exact value `7.150452193319816`.
+- `maehi`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/mae/confidence_interval/1`, exact value `9.15306714544498`.
+- `rmse`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/rmse/value`, exact value `13.013156530481758`.
+- `rmselo`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/rmse/confidence_interval/0`, exact value `11.474457750958301`.
+- `rmsehi`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/rmse/confidence_interval/1`, exact value `14.561896355604915`.
+
+## selected-intervals
+
+Native nominal 80% interval coverage is 0.782 [0.745, 0.811], with mean width 23.02 bpm [20.63, 25.62].
+
+Limit: Same validation targets, native nominal interval from the public report, uncalibrated after selection. These are not clinical probabilities or final-test coverage.
+
+- `coverage`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/interval_coverage/value`, exact value `0.7820733249081157`.
+- `clo`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/interval_coverage/confidence_interval/0`, exact value `0.7450790702287571`.
+- `chi`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/interval_coverage/confidence_interval/1`, exact value `0.8105604056411061`.
+- `width`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/mean_interval_width/value`, exact value `23.02054720771046`.
+- `wlo`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/mean_interval_width/confidence_interval/0`, exact value `20.633719371157415`.
+- `whi`: source `selection`, selector `/candidates/chronos-2-zero-shot-ctx720/mean_interval_width/confidence_interval/1`, exact value `25.62148097104453`.
+- `nominal`: source `selection-report`, selector `exact text anchor`, exact value `"80%"`.
+
+## selection-ridge
+
+`handcrafted-ridge-personal` versus `train-population-mean-v1`: paired ΔMAE -2.47 bpm [-4.17, -0.69] on 1599 common targets; rule result `promoted`.
+
+Limit: Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements.
+
+- `candidate`: source `selection`, selector `/selection/steps/3/candidate`, exact value `"handcrafted-ridge-personal"`.
+- `incumbent`: source `selection`, selector `/selection/steps/3/incumbent`, exact value `"train-population-mean-v1"`.
+- `support`: source `selection`, selector `/selection/steps/3/evidence/paired_points`, exact value `1599`.
+- `delta`: source `selection`, selector `/selection/steps/3/evidence/paired_mae/value`, exact value `-2.474096799845009`.
+- `lo`: source `selection`, selector `/selection/steps/3/evidence/paired_mae/confidence_interval/0`, exact value `-4.166581702070478`.
+- `hi`: source `selection`, selector `/selection/steps/3/evidence/paired_mae/confidence_interval/1`, exact value `-0.689071205754028`.
+- `status`: source `selection`, selector `/selection/steps/3/status`, exact value `"promoted"`.
+
+## selection-context-middle
+
+`chronos-2-zero-shot-ctx168` versus `handcrafted-ridge-personal`: paired ΔMAE -1.33 bpm [-2.21, -0.64] on 1599 common targets; rule result `promoted`.
+
+Limit: Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements.
+
+- `candidate`: source `selection`, selector `/selection/steps/5/candidate`, exact value `"chronos-2-zero-shot-ctx168"`.
+- `incumbent`: source `selection`, selector `/selection/steps/5/incumbent`, exact value `"handcrafted-ridge-personal"`.
+- `support`: source `selection`, selector `/selection/steps/5/evidence/paired_points`, exact value `1599`.
+- `delta`: source `selection`, selector `/selection/steps/5/evidence/paired_mae/value`, exact value `-1.3282185147115129`.
+- `lo`: source `selection`, selector `/selection/steps/5/evidence/paired_mae/confidence_interval/0`, exact value `-2.2082286871413013`.
+- `hi`: source `selection`, selector `/selection/steps/5/evidence/paired_mae/confidence_interval/1`, exact value `-0.6364510038142329`.
+- `status`: source `selection`, selector `/selection/steps/5/status`, exact value `"promoted"`.
+
+## selection-context-long
+
+`chronos-2-zero-shot-ctx720` versus `chronos-2-zero-shot-ctx168`: paired ΔMAE -0.34 bpm [-0.51, -0.16] on 1599 common targets; rule result `promoted`.
+
+Limit: Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements.
+
+- `candidate`: source `selection`, selector `/selection/steps/6/candidate`, exact value `"chronos-2-zero-shot-ctx720"`.
+- `incumbent`: source `selection`, selector `/selection/steps/6/incumbent`, exact value `"chronos-2-zero-shot-ctx168"`.
+- `support`: source `selection`, selector `/selection/steps/6/evidence/paired_points`, exact value `1599`.
+- `delta`: source `selection`, selector `/selection/steps/6/evidence/paired_mae/value`, exact value `-0.34128749162253885`.
+- `lo`: source `selection`, selector `/selection/steps/6/evidence/paired_mae/confidence_interval/0`, exact value `-0.5129882669091845`.
+- `hi`: source `selection`, selector `/selection/steps/6/evidence/paired_mae/confidence_interval/1`, exact value `-0.15941570360119803`.
+- `status`: source `selection`, selector `/selection/steps/6/status`, exact value `"promoted"`.
+
+## adaptation-negative
+
+`chronos-2-finetuned` versus `chronos-2-zero-shot-ctx720`: paired ΔMAE +0.03 bpm [-0.14, +0.23] on 1599 common targets; rule result `kept_incumbent`.
+
+Limit: Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements.
+
+- `candidate`: source `selection`, selector `/selection/steps/9/candidate`, exact value `"chronos-2-finetuned"`.
+- `incumbent`: source `selection`, selector `/selection/steps/9/incumbent`, exact value `"chronos-2-zero-shot-ctx720"`.
+- `support`: source `selection`, selector `/selection/steps/9/evidence/paired_points`, exact value `1599`.
+- `delta`: source `selection`, selector `/selection/steps/9/evidence/paired_mae/value`, exact value `0.027241326962173778`.
+- `lo`: source `selection`, selector `/selection/steps/9/evidence/paired_mae/confidence_interval/0`, exact value `-0.1438925511998738`.
+- `hi`: source `selection`, selector `/selection/steps/9/evidence/paired_mae/confidence_interval/1`, exact value `0.22805644197502714`.
+- `status`: source `selection`, selector `/selection/steps/9/status`, exact value `"kept_incumbent"`.
+
+## stacking-negative
+
+`ensemble-stacked` versus `chronos-2-zero-shot-ctx720`: paired ΔMAE -0.01 bpm [-0.06, +0.03] on 1599 common targets; rule result `kept_incumbent`.
+
+Limit: Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements.
+
+- `candidate`: source `selection`, selector `/selection/steps/11/candidate`, exact value `"ensemble-stacked"`.
+- `incumbent`: source `selection`, selector `/selection/steps/11/incumbent`, exact value `"chronos-2-zero-shot-ctx720"`.
+- `support`: source `selection`, selector `/selection/steps/11/evidence/paired_points`, exact value `1599`.
+- `delta`: source `selection`, selector `/selection/steps/11/evidence/paired_mae/value`, exact value `-0.014805503177603466`.
+- `lo`: source `selection`, selector `/selection/steps/11/evidence/paired_mae/confidence_interval/0`, exact value `-0.05887708761217896`.
+- `hi`: source `selection`, selector `/selection/steps/11/evidence/paired_mae/confidence_interval/1`, exact value `0.02759684595075489`.
+- `status`: source `selection`, selector `/selection/steps/11/status`, exact value `"kept_incumbent"`.
+
+## equal-weight-negative
+
+`ensemble-equal-weight` versus `chronos-2-zero-shot-ctx720`: paired ΔMAE +0.58 bpm [+0.35, +0.81] on 1599 common targets; rule result `kept_incumbent`. Its interval coverage is 0.353 [0.323, 0.387], failing the coverage gate.
+
+Limit: Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements.
+
+- `candidate`: source `selection`, selector `/selection/steps/10/candidate`, exact value `"ensemble-equal-weight"`.
+- `incumbent`: source `selection`, selector `/selection/steps/10/incumbent`, exact value `"chronos-2-zero-shot-ctx720"`.
+- `support`: source `selection`, selector `/selection/steps/10/evidence/paired_points`, exact value `1599`.
+- `delta`: source `selection`, selector `/selection/steps/10/evidence/paired_mae/value`, exact value `0.5779946728027927`.
+- `lo`: source `selection`, selector `/selection/steps/10/evidence/paired_mae/confidence_interval/0`, exact value `0.34940056395093366`.
+- `hi`: source `selection`, selector `/selection/steps/10/evidence/paired_mae/confidence_interval/1`, exact value `0.8116227880747264`.
+- `status`: source `selection`, selector `/selection/steps/10/status`, exact value `"kept_incumbent"`.
+- `coverage`: source `selection`, selector `/selection/steps/10/evidence/coverage/value`, exact value `0.3529801329389757`.
+- `clo`: source `selection`, selector `/selection/steps/10/evidence/coverage/confidence_interval/0`, exact value `0.3231183814360729`.
+- `chi`: source `selection`, selector `/selection/steps/10/evidence/coverage/confidence_interval/1`, exact value `0.3870038344598151`.
+
+## steps-negative
+
+`chronos-2-zero-shot-steps` versus `chronos-2-zero-shot-ctx720`: paired ΔMAE +0.92 bpm [+0.36, +1.39] on 1599 common targets; rule result `kept_incumbent`.
+
+Limit: Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements.
+
+- `candidate`: source `selection`, selector `/selection/steps/7/candidate`, exact value `"chronos-2-zero-shot-steps"`.
+- `incumbent`: source `selection`, selector `/selection/steps/7/incumbent`, exact value `"chronos-2-zero-shot-ctx720"`.
+- `support`: source `selection`, selector `/selection/steps/7/evidence/paired_points`, exact value `1599`.
+- `delta`: source `selection`, selector `/selection/steps/7/evidence/paired_mae/value`, exact value `0.9151957439786859`.
+- `lo`: source `selection`, selector `/selection/steps/7/evidence/paired_mae/confidence_interval/0`, exact value `0.35608640756695664`.
+- `hi`: source `selection`, selector `/selection/steps/7/evidence/paired_mae/confidence_interval/1`, exact value `1.393951624533447`.
+- `status`: source `selection`, selector `/selection/steps/7/status`, exact value `"kept_incumbent"`.
+
+## embedding-negative
+
+`chronos-2-embedding-ridge` versus `chronos-2-zero-shot-ctx720`: paired ΔMAE +1.22 bpm [+0.81, +1.64] on 1599 common targets; rule result `kept_incumbent`.
+
+Limit: Challenger minus incumbent on identical paired origins; negative means lower error. Per-comparison participant-bootstrap uncertainty, not family-wise or final-test evidence. All gates must pass; root replayed saved estimates without recomputing original decile/runtime measurements.
+
+- `candidate`: source `selection`, selector `/selection/steps/8/candidate`, exact value `"chronos-2-embedding-ridge"`.
+- `incumbent`: source `selection`, selector `/selection/steps/8/incumbent`, exact value `"chronos-2-zero-shot-ctx720"`.
+- `support`: source `selection`, selector `/selection/steps/8/evidence/paired_points`, exact value `1599`.
+- `delta`: source `selection`, selector `/selection/steps/8/evidence/paired_mae/value`, exact value `1.223577964385451`.
+- `lo`: source `selection`, selector `/selection/steps/8/evidence/paired_mae/confidence_interval/0`, exact value `0.8117875726634561`.
+- `hi`: source `selection`, selector `/selection/steps/8/evidence/paired_mae/confidence_interval/1`, exact value `1.6360055583856559`.
+- `status`: source `selection`, selector `/selection/steps/8/status`, exact value `"kept_incumbent"`.
+
+## selection-optimism
+
+The report explicitly warns: “Thirteen candidates were compared on the same 12 participants and 7 days. The rule's confidence bounds are per comparison, not family-wise. Treat the selected model's validation numbers as optimistic until the sealed outer test is opened.”
+
+Limit: Rule written after public baseline/zero-shot results; previously public representation heads are reported comparators only. Development selection is accepted; final test opening is not authorized.
+
+- `quote`: source `selection-report`, selector `exact text anchor`, exact value `"Thirteen candidates were compared on the same 12 participants and 7 days. The rule's confidence bounds are per comparison, not family-wise. Treat the selected model's validation numbers as optimistic until the sealed outer test is opened."`.
+
+## simulation-metadata
+
+The standalone simulator declares `status=ok`, `task=alertness`, `mode=simulation`, `data_mode=synthetic`, `validation=null` and `dataset_snapshot=null`.
+
+Limit: Accepted conditional equations and CLI/SVG availability only. Synthetic comparisons are not measured KSS/PVT predictions, causal benefit, clinical probabilities, API integration or full-app acceptance.
+
+- `status`: source `scenario-report`, selector `exact text anchor`, exact value `"status=ok"`.
+- `task`: source `scenario-report`, selector `exact text anchor`, exact value `"task=alertness"`.
+- `mode`: source `scenario-report`, selector `exact text anchor`, exact value `"mode=simulation"`.
+- `data`: source `scenario-report`, selector `exact text anchor`, exact value `"data_mode=synthetic"`.
+- `validation`: source `scenario-report`, selector `exact text anchor`, exact value `"validation=null"`.
+- `snapshot`: source `scenario-report`, selector `exact text anchor`, exact value `"dataset_snapshot=null"`.
+
+## simulation-parameters
+
+The pinned illustrative configuration is:
+
+```toml
+version = "two-process-v1"
+tau_wake_hours = 18.2
+tau_sleep_hours = 4.2
+initial_pressure = 0.6
+circadian_weight = 0.2
+anchor_local_hour = 15
+sample_minutes = 30
+```
+
+
+
+Limit: Literature-derived concept and original implementation; parameters include disclosed assumptions, not population/personal fits. Root checked implementation equations, not independent validation of paper timing constants. Caffeine/light effects are not modeled.
+
+- `config`: source `scenario-config`, selector `exact text anchor`, exact value `"version = \"two-process-v1\"\ntau_wake_hours = 18.2\ntau_sleep_hours = 4.2\ninitial_pressure = 0.6\ncircadian_weight = 0.2\nanchor_local_hour = 15\nsample_minutes = 30"`.
+
 ## Source pins
 
 ### chronos
@@ -497,9 +695,9 @@ Scope: Generated native/HTTP transport performance on exact CPU receipt; unchang
 
 ### final
 
-[reports/evaluation/final/README.md](https://github.com/vibemonkies/hachi/blob/7db3baafcf0f8a0c3f615c69443a102b58dc4eee/reports/evaluation/final/README.md)
+[reports/evaluation/final/README.md](https://github.com/vibemonkies/hachi/blob/66a39842ffed015fe4764f6b5012a751118aeb51/reports/evaluation/final/README.md)
 
-File SHA256: `12ee07a88d6cde35a6d93a7ebff8056db022e7d21e6dc405e436aa7695e7b784`.
+File SHA256: `95e13fd222cd74088637385bec7eb126783023ee632c4cefd1a7220cdfd30621`.
 
 Scope: Development tooling only; no selected model, test authority or accepted superseded recovery packet.
 
@@ -558,3 +756,43 @@ Scope: Binding stricter noncommercial source license; source citation.
 File SHA256: `a6a289585d8c07dbef195771074dbe89b8ae2d240aa34d09a8457280d00f21a6`.
 
 Scope: Public research access, no explicit data license; source citation.
+
+### selection
+
+[reports/models/issue12-pmdata-hourly-selection.json](https://github.com/vibemonkies/hachi/blob/011e98abb1830f7139aece926bdd606388426911/reports/models/issue12-pmdata-hourly-selection.json)
+
+File SHA256: `92d9624a922dee9cdf2ca6435ec174ebb8edebd2e89d82919b9c6109bc22eb71`.
+
+Scope: Accepted development selection only. Saved Challenge estimates replayed by root; original decile/runtime measurements not independently recomputed. Scoring producer 921265fc3300cda0197c952741c4a5cd4ba81e5f; export producer 7b49924105cda187242252eaf1a9292aa8fcd1cd. Original protocol/rule/context/dataset and per-fold comparison hashes retained in this public report. No final test or clinical acceptance.
+
+### selection-report
+
+[reports/models/issue12-pmdata-hourly-selection.md](https://github.com/vibemonkies/hachi/blob/011e98abb1830f7139aece926bdd606388426911/reports/models/issue12-pmdata-hourly-selection.md)
+
+File SHA256: `983d3dfec902f5c61dfee03cc1e4a63cd7ef30029f80e7c0feac1acbc9c6167d`.
+
+Scope: Public methods, selected artifact identity, training/meta-fold provenance, negative results and selection optimism. Root verified the native selected loader and original private source hashes; presentation does not inspect or copy private artifacts. Native intervals uncalibrated; final freeze/test opening remains root-owned.
+
+### scenario-report
+
+[src/hachi/scenarios/README.md](https://github.com/vibemonkies/hachi/blob/85a8c80658e7066dc2a1e9d06ebc4489bf597f21/src/hachi/scenarios/README.md)
+
+File SHA256: `61ea51d88624b84dcdced6ae52b0153a1efef8218c51df5daa55807778fa775e`.
+
+Scope: Original conditional simulation, accepted at reviewed head 0622db3e2d971dfc5549db0741c70f7c07bd2f9b. Root independently checked CLI, implemented equations, local-time boundaries and rendered source-bound SVG. No measured rating/PVT validation, personalization, API or full app integration; no independent paper-constant verification.
+
+### scenario-config
+
+[configs/scenarios/two-process-v1.toml](https://github.com/vibemonkies/hachi/blob/85a8c80658e7066dc2a1e9d06ebc4489bf597f21/configs/scenarios/two-process-v1.toml)
+
+File SHA256: `94fa3c787da36862bd2f4ab207a9d10c94c438981996cb9e65e222bc657ef2eb`.
+
+Scope: Exact public illustrative parameters, assumptions rather than fitted personal coefficients. Changing parameters changes the conditional comparison.
+
+### scenario-request
+
+[configs/scenarios/compare-bedtimes.toml](https://github.com/vibemonkies/hachi/blob/85a8c80658e7066dc2a1e9d06ebc4489bf597f21/configs/scenarios/compare-bedtimes.toml)
+
+File SHA256: `ba868466f9d0fcda167cf337a9ed6c0c3777fbb1281b028b00f3da8a93f5ece7`.
+
+Scope: Committed explicitly synthetic CLI request only; no participant record or evidence of measured alertness.

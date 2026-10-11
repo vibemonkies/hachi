@@ -88,9 +88,62 @@ results do not establish added information from the frozen representations in th
 forecasting task. Missing channels, device shift and mismatch between a weekly
 representation and an hourly forecast limit interpretation; this is not a claim that
 the encoders are useless. Pretraining overlap is unknown for Chronos/MOMENT and none
-known for WBM. No selected adapted/ensemble export is admitted to this presentation;
-actual #12 adaptation, export, uncertainty/cost-based selection and #20 acceptance
-remain required. Do not replace those gates with this simpler head experiment.
+known for WBM. The separate accepted #12 experiment now supplies actual adaptation,
+ensemble comparisons and development selection. The earlier head experiment remains
+a distinct contribution, with its original support and limits.
+
+## Accepted development selection and negative adaptation results
+
+The accepted public #12 report extends the same frozen PMData protocol. Its incumbent
+chain evaluates paired error and decile loss, coverage, abstention, latency and memory;
+a challenger replaces the incumbent only when every gate passes. Root independently
+replayed the saved Challenge estimates and verified original private file hashes and
+the actual native selected loader. That acceptance covers development selection;
+it does not independently recompute the original decile losses/runtime or accept a
+final test. This preparation reads only committed public aggregates.
+
+{{selected-support}}
+
+{{selected-errors}}
+
+{{selected-intervals}}
+
+Native intervals remain uncalibrated after selection. These selected-model numbers
+are separate from the earlier zero-shot comparison and point-only CPU rehearsal.
+The successful incumbent changes were:
+
+{{selection-ridge}}
+
+{{selection-context-middle}}
+
+{{selection-context-long}}
+
+The adaptation contribution includes actual full-precision fine-tuning with AdamW
+and best-checkpoint early stopping on a temporal holdout of training participants.
+Learning rate and context were chosen on inner validation. Stacking fits constrained
+decile weights on grouped out-of-fold points inside training participants, with
+residual intervals fitted there as well. The public report retains optimizer, seed,
+checkpoint, source/configuration and comparison-packet provenance. Private checkpoints
+and sample artifacts are not redistributed here.
+
+{{adaptation-negative}}
+
+{{stacking-negative}}
+
+{{equal-weight-negative}}
+
+{{steps-negative}}
+
+{{embedding-negative}}
+
+Those results retain the long-context zero-shot incumbent; an adapted model or ensemble
+is not promoted. The rule was written after the earlier public baseline/zero-shot
+results; the already-public representation heads are reported comparators only.
+
+{{selection-optimism}}
+
+Final #20 freeze, independent final evaluation and test opening remain root-owned
+gates. PMData still supplies no illness labels and no real Apple transfer validation.
 
 ## Anomalies, burden and missingness
 
@@ -129,6 +182,9 @@ Past survey completion can predict whether the future window is eligible for a
 negative label. The phase1 ablations do not establish an independent physiological
 benefit at these selected windows. Retrospective classification metrics must not be
 presented as transferable cold probabilities or population calibration.
+Current exposed clinical outer partitions remain research-only. They are not a
+repaired or pristine blind test; PMData's recorded sealed forecast test is a separate
+task/source, with its own unopened final acceptance gate.
 
 {{illness-parity}}
 
@@ -136,9 +192,38 @@ presented as transferable cold probabilities or population calibration.
 
 Recovery still requires accepted censoring-aware follow-up and comparison with an
 episode-duration/survival baseline. No recovery score from the superseded packet
-appears here. CMU scope results remain pending. Sleep scenarios remain a conditional
-simulation proposal pending the separately owned #15 evidence/publication; no measured
-personal-alertness accuracy is claimed. The full initial scope remains incomplete.
+appears here. CMU quantitative results are not admitted here. No CMU/recovery results
+are promoted. The full initial scope remains incomplete.
+
+## Published conditional sleep simulator
+
+The original #15 conditional simulator is now published with an offline CLI and
+source-bound SVG. Root independently exercised the CLI, checked implemented equations,
+gap refusal and ambiguous-time handling, and inspected the rendered SVG at the accepted
+source head. These are supplied root runtime receipts, not a new #23 execution or full
+app rehearsal. [Accepted scoped runtime record](https://github.com/vibemonkies/hachi/pull/101),
+[public description](../../src/hachi/scenarios/README.md).
+
+{{simulation-metadata}}
+
+{{simulation-parameters}}
+
+Each alternative uses a disclosed synthetic prior-sleep block, then awake/sleep
+pressure propagation and a fixed circadian phase on elapsed UTC time. Missing local
+times are refused; ambiguous times use the documented first occurrence. The relative
+index is illustrative, with caffeine/light assumptions echoed but their effects not
+modeled. Sleep quality, individual differences, chronotype and sleep inertia are omitted.
+Changing assumptions can change the comparison; it cannot select a medically optimal
+bedtime. The committed request is explicitly synthetic, with no participant observations.
+
+The literature-derived concept cites
+[Borbély et al., reappraisal](https://doi.org/10.1111/jsr.12371) and
+[Daan, Beersma & Borbély, timing of human sleep](https://doi.org/10.1152/ajpregu.1984.246.2.R161).
+Implementation is original; no borrowed software license is asserted. Root's equation
+checks do not independently validate the paper's exact timing constants or fit parameters
+to a population. Repeated ratings/PVT observations, train-only personal mapping and
+held-out baseline evaluation remain missing. PMData daily fatigue is not hourly alertness
+truth. Neither API nor full-app integration is delivered by the simulator merge.
 
 ## What the existing runtime receipts prove
 
@@ -216,8 +301,8 @@ consents and frozen accepted system are missing, so no case result is shown.
 
 ## Close with the remaining required experiment
 
-Freeze and independently reproduce the complete supported candidate selection, then
-evaluate the untouched cohort under root's scientific/test-opening control. Obtain
+Use the accepted development selection as input to the final freeze, then evaluate
+the untouched forecast cohort under root's scientific/test-opening control. Obtain
 adequate clinical labels/follow-up and independently observed negatives. Integrate the
 same accepted artifact into the published app, complete the separately consented case,
 then rehearse the live and offline paths. Presenter roles below are proposals pending
