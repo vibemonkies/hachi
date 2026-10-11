@@ -20,13 +20,13 @@ access_steps = [
 ]
 access_owner = "justin06lee"
 approved_users = ["justin06lee", "ezzy1630", "CoffeeCoder1015"]
-storage = "Raw archives stay on storage only the access owner uses, outside Git, on an encrypted volume (the agreement requires appropriate security; an unencrypted external drive does not meet it). Not on the shared GX10 account until every teammate with access to that account has accepted the CCP agreement."
+storage = "Outside Git, only where every person with access has accepted the CCP agreement: the access owner's data root and, since all three teammates registered (2026-10-11), the shared GX10 account at ~/hachi/data/cmu-common-cold-project/<version>/. The agreement requires appropriate security; the target is encrypted storage with key-only SSH. As of 2026-10-11 the T7 and the GX10 disk are unencrypted and the GX10 still allows password SSH on a private lab network; the owner accepted this interim state and plans to encrypt and disable password login."
 checksum_strategy = "SHA-256 of each downloaded archive as received; ingestion later records per-file checksums of the extracted codebooks and data files."
 blocked_capabilities = [
   "Wearable-based illness-onset prediction: the studies contain no wearable signals.",
   "Any analysis before the planned analysis is registered with CMU.",
   "Hosted-LLM processing of participant-level rows.",
-  "Placing the data on the shared GX10 account before all users accept the agreement.",
+  "Giving access to anyone who has not accepted the CCP agreement, including new users of the shared GX10 account.",
 ]
 notes = [
   "Controlled viral-challenge (inoculation) studies of healthy adults aged 18-55, 1986-2011; de-identified. BCS n=399 (rhinoviruses 2, 9, 14, RSV, coronavirus 229E; quarantine to day 6), PCS1 n=276 (RV39/RV21, 5 days), PCS2 n=334 (RV39/RV23, 5 days), PMBC n=193 (influenza A for 38 over 6 days, RV39 for 155 over 5 days), PCS3 n=213 (RV39, 5 days); serum about 28 days after challenge.",
