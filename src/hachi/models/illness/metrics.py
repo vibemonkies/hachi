@@ -5,9 +5,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import timedelta
 
-import numpy as np
-from sklearn.metrics import average_precision_score, roc_auc_score
-
 from .data import Window
 from .protocol import Protocol
 
@@ -44,6 +41,9 @@ def alert_groups(scores: Sequence[Score]) -> list[list[Score]]:
 
 
 def scalar_metrics(scores: Sequence[Score]) -> dict[str, float | None]:
+    import numpy as np
+    from sklearn.metrics import average_precision_score, roc_auc_score
+
     if not scores:
         return dict.fromkeys(
             (
@@ -95,6 +95,8 @@ def scalar_metrics(scores: Sequence[Score]) -> dict[str, float | None]:
 
 
 def reliability(scores: Sequence[Score], bins: int) -> list[dict[str, int | float | None]]:
+    import numpy as np
+
     out = []
     for i in range(bins):
         lo, hi = i / bins, (i + 1) / bins
@@ -127,6 +129,8 @@ def resample(scores: Sequence[Score], subjects: Sequence[str]) -> list[Score]:
 
 
 def interval(values: Sequence[float], protocol: Protocol) -> dict[str, float | int | None]:
+    import numpy as np
+
     alpha = (1 - protocol.confidence_level) / 2
     return {
         "lower": float(np.quantile(values, alpha)) if values else None,
@@ -136,6 +140,8 @@ def interval(values: Sequence[float], protocol: Protocol) -> dict[str, float | i
 
 
 def report(scores: Sequence[Score], protocol: Protocol) -> dict:
+    import numpy as np
+
     point = scalar_metrics(scores)
     subjects = sorted({s.window.subject_id for s in scores})
     rng = np.random.default_rng(protocol.seed)
@@ -172,6 +178,8 @@ def report(scores: Sequence[Score], protocol: Protocol) -> dict:
 def paired_auprc(
     candidate: Sequence[Score], baseline: Sequence[Score], protocol: Protocol
 ) -> dict[str, float | int | None]:
+    import numpy as np
+
     def keys(rows: Sequence[Score]):
         return [(s.window.subject_id, s.window.cutoff) for s in rows]
 

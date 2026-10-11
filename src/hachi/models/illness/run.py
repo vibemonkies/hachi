@@ -9,8 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
 
-import sklearn
-
 from hachi.contracts.manifests import ModelRef, RunManifest, SplitManifest
 from hachi.data.clinical.snapshot import dataset_snapshot_ref, verify
 from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
@@ -45,6 +43,8 @@ def run(
     feature_family: str = "survey-history-control",
 ) -> dict:
     """Only outer0 inner-validation data score. No switch exists to open outer test."""
+    import sklearn
+
     started = perf_counter()
     if not verify(snapshot)["ok"]:
         raise ValueError("snapshot integrity verification failed")

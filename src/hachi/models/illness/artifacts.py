@@ -1,12 +1,14 @@
 """Private data-only calibrated classifiers; replay uses no pickle or fitted sklearn object."""
 
+from __future__ import annotations
+
 import hashlib
 import math
 import os
 import struct
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import Field, FiniteFloat, model_validator
 
@@ -16,7 +18,9 @@ from hachi.evaluation.serialization import document_bytes, document_sha256
 from .data import Window
 from .metrics import Score
 from .protocol import Candidate
-from .training import Fitted
+
+if TYPE_CHECKING:
+    from .training import Fitted
 
 
 class Node(Contract):

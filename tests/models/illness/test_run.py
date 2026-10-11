@@ -16,6 +16,8 @@ from hachi.models.illness.data import FeatureSet
 from hachi.models.illness.protocol import load_protocol
 from hachi.models.illness.run import run
 
+pytest.importorskip("sklearn", reason="illness runner requires the baselines extra")
+
 PROTOCOL = load_protocol(Path("configs/experiments/illness/phase1.toml")).model_copy(
     update={"bootstrap_replicates": 100}
 )

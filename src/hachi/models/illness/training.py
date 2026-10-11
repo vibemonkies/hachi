@@ -1,15 +1,16 @@
 """Fit/scaling on fit participants, sigmoid calibration/thresholds on separate participants."""
 
+from __future__ import annotations
+
 import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import numpy as np
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.tree import DecisionTreeClassifier
+if TYPE_CHECKING:
+    import numpy as np
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import Pipeline
 
 from .data import Window
 from .metrics import Score, scalar_metrics
@@ -42,6 +43,8 @@ class Fitted:
     calibration_subjects: tuple[str, ...]
 
     def raw(self, rows: Sequence[Window]) -> np.ndarray:
+        import numpy as np
+
         if self.estimator is None:
             return np.full(len(rows), self.prevalence)
         return self.estimator.predict_proba(_matrix(rows))[:, 1]
@@ -56,10 +59,14 @@ class Fitted:
 
 
 def _matrix(rows: Sequence[Window]) -> np.ndarray:
+    import numpy as np
+
     return np.array([[np.nan if x is None else x for x in r.features] for r in rows], dtype=float)
 
 
 def _logits(probability: np.ndarray) -> np.ndarray:
+    import numpy as np
+
     p = np.clip(probability, 1e-6, 1 - 1e-6)
     return np.log(p / (1 - p)).reshape(-1, 1)
 
@@ -84,6 +91,12 @@ def choose_threshold(scores: Sequence[Score], protocol: Protocol) -> float:
 def fit(
     candidate: Candidate, rows: Sequence[Window], train_subjects: Sequence[str], protocol: Protocol
 ) -> tuple[Fitted | None, str]:
+    from sklearn.impute import SimpleImputer
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.tree import DecisionTreeClassifier
+
     fit_subjects, calibration_subjects = calibration_partition(train_subjects, protocol)
     fit_rows = [r for r in rows if r.subject_id in fit_subjects]
     calibration_rows = [r for r in rows if r.subject_id in calibration_subjects]

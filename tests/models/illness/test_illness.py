@@ -4,7 +4,6 @@ from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 from hachi.models.illness.artifacts import export, load, save
@@ -12,6 +11,9 @@ from hachi.models.illness.data import FeaturePoint, FeatureSet, Window, external
 from hachi.models.illness.metrics import Score, alert_groups, paired_auprc, report, scalar_metrics
 from hachi.models.illness.protocol import load_protocol
 from hachi.models.illness.training import calibration_partition, choose_threshold, fit
+
+np = pytest.importorskip("numpy", reason="illness fitting requires the baselines extra")
+pytest.importorskip("sklearn", reason="illness fitting requires the baselines extra")
 
 PROTOCOL = load_protocol(Path("configs/experiments/illness/phase1.toml"))
 CUTOFF = datetime(2020, 1, 10, tzinfo=UTC)
