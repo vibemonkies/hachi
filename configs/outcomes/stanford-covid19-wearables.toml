@@ -1,0 +1,33 @@
+# Stanford COVID-19 wearables, phase 1 (Mishra et al. 2020): label adapter settings (#8).
+# The admitted files (archive and the paper's Supplementary Data 1) come from the dataset
+# registry, configs/datasets/stanford-covid19-wearables.toml.
+schema_version = "0.1"
+pipeline_version = "clinical-labels-1"
+dataset_id = "stanford-covid19-wearables"
+# Name of the registered archive holding the wearable CSVs, and of the labels workbook.
+archive = "COVID-19-Wearables.zip"
+labels_workbook = "41551_2020_640_MOESM3_ESM.xlsx"
+
+# Every date and time in this release is local wall time in an undisclosed zone (US participants),
+# and the authors shifted dates "to obscure PHI". No real UTC instant can be recovered. Labels and
+# wearable records share one floating clock: naive local wall time is written into the contract's
+# *_utc fields as if it were UTC. Within this dataset, order and durations are exact; nothing may
+# be joined with real UTC data or with another dataset's calendar.
+clock = "floating_local_shifted"
+
+[illness_categories]
+# Supplementary Table 3 "Category" -> episode category. COVID-19 labels are not colds.
+"COVID-19" = "covid19"
+"Other Illness" = "other_illness"
+"Other Illness (Influenza B)" = "influenza_b"
+
+[survey]
+# Supplementary Table 5 daily symptom reports. A row with no answer at all is not a completed
+# survey. A completed survey is symptomatic when any symptom has a severity (1-5) or the overall
+# feeling is one of these.
+symptomatic_feelings = ["Currently ill", "Experiencing symptoms of beginning illness"]
+symptom_columns = [
+  "aches_pains_matrix", "cough_matrix", "diarrhea_matrix", "fatigue_matrix", "headaches_matrix",
+  "runny_nose_matrix", "shortness_breath_matrix", "sore_throat_matrix", "smell_matrix",
+  "taste_matrix",
+]
