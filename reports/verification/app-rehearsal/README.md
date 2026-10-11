@@ -40,6 +40,16 @@ points against both references, with no missing/extra points. Runtime root
 Mean local job latency was 0.197 s (0.176–0.240 s); no performance comparison is
 claimed across these checks.
 
+After main's PR66 privacy changes landed, the affected API/storage path was
+integrated and rehearsed again at clean
+`88094a3c68118385559d3c9e555685c40a2fab94`.
+[Post-privacy receipt](api-88094a3.json): 25/25 origins, 600/600 exact points
+against packet and evaluator, zero missing/extra points, point-only results,
+and all separate synthetic lifecycle checks passed. API/privacy tests passed
+56/56, plus the five rehearsal integrity tests. Owned session 53837 and runtime
+`~/hachi/runtime/jadeox/run-004` were stopped after the check. This incorporates
+the storage/logging changes; the fixture browser source was unchanged.
+
 Actual unavailable responses were anomaly `NO_ARTIFACT_FOR_TASK`, illness
 `NO_VALIDATED_ILLNESS_ARTIFACT`, and recovery `NO_ONGOING_EPISODE` for a request
 without a recorded ongoing episode. No zero probabilities or recovery curves
@@ -115,6 +125,9 @@ the existing CI `--extra baselines pytest tests/models` stage runs them with
 NumPy/SciPy installed. Runtime source is unchanged by that test-only integration,
 so the final real-data receipt remains bound to `4129197`. Do not merge until
 fresh CI and the independent tooling review pass.
+The original PR head `d2a49fe` passed all CI stages, including baselines and API
+extras, in run `38138236148`. The post-privacy head needs its own fresh CI result
+and independent review before merge.
 
 ## Outstanding acceptance gates
 
