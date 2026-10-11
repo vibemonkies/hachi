@@ -107,9 +107,9 @@ def compare(
     """
     paired = []
     for row in rows:
-        if row.lower == 1 and row.upper > horizon:
-            continue
         limited = truncate(row, horizon)
+        if limited is None:
+            continue
         paired.append(
             {
                 "subject": row.subject,

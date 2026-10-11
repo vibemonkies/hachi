@@ -1,7 +1,7 @@
 import math
 
 from hachi.models.recovery.evaluation import calibration, compare, observable_at, supported_horizon
-from hachi.models.recovery.survival import Observation, SurvivalModel
+from hachi.models.recovery.survival import Observation, SurvivalModel, truncate
 
 
 def model(h=0.2):
@@ -43,3 +43,7 @@ def test_cluster_bootstrap_and_uninformative_interval_exclusion():
     assert result["conditional_minus_baseline_nll_ci95"] == [0, 0]
     assert result["subjects"] == 2
     assert len(paired) == 2
+
+
+def test_public_truncation_returns_no_information_without_zero_day_censor():
+    assert truncate(Observation("synthetic", "e", (), 1, 20), 7) is None
