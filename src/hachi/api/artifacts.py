@@ -314,26 +314,31 @@ def _run_label(run: RunManifest) -> str | None:
     return run.run_id.rsplit(marker, 1)[1] if marker in run.run_id else None
 
 
-def _protocol_key(document: object) -> str:
-    return _sha256(json.dumps(document, sort_keys=True, separators=(",", ":")).encode())
+def protocol_key(document: object) -> str:
+    """Identity of a staged protocol document. A density variant is identified whole: its
+    thinning rule, gates and wrapped protocol together, never the protocol alone."""
+    kind = "variant" if isinstance(document, dict) and "thinning" in document else "protocol"
+    canonical = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
+    return f"{kind}:{_sha256(canonical)}"
 
 
 @functools.cache
 def frozen_protocols() -> frozenset[str]:
-    """Predeclared protocols committed under configs/evaluation, as written and as a run's
-    protocol.json writes them (normalized), with density variants unwrapped."""
+    """Predeclared protocols committed under configs/evaluation: each document as written,
+    and a PMData protocol also as a run's protocol.json writes it (normalized)."""
     from hachi.evaluation.pmdata_run import PMDataProtocol
 
     keys: set[str] = set()
     for path in sorted(FROZEN_PROTOCOL_DIR.glob("*.json")):
         document = json.loads(path.read_bytes())
-        effective = document["protocol"] if "thinning" in document else document
-        keys.add(_protocol_key(effective))
+        keys.add(protocol_key(document))
+        if "thinning" in document:
+            continue  # a variant is staged as its committed file, whole
         try:
-            normalized = PMDataProtocol.model_validate_json(json.dumps(effective))
+            normalized = PMDataProtocol.model_validate_json(json.dumps(document))
         except ValueError:
             continue  # not a PMData protocol (e.g. a clinical one); its raw form is enough
-        keys.add(_protocol_key(normalized.model_dump(mode="json")))
+        keys.add(protocol_key(normalized.model_dump(mode="json")))
     return frozenset(keys)
 
 
@@ -347,13 +352,13 @@ def _check_protocol(
 ) -> None:
     """Derive the evaluated gate and thinning from the staged protocol; serve nothing else.
 
-    The protocol is a committed, predeclared PMData protocol or a density variant wrapping
-    one, so no gate can be written by hand. It must name the pinned model's exact config among
-    its comparators, with that config's own count gate. Its evaluation section must be the
-    packet's config and its split parameters the packet's split. The served feature policy and
-    thinning must equal it, and the packet's run_id label must be exactly that thinning's
-    suffix, so neither a full-density packet served thinned nor a thinned packet served
-    unthinned can be staged.
+    The protocol is a committed, predeclared PMData protocol, or a committed density variant
+    taken whole (its thinning rule included), so no gate or recipe can be written by hand.
+    It must name the pinned model's exact config among its comparators, with that config's
+    own count gate. Its evaluation section must be the packet's config and its split
+    parameters the packet's split. The served feature policy and thinning must equal it, and
+    the packet's run_id label must be exactly that thinning's suffix, so neither a
+    full-density packet served thinned nor a thinned packet served unthinned can be staged.
     """
     if serving.protocol_sha256 != _sha256(data):
         raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "serving names another protocol")
@@ -372,7 +377,7 @@ def _check_protocol(
         raise ArtifactRefused(
             "ARTIFACT_INCOMPATIBLE", "the staged protocol is not a served evaluation protocol"
         ) from exc
-    if _protocol_key(effective) not in frozen_protocols():
+    if protocol_key(document) not in frozen_protocols():
         raise ArtifactRefused(
             "ARTIFACT_INCOMPATIBLE", "the staged protocol is not a committed, predeclared one"
         )

@@ -16,7 +16,7 @@ from xml.sax.saxutils import quoteattr
 
 import pytest
 
-from hachi.api.artifacts import SPLIT_PARAMETERS, ServingSpec, stage_artifact
+from hachi.api.artifacts import SPLIT_PARAMETERS, ServingSpec, protocol_key, stage_artifact
 from hachi.api.settings import Settings
 from hachi.contracts.base import ArtifactRef
 from hachi.contracts.manifests import ModelRef, RunManifest, SplitManifest
@@ -173,12 +173,10 @@ def make_packet(
     }
     if not predeclared:
         protocol["note"] = "written by hand for this artifact"  # never committed
-    else:
-        FIXTURE_PROTOCOLS.add(hashlib.sha256(
-            json.dumps(protocol, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest())  # fmt: skip
     if thinning is not None:
         protocol = {"thinning": thinning.model_dump(mode="json"), "protocol": protocol}
+    if predeclared:
+        FIXTURE_PROTOCOLS.add(protocol_key(protocol))
     protocol_bytes = json.dumps(protocol, sort_keys=True).encode()
     serving = serving.model_copy(
         update={"protocol_sha256": hashlib.sha256(protocol_bytes).hexdigest()}

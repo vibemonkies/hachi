@@ -466,3 +466,44 @@ def test_dataset_subjects_without_numpy_get_a_clear_unavailable(thinned_client, 
     assert (snapshot.status, snapshot.reason_code) == ("unavailable", "NO_ARTIFACT_FOR_TASK")
     assert "baselines extra" in snapshot.requirements[0]
     assert forecast(client, "synthetic-apple-watch").result.root.status == "ok"  # pure Python
+
+
+def test_a_variant_is_bound_whole_so_its_recipe_cannot_change_under_its_label(
+    tmp_path, data_root, snapshot_id
+):
+    # SnowyFortress's counterexample: from a matched thinned control, change only the slot
+    # (300 s -> 60 s) in the staged variant and in serving.json, rehash, keep the label.
+    import hashlib
+
+    packet = make_packet(
+        tmp_path / "p", data_root / "derived" / snapshot_id, serving=thinned_serving()
+    )
+    document = json.loads(packet.protocol.read_bytes())
+    document["thinning"]["slot_seconds"] = 60
+    changed = tmp_path / "changed-protocol.json"
+    changed.write_bytes(json.dumps(document, sort_keys=True).encode())
+    serving = packet.serving.model_copy(
+        update={
+            "history_thinning": THIN.model_copy(update={"slot_seconds": 60}),
+            "protocol_sha256": hashlib.sha256(changed.read_bytes()).hexdigest(),
+        }
+    )
+    root = tmp_path / "root"
+    root.mkdir()
+    with pytest.raises(ArtifactRefused, match="committed, predeclared"):
+        stage_artifact(root, packet.model_dir, packet.packet_dir, serving, changed)
+    assert stage_artifact(
+        root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol
+    )
+
+
+def test_committed_density_variants_are_registered_whole():
+    from hachi.api.artifacts import FROZEN_PROTOCOL_DIR, frozen_protocols, protocol_key
+
+    committed = json.loads(
+        (FROZEN_PROTOCOL_DIR / "pmdata-hourly-validation-apple-minute-density.json").read_bytes()
+    )
+    assert protocol_key(committed) in frozen_protocols()
+    assert protocol_key(committed["protocol"]) not in frozen_protocols()  # never unwrapped
+    committed["thinning"]["slot_seconds"] = 60
+    assert protocol_key(committed) not in frozen_protocols()
