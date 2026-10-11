@@ -180,7 +180,14 @@ export function ImportPanel({
           <h2>Offline replay</h2>
           <p>Load the replay provider’s saved report and its recorded provenance. This does not request a live report.</p>
         </div>
-        <button type="button" disabled={busy} onClick={() => dispatch({ type: "begin-replay", operationId: crypto.randomUUID() })}>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            dispatch({ type: "begin-replay", operationId: crypto.randomUUID() });
+            window.location.hash = "replay";
+          }}
+        >
           Open saved replay
         </button>
       </section>
