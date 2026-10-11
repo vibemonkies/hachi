@@ -80,7 +80,8 @@ its rendered verification are described under [Private offline replay](#private-
 ## Browser integration and honest gates
 
 Build the exact published #17 source in a clean owned review checkout. PR111
-`0b58f4e7358a1bcc1f29c036eac98c954a808449` was exercised with these settings
+`0b58f4e7358a1bcc1f29c036eac98c954a808449` and corrected
+`5a422ddb2f1d0dd2a5c4e1003a1c833cf430daca` were exercised with these settings
 in both the build and preview shell (later app revisions need fresh evidence):
 
 ```sh
@@ -124,8 +125,9 @@ and [generated CPU-artifact HTTP proof](../../src/hachi/data/apple_health/README
 That generated proof does not establish real Apple accuracy. The actual PR111 app
 existing-PMData-subject → report → chart and private offline replay were exercised
 at the pinned head: [source-bound receipts and scope](../../reports/verification/app-rehearsal/README.md#actual-app-runtime-at-pr111-0b58f4e).
-One app origin matched 24 points/48 endpoints; the separate API oracle covers
-25 origins/600 points. Generated Apple input exercised actual app import/status/
+One app origin matched 24 points/48 endpoints at each head; the separate API
+oracle covers 25 origins/600 points at each head. Generated Apple input exercised
+the `0b58f4e` app import/status/
 coverage and the truthful unavailable response, not a real Apple case.
 #19's storage/demo implementation is accepted; #18's complete integrated states,
 #20's selected-artifact parity and #21's separately consented late case remain
@@ -225,8 +227,9 @@ domain, unlike the standalone viewer's interval midpoints. It deliberately
 requires the original point-only CPU comparator: it is not selected 720-hour
 interval-model parity. Use the generated staggered-window cache for gap and
 mobile illustrations, and a missing private cache for the visible 409 refusal.
-Fresh [actual app evidence](../../reports/verification/app-rehearsal/app-runtime-0b58f4e.json)
-records these paths at the producing head. New source needs a rebuild/relaunch
+The [broader actual app evidence](../../reports/verification/app-rehearsal/app-runtime-0b58f4e.json)
+and [corrected-head live/replay follow-up](../../reports/verification/app-rehearsal/app-runtime-5a422dd.json)
+record their paths at each producing head. New source needs a rebuild/relaunch
 and fresh comparison; no model selection or outer-test opening is authorized
 by this runbook.
 

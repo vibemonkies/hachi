@@ -12,6 +12,36 @@ Apple import → chart, selected-product-artifact parity and the full rehearsal
 remain incomplete. This lane did not select a model, open outer test or waive a
 clinical/product gate.
 
+## Corrected app follow-up at PR111 5a422dd
+
+After Coffee published the subject-ID pattern and fractional-UTC input fixes,
+the clean detached checkout was advanced to exact
+`5a422ddb2f1d0dd2a5c4e1003a1c833cf430daca`. The only app delta from `0b58f4e`
+is `ImportPanel.tsx`'s two escaped HTML ID patterns and fractional UTC/calendar
+validation. No owner source was edited. A fresh private operator/SQLite root,
+new build and owned API8720/web5180/replay8729 sessions produced
+[API](api-5a422dd.json), [replay projection](replay-5a422dd.json) and
+[actual app](app-runtime-5a422dd.json) receipts.
+
+All 25 API origins / 600 points again exactly match packet and direct evaluator.
+The actual app again checks **one** origin / 24 points / 48 endpoints in live
+and API-stopped replay, with zero numeric/time/geometry differences and matching
+units, mode, quality, cutoff and artifact/snapshot/code. The whole live result
+equals the saved response; replay made zero live report requests. Both rendered
+subject-ID patterns compile with Chromium's `v` flag and the private ID passes
+native validity. Served bytes match the fresh build. All owned sessions/tab were
+stopped and the three ports released.
+
+The initial replay observation failed `exact_tables_open` because the driver
+clicked an already-open retained table closed. Reopening through the native
+summary and rerunning the unchanged oracle passed; no source or acceptance check
+was changed. Three replay GETs include the client and both oracle observations.
+The separate fractional-cutoff form proof remains Coffee/Misty's lane; this
+private frozen origin uses whole seconds. The broader generated Apple, gaps,
+missing-cache and mobile observations/screenshots below remain bound to their
+actual `0b58f4e` run, not relabeled as new captures. This follow-up reran the
+changed source's build/runtime, not the unchanged 19-test suite or full checks.
+
 ## Actual app runtime at PR111 0b58f4e
 
 JadeOx exercised public [PR111](https://github.com/vibemonkies/hachi/pull/111) at
@@ -88,10 +118,9 @@ not a hidden failed request.
 
 The run detected an invalid native HTML subject-ID pattern and reported it to
 [Coffee](https://github.com/vibemonkies/hachi/pull/111#issuecomment-6111003942).
-Coffee subsequently published `8ee2c12`; that correction is not part of this
-tested source. A separately reported fractional-cutoff control defect remains
-in Coffee's lane. Later source needs fresh binding before merge readiness is
-claimed. The historical API receipt's gate notes reflect its API-only scope;
+Coffee subsequently published `8ee2c12` and then the fractional-cutoff correction
+at `5a422dd`; those corrections are outside this older tested source, with fresh
+live/replay binding above. The historical API receipt's gate notes reflect its API-only scope;
 this app receipt supersedes those notes for the observed app paths. Full #22
 acceptance, actual Apple case/consent and selected-artifact parity remain open.
 
@@ -336,10 +365,10 @@ and independent review before merge.
 
 - #17's unpublished-source gate is resolved by public PR111. Actual existing-
   PMData app and offline replay pass at `0b58f4e` as recorded above. Coffee owns
-  subsequent app corrections and source integration; a newer passing build is
-  not this producing head's rendered evidence. The native HTML pattern defect
-  has a subsequent source correction, while fractional-cutoff fidelity has a
-  separately reported correction request. Root owns merge readiness.
+  subsequent app corrections and source integration. The native HTML pattern
+  and fractional-cutoff source corrections are published at `5a422dd`; this lane
+  repeated actual private live/replay on that exact head. The separate fractional
+  recording-cutoff form gate remains in Coffee/Misty's lane. Root owns merge readiness.
 - Apple input is admitted **per artifact**. This rehearsal's frozen PMData
   comparator has no Apple admission and returns `unavailable` /
   `NO_ARTIFACT_FOR_TASK` for that source. PR85/91 support an explicit serving
