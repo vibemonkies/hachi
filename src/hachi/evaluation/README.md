@@ -142,6 +142,26 @@ record exclusions in the derived-input split manifest.
 with raw rows. Saved model source receipts also bind this feature adapter and
 shared causality/serialization helpers; prior artifacts require their prior code.
 
+## Bounded context beyond the lookback
+
+`evaluate_forecast` passes a predictor only the configured metric within the protocol
+lookback. A model variant that needs a longer window or a past-only covariate reads it
+from `hachi.evaluation.context`, keyed by the request's own subject and cutoff:
+
+```python
+from hachi.evaluation.context import ContextPolicy, context_index, hourly_grid
+
+policy = ContextPolicy(hours=168, channels=[protocol.feature_policy, steps_policy])
+index = context_index(bins, policy)  # each channel selected by its own HourlyFeaturePolicy
+window = index.window(request.subject_id, request.cutoff)  # metric -> completed, available bins
+values = hourly_grid(window["heart_rate"], request.cutoff, policy.hours)  # None = missing
+```
+
+A window holds only bins in `[cutoff - hours, cutoff)` that are `available_by` the
+cutoff. Absent channels stay empty, never zero. Origins, eligibility and fit inputs
+are unchanged. Record `document_sha256(policy)` per variant, and check that the last
+lookback hours equal `request.history` (as `tests/evaluation/test_context.py` does).
+
 ## Nested participant folds
 
 `nested_participant_folds` builds deterministic, balanced grouped folds from
