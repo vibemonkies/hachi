@@ -118,7 +118,7 @@ def test_saved_artifact_roundtrip_preserves_inference_and_refuses_bad_state():
     with pytest.raises(ValidationError):
         BaselineArtifact.model_validate({**fitted.model_dump(), "population_mean": None})
     with pytest.raises(ValidationError):
-        BaselineConfig(method="last_valid", metric="steps", aggregation="sum")
+        BaselineConfig(method="last_valid", metric="steps", aggregation="mean")
 
 
 def test_saved_model_cannot_be_replayed_before_its_fit_cutoff():

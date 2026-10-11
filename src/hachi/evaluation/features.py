@@ -42,8 +42,8 @@ class HourlyFeature(Contract):
         row = self.aggregate
         if row.resolution != "hour" or row.interval_start_utc.minute:
             raise ValueError("hourly features require complete UTC hour-aligned bins")
-        if METRICS[row.metric].kind != "level" or row.value is None:
-            raise ValueError("hourly features require an observed level value")
+        if row.value is None:
+            raise ValueError("hourly features require an observed value")
         if self.available_at_utc < row.interval_end_utc:
             raise ValueError("a complete hourly feature cannot be available before its bin ends")
         return self
@@ -96,10 +96,10 @@ class HourlyFeaturePolicy(Contract):
     availability_rule: Identifier
 
     @model_validator(mode="after")
-    def _level(self) -> Self:
+    def _metric(self) -> Self:
         spec = METRICS[self.metric]
-        if spec.kind != "level" or self.aggregation not in spec.aggregations:
-            raise ValueError("hourly feature policy requires a compatible level aggregation")
+        if self.aggregation not in spec.aggregations:
+            raise ValueError("hourly feature policy requires the registered metric aggregation")
         return self
 
 
