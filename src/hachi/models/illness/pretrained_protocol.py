@@ -46,6 +46,13 @@ type Representation = Annotated[
 ]
 
 
+def representation_feature_names(representation: Representation) -> tuple[str, ...]:
+    return (
+        tuple(f"{representation.name}_{i:03d}" for i in range(representation.vector_width))
+        + representation.auxiliary_features
+    )
+
+
 class PretrainedProtocol(Contract):
     protocol_id: Literal["phase1-frozen-hr-representation-development-v1"]
     task_protocol: DocumentPin

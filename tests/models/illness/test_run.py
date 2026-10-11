@@ -196,3 +196,90 @@ def test_partial_external_fold_candidates_do_not_pool_incompatible_features(
             clinical=clinical(plan),
             external_by_inner={0: features},
         )
+
+
+def test_pretrained_support_gate_prevents_any_fit_scores_or_selection(
+    snapshot, tmp_path, monkeypatch
+):
+    from hachi.models.illness.data import FeaturePoint
+    from hachi.models.illness.pretrained_protocol import (
+        load_pretrained_protocol,
+        representation_feature_names,
+    )
+
+    path, subjects = snapshot
+    plan = nested_participant_folds(subjects, PROTOCOL.folds)
+    shared = clinical(plan)
+    frozen = load_pretrained_protocol(Path("configs/experiments/illness/pretrained.json"))
+    # Synthetic policy identity only; the clinical production document remains unchanged.
+    comparison = frozen.model_copy(
+        update={
+            "task_protocol": frozen.task_protocol.model_copy(update={"sha256": PROTOCOL.sha256}),
+            "clinical_protocol": frozen.clinical_protocol.model_copy(
+                update={"sha256": document_sha256(shared)}
+            ),
+        }
+    )
+    clean_run(monkeypatch)
+
+    def forbidden_fit(*args, **kwargs):
+        pytest.fail("unsupported calibration reached classifier fitting")
+
+    monkeypatch.setattr("hachi.models.illness.run.fit", forbidden_fit)
+    external, support = {}, {}
+    for fold in plan.folds:
+        if fold.outer_fold != 0:
+            continue
+        rows, _ = data.at_risk_windows(
+            path, fold.train_subjects + fold.validation_subjects, PROTOCOL
+        )
+        keys = {(r.subject_id, r.cutoff) for r in rows}
+        external[fold.inner_fold] = FeatureSet(
+            feature_names=representation_feature_names(frozen.representations[-1]),
+            provenance_sha256="e" * 64,
+            fit_subjects=(),
+            clock="floating_local_shifted",
+            points=tuple(
+                FeaturePoint(subject_id=s, at=c, available_at=c, values=(1.0,) * 770)
+                for s, c in sorted(keys)
+            ),
+        )
+        support[fold.inner_fold] = frozenset(keys)
+    summary = run(
+        path,
+        tmp_path / "unsupported",
+        PROTOCOL,
+        clinical=shared,
+        external_by_inner=external,
+        feature_family="chronos_hr",
+        comparison=comparison,
+        supported_by_inner=support,
+    )
+    assert all(
+        e["status"] == "insufficient_context_supported_calibration_participants"
+        and e["scored_validation_windows"] == 0
+        for e in summary["fold_evidence"]
+    )
+    assert not list((tmp_path / "unsupported").glob("inner-*/predictions.json"))
+    assert all(
+        s["development_candidate"] is None and s["status"] == "descriptive_only_no_selection"
+        for s in summary["selection"].values()
+    )
+    assert summary["pretrained_protocol_sha256"] == document_sha256(comparison)
+    wrong_schema = {
+        inner: features.model_copy(update={"feature_names": ("wrong_width_and_name",)})
+        for inner, features in external.items()
+    }
+    rejected = tmp_path / "wrong-schema"
+    with pytest.raises(ValueError, match="schema differs from frozen"):
+        run(
+            path,
+            rejected,
+            PROTOCOL,
+            clinical=shared,
+            external_by_inner=wrong_schema,
+            feature_family="chronos_hr",
+            comparison=comparison,
+            supported_by_inner=support,
+        )
+    assert not rejected.exists()
