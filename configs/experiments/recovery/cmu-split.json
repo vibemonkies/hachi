@@ -1,0 +1,20 @@
+{
+  "compatible_snapshots": [
+    {
+      "dataset_id": "cmu-common-cold-project",
+      "dataset_version": "retrieved-2026-10-10",
+      "snapshot_sha256": "7c1429b102ebf5bcb5c0f94db0aba6c1e290d1b0b78aeae68c7105b3cfda38c3"
+    }
+  ],
+  "clock": "relative_to_challenge",
+  "roster": "all_subjects_before_task_eligibility",
+  "folds": {
+    "outer_folds": 4,
+    "inner_folds": 3,
+    "min_train_subjects": 4,
+    "seed": 42
+  },
+  "active_outer_fold": 0,
+  "nested_plan_sha256": "f95b01edbd73c7511e517b03a1bf9e4a887d19f416b2a172b523b4eb2d790016",
+  "split_created_at_utc": "2026-10-11T12:50:59.872347Z"
+}

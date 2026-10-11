@@ -1,0 +1,13 @@
+{
+  "synthetic_only": true,
+  "import_state": "succeeded",
+  "api_git_sha": "4f5da115559ac7091cb19dc5d5652158c683a4f3",
+  "history_entries": 7,
+  "all_seven_entry_kinds_persisted": true,
+  "onset_window_exact": true,
+  "resolution_root_link_exact": true,
+  "pvt_kss_values_exact": true,
+  "explicit_symptom_absence_exact": true,
+  "page_reload_verified": true,
+  "mobile_horizontal_overflow": false
+}

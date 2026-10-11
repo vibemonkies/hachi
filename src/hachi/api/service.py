@@ -7,7 +7,9 @@ import logging
 import os
 import secrets
 import tempfile
-from collections.abc import AsyncIterator
+import threading
+from collections.abc import AsyncIterator, Iterator
+from contextlib import contextmanager
 from datetime import timedelta
 from pathlib import Path
 from typing import Literal
@@ -82,6 +84,13 @@ class CoverageParams(Contract):
     as_of: UtcDatetime | None = None
 
 
+class HistoryParams(Contract):
+    """Query of GET /v1/subjects/{id}/observations."""
+
+    as_of: UtcDatetime | None = None
+    versions: Literal["current", "all"] = "current"
+
+
 def _dataset_id(data_mode: DataMode) -> str:
     return "apple-health-export" if data_mode == "real" else "synthetic-apple-health-export"
 
@@ -94,6 +103,9 @@ class Service:
         self.workspace = settings.workspace
         self.context = Context(catalog, metadata, settings.workspace, settings.git_sha)
         self.runner = JobRunner({"import": self.run_import, "report": self.run_report})
+        # Deletion is serialised against new records for the same subject.
+        self._subjects = threading.Lock()
+        self._deleting: set[str] = set()
 
     def start(self) -> None:
         private_directory(self.workspace.state)
@@ -111,6 +123,16 @@ class Service:
         return self.catalog.dataset_for(subject_id) is not None or self.metadata.subject_known(
             subject_id
         )
+
+    @contextmanager
+    def _writing(self, subject_id: str) -> Iterator[None]:
+        """Hold off deletion while a new record for this subject is written."""
+        with self._subjects:
+            if subject_id in self._deleting:
+                raise ApiProblem(
+                    "CONFLICT", "This subject is being deleted; try again after it finishes."
+                )
+            yield
 
     def _require_known(self, subject_id: str) -> None:
         if not self.known(subject_id):
@@ -148,32 +170,47 @@ class Service:
             key = document_sha256(
                 {"upload_sha256": upload_sha256, "params": params, "importer": IMPORTER_VERSION}
             )
-            for record in self.metadata.imports_with_key(key):
-                if _reusable_import(record):
-                    return record.status, False
             import_id = "imp-" + secrets.token_hex(12)
-            directory = private_directory(self.workspace.import_directory(import_id))
-            os.replace(temporary, directory / ("upload" + UPLOAD_SUFFIX[params.source_format]))
-            now = now_utc()
-            status = ImportStatus(
-                schema_version=SCHEMA_VERSION,
-                import_id=import_id,
-                subject_id=params.subject_id,
-                data_mode=params.data_mode,
-                source_format=params.source_format,
-                declared_tz_name=params.tz_name,
-                state="pending",
-                created_at_utc=now,
-                updated_at_utc=now,
-                counts=None,
-                record_issues=[],
-                failure=None,
-            )
-            self.metadata.insert_import(key, upload_sha256, status)
+            # Reuse and creation share the deletion guard: a subject being deleted can
+            # neither gain an import nor hand back one that is about to disappear.
+            with self._writing(params.subject_id):
+                for record in self.metadata.imports_with_key(key):
+                    if _reusable_import(record):
+                        return record.status, False
+                directory = private_directory(self.workspace.import_directory(import_id))
+                try:
+                    os.replace(
+                        temporary, directory / ("upload" + UPLOAD_SUFFIX[params.source_format])
+                    )
+                    status = self._insert_import(key, upload_sha256, import_id, params)
+                except BaseException:
+                    remove_tree(directory)  # no record names it, so it must not outlive us
+                    raise
         finally:
             temporary.unlink(missing_ok=True)
         self.runner.submit("import", import_id)
         return status, True
+
+    def _insert_import(
+        self, key: str, upload_sha256: str, import_id: str, params: UploadParams
+    ) -> ImportStatus:
+        now = now_utc()
+        status = ImportStatus(
+            schema_version=SCHEMA_VERSION,
+            import_id=import_id,
+            subject_id=params.subject_id,
+            data_mode=params.data_mode,
+            source_format=params.source_format,
+            declared_tz_name=params.tz_name,
+            state="pending",
+            created_at_utc=now,
+            updated_at_utc=now,
+            counts=None,
+            record_issues=[],
+            failure=None,
+        )
+        self.metadata.insert_import(key, upload_sha256, status)
+        return status
 
     def get_import(self, import_id: str) -> ImportStatus:
         record = self.metadata.get_import(import_id)
@@ -327,12 +364,22 @@ class Service:
                 issues=[FieldIssue(path="body.as_of", message="must not be in the future")],
             )
         self._require_known(body.subject_id)
+        # Snapshot, key, reuse and publication share one guard with deletion, so a job is
+        # never keyed on self-reports a concurrent deletion has already erased.
+        with self._writing(body.subject_id):
+            job, created = self._publish_report(request)
+        if created:
+            self.runner.submit("report", job.report_id)
+        return job, created
+
+    def _publish_report(self, request: ReportRequest) -> tuple[ReportJob, bool]:
+        body = request.root
         subject = self.catalog.subject(body.subject_id, self.metadata, self.workspace)
         artifact = reports.select_artifact(request, self.catalog, subject)
         digest = None
         if body.task in ("illness_onset", "recovery"):
-            entries = reports.self_report_entries(self.metadata, body.subject_id)
-            digest = reports.self_report_digest(entries, body.as_of)
+            versions = reports.self_report_versions(self.metadata, body.subject_id)
+            digest = reports.self_report_digest(versions, body.as_of)
         key = reports.report_key(request, subject, artifact, self.settings.git_sha, digest)
         for job in self.metadata.reports_with_key(key):
             if _reusable_report(job):
@@ -348,7 +395,6 @@ class Service:
             result=None,
         )
         self.metadata.insert_report(key, job)
-        self.runner.submit("report", job.report_id)
         return job, True
 
     def get_report(self, report_id: str) -> ReportJob:
@@ -387,48 +433,155 @@ class Service:
     def add_self_reports(
         self, subject_id: str, request: SelfReportRequest
     ) -> tuple[SelfReportRequest, bool]:
-        """Append entries; an identical resubmission is a no-op, a changed one a conflict."""
+        """Append entries and corrections; nothing recorded is ever edited in place.
+
+        An identical resubmission is a no-op and a changed one a conflict. A correction names
+        the current version it `supersedes`, keeps its kind, and is entered after it; the
+        chain keeps its original entry's id, which is the episode id for onsets. Reading,
+        validating and writing share one guard with deletion: no correction can resurrect a
+        chain, and no reference can dangle, because of a concurrent delete.
+        """
+        with self._writing(subject_id):
+            return self._append_self_reports(subject_id, request)
+
+    def _append_self_reports(
+        self, subject_id: str, request: SelfReportRequest
+    ) -> tuple[SelfReportRequest, bool]:
         stored = {row.entry_id: row for row in self.metadata.self_reports(subject_id)}
-        onsets = {r.entry_id for r in stored.values() if r.kind == "symptom_onset"}
-        onsets |= {e.entry_id for e in request.entries if isinstance(e, SymptomOnsetEntry)}
-        issues, rows = [], []
+        deleted = self.metadata.self_report_tombstones(subject_id)
+        superseded = {r.supersedes for r in stored.values() if r.supersedes}
+        known = {
+            entry_id: (reports.ENTRY.validate_json(row.entry_json), row.root)
+            for entry_id, row in stored.items()
+        }
+        onset_roots = {root for e, root in known.values() if isinstance(e, SymptomOnsetEntry)}
+        conflicts, rows = [], []
         for index, entry in enumerate(request.entries):
-            document = entry.model_dump_json()
-            previous = stored.get(entry.entry_id)
-            if previous is not None and previous.entry_json != document:
-                issues.append(
-                    FieldIssue(
-                        path=f"body.entries.{index}.entry_id",
-                        message="an entry with this id was already recorded differently",
-                    )
-                )
-            if isinstance(entry, SymptomResolutionEntry) and entry.onset_entry_id not in onsets:
-                raise ApiProblem(
+            path = f"body.entries.{index}"
+
+            def invalid(field: str, message: str, path: str = path) -> ApiProblem:
+                return ApiProblem(
                     "VALIDATION_FAILED",
-                    "A resolution must refer to a recorded symptom onset.",
-                    issues=[
-                        FieldIssue(
-                            path=f"body.entries.{index}.onset_entry_id",
-                            message="no symptom_onset entry with this id",
-                        )
-                    ],
+                    "The entry does not fit the recorded history.",
+                    issues=[FieldIssue(path=f"{path}.{field}", message=message)],
                 )
-            if previous is None:
-                rows.append(SelfReportRow(entry.entry_id, entry.kind, document))
-        if issues:
+
+            if entry.entry_id in deleted:
+                conflicts.append(
+                    FieldIssue(path=f"{path}.entry_id", message="this entry id was deleted")
+                )
+                continue
+            if entry.entry_id in known:
+                if known[entry.entry_id][0] != entry:
+                    conflicts.append(
+                        FieldIssue(
+                            path=f"{path}.entry_id",
+                            message="an entry with this id was already recorded differently",
+                        )
+                    )
+                continue
+            root = entry.entry_id
+            if entry.supersedes is not None:
+                target = known.get(entry.supersedes)
+                if target is None:
+                    raise invalid("supersedes", "no recorded entry with this id")
+                if entry.supersedes in superseded:
+                    conflicts.append(
+                        FieldIssue(
+                            path=f"{path}.supersedes",
+                            message="that version was already corrected; correct the current one",
+                        )
+                    )
+                    continue
+                if target[0].kind != entry.kind:
+                    raise invalid("kind", "a correction keeps the kind it corrects")
+                if entry.entered_at_utc < target[0].entered_at_utc:
+                    raise invalid(
+                        "entered_at_utc", "a correction is entered after the version it corrects"
+                    )
+                root = target[1]
+                superseded.add(entry.supersedes)
+            if isinstance(entry, SymptomOnsetEntry):
+                onset_roots.add(root)
+            if (
+                isinstance(entry, SymptomResolutionEntry)
+                and entry.onset_entry_id not in onset_roots
+            ):
+                raise invalid(
+                    "onset_entry_id", "name the original entry_id of a recorded symptom onset"
+                )
+            known[entry.entry_id] = (entry, root)
+            rows.append(
+                SelfReportRow(
+                    entry.entry_id, entry.kind, entry.model_dump_json(), root, entry.supersedes
+                )
+            )
+        if conflicts:
             raise ApiProblem(
-                "CONFLICT", "Recorded entries are immutable; use a new entry_id.", issues=issues
+                "CONFLICT",
+                "Recorded entries are immutable; correct one by appending a new entry_id that "
+                "supersedes its current version.",
+                issues=conflicts,
             )
         if rows:
             self.metadata.insert_self_reports(subject_id, rows)
         return request, bool(rows)
 
-    def self_report_history(self, subject_id: str) -> SelfReportHistory:
+    def self_report_history(self, subject_id: str, params: HistoryParams) -> SelfReportHistory:
+        """Current versions (or every version) of the subject's entries, as known by as_of."""
         self._require_known(subject_id)
+        versions = reports.self_report_versions(self.metadata, subject_id)
+        if params.versions == "all":
+            chosen = [
+                v
+                for v in versions
+                if params.as_of is None or v.entry.entered_at_utc <= params.as_of
+            ]
+        else:
+            chosen = reports.current_versions(versions, params.as_of)
         return SelfReportHistory(
             schema_version=SCHEMA_VERSION,
             subject_id=subject_id,
-            entries=reports.self_report_entries(self.metadata, subject_id),
+            entries=[v.entry for v in chosen],
+        )
+
+    def delete_self_report(self, subject_id: str, entry_id: str, confirm: str | None) -> None:
+        """Erase every version of one entry; only a content-free tombstone remains.
+
+        Illness and recovery reports, the only ones that read self-reports, are invalidated.
+        An onset that a recorded resolution refers to is kept until the resolution goes.
+        """
+        if confirm != entry_id:
+            raise ApiProblem(
+                "VALIDATION_FAILED",
+                "Confirm deletion by repeating the entry id.",
+                issues=[FieldIssue(path="confirm", message="must equal the entry id")],
+            )
+        self._require_known(subject_id)
+        with self._writing(subject_id):  # read, guard and erase as one step
+            self._delete_chain(subject_id, entry_id)
+
+    def _delete_chain(self, subject_id: str, entry_id: str) -> None:
+        rows = self.metadata.self_reports(subject_id)
+        row = next((r for r in rows if r.entry_id == entry_id), None)
+        if row is None:
+            raise ApiProblem("NOT_FOUND", "No such self-report entry.")
+        if row.kind == "symptom_onset":
+            for other in rows:
+                entry = reports.ENTRY.validate_json(other.entry_json)
+                if isinstance(entry, SymptomResolutionEntry) and entry.onset_entry_id == row.root:
+                    raise ApiProblem(
+                        "CONFLICT",
+                        "A recorded resolution refers to this onset; delete the resolution first.",
+                    )
+        jobs = self.metadata.subject_reports(subject_id)
+        if any(j.state != "completed" for j in jobs):
+            raise ApiProblem("CONFLICT", "Reports for this subject are still running; retry after.")
+        dependent = [
+            j.report_id for j in jobs if j.request.root.task in ("illness_onset", "recovery")
+        ]
+        self.metadata.delete_self_report_chain(
+            subject_id, row.root, now_utc().isoformat(), dependent
         )
 
     # Scenarios --------------------------------------------------------------------------
@@ -455,16 +608,35 @@ class Service:
                 issues=[FieldIssue(path="confirm", message="must equal the subject id")],
             )
         self._require_known(subject_id)
-        busy = any(
-            r.status.state in ("pending", "running")
-            for r in self.metadata.subject_imports(subject_id)
-        ) or any(j.state != "completed" for j in self.metadata.subject_reports(subject_id))
-        if busy:
-            raise ApiProblem(
-                "CONFLICT", "Jobs for this subject are still running; delete after they finish."
+        with self._subjects:
+            if subject_id in self._deleting:
+                raise ApiProblem("CONFLICT", "This subject is already being deleted.")
+            imports = self.metadata.subject_imports(subject_id)
+            busy = any(r.status.state in ("pending", "running") for r in imports) or any(
+                j.state != "completed" for j in self.metadata.subject_reports(subject_id)
             )
-        for import_id in self.metadata.delete_subject(subject_id):
-            remove_tree(self.workspace.import_directory(import_id))
+            if busy:
+                raise ApiProblem(
+                    "CONFLICT", "Jobs for this subject are still running; delete after they finish."
+                )
+            self._deleting.add(subject_id)
+        try:
+            # Private files go first and the records last: if a removal fails, the records
+            # still name every import, so the same deletion can simply be retried.
+            try:
+                for record in imports:
+                    remove_tree(self.workspace.import_directory(record.import_id))
+            except OSError as exc:
+                log.error("delete: private files not removed (%s)", type(exc).__name__)
+                raise ApiProblem(
+                    "INTERNAL_ERROR",
+                    "Some private files could not be removed, so no records were deleted. "
+                    "Retry the deletion.",
+                ) from exc
+            self.metadata.delete_subject(subject_id)
+        finally:
+            with self._subjects:
+                self._deleting.discard(subject_id)
 
     # Health -----------------------------------------------------------------------------
 

@@ -102,10 +102,21 @@ def _local_to_utc(local: datetime, zone: ZoneInfo, label: str) -> datetime:
     return instant
 
 
+# Naive wall-clock times are not RFC 3339 `date-time` (which requires an offset). They carry
+# their own format name so validators keep strict `date-time` for every UTC timestamp.
+type LocalDateTime = Annotated[
+    NaiveDatetime,
+    Field(
+        description="Local wall-clock time, without an offset.",
+        json_schema_extra={"format": "local-date-time"},
+    ),
+]
+
+
 class SleepSchedule(Contract):
     schedule_id: Identifier
-    bedtime_local: NaiveDatetime = Field(description="Local wall-clock time, without an offset.")
-    wake_time_local: NaiveDatetime = Field(description="Local wall-clock time, without an offset.")
+    bedtime_local: LocalDateTime
+    wake_time_local: LocalDateTime
 
 
 class ScenarioAssumptions(Contract):
@@ -164,6 +175,18 @@ type Severity = Annotated[Literal[1, 2, 3], Field(description="1 mild, 2 moderat
 class _Entry(Contract):
     entry_id: Identifier
     entered_at_utc: UtcDatetime = Field(description="When the person recorded this entry.")
+    supersedes: Identifier | None = Field(
+        default=None,
+        description="entry_id of the version this entry corrects; null for an original entry. "
+        "Corrections are appended, never edited in place, so an earlier as_of still sees what "
+        "was known then. An episode is identified by its original onset's entry_id.",
+    )
+
+    @model_validator(mode="after")
+    def _check_supersedes(self) -> Self:
+        if self.supersedes == self.entry_id:
+            raise ValueError("an entry cannot supersede itself")
+        return self
 
     def _require_entered_after(self, event_start: datetime) -> None:
         if self.entered_at_utc < event_start:

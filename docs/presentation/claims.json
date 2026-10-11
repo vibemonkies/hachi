@@ -1,0 +1,941 @@
+{
+  "format": "hachi-public-claims-1",
+  "completion": "preparation_only",
+  "final_test_authorized": false,
+  "context_commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+  "sources": {
+    "chronos": {
+      "path": "reports/models/chronos-2-pmdata-hourly-validation.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "5e2dceb77966e8d7274a9f225adefad4cc62589d0ca77f355a30a9f1f3dc4efa",
+      "scope": "Real PMData inner-validation only; no final selection, Apple transfer or clinical inference."
+    },
+    "chronos-report": {
+      "path": "reports/models/chronos-2-pmdata-hourly-validation.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "f5e57f28f108e83a21449c905ce94490c601e9d94d5e28cc762552ae778bd1d1",
+      "scope": "Reviewed narrative, model revision/license and original inference scope."
+    },
+    "encoders": {
+      "path": "reports/models/encoders-pmdata-hourly-validation.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "ff44a2b1f6c75a195313aea6299513f647e9b7170c45091561919cb751db641c",
+      "scope": "Frozen representations plus trained ridge heads; development validation only."
+    },
+    "encoder-report": {
+      "path": "reports/models/encoders-pmdata-hourly-validation.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "8a8c309dd739e09576f1392887b87fab298b71f92f9c29b8bc124dc78dcc2900",
+      "scope": "Original trained-head methods, mask/device/overlap and conflicting WBM license limits."
+    },
+    "baseline": {
+      "path": "reports/evaluation/pmdata-hourly-validation/baseline.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "57bbd1f9f5b024deac2b8bf34d1e2cf9e191befd03e22037e5b3d7bd3160365b",
+      "scope": "Real baseline validation, coverage and original source/config/artifact receipts."
+    },
+    "baseline-report": {
+      "path": "reports/evaluation/pmdata-hourly-validation/README.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "824b653797750fd9808a1d13677a916daead7ea2f323d0cd08e1dc385cbd9a28",
+      "scope": "Denominators, paired support, no final winner; PMData illness status unknown."
+    },
+    "baseline-paired": {
+      "path": "reports/evaluation/pmdata-hourly-validation/paired.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "05e1dbe9d62f74b01814bda7f2118b3b5e108d2d3e3b2f9fff3fe371c51d96bb",
+      "scope": "Paired common-target comparisons; differing coverage cannot be ignored."
+    },
+    "baseline-index": {
+      "path": "reports/evaluation/pmdata-hourly-validation/packet-index.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "65b9de2982d2c0032d95ad034aecb989d6a1c58628fe0f1a7ce993032fabef1f",
+      "scope": "Public private-packet digests, no participant membership; outer test sealed."
+    },
+    "anomaly": {
+      "path": "reports/evaluation/stanford-anomaly-validation/summary.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "2eb836d8fec314c53f82f45ef11d410ab1469ff8980c598f656429a9b7b08604",
+      "scope": "Observed symptom-free control burden with scored and all-observed denominators; floating clock, no illness probability."
+    },
+    "anomaly-acceptance": {
+      "path": "reports/evaluation/stanford-anomaly-validation/acceptance.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "df0a1e02c562d6461400b9900eee953706bf7a066130ef57dd7d3efe75990295",
+      "scope": "Source-bound aggregate replay/independent raw reconciliation acceptance."
+    },
+    "illness": {
+      "path": "reports/models/illness/phase1.json",
+      "commit": "65091ea619d367cef74a77504b744fca9d7875ef",
+      "sha256": "6e3ab0b2c25629845be5890e947eaab4f7f8f6fb8eed46061fbca50c96fe5519",
+      "scope": "Selected retrospective cohort development, survey-observation selection; no validated product probabilities."
+    },
+    "illness-report": {
+      "path": "reports/models/illness/phase1.md",
+      "commit": "65091ea619d367cef74a77504b744fca9d7875ef",
+      "sha256": "fd3aef86555534e6b55f9c279bd4ee35d6d146ec476163cb705ab0549de959e3",
+      "scope": "Research-only ablation and remaining calibration/negative-cohort/feature/final-selection gates."
+    },
+    "illness-replay": {
+      "path": "reports/models/illness/base-replay.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "3ce8ed2b5c80a7375519a4242d81ab8d466d707471d9f6c682f81b9600be1e90",
+      "scope": "Reload/decision parity evidence only; no clinical accuracy implication."
+    },
+    "api": {
+      "path": "reports/verification/app-rehearsal/api-e76626b.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "f460e734c5047950aca26c47f0de7fec9402f482bb8785c8f01c0b9669c27d6c",
+      "scope": "Real PMData inner-validation HTTP/direct/packet comparison; separate synthetic lifecycle."
+    },
+    "replay": {
+      "path": "reports/verification/app-rehearsal/replay-e76626b.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "293430ad23dc039158d55ada4b40501c2f32bf77899d5df4e866b016f77b5932",
+      "scope": "Saved real result with original immutable identities; no live inference."
+    },
+    "browser": {
+      "path": "reports/verification/app-rehearsal/replay-browser-e76626b.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "23d4b8af39380a64e00602f7e1ecbad7d685657d568f357752905ebe56e2d703",
+      "scope": "Original separate replay consumer numeric/time/geometry evidence; full app integration false."
+    },
+    "rehearsal-report": {
+      "path": "reports/verification/app-rehearsal/README.md",
+      "commit": "155b1aae6e9960cb2e017865f1f3195360e29af7",
+      "sha256": "12ebd8fcb51460030d792a826f82070f741c9ed836720259ac0df5b4daeea5db",
+      "scope": "Current versus historical replay receipts; missing #17/#20/#21/full #22 gates."
+    },
+    "runbook": {
+      "path": "scripts/rehearsal/README.md",
+      "commit": "155b1aae6e9960cb2e017865f1f3195360e29af7",
+      "sha256": "65ff8c00936d9436a0bcb7d4d30151e249bcca170b7107de3733024fbc8b4f10",
+      "scope": "Source runbook; commands are future rehearsal instructions, not execution proof."
+    },
+    "privacy-report": {
+      "path": "reports/verification/privacy/README.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "6f18b6741cb16383d8297442f2ee26ce9d9e0a63f6070f8f67649748fbb39ffe",
+      "scope": "Generated transport/deletion and separate SSH removal proof; no real personal consent, physical-media erasure or GPU inference proof."
+    },
+    "privacy": {
+      "path": "reports/verification/privacy/remote-cleanup-receipt.json",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "12f1047cbacc9e631f85521b41c15bfa838441f11bd3224bff022bd61ea6a716",
+      "scope": "Generated independent private storage/remote cleanup checks."
+    },
+    "apple": {
+      "path": "src/hachi/data/apple_health/README.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "37255e97552fc9bb54eda827133a5dc630908fb1f2304ae37a52b9466d2bd595",
+      "scope": "Generated native/HTTP transport performance on exact CPU receipt; unchanged gates, DEVICE_SHIFT, unvalidated real Apple transfer."
+    },
+    "final": {
+      "path": "reports/evaluation/final/README.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "12ee07a88d6cde35a6d93a7ebff8056db022e7d21e6dc405e436aa7695e7b784",
+      "scope": "Development tooling only; no selected model, test authority or accepted superseded recovery packet."
+    },
+    "product": {
+      "path": "docs/PRODUCT.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "1fb39e9ab1dcd467e1382b2d6c8882e4e4bdcd2a4ef12228cf2c6a0b33e3c963",
+      "scope": "All required product capabilities and research/full scope completion gates."
+    },
+    "roadmap": {
+      "path": "docs/ROADMAP.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "8fbeb404d4dccd35cf98a0d1785eebb72374453f2032fc7c8a210f65e4d46710",
+      "scope": "Required M0\u2013M4 gates; M5 optional extensions cannot replace required scope."
+    },
+    "evaluation": {
+      "path": "docs/EVALUATION.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "37091c32e591a0b9d8d40b1c7b078fe32ceaec2077b910b6f7b9a126777ce99e",
+      "scope": "Participant/temporal protocol, separate clinical labels, healthy burden and one-person retrospective limitation."
+    },
+    "contracts": {
+      "path": "docs/CONTRACTS.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "ba50d209c7e4943ab8bfdcb86e57fb40f788f636552093726707a19fb975cf5e",
+      "scope": "Authoritative contract semantics, modes/provenance and unavailable/simulation separation."
+    },
+    "research": {
+      "path": "docs/RESEARCH.md",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "b7737fddf41b730e5e5e909503ef1324fc8cce1c82d2f202a84c584f6dcd75cc",
+      "scope": "Source access and model/source license/citation summaries."
+    },
+    "pmdata-license": {
+      "path": "configs/datasets/pmdata.toml",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "e55f232d0b9dc52b82124ff63b963ca276540eaec11efbdf7daad825bd605ef8",
+      "scope": "Binding stricter noncommercial source license; source citation."
+    },
+    "stanford-license": {
+      "path": "configs/datasets/stanford-covid19-wearables.toml",
+      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
+      "sha256": "a6a289585d8c07dbef195771074dbe89b8ae2d240aa34d09a8457280d00f21a6",
+      "scope": "Public research access, no explicit data license; source citation."
+    }
+  },
+  "claims": [
+    {
+      "id": "forecast-cohort",
+      "text": "Development cohort: {people} unique validation participants; {origins} planned origins; {targets} scheduled target hours; {history} insufficient-history hours and {missing} missing labels; {scored} eligible labeled hours scored by Chronos.",
+      "values": {
+        "people": {
+          "source": "chronos",
+          "pointer": "/validation_participants",
+          "expected": 12
+        },
+        "origins": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/counts/planned_origins",
+          "expected": 84
+        },
+        "targets": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/counts/expected_points",
+          "expected": 2016
+        },
+        "history": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/counts/insufficient_history_points",
+          "expected": 168
+        },
+        "missing": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/counts/missing_labels",
+          "expected": 249
+        },
+        "scored": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/counts/scored_points",
+          "expected": 1599
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "sealed-test",
+      "text": "The PMData outer test reserves {people} participants (source sealed flag: `{sealed}`).",
+      "values": {
+        "people": {
+          "source": "chronos",
+          "pointer": "/outer_test_participants",
+          "expected": 4
+        },
+        "sealed": {
+          "source": "chronos",
+          "pointer": "/outer_test_sealed",
+          "expected": true
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "last-valid",
+      "text": "Last-valid baseline: MAE {mae:.2f} bpm, participant confidence interval [{lo:.2f}, {hi:.2f}]; {scored} scored hours and {abstain} labeled abstentions.",
+      "values": {
+        "mae": {
+          "source": "chronos",
+          "pointer": "/models/hourly-last-valid-v1/metrics/mae/value",
+          "expected": 12.025532450745864
+        },
+        "lo": {
+          "source": "chronos",
+          "pointer": "/models/hourly-last-valid-v1/metrics/mae/confidence_interval/0",
+          "expected": 10.942346892345657
+        },
+        "hi": {
+          "source": "chronos",
+          "pointer": "/models/hourly-last-valid-v1/metrics/mae/confidence_interval/1",
+          "expected": 13.011816214955356
+        },
+        "scored": {
+          "source": "chronos",
+          "pointer": "/models/hourly-last-valid-v1/counts/scored_points",
+          "expected": 1599
+        },
+        "abstain": {
+          "source": "chronos",
+          "pointer": "/models/hourly-last-valid-v1/counts/abstained_points",
+          "expected": 0
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "seasonal",
+      "text": "Seasonal baseline: MAE {mae:.2f} bpm, participant confidence interval [{lo:.2f}, {hi:.2f}]; {scored} scored hours and {abstain} labeled abstentions.",
+      "values": {
+        "mae": {
+          "source": "chronos",
+          "pointer": "/models/utc-seasonal-naive-v1/metrics/mae/value",
+          "expected": 11.15451767800426
+        },
+        "lo": {
+          "source": "chronos",
+          "pointer": "/models/utc-seasonal-naive-v1/metrics/mae/confidence_interval/0",
+          "expected": 9.422525238518059
+        },
+        "hi": {
+          "source": "chronos",
+          "pointer": "/models/utc-seasonal-naive-v1/metrics/mae/confidence_interval/1",
+          "expected": 12.942661497061493
+        },
+        "scored": {
+          "source": "chronos",
+          "pointer": "/models/utc-seasonal-naive-v1/counts/scored_points",
+          "expected": 1464
+        },
+        "abstain": {
+          "source": "chronos",
+          "pointer": "/models/utc-seasonal-naive-v1/counts/abstained_points",
+          "expected": 135
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "tree",
+      "text": "Frozen causal tree: MAE {mae:.2f} bpm, participant confidence interval [{lo:.2f}, {hi:.2f}]; {scored} scored hours and {abstain} labeled abstentions.",
+      "values": {
+        "mae": {
+          "source": "chronos",
+          "pointer": "/models/causal-hourly-tree-v1/metrics/mae/value",
+          "expected": 10.323923219908261
+        },
+        "lo": {
+          "source": "chronos",
+          "pointer": "/models/causal-hourly-tree-v1/metrics/mae/confidence_interval/0",
+          "expected": 9.380857323875746
+        },
+        "hi": {
+          "source": "chronos",
+          "pointer": "/models/causal-hourly-tree-v1/metrics/mae/confidence_interval/1",
+          "expected": 11.302113281852039
+        },
+        "scored": {
+          "source": "chronos",
+          "pointer": "/models/causal-hourly-tree-v1/counts/scored_points",
+          "expected": 1481
+        },
+        "abstain": {
+          "source": "chronos",
+          "pointer": "/models/causal-hourly-tree-v1/counts/abstained_points",
+          "expected": 118
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "zero-shot",
+      "text": "Chronos zero-shot: MAE {mae:.2f} bpm, participant confidence interval [{lo:.2f}, {hi:.2f}]; {scored} scored hours and {abstain} labeled abstentions.",
+      "values": {
+        "mae": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/metrics/mae/value",
+          "expected": 8.939667320175072
+        },
+        "lo": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/metrics/mae/confidence_interval/0",
+          "expected": 7.691080268915542
+        },
+        "hi": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/metrics/mae/confidence_interval/1",
+          "expected": 10.17092844973423
+        },
+        "scored": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/counts/scored_points",
+          "expected": 1599
+        },
+        "abstain": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/counts/abstained_points",
+          "expected": 0
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "paired-last",
+      "text": "Chronos minus last-valid: paired MAE difference {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}], on {n} common target hours. Negative favors Chronos.",
+      "values": {
+        "delta": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/hourly-last-valid-v1/mae/value",
+          "expected": -3.0858651305707903
+        },
+        "lo": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/hourly-last-valid-v1/mae/confidence_interval/0",
+          "expected": -4.276678980111988
+        },
+        "hi": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/hourly-last-valid-v1/mae/confidence_interval/1",
+          "expected": -2.061093307560289
+        },
+        "n": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/hourly-last-valid-v1/counts/paired_points",
+          "expected": 1599
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "paired-tree",
+      "text": "Chronos minus tree: paired MAE difference {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}], on {n} common target hours. Negative favors Chronos.",
+      "values": {
+        "delta": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/causal-hourly-tree-v1/mae/value",
+          "expected": -1.2935209939705026
+        },
+        "lo": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/causal-hourly-tree-v1/mae/confidence_interval/0",
+          "expected": -2.6408557304296782
+        },
+        "hi": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/causal-hourly-tree-v1/mae/confidence_interval/1",
+          "expected": -0.05679844575121507
+        },
+        "n": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/causal-hourly-tree-v1/counts/paired_points",
+          "expected": 1481
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "intervals",
+      "text": "The prespecified central interval observed coverage was {coverage:.3f} [{lo:.3f}, {hi:.3f}], with width {width:.2f} bpm.",
+      "values": {
+        "coverage": {
+          "source": "chronos",
+          "pointer": "/chronos_calibration/0.80/value",
+          "expected": 0.8123628375803609
+        },
+        "lo": {
+          "source": "chronos",
+          "pointer": "/chronos_calibration/0.80/confidence_interval/0",
+          "expected": 0.7790278228228024
+        },
+        "hi": {
+          "source": "chronos",
+          "pointer": "/chronos_calibration/0.80/confidence_interval/1",
+          "expected": 0.8455017667172274
+        },
+        "width": {
+          "source": "chronos",
+          "pointer": "/models/chronos-2-zero-shot/metrics/mean_interval_width/value",
+          "expected": 29.422462110200055
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion. Nominal interval is fixed in the source configuration; this is measured validation coverage, not a served calibrated interval."
+    },
+    {
+      "id": "interval-level",
+      "text": "Nominal central quantiles were {lower:.1f} and {upper:.1f}.",
+      "values": {
+        "lower": {
+          "source": "chronos",
+          "pointer": "/model/interval/0",
+          "expected": 0.1
+        },
+        "upper": {
+          "source": "chronos",
+          "pointer": "/model/interval/1",
+          "expected": 0.9
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "trained-head",
+      "text": "The actually trained handcrafted ridge head achieved MAE {value:.2f} bpm [{lo:.2f}, {hi:.2f}].",
+      "values": {
+        "value": {
+          "source": "encoders",
+          "pointer": "/models/ridge-handcrafted/metrics_full_support/mae/value",
+          "expected": 9.781968733559461
+        },
+        "lo": {
+          "source": "encoders",
+          "pointer": "/models/ridge-handcrafted/metrics_full_support/mae/confidence_interval/0",
+          "expected": 8.825776476515424
+        },
+        "hi": {
+          "source": "encoders",
+          "pointer": "/models/ridge-handcrafted/metrics_full_support/mae/confidence_interval/1",
+          "expected": 10.738599713064415
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion."
+    },
+    {
+      "id": "wbm-no-gain",
+      "text": "Adding frozen WBM to that same head changed paired MAE by {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {n} common hours; the interval includes zero.",
+      "values": {
+        "delta": {
+          "source": "encoders",
+          "pointer": "/paired_vs_baseline/ridge-handcrafted-wbm/difference/mae/value",
+          "expected": 0.22239446044132816
+        },
+        "lo": {
+          "source": "encoders",
+          "pointer": "/paired_vs_baseline/ridge-handcrafted-wbm/difference/mae/confidence_interval/0",
+          "expected": -0.4563527505702949
+        },
+        "hi": {
+          "source": "encoders",
+          "pointer": "/paired_vs_baseline/ridge-handcrafted-wbm/difference/mae/confidence_interval/1",
+          "expected": 0.9597640846711268
+        },
+        "n": {
+          "source": "encoders",
+          "pointer": "/paired_vs_baseline/ridge-handcrafted-wbm/counts/paired_points",
+          "expected": 1481
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion. No demonstrated added representation benefit in this task; not proof the representation is useless."
+    },
+    {
+      "id": "moment-no-gain",
+      "text": "Adding frozen MOMENT to that same head changed paired MAE by {delta:+.2f} bpm [{lo:+.2f}, {hi:+.2f}] on {n} common hours; the interval includes zero.",
+      "values": {
+        "delta": {
+          "source": "encoders",
+          "pointer": "/paired_vs_baseline/ridge-handcrafted-moment/difference/mae/value",
+          "expected": 0.5297684183514939
+        },
+        "lo": {
+          "source": "encoders",
+          "pointer": "/paired_vs_baseline/ridge-handcrafted-moment/difference/mae/confidence_interval/0",
+          "expected": -0.07876282976520244
+        },
+        "hi": {
+          "source": "encoders",
+          "pointer": "/paired_vs_baseline/ridge-handcrafted-moment/difference/mae/confidence_interval/1",
+          "expected": 1.0833571722285238
+        },
+        "n": {
+          "source": "encoders",
+          "pointer": "/paired_vs_baseline/ridge-handcrafted-moment/counts/paired_points",
+          "expected": 1481
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion. No demonstrated added representation benefit in this task; not proof the representation is useless."
+    },
+    {
+      "id": "failure-tail",
+      "text": "Chronos was worse than the tree for {worse} of {n} validation participants; the largest participant MAE difference was {delta:+.2f} bpm.",
+      "values": {
+        "worse": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/causal-hourly-tree-v1/mae_by_participant/candidate_worse",
+          "expected": 3
+        },
+        "n": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/causal-hourly-tree-v1/mae_by_participant/participants",
+          "expected": 12
+        },
+        "delta": {
+          "source": "chronos",
+          "pointer": "/paired_vs_comparators/causal-hourly-tree-v1/mae_by_participant/max",
+          "expected": 2.887206526635003
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion. Aggregate failure example only; no participant identity or curve."
+    },
+    {
+      "id": "quantile-failure",
+      "text": "The adapter clipped {clipped} upper quantiles to the registered physiological bound.",
+      "values": {
+        "clipped": {
+          "source": "chronos",
+          "pointer": "/adapter_counts/clipped_quantiles",
+          "expected": 19
+        }
+      },
+      "limit": "PMData development-validation only; equal participant weighting; participant bootstrap intervals. Outer test sealed; no product-model promotion. Preserve clipping as an observed model failure/constraint, not evidence of physiological validity."
+    },
+    {
+      "id": "anomaly-support",
+      "text": "Stanford observed-control burden: {observed} observed symptom-free days across {people} people; only {scored} days across {supported} people scored; {missing} days lacked a resting measurement and {cold} abstained at cold start.",
+      "values": {
+        "observed": {
+          "source": "anomaly",
+          "pointer": "/policies/both/counts/observed_control_days",
+          "expected": 134
+        },
+        "people": {
+          "source": "anomaly",
+          "pointer": "/participants_with_control_days",
+          "expected": 9
+        },
+        "scored": {
+          "source": "anomaly",
+          "pointer": "/policies/both/counts/scored_control_days",
+          "expected": 29
+        },
+        "supported": {
+          "source": "anomaly",
+          "pointer": "/policies/both/participants_with_scored_control_days",
+          "expected": 3
+        },
+        "missing": {
+          "source": "anomaly",
+          "pointer": "/policies/both/counts/abstained_missing_rest_measurement",
+          "expected": 99
+        },
+        "cold": {
+          "source": "anomaly",
+          "pointer": "/policies/both/counts/abstained_cold_start",
+          "expected": 6
+        }
+      },
+      "limit": "Floating shifted local clock; observed symptom-free controls only, not all PMData time or population healthy days; outer test sealed."
+    },
+    {
+      "id": "anomaly-burden",
+      "text": "There were {episodes} false-alert episodes intersecting controls and {days} alerted control days. Participant-weighted burden was {rate:.3f} episodes per thirty scored control days [{lo:.3f}, {hi:.3f}].",
+      "values": {
+        "episodes": {
+          "source": "anomaly",
+          "pointer": "/policies/both/counts/alert_episodes_intersecting_controls",
+          "expected": 2
+        },
+        "days": {
+          "source": "anomaly",
+          "pointer": "/policies/both/counts/alerted_control_days",
+          "expected": 3
+        },
+        "rate": {
+          "source": "anomaly",
+          "pointer": "/policies/both/episodes_per30_scored_control_days/value",
+          "expected": 1.1764705882352942
+        },
+        "lo": {
+          "source": "anomaly",
+          "pointer": "/policies/both/episodes_per30_scored_control_days/confidence_interval/0",
+          "expected": 0.0
+        },
+        "hi": {
+          "source": "anomaly",
+          "pointer": "/policies/both/episodes_per30_scored_control_days/confidence_interval/1",
+          "expected": 3.5294117647058822
+        }
+      },
+      "limit": "Wide participant-bootstrap interval and sparse coverage; no illness probability or alert-burden guarantee."
+    },
+    {
+      "id": "anomaly-denominator",
+      "text": "The separately pooled all-observed-days rate was {rate:.3f} episodes per thirty observed days, including abstentions.",
+      "values": {
+        "rate": {
+          "source": "anomaly",
+          "pointer": "/policies/both/pooled_episodes_per30_all_observed_control_days",
+          "expected": 0.44776119402985076
+        }
+      },
+      "limit": "This denominator is not the scored-day rate and must never replace it."
+    },
+    {
+      "id": "onset-short",
+      "text": "{horizon}h illness development support: {people} people, {episodes} incident episodes, {windows} eligible windows ({positive} positive / {negative} negative).",
+      "values": {
+        "people": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/24/participants",
+          "expected": 30
+        },
+        "episodes": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/24/incident_episodes",
+          "expected": 36
+        },
+        "windows": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/24/windows",
+          "expected": 170
+        },
+        "positive": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/24/positive_windows",
+          "expected": 36
+        },
+        "negative": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/24/negative_windows",
+          "expected": 134
+        },
+        "horizon": {
+          "source": "illness",
+          "pointer": "/protocol_document/horizons_hours/0",
+          "expected": 24
+        }
+      },
+      "limit": "Selected retrospective illness-reporting people; horizons fixed by source protocol; not representative negatives, final clinical acceptance or validated product probabilities."
+    },
+    {
+      "id": "onset-middle",
+      "text": "{horizon}h illness development support: {people} people, {episodes} incident episodes, {windows} eligible windows ({positive} positive / {negative} negative).",
+      "values": {
+        "people": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/48/participants",
+          "expected": 30
+        },
+        "episodes": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/48/incident_episodes",
+          "expected": 36
+        },
+        "windows": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/48/windows",
+          "expected": 157
+        },
+        "positive": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/48/positive_windows",
+          "expected": 72
+        },
+        "negative": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/48/negative_windows",
+          "expected": 85
+        },
+        "horizon": {
+          "source": "illness",
+          "pointer": "/protocol_document/horizons_hours/1",
+          "expected": 48
+        }
+      },
+      "limit": "Selected retrospective illness-reporting people; horizons fixed by source protocol; not representative negatives, final clinical acceptance or validated product probabilities."
+    },
+    {
+      "id": "onset-long",
+      "text": "{horizon}h illness development support: {people} people, {episodes} incident episodes, {windows} eligible windows ({positive} positive / {negative} negative).",
+      "values": {
+        "people": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/72/participants",
+          "expected": 30
+        },
+        "episodes": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/72/incident_episodes",
+          "expected": 36
+        },
+        "windows": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/72/windows",
+          "expected": 169
+        },
+        "positive": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/72/positive_windows",
+          "expected": 107
+        },
+        "negative": {
+          "source": "illness",
+          "pointer": "/families/survey-history/eligible_validation/72/negative_windows",
+          "expected": 62
+        },
+        "horizon": {
+          "source": "illness",
+          "pointer": "/protocol_document/horizons_hours/2",
+          "expected": 72
+        }
+      },
+      "limit": "Selected retrospective illness-reporting people; horizons fixed by source protocol; not representative negatives, final clinical acceptance or validated product probabilities."
+    },
+    {
+      "id": "survey-selection",
+      "text": "At the long horizon, {posmissing}/{positive} positive windows versus {negmissing}/{negative} negative windows had no prior survey in the source lookback.",
+      "values": {
+        "posmissing": {
+          "source": "illness",
+          "pointer": "/past_survey_distribution_by_label/72/positive/zero_prior_7d_surveys",
+          "expected": 101
+        },
+        "positive": {
+          "source": "illness",
+          "pointer": "/past_survey_distribution_by_label/72/positive/windows",
+          "expected": 107
+        },
+        "negmissing": {
+          "source": "illness",
+          "pointer": "/past_survey_distribution_by_label/72/negative/zero_prior_7d_surveys",
+          "expected": 3
+        },
+        "negative": {
+          "source": "illness",
+          "pointer": "/past_survey_distribution_by_label/72/negative/windows",
+          "expected": 62
+        }
+      },
+      "limit": "Survey completion can rank label eligibility; causal inputs alone cannot remove outcome-observation selection. Do not advertise headline AUPRC as wearable illness performance."
+    },
+    {
+      "id": "illness-parity",
+      "text": "Research export parity: {artifacts} artifacts reloaded, {predictions} predictions replayed, {mismatches} decision mismatches.",
+      "values": {
+        "artifacts": {
+          "source": "illness-replay",
+          "pointer": "/artifacts_reloaded",
+          "expected": 81
+        },
+        "predictions": {
+          "source": "illness-replay",
+          "pointer": "/predictions_replayed",
+          "expected": 4464
+        },
+        "mismatches": {
+          "source": "illness-replay",
+          "pointer": "/decision_mismatches",
+          "expected": 0
+        }
+      },
+      "limit": "Serialization parity only; illness output remains unavailable and no final cohort test was run."
+    },
+    {
+      "id": "api-parity",
+      "text": "The separate live CPU baseline API rehearsal compared {origins} permitted PMData validation origins / {n} points against both frozen packet and independent evaluator, with {mismatches} packet mismatches.",
+      "values": {
+        "origins": {
+          "source": "api",
+          "pointer": "/real/origins",
+          "expected": 25
+        },
+        "n": {
+          "source": "api",
+          "pointer": "/real/comparison/packet/points_compared",
+          "expected": 600
+        },
+        "mismatches": {
+          "source": "api",
+          "pointer": "/real/comparison/packet/points_mismatched",
+          "expected": 0
+        }
+      },
+      "limit": "Historical source-bound receipt; independent rehearsal consumer, not the integrated app or a new #23 dry run. Outer test sealed."
+    },
+    {
+      "id": "api-latency",
+      "text": "That HTTP rehearsal reported mean latency {mean:.3f} s (range {lo:.3f}\u2013{hi:.3f} s).",
+      "values": {
+        "mean": {
+          "source": "api",
+          "pointer": "/real/latency_seconds/mean",
+          "expected": 0.17130478332517668
+        },
+        "lo": {
+          "source": "api",
+          "pointer": "/real/latency_seconds/min",
+          "expected": 0.1037766250083223
+        },
+        "hi": {
+          "source": "api",
+          "pointer": "/real/latency_seconds/max",
+          "expected": 0.21387045801384374
+        }
+      },
+      "limit": "POST/report completion scope on original source/runtime; not GPU model-only latency or a current-device benchmark."
+    },
+    {
+      "id": "replay-parity",
+      "text": "With the live API stopped, the saved real browser replay checked {n} points and {times} interval endpoints: {numeric} numeric, {time} time and {geometry} geometry mismatches.",
+      "values": {
+        "n": {
+          "source": "browser",
+          "pointer": "/real/pointsCompared",
+          "expected": 24
+        },
+        "times": {
+          "source": "browser",
+          "pointer": "/real/intervalTimesCompared",
+          "expected": 48
+        },
+        "numeric": {
+          "source": "browser",
+          "pointer": "/real/numericMismatch",
+          "expected": 0
+        },
+        "time": {
+          "source": "browser",
+          "pointer": "/real/intervalTimeMismatch",
+          "expected": 0
+        },
+        "geometry": {
+          "source": "browser",
+          "pointer": "/real/geometryMismatch",
+          "expected": 0
+        }
+      },
+      "limit": "Historical source-bound real replay consumer proof; original modes/provenance retained. Full app integration explicitly unproven."
+    },
+    {
+      "id": "replay-identity",
+      "text": "The historical CPU replay artifact is `{id}`, SHA256 `{sha}`.",
+      "values": {
+        "id": {
+          "source": "replay",
+          "pointer": "/artifact/artifact_id",
+          "expected": "hourly-last-valid-v1-141306001b16e168"
+        },
+        "sha": {
+          "source": "replay",
+          "pointer": "/artifact/artifact_sha256",
+          "expected": "e7666ef0f4665006822f9ee9c0988a6de0df1633175ff217a27666ce6f66fa3b"
+        }
+      },
+      "limit": "A demonstrated immutable baseline receipt, not #20 final-selected artifact."
+    },
+    {
+      "id": "apple-transport",
+      "text": "Generated Apple HTTP transport preserved the original sparse abstention and dense exact-inference behavior: source measurement row ``{quote}``.",
+      "values": {
+        "quote": {
+          "source": "apple",
+          "expected": "| 105,120 points, 12/hour | 8.742 s | 0.705 s | 0.645 s | `INSUFFICIENT_HISTORY` at original gates |"
+        }
+      },
+      "limit": "Generated inputs only; exact CPU receipt/unchanged admissions; DEVICE_SHIFT; no real Apple accuracy, cohort, case consent or full UI claim."
+    },
+    {
+      "id": "recovery-exclusion",
+      "text": "The finalization report explicitly states: \u201c{quote}\u201d.",
+      "values": {
+        "quote": {
+          "source": "final",
+          "expected": "No recovery adapter in this release accepts that packet."
+        }
+      },
+      "limit": "Refers to superseded af7 recovery evidence; no quantitative recovery claim admitted."
+    },
+    {
+      "id": "confidence-method",
+      "text": "The forecast reports use: \u201c{quote}\u201d",
+      "values": {
+        "quote": {
+          "source": "chronos-report",
+          "expected": "95% intervals are participant-level bootstrap (1,000 resamples, seed 42)."
+        }
+      },
+      "limit": "Development-validation uncertainty conditional on this protocol/cohort, not population clinical accuracy."
+    }
+  ]
+}

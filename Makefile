@@ -23,9 +23,10 @@ types: schema
 fixtures:
 	uv run python contracts/scripts/build_fixtures.py
 
-# Lint covers the package and contracts. Standalone scripts/ keep their owners' style until
-# those owners opt in.
-LINT_PATHS := src tests contracts
+# Lint covers the package, contracts and the tracked script folders that are clean. Not
+# scripts/coordination (local inbox helpers live there untracked) or scripts/gx10 (it runs in the
+# GX10's own Python and is not yet clean). List folders explicitly; never lint all of scripts/.
+LINT_PATHS := src tests contracts scripts/rehearsal scripts/privacy scripts/evaluation
 
 lint:
 	uv run ruff check $(LINT_PATHS)
