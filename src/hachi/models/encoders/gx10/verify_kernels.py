@@ -113,7 +113,8 @@ def case_chunk_scan(device):
     )
 
     g = torch.Generator(device=device).manual_seed(3)
-    batch, length, heads, headdim, groups, state = 2, 168, 8, 64, 1, 128
+    # The reference needs whole chunks; two chunks also exercise state passing.
+    batch, length, heads, headdim, groups, state = 2, 512, 8, 64, 1, 128
     x = torch.randn(batch, length, heads, headdim, device=device, generator=g, requires_grad=True)
     dt = (0.1 * torch.rand(batch, length, heads, device=device, generator=g)).requires_grad_()
     a = (-torch.rand(heads, device=device, generator=g)).requires_grad_()

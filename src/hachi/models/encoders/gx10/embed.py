@@ -157,7 +157,12 @@ def summary(name, array):
 
 
 def prove(model_name, model, device):
-    """One synthetic forward/backward/optimizer step on unfrozen weights (never saved)."""
+    """Two synthetic forward/backward/optimizer steps on unfrozen weights (never saved).
+
+    The first step includes Triton's JIT compilation; the second is timed warm. A tensor the
+    loss never reaches has no gradient, and one whose gradient is too small to move float32
+    weights at this learning rate is listed as underflowed; both are reported, not hidden.
+    """
     torch.manual_seed(0)
     model.train()
     if model_name == "wbm":
@@ -169,36 +174,43 @@ def prove(model_name, model, device):
     params = [p for _, p in named]
     optimizer = torch.optim.SGD(params, lr=1e-3)
     before = [p.detach().clone() for p in params]
-    torch.cuda.synchronize()
-    began = time.perf_counter()
-    if model_name == "wbm":
-        _, r = model(x)
-    else:
-        r = model.embed(x_enc=x, input_mask=torch.ones(4, 512, device=device)).embeddings
-    loss = r.float().pow(2).mean()
-    loss.backward()
-    # A parameter this input never reaches (e.g. a mask embedding when every step is observed)
-    # has no gradient; that is reported by name, separately from non-finite gradients.
+    timings, losses = [], []
+    for _ in range(2):
+        optimizer.zero_grad(set_to_none=True)
+        torch.cuda.synchronize()
+        began = time.perf_counter()
+        if model_name == "wbm":
+            _, r = model(x)
+        else:
+            r = model.embed(x_enc=x, input_mask=torch.ones(4, 512, device=device)).embeddings
+        loss = r.float().pow(2).mean()
+        loss.backward()
+        optimizer.step()
+        torch.cuda.synchronize()
+        timings.append(round((time.perf_counter() - began) * 1000, 1))
+        losses.append(float(loss.detach()))
     no_grad = [n for n, p in named if p.grad is None]
     zero_grad = [n for n, p in named if p.grad is not None and not bool(p.grad.any())]
     grads_finite = all(bool(torch.isfinite(p.grad).all()) for p in params if p.grad is not None)
-    optimizer.step()
-    torch.cuda.synchronize()
-    seconds = time.perf_counter() - began
-    changed = sum(int(not torch.equal(a, p.detach())) for a, p in zip(before, params, strict=True))
+    moved = [not torch.equal(a, p.detach()) for a, p in zip(before, params, strict=True)]
+    underflowed = [
+        n
+        for (n, p), m in zip(named, moved, strict=True)
+        if not m and p.grad is not None and bool(p.grad.any())
+    ]
+    finite = all(np.isfinite(losses))
     return {
         "output_shape": list(r.shape),
-        "loss": float(loss.detach()),
-        "loss_finite": bool(torch.isfinite(loss)),
+        "losses": losses,
+        "loss_finite": finite,
         "trainable_tensors": len(params),
         "gradients_finite": grads_finite,
         "tensors_without_gradient": no_grad,
         "tensors_with_zero_gradient": zero_grad,
-        "tensors_changed_by_update": changed,
-        "forward_backward_update_ms": round(seconds * 1000, 1),
-        "passed": bool(torch.isfinite(loss))
-        and grads_finite
-        and changed == len(params) - len(no_grad) - len(zero_grad) > 0,
+        "tensors_changed_by_update": sum(moved),
+        "tensors_update_below_float32_resolution": underflowed,
+        "forward_backward_update_ms": {"first_with_jit": timings[0], "warm": timings[1]},
+        "passed": finite and grads_finite and sum(moved) > 0,
     }
 
 
