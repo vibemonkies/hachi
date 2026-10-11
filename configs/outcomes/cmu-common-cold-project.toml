@@ -18,9 +18,9 @@ clock = "relative_to_challenge"
 relative_day_epoch = 2000-01-01
 
 [analysis_registration]
-# Fill in once the Data Analysis Form is submitted, e.g.
-# submitted_on = 2026-10-12
-# reference = "Data Analysis Form emailed to the Laboratory for the Study of Stress, Immunity, and Disease"
+# Recorded by Justin's decision (#8): each team member submitted the CMU Data Analysis Form.
+submitted_on = 2026-10-11
+reference = "CMU Data Analysis Form (the Google Form linked from cmu.edu/common-cold-project) submitted on 2026-10-11 by Justin (justin06lee), Ezzy (ezzy1630) and CoffeeCoder (CoffeeCoder1015); data source Aggregated Data Set; no reference number was returned."
 
 [studies]
 # study.id codes (codebook STUDYID). BCS used a clinician checklist instead of the daily Jackson

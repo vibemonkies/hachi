@@ -4,7 +4,7 @@ schema_version = "0.1"
 dataset_id = "covidentify"
 name = "CovIdentify"
 version = "1.0.0"
-status = "access_pending"
+status = "rejected_for_task"
 access = "credentialed"
 primary_url = "https://physionet.org/content/covidentify/1.0.0/"
 doi = "10.13026/ncq1-vp79"
@@ -29,6 +29,7 @@ blocked_capabilities = [
   "Hosted-LLM processing of rows: PhysioNet counts sending data to an LLM API as sharing unless the service guarantees zero retention, no training and no human review.",
 ]
 notes = [
+  "Abandoned for this project on 2026-10-11 by Justin's decision: the PhysioNet credential review (submitted, under manual review for about a week) cannot finish within the project timeline. No data was obtained. #8's wearable onset labels come from the Stanford COVID-19 cohorts instead.",
   "2,887 participants connected smartwatches (1,689 Garmin, 1,091 Fitbit, 107 Apple). Wearable data is daily only: device resting HR, min/median/mean/10th-percentile HR, and steps; minute data is not included. About 46 MB uncompressed.",
   "Dates are replaced by days relative to enrollment (the API description says date-shifted); local time-of-day features are impossible.",
   "362,108 daily surveys from 5,859 participants; COVID-19 test results are self-reported (132 positive, 1,157 negative among 1,289 reporting).",

@@ -1,9 +1,10 @@
-# Illness and recovery labels (#8): cohorts, snapshots and access blockers
+# Illness and recovery labels (#8): cohorts, snapshots and access
 
-What #8 delivered: the locked outcome definitions, the Stanford COVID-19 label snapshots, and where each illness cohort stands. Everything here is aggregate. Participant-level tables stay in approved storage (`$HACHI_DATA_ROOT/derived/`, and read-only on the GX10 at `~/hachi/data/derived/`). The per-dataset machine reports for the current snapshots are beside this file:
+What #8 delivered: the locked outcome definitions, the Stanford COVID-19 and CMU Common Cold label snapshots, and where each illness cohort stands. Everything here is aggregate. Participant-level tables stay in approved storage (`$HACHI_DATA_ROOT/derived/`, and read-only on the GX10 at `~/hachi/data/derived/`). The per-dataset machine reports for the current snapshots are beside this file:
 
 - [`clinical-labels-2-stanford-covid19-wearables-2020-nbe.json`](clinical-labels-2-stanford-covid19-wearables-2020-nbe.json) / [`.md`](clinical-labels-2-stanford-covid19-wearables-2020-nbe.md)
 - [`clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm.json`](clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm.json) / [`.md`](clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm.md)
+- [`clinical-labels-2-cmu-common-cold-project-retrieved-2026-10-10.json`](clinical-labels-2-cmu-common-cold-project-retrieved-2026-10-10.json) / [`.md`](clinical-labels-2-cmu-common-cold-project-retrieved-2026-10-10.md)
 
 The `clinical-labels-1` snapshots (first published in PR #58; reports `clinical-labels-1-*`) are superseded. Every table and the audit are byte-identical to `clinical-labels-2`, which only adds `symptom_scores.parquet`. Both stay in place, read-only.
 
@@ -20,16 +21,26 @@ Code and definitions: [`src/hachi/data/clinical/`](../../src/hachi/data/clinical
 | Rows | outcomes 246, episodes 59, recovery 118, onset_windows 14,481, subjects 121, status_intervals 562, surveys 794, symptom_scores 794, wearable_days 11,729 | outcomes 2,337, episodes 66, recovery 66, onset_windows 365,377, subjects 2,122, status_intervals 2,122, surveys 0, symptom_scores 0, wearable_days 266,348 |
 | Locations | Mac `$HACHI_DATA_ROOT/derived/<id>/`; GX10 `~/hachi/data/derived/<id>/` (read-only) | same |
 
+**CMU Common Cold Project** (aggregated five-study file): snapshot `clinical-labels-2-cmu-common-cold-project-retrieved-2026-10-10-7c1429b102eb`. Its `DatasetSnapshotRef` is `cmu-common-cold-project` / `retrieved-2026-10-10` / `7c1429b102ebf5bcb5c0f94db0aba6c1e290d1b0b78aeae68c7105b3cfda38c3`. The source is `Aggregated Cold Study (Studies 1-5) .zip` (60,512,756 B, `6a0d7443…d348`), member `FIVE_STUDY_DATA.dat`. It was built from commit `b504950` on a clean tree in 0.7 s, after the CMU Data Analysis Form was submitted on 2026-10-11 (recorded in `configs/outcomes/cmu-common-cold-project.toml`). Rows: outcomes 6,520, episodes 697, recovery 697, onset_windows 5,113, subjects 1,016, status_intervals 3,018, surveys 5,107, symptom_scores 5,107, wearable_days 0. It sits at the same locations; the CMU agreement allows the shared GX10 login because all three teammates registered.
+
 Built with `HACHI_DATA_ROOT=/Volumes/T7/Stockpile/hachi.datasets uv run python -I -m hachi.data.clinical build <dataset_id> --report-dir reports/data`, from a clean tree.
 
 ## Verification
 
-- **`verify --full`** passes for both snapshots: every file matches `SHA256SUMS` and the manifest, the snapshot hash and directory name agree, and every outcome row re-validates against the shared contracts.
+- **`verify --full`** passes for all three snapshots: every file matches `SHA256SUMS` and the manifest, the snapshot hash and directory name agree, and every outcome row re-validates against the shared contracts.
 - **Deterministic rebuild.** An independent phase 1 build into a scratch directory gave the same snapshot id and a byte-identical `SHA256SUMS`, covering all eleven files including the manifest and audit. The phase 2 build reproduced every table and the audit of the earlier `clinical-labels-1` phase 2 build byte for byte.
 - **`reconcile`** re-reads each source workbook and checks the snapshot by a separate route, without the label engine. It found 0 mismatches. Phase 1 checks: 59 episode onsets are reported dates; reported onsets are accounted for in all 47 participants (merged relapses included); positive tests equal the reported diagnosis dates in all 47; 794 answered survey days have the state their raw answers imply; all 33 accepted self-reported recoveries are reported dates; and 48 episodes whose onset day is a cutoff are `positive` or excluded there. Phase 2 checks: all 84 positives' test dates are matched, all 66 episode onsets are reported dates, and the 66 own-onset cutoffs are positive.
+- **CMU `reconcile`** re-parses `FIVE_STUDY_DATA.dat` independently and checks the snapshot from raw cells. It found 0 mismatches:
+  - the participant set (1,016);
+  - 5,107 daily states and adjusted scores;
+  - for all 1,016 participants, an episode exactly when a symptomatic day exists, and shedding cultures that match;
+  - 697 onsets on the first symptomatic day;
+  - 590 infected episodes `confirmed` and 107 uninfected `uncertain`.
+
+  An independent CMU rebuild was byte-identical. No CMU row or participant id was printed or read into a conversation; every check reports counts only.
 - **Paper cross-check.** Phase 1 yields 27 test-confirmed COVID-19 episodes, matching the paper's "32 COVID-19-positive participants (27 confirmed)". Phase 2 yields 84 positives, 66 with a symptom onset.
-- **GX10.** Both snapshots and both label workbooks are on the GX10 read-only, and `sha256sum -c SHA256SUMS` passes in each directory.
-- **Synthetic tests** (`tests/data/clinical/`, 36 tests) cover every definition, both archive layouts with their quirks, the CMU adapter and its gate, tamper detection, read-only output, admission refusal and report sanitization.
+- **GX10.** All three snapshots and both Stanford label workbooks are on the GX10 read-only, and `sha256sum -c SHA256SUMS` passes in each directory.
+- **Synthetic tests** (`tests/data/clinical/`, 37 tests) cover every definition, both archive layouts with their quirks, the CMU adapter and its gate, tamper detection, read-only output, admission refusal and report sanitization.
 
 ## Cohort audit
 
@@ -84,34 +95,66 @@ Positive-test target, 24 h: phase 1 has 30 `positive_test` windows and phase 2 h
 - Phase 1: 17 diagnosis, 17 recovery and 3 onset entries are `NaT`. One participant reports an illness with no date at all; their windows are `excluded_undated_illness`. 30 survey days have several reports, 2 of them conflicting, and the worst state wins. 3 labeled participants have no wearable file.
 - Phase 2 archive: 4,200 members read; 30 hold export-error text and 16 are blank; 4,251 `__MACOSX` entries are ignored; 14 rows are unparseable (repeated headers); 1.47 billion HR records and 49.9 million step records.
 
+## CMU Common Cold Project audit
+
+Healthy adults were inoculated on quarantine Day 0 and rated eight Modified Jackson symptoms (0-4) daily until the end of quarantine. That is Day 5, or Day 6 for influenza. There are no wearables and no calendar dates: study day N is written as 2000-01-01 + N days (`clock: relative_to_challenge`).
+
+| | Count |
+|---|---:|
+| Participants in the five-study file | 1,415 (BCS 399, PCS1 276, PCS2 334, PCS3 213, PMBC 193) |
+| Excluded: BCS has no daily Jackson scores in this file | 399 |
+| Participants with daily scores | 1,016 (infected 784, not infected 232, by `post.infected`) |
+| Answered quarantine days: symptomatic / symptom-free / intermediate | 2,110 / 2,822 / 175 |
+| Participants with a gap in their quarantine days | 2 |
+| Non-0/1 codes counted and treated as missing | 1 (`cold`) |
+| Episodes (first day with an adjusted Jackson score of at least 2) | 697: rhinovirus 574 confirmed + 99 uncertain (not infected); influenza 16 confirmed + 8 uncertain |
+| Participants without a symptomatic onset | 319 |
+| Shedding cultures (positive / negative) | rhinovirus and other viruses (contract pathogen `other`) 2,288 / 2,543; influenza 69 / 159 |
+| Positive cultures linked to no episode (asymptomatic infection or outside the link window) | 481 |
+
+**Onset precision.** Assessment times are undocumented. A first symptomatic rating on day N therefore places onset in days N-1 to N, a 2-day interval. No 24 h window can contain a 2-day interval, so every CMU 24 h window that overlaps an onset is `uncertain_partial_onset`. CMU supports onset labels at 48 and 72 h only, and they are exploratory and symptom-only.
+
+| Label | 24 h | 48 h | 72 h |
+|---|---:|---:|---:|
+| positive | 0 | 444 | 609 |
+| negative (symptom-free every day) | 967 | 645 | 443 |
+| **at-risk denominator** | **967** | **1,089** | **1,052** |
+| uncertain_partial_onset | 1,141 | 862 | 753 |
+| uncertain_unexplained_symptoms | 33 | 39 | 34 |
+| excluded_ongoing_episode / washout / infection without onset | 1,822 / 304 / 843 | same | same |
+| unknown_follow_up_ended / unknown_no_survey | 0 / 3 | 151 / 3 | 302 / 3 |
+
+**Recovery (`outcomes-1-sustained-symptom-free-2d`).**
+- 697 episodes: 170 resolved, and the rest right-censored at the end of quarantine (511 with no qualifying run, 16 with no follow-up after onset).
+- Resolved episodes reach their resolution interval at day index 2–5 from the onset interval's first day (median 2, IQR 2–3).
+- Censored follow-up runs a median of 4 days (IQR 3–5, max 6).
+- Exact recovery days beyond quarantine cannot be learned from this cohort.
+
+**Severity.** `symptom_scores` holds the adjusted Jackson total and the "have a cold?" answer for every answered day (5,107 rows), available at the end of that day.
+
 ## What each cohort can and cannot support
 
 | Capability | Stanford phase 1 | Stanford phase 2 | CMU Common Cold |
 |---|---|---|---|
-| Wearable onset prediction, at-risk classification (#13) | Yes, evaluation-sized: survey-confirmed negatives exist but are few (180 at 24 h) | No negatives: no surveys were released, so every non-episode window is `unknown_no_survey` | No wearables |
+| Wearable onset prediction, at-risk classification (#13) | Yes, evaluation-sized: survey-confirmed negatives exist but are few (180 at 24 h) | No negatives: no surveys were released, so every non-episode window is `unknown_no_survey` | No wearables. Symptom-only onset at 48/72 h (exploratory) |
 | Onset detection lead time / sensitivity (#9, #13) | Yes | Yes, the main use (66 onsets, 61 test-confirmed) | No wearables |
-| Positive-test target | 36 positive tests, no negatives released | 84 positive tests, no negatives released | Shedding cultures, positive and negative |
+| Positive-test target | 36 positive tests, no negatives released | 84 positive tests, no negatives released | Daily shedding cultures, positive and negative (5,059) |
 | Healthy-period alert burden (#9) | Only from `observed_symptom_free` survey days (the 24 h negatives above) | None observed | No wearables |
-| Recovery (#14) | Small: 15 sustained resolutions, 33 accepted self-reported recoveries, the rest censored | None: no follow-up after onset is released | Symptom-only, right-censored at the end of quarantine; gated |
+| Recovery (#14) | Small: 15 sustained resolutions, 33 accepted self-reported recoveries, the rest censored | None: no follow-up after onset is released | The main recovery cohort: 697 episodes, 170 resolved, 527 right-censored at the end of quarantine; symptom predictors only |
 
-COVID-19 labels are not colds. Phase 1's 14 other episodes in COVID-19 participants are `unspecified_illness`, and its 15 other-illness and 1 influenza B episodes keep their own categories. Phase 2's onset target is COVID-19 symptom onset only.
+COVID-19 labels are not colds, and CMU's rhinovirus, influenza, RSV and coronavirus 229E challenges are not COVID-19. Phase 1's 14 other episodes in COVID-19 participants are `unspecified_illness`, and its 15 other-illness and 1 influenza B episodes keep their own categories. Phase 2's onset target is COVID-19 symptom onset only. CMU categories name the challenge virus.
 
-## Access and blockers
+## Access
 
-| Cohort | State | Exact blocker |
-|---|---|---|
-| CMU Common Cold Project | Downloaded; adapter and definitions built, tested on synthetic rows only. No CMU row or count has been computed | CMU's Data-Sharing Agreement: "planned analyses will be registered with the Laboratory for the Study of Stress, Immunity, and Disease". The Data Analysis Form (a Google Form linked from cmu.edu/common-cold-project, asking for name, date, email, data sources and a description of planned analyses) must be submitted by Justin. Then record `submitted_on` and `reference` under `[analysis_registration]` in `configs/outcomes/cmu-common-cold-project.toml`. Until then `build cmu-common-cold-project` exits before reading the data. Also open: the owner's plan to encrypt the T7 and disable GX10 password SSH (interim state accepted 2026-10-11) |
-| CovIdentify 1.0.0 (PhysioNet) | `access_pending` | Justin's PhysioNet credentialing application is under manual review (about a week). After approval he must sign the Credentialed Health Data Use Agreement 1.5.0 on the project page. Every other teammate who touches the data needs their own credential, and the data may never sit on the shared GX10 account |
-| Homekit2020 (Synapse) | `candidate` | Synapse certification and profile validation (ORCID, signed pledge, identity document) are not done. Then an Intended Data Use statement and Conditions for Use per person |
-| Evidation ILI 2019-2020 (Synapse) | `candidate` | The same Synapse validation, then an emailed data-use statement and signed Conditions for Use per person |
+| Cohort | State |
+|---|---|
+| Stanford COVID-19 wearables, phase 1 and phase 2 | Public; downloaded, labels built (above) |
+| CMU Common Cold Project | Registered by all three teammates. The CMU Data Analysis Form was submitted on 2026-10-11 by Justin, Ezzy and CoffeeCoder, via the Google Form linked from cmu.edu/common-cold-project; no reference number was returned. Labels are built (above) |
+| CovIdentify 1.0.0 (PhysioNet) | `rejected_for_task`. Abandoned on 2026-10-11 by Justin's decision: the PhysioNet credential review cannot finish within the project timeline. No data was obtained |
+| Homekit2020, Evidation ILI 2019-2020 (Synapse) | `rejected_for_task`. Not available for this project: Synapse certification and profile validation were never completed, so no data was obtained |
 
-### Draft for the CMU Data Analysis Form
+## Limitations and open items
 
-Data source: Aggregated Data Set. Description of planned analyses:
-
-> Non-commercial student research project (Hachi). Using the aggregated five-study file, we will define symptom-based outcome labels after viral challenge and evaluate simple recovery-time models. (1) For each participant, identify the first post-challenge day with a baseline-adjusted Modified Jackson score of at least 2 (symptomatic onset), and the first run of two consecutive low-symptom days (adjusted score at most 1 and no "have a cold?" answer) as a symptom-resolution endpoint, right-censored at the end of quarantine. Summarize onset and resolution timing by challenge virus and infection status (post.infected). (2) Fit and evaluate a discrete-time survival baseline for time to resolution on these labels, using participant-level held-out splits and censoring-aware metrics. (3) Describe how these symptom-onset definitions relate to laboratory-confirmed infection (viral shedding, seroconversion). Variables: subj_id, study.id, the challenge-virus indicators, q1-q6 jacksn_scr_adj and cold, q1-q7 shed, post.infected. No psychosocial or biological predictors, no linkage to other data, no re-identification. Only aggregate results will be shared, and the data stay on storage used by the three registered team members.
-
-## Still open on #8
-
-- **CMU labels.** These wait on the Data Analysis Form (above). Once it is recorded, run `build cmu-common-cold-project --report-dir reports/data` and publish the aggregate report.
-- **A training-sized wearable illness cohort.** This waits on CovIdentify (PhysioNet review) or Homekit2020/Evidation (Synapse validation). The Stanford cohorts are evaluation-sized; they cannot train a calibrated onset model alone.
+- **CMU storage security.** CMU's agreement asks for data "secured using appropriate technology"; the target is encrypted storage. The T7 and the GX10 disk are not encrypted yet, and the GX10 still allows password SSH on its private lab network. Justin accepted this interim state on 2026-10-11 and plans to encrypt. This is not a gate on #8.
+- **No training-sized wearable illness cohort.** With CovIdentify and the Synapse cohorts out, the only wearable-paired illness labels are the Stanford cohorts, which are evaluation-sized. #13 must report that limit rather than claim a calibrated onset model. CMU adds symptom-only recovery and onset labels with no wearables.
+- **CMU publications.** After publishing anything that uses CMU data, report it with CMU's Data Set Publication Form.

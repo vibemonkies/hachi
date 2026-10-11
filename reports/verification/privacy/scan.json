@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "files_scanned": 526,
+  "findings": {},
+  "participant_roster_checked": true,
+  "scope": "current tracked files including staged evidence plus explicit infra/demo and privacy evidence assets; no Git history",
+  "source_commit": "809839b112ccd26e6f63b6d8fc6db4a51cbb25ee"
+}

@@ -214,7 +214,15 @@ def test_writes_wait_out_a_deletion_in_progress(client):
         twice = client.delete("/v1/subjects/synthetic-001", params={"confirm": "synthetic-001"})
         assert twice.status_code == 409
         assert upload(client, hourly_export(30), subject="synthetic-001").status_code == 409
-        assert private_files(service.workspace.imports) == []  # refused before any file
+        # An identical re-upload must not hand back a cached import that is being deleted.
+        service._deleting.discard("synthetic-001")
+        first = upload(client, hourly_export(31), subject="synthetic-001")
+        wait(client)
+        service._deleting.add("synthetic-001")
+        again = upload(client, hourly_export(31), subject="synthetic-001")
+        assert first.status_code == 202 and again.status_code == 409
+        imports = [first.json()["import_id"]]
+        assert private_files(service.workspace.imports) == imports  # nothing else was created
     finally:
         service._deleting.discard("synthetic-001")
     done = client.delete("/v1/subjects/synthetic-001", params={"confirm": "synthetic-001"})
