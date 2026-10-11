@@ -92,12 +92,17 @@ def _windows(values: np.ndarray) -> WeekWindows:
 def model_inputs(values: np.ndarray, means: np.ndarray, stds: np.ndarray) -> dict[str, np.ndarray]:
     """#11's exact layouts. Distance, sleep, iPhone, energy and workout channels stay missing."""
     windows = _windows(values)
+    # Steps variants exist only when the export carries steps (its primary is HR-only).
+    channels = ("heart_rate", "steps") if np.isfinite(values[:, :, 1]).any() else ("heart_rate",)
     arrays: dict[str, np.ndarray] = {}
     for name, variant in WBM_VARIANTS.items():
+        if variant == "full" and "steps" not in channels:
+            continue
         raw = wbm_values(windows, variant)
         arrays[name] = wbm_input(raw, means, stds)
         arrays[name.replace("wbm", "meanpool")] = meanpool_features(raw)
-    arrays["moment_x"], arrays["moment_mask"] = moment_input(windows, ("heart_rate", "steps"))
+    arrays["moment_x"], arrays["moment_mask"] = moment_input(windows, channels)
+    arrays["moment_channels"] = np.asarray(channels)
     return arrays
 
 
@@ -171,7 +176,8 @@ def main() -> int:
             return 0
         with np.load(args.inputs, allow_pickle=False) as data:
             hashes = data["request_sha256"]
-            arrays = {k: data[k] for k in ("meanpool_hr", "meanpool_hr_steps")}
+            channels = [str(c) for c in data["moment_channels"]]
+            arrays = {k: data[k] for k in data.files if k.startswith("meanpool_")}
         for path in (args.wbm, args.moment):
             with np.load(path, allow_pickle=False) as data:
                 if not np.array_equal(data["request_sha256"], hashes):
@@ -180,9 +186,10 @@ def main() -> int:
                     if name in WBM_VARIANTS:
                         arrays[name] = data[name]
                 if "moment" in data.files:
-                    width = data["moment"].shape[1] // 2
-                    arrays["moment_hr"] = data["moment"][:, :width]
-                    arrays["moment_steps"] = data["moment"][:, width:]
+                    width = data["moment"].shape[1] // len(channels)
+                    for i, channel in enumerate(channels):
+                        name = {"heart_rate": "moment_hr", "steps": "moment_steps"}[channel]
+                        arrays[name] = data["moment"][:, i * width : (i + 1) * width]
         metadata = {
             "inputs_sha256": _sha(args.inputs),
             "wbm_sha256": _sha(args.wbm),

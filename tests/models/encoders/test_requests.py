@@ -44,6 +44,14 @@ def test_requests_map_to_wbm_hr_and_steps_with_everything_else_missing(tmp_path)
     assert arrays["wbm_hr"][:, :, 19 + 3].all()  # HR-only masks steps even when supplied
     assert arrays["moment_x"].shape == (2, 2, 512) and not arrays["moment_mask"][1, 1].any()
     assert arrays["meanpool_hr"].shape == (2, 76)
+    assert list(arrays["moment_channels"]) == ["heart_rate", "steps"]
+
+
+def test_hr_only_exports_get_no_steps_variants(tmp_path):
+    _, values, _ = read_requests(write(tmp_path, [request([65.0] * 168)]))
+    arrays = model_inputs(values, MEANS, STDS)
+    assert set(arrays) == {"wbm_hr", "meanpool_hr", "moment_x", "moment_mask", "moment_channels"}
+    assert arrays["moment_x"].shape == (1, 1, 512)
 
 
 def test_requests_are_refused_when_hash_alignment_or_values_are_wrong(tmp_path):
