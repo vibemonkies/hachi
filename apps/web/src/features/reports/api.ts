@@ -7,6 +7,7 @@ import type {
 } from "@hachi/contracts";
 import { ApiRequestError, isRecord, requestJson, waitForPoll } from "../api";
 import { parseContractDocument } from "../contract-validation";
+import { canonicalUtcInstant } from "../utc-instant";
 
 export type TaskResult =
   | { kind: "result"; result: ReportResult }
@@ -57,10 +58,12 @@ export async function readSavedReplay(
   if (job.state !== "completed" || !job.result?.replay) {
     throw new ApiRequestError("The saved report is incomplete or lacks replay provenance.");
   }
+  const requestAsOf = canonicalUtcInstant(job.request.as_of);
   if (
+    requestAsOf === null ||
     job.result.report_id !== job.report_id ||
     job.result.subject_id !== job.request.subject_id ||
-    job.result.as_of !== job.request.as_of ||
+    canonicalUtcInstant(job.result.as_of) !== requestAsOf ||
     job.result.task !== job.request.task
   ) {
     throw new ApiRequestError("The saved report does not match its request.");
@@ -73,9 +76,11 @@ async function requestReport(
   signal: AbortSignal,
   apiBaseUrl: string,
 ): Promise<ReportResult> {
+  const requestAsOf = canonicalUtcInstant(request.as_of);
+  if (requestAsOf === null) throw new Error("The report request has an invalid UTC cutoff.");
   const matchesRequest = (job: ReportJob) =>
     job.request.subject_id === request.subject_id &&
-    job.request.as_of === request.as_of &&
+    canonicalUtcInstant(job.request.as_of) === requestAsOf &&
     job.request.task === request.task;
   let job = readReportJob(
     await requestJson<ReportJob>("/v1/reports", {
@@ -99,7 +104,7 @@ async function requestReport(
   if (
     job.result.report_id !== job.report_id ||
     job.result.subject_id !== request.subject_id ||
-    job.result.as_of !== request.as_of ||
+    canonicalUtcInstant(job.result.as_of) !== requestAsOf ||
     job.result.task !== request.task
   ) {
     throw new Error("The Hachi API returned a result that does not match its report request.");

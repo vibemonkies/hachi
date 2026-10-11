@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties, type Dispatch, type FormEvent } from "react";
 import type { Coverage, ImportStatus } from "@hachi/contracts";
 import type { Action, ImportSubmission, Workflow } from "../../workflow";
+import { canonicalUtcInstant } from "../utc-instant";
 
 const metricLabels: Record<string, string> = {
   heart_rate: "Heart rate",
@@ -40,12 +41,6 @@ function defaultTimeZone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
-function isUtcInstant(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(value)) return false;
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 19) === value.slice(0, 19);
-}
-
 export function ImportPanel({
   workflow,
   dispatch,
@@ -83,7 +78,7 @@ export function ImportPanel({
 
   function refreshCoverage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!isUtcInstant(asOfDraft)) return;
+    if (!asOfDraft.endsWith("Z") || canonicalUtcInstant(asOfDraft) === null) return;
     dispatch({
       type: "refresh-coverage",
       operationId: crypto.randomUUID(),
@@ -385,8 +380,8 @@ function CoveragePanel({
             placeholder="2026-10-10T07:00:00Z"
             value={asOfDraft}
             onChange={(event) => onAsOfChange(event.target.value)}
-            pattern={"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z"}
-            title="Enter an ISO 8601 UTC instant ending in Z, such as 2026-10-10T07:00:00Z."
+            pattern={"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,6})?Z"}
+            title="Enter an ISO 8601 UTC instant ending in Z with up to 6 fractional digits, such as 2026-10-10T07:00:00Z."
             required
           />
           <button>Review coverage at this cutoff</button>
