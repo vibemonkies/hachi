@@ -2,7 +2,7 @@ schema_version = "0.1"
 dataset_id = "dreamt"
 name = "DREAMT: Dataset for Real-time sleep stage EstimAtion using Multisensor wearable Technology"
 version = "2.2.0"
-status = "candidate"
+status = "access_pending"
 access = "registration"
 primary_url = "https://physionet.org/content/dreamt/2.2.0/"
 doi = "10.13026/3f7y-2d80"
@@ -14,11 +14,12 @@ access_steps = [
   "Download. Each teammate signs individually.",
 ]
 access_owner = "justin06lee"
-approved_users = []
+approved_users = ["justin06lee", "ezzy1630", "CoffeeCoder1015"]
 storage = "Only accounts used solely by users who signed; not the shared GX10 account unless all three have signed."
 checksum_strategy = "SHA-256 per file, compared with PhysioNet's SHA256SUMS.txt."
 blocked_capabilities = []
 notes = [
+  "All three teammates signed the PhysioNet Restricted Health Data Use Agreement on 2026-10-11, so a shared GX10 copy is allowed. The 21.8 GB zip (122 GB unpacked) is downloading from PhysioNet at about 90 KB/s, roughly three days.",
   "100 adults from a sleep-disorder lab, one night each: Empatica E4 wrist signals aligned with PSG 30-second sleep stages.",
   "Optional (#24): validating wrist sleep/wake against PSG; clinical apnea-heavy population and raw E4 signals.",
 ]
