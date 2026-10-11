@@ -90,6 +90,49 @@ def ensure_toolchain(sources, workspace):
     return prefix, identity
 
 
+def ensure_python_headers(workspace):
+    """CPython 3.12 development headers without installing a system package.
+
+    The GX10's interpreter ships without Python.h. ``apt-get download`` (no root) fetches the
+    Ubuntu candidate libpython3.12-dev, which is checked against the SHA256 in apt's signed
+    package index and unpacked into the owner workspace. Bugfix revisions of 3.12.3 share one
+    C ABI, so the candidate revision's headers match the installed interpreter.
+    """
+    package = "libpython3.12-dev"
+    record = subprocess.check_output(["apt-cache", "show", package], text=True).split("\n\n")[0]
+    fields = dict(line.split(": ", 1) for line in record.splitlines() if ": " in line)
+    version, expected = fields["Version"], fields["SHA256"]
+    installed = subprocess.check_output(
+        ["dpkg-query", "-W", "-f=${Version}", "python3.12-minimal"], text=True
+    ).strip()
+    root = workspace / "toolchains" / f"python-headers-{version}"
+    include = root / "usr/include"
+    stamp = root / ".hachi-deb-sha256"
+    if not (stamp.exists() and stamp.read_text().strip() == expected):
+        if root.exists():
+            raise SystemExit(f"existing unrecognized header tree is untouched: {root}")
+        downloads = workspace / "toolchains/downloads"
+        downloads.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["apt-get", "download", f"{package}={version}"], cwd=downloads, check=True)
+        (deb,) = downloads.glob(f"{package}_*_arm64.deb")
+        if digest(deb) != expected:
+            raise SystemExit(f"{deb.name} does not match apt's signed index")
+        staging = root.with_name(root.name + ".staging")
+        shutil.rmtree(staging, ignore_errors=True)
+        subprocess.run(["dpkg-deb", "-x", str(deb), str(staging)], check=True)
+        if not (staging / "usr/include/python3.12/Python.h").exists():
+            raise SystemExit("libpython3.12-dev did not provide Python.h")
+        (staging / ".hachi-deb-sha256").write_text(expected + "\n")
+        staging.replace(root)
+    identity = {
+        "package": package,
+        "version": version,
+        "sha256": expected,
+        "interpreter_package": installed,
+    }
+    return [include / "python3.12", include], identity
+
+
 def ensure_wheels(root, lock_dir):
     lock_id = digest(lock_dir / "requirements.lock")
     wheels = root / "infra/wheels" / lock_id
@@ -193,6 +236,7 @@ def main():
         parser.error(f"owner workspace is not provisioned: {workspace}")
 
     prefix, toolchain_id = ensure_toolchain(sources, workspace)
+    python_include, python_headers = ensure_python_headers(workspace)
     runtime = ensure_wheels(root, HERE)
     build = ensure_wheels(root, HERE / "build")
     builder = ensure_builder(workspace, runtime, build)
@@ -217,6 +261,7 @@ def main():
             "PATH": f"{prefix / 'bin'}:{builder / 'bin'}:/usr/bin:/bin",
             "MAX_JOBS": str(args.max_jobs),
             "TMPDIR": str(work),
+            "CPATH": ":".join(str(p) for p in python_include),
         }
     )
     env.pop("NVCC_APPEND_FLAGS", None)
@@ -260,6 +305,7 @@ def main():
         "built_at_utc": stamp,
         "variant": args.variant,
         "nvcc_append_flags": flags,
+        "python_headers": python_headers,
         "toolchain": {
             "release": sources["cuda_toolkit"]["release"],
             "components_sha256": toolchain_id,
