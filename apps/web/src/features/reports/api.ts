@@ -5,7 +5,8 @@ import type {
   ReportResult,
   SubjectId,
 } from "@hachi/contracts";
-import { ApiRequestError, apiUrl, isRecord, requestJson, waitForPoll } from "../api";
+import { ApiRequestError, isRecord, requestJson, waitForPoll } from "../api";
+import { parseDocument } from "../checkins/schema";
 
 export type TaskResult =
   | { kind: "result"; result: ReportResult }
@@ -14,31 +15,36 @@ export type TaskResult =
 export type ReportPair = { forecast: TaskResult; anomaly: TaskResult };
 
 export function readReportJob(value: unknown): ReportJob {
-  if (
-    !isRecord(value) ||
-    value.schema_version !== "0.1" ||
-    typeof value.report_id !== "string" ||
-    !["queued", "running", "completed"].includes(String(value.state)) ||
-    !isRecord(value.request) ||
-    (value.state === "completed" && !isRecord(value.result))
-  ) {
+  try {
+    return parseDocument("ReportJob", value);
+  } catch {
     throw new Error("The Hachi API returned an invalid report job.");
   }
-  return value as unknown as ReportJob;
 }
 
 export async function readSavedReplay(
-  apiBaseUrl: string,
   signal: AbortSignal,
 ): Promise<ReportJob> {
   let response: Response;
   try {
-    response = await fetch(apiUrl("/replay/report", apiBaseUrl), { signal });
+    response = await fetch("/replay/report", { signal });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw new ApiRequestError("The offline replay provider could not be reached.");
   }
   if (!response.ok) {
+    if (response.status === 409) {
+      let error: unknown;
+      try {
+        error = await response.json();
+      } catch {
+        throw new ApiRequestError("The offline replay provider returned an unreadable error.");
+      }
+      if (isRecord(error) && typeof error.error_code === "string" && error.live_fallback === false) {
+        throw new ApiRequestError(`No valid saved replay is available (${error.error_code}).`);
+      }
+      throw new ApiRequestError("The offline replay provider returned an invalid conflict response.");
+    }
     throw new ApiRequestError(`No valid saved replay is available (${response.status}).`);
   }
   let body: unknown;
@@ -59,6 +65,10 @@ async function requestReport(
   signal: AbortSignal,
   apiBaseUrl: string,
 ): Promise<ReportResult> {
+  const matchesRequest = (job: ReportJob) =>
+    job.request.subject_id === request.subject_id &&
+    job.request.as_of === request.as_of &&
+    job.request.task === request.task;
   let job = readReportJob(
     await requestJson<ReportJob>("/v1/reports", {
       method: "POST",
@@ -67,15 +77,25 @@ async function requestReport(
       signal,
     }, apiBaseUrl),
   );
+  if (!matchesRequest(job)) throw new Error("The Hachi API returned a report for a different request.");
 
   while (job.state !== "completed") {
     await waitForPoll(signal);
     job = readReportJob(
       await requestJson<ReportJob>(`/v1/reports/${encodeURIComponent(job.report_id)}`, { signal }, apiBaseUrl),
     );
+    if (!matchesRequest(job)) throw new Error("The Hachi API returned a report for a different request.");
   }
 
   if (!job.result) throw new Error("The completed report did not include a result.");
+  if (
+    job.result.report_id !== job.report_id ||
+    job.result.subject_id !== request.subject_id ||
+    job.result.as_of !== request.as_of ||
+    ((job.result.status === "ok" || job.result.status === "unavailable") && job.result.task !== request.task)
+  ) {
+    throw new Error("The Hachi API returned a result that does not match its report request.");
+  }
   return job.result;
 }
 

@@ -197,9 +197,11 @@ function ForecastChart({ series, expanded }: { series: ForecastSeries; expanded:
   const range = max === min ? Math.max(1, Math.abs(max) * 0.05) : (max - min) * 0.12;
   const low = min - range;
   const high = max + range;
-  const x = (index: number) => 58 + index * 560 / Math.max(1, series.points.length - 1);
+  const start = Date.parse(series.points[0].interval_start_utc);
+  const end = Date.parse(series.points.at(-1)!.interval_start_utc);
+  const x = (timestamp: string) => 58 + (Date.parse(timestamp) - start) * 560 / Math.max(1, end - start);
   const y = (value: number) => 220 - (value - low) / (high - low) * 170;
-  const path = series.points.map((point, index) => `${index ? "L" : "M"}${x(index)},${y(point.median)}`).join(" ");
+  const path = series.points.map((point, index) => `${index ? "L" : "M"}${x(point.interval_start_utc)},${y(point.median)}`).join(" ");
   const metricName = labels[series.metric] ?? series.metric.replaceAll("_", " ");
   return (
     <figure className="plot api-plot">
@@ -220,12 +222,12 @@ function ForecastChart({ series, expanded }: { series: ForecastSeries; expanded:
         <svg viewBox="0 0 680 270" role="img" aria-label={`${metricName} median forecast${pointOnly ? " points without intervals" : " with interval bounds"}`}>
           {[low, (low + high) / 2, high].map((value) => <g key={value}><line x1="58" x2="640" y1={y(value)} y2={y(value)} className="grid-line" /><text x="8" y={y(value) + 4}>{value.toFixed(1)}</text></g>)}
           <text x="8" y="18">{series.unit}</text>
-          {series.points.map((point, index) => <g key={point.interval_start_utc}>
-            {showBounds && point.lower !== null && point.upper !== null && <line x1={x(index)} x2={x(index)} y1={y(point.lower)} y2={y(point.upper)} className="interval" />}
-            <text x={x(index)} y="254" textAnchor="middle">{point.interval_start_utc.slice(5, 10)} {point.interval_start_utc.slice(11, 16)}</text>
+          {series.points.map((point) => <g key={point.interval_start_utc}>
+            {showBounds && point.lower !== null && point.upper !== null && <line x1={x(point.interval_start_utc)} x2={x(point.interval_start_utc)} y1={y(point.lower)} y2={y(point.upper)} className="interval" />}
+            <text x={x(point.interval_start_utc)} y="254" textAnchor="middle">{point.interval_start_utc.slice(5, 10)} {point.interval_start_utc.slice(11, 16)}</text>
           </g>)}
           <path d={path} className="series" />
-          {series.points.map((point, index) => <circle key={point.interval_start_utc} cx={x(index)} cy={y(point.median)} r="4" className="dot" />)}
+          {series.points.map((point) => <circle key={point.interval_start_utc} cx={x(point.interval_start_utc)} cy={y(point.median)} r="4" className="dot" />)}
         </svg>
       </div>
       <details open={expanded}>
@@ -252,8 +254,16 @@ function AnomalyChart({ result, expanded }: { result: AnomalyResult; expanded: b
   const max = Math.max(anomaly.alert_threshold, ...values);
   const range = max === min ? 1 : max - min;
   const y = (value: number) => 220 - (value - min) / range * 170;
-  const x = (index: number) => 58 + index * 560 / Math.max(1, anomaly.timeline.length - 1);
-  const path = anomaly.timeline.map((point, index) => point.score === null ? "" : `${index === 0 || anomaly.timeline[index - 1].score === null ? "M" : "L"}${x(index)},${y(point.score)}`).join(" ");
+  const start = Date.parse(anomaly.baseline_window_start_utc);
+  const end = Date.parse(anomaly.baseline_window_end_utc);
+  const x = (timestamp: string) => 58 + (Date.parse(timestamp) - start) * 560 / Math.max(1, end - start);
+  const path = anomaly.timeline.map((point, index) => {
+    if (point.score === null) return "";
+    const previous = anomaly.timeline[index - 1];
+    const contiguous = previous !== undefined && previous.score !== null &&
+      Date.parse(previous.interval_end_utc) === Date.parse(point.interval_start_utc);
+    return `${contiguous ? "L" : "M"}${x(point.interval_start_utc)},${y(point.score)}`;
+  }).join(" ");
   return (
     <figure className="plot api-plot">
       <figcaption><h2>Baseline deviation timeline · score</h2><p>{anomaly.score_definition}</p></figcaption>
@@ -263,9 +273,9 @@ function AnomalyChart({ result, expanded }: { result: AnomalyResult; expanded: b
           {[min, (min + max) / 2, max].map((value) => <g key={value}><line x1="58" x2="640" y1={y(value)} y2={y(value)} className="grid-line" /><text x="8" y={y(value) + 4}>{value.toFixed(2)}</text></g>)}
           <line x1="58" x2="640" y1={y(anomaly.alert_threshold)} y2={y(anomaly.alert_threshold)} className="threshold" />
           <text x="8" y="18">score</text>
-          {anomaly.timeline.map((point, index) => <text key={point.interval_start_utc} x={x(index)} y="254" textAnchor="middle">{point.interval_start_utc.slice(5, 10)} {point.interval_start_utc.slice(11, 16)}</text>)}
+          {anomaly.timeline.map((point) => <text key={point.interval_start_utc} x={x(point.interval_start_utc)} y="254" textAnchor="middle">{point.interval_start_utc.slice(5, 10)} {point.interval_start_utc.slice(11, 16)}</text>)}
           <path d={path} className="series" />
-          {anomaly.timeline.map((point, index) => point.score === null ? <text key={point.interval_start_utc} x={x(index)} y="238" textAnchor="middle">abstained</text> : <circle key={point.interval_start_utc} cx={x(index)} cy={y(point.score)} r="4" className={point.alert ? "alert-dot" : "dot"} />)}
+          {anomaly.timeline.map((point) => point.score === null ? <text key={point.interval_start_utc} x={x(point.interval_start_utc)} y="238" textAnchor="middle">abstained</text> : <circle key={point.interval_start_utc} cx={x(point.interval_start_utc)} cy={y(point.score)} r="4" className={point.alert ? "alert-dot" : "dot"} />)}
         </svg>
       </div>
       {anomaly.observed_alert_burden ? <p>Observed burden · {anomaly.observed_alert_burden.false_alert_episodes_per_30_healthy_days} false-alert episodes per 30 healthy days · {anomaly.observed_alert_burden.evaluation_report}</p> : <p className="caption">Observed alert burden has not been measured. This is deviation from a personal baseline, not an illness probability.</p>}

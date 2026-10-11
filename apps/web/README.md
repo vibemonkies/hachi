@@ -4,7 +4,7 @@ The React and Vite client uploads Apple Health exports, opens an existing API su
 
 ## Configure the API
 
-The development and preview servers proxy `/v1`, `/replay`, and `/healthz` to `http://127.0.0.1:8717` by default. Set `VITE_HACHI_API_PROXY_TARGET` in the Vite environment to use another loopback API port, such as `http://127.0.0.1:8720`. This keeps browser requests same-origin. Set `VITE_HACHI_API_BASE_URL` only when the browser should call a separately reachable API origin directly and that API allows the page's origin.
+The development and preview servers proxy `/v1` and `/healthz` to `http://127.0.0.1:8717`, and `/replay` to `http://127.0.0.1:5180`. Set `VITE_HACHI_API_PROXY_TARGET` or `VITE_HACHI_REPLAY_PROXY_TARGET` in the Vite environment to use different upstreams. Replay requests stay same-origin in the browser and use a separate proxy target. Set `VITE_HACHI_API_BASE_URL` only when the browser should call a separately reachable API origin directly and that API allows the page's origin.
 
 The API base setting is shared by import, coverage, reports, check-ins, schedule comparisons, and saved replay. Subject IDs are entered explicitly; the app has no subject-discovery endpoint and never manufactures an import to open an existing subject.
 

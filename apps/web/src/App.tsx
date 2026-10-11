@@ -100,7 +100,7 @@ export default function App() {
         },
       );
     } else if (workflow.kind === "replay-loading") {
-      readSavedReplay(apiBaseUrl, signal).then(
+      readSavedReplay(signal).then(
         (job) => dispatch({ type: "replay-finished", operationId, job }),
         (error: unknown) => {
           if (!(error instanceof DOMException && error.name === "AbortError"))
