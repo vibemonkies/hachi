@@ -129,7 +129,6 @@ def test_actual_isolated_worker_serializes_typed_support_counts(tmp_path, monkey
     root = tmp_path / "packet"
     root.mkdir()
     (root / "summary.json").write_text(json.dumps({"git_sha": commit}))
-    (tmp_path / ".cache").mkdir()
     files = {
         f"src/{p}/__init__.py": b""
         for p in ("hachi", "hachi/models", "hachi/models/illness", "hachi/evaluation")
@@ -157,6 +156,7 @@ def test_actual_isolated_worker_serializes_typed_support_counts(tmp_path, monkey
     )
     result = evidence.archived_report(tmp_path, tmp_path, root, tmp_path, tmp_path, tmp_path)
     assert result == {"scoring_commit": commit, "counts": {"participants": 3}}
+    assert (tmp_path / ".cache").is_dir()
 
 
 def test_markdown_uses_canonical_json_order():

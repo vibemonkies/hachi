@@ -65,7 +65,9 @@ def archived_report(snapshot, packet, root, chronos, encoder_return, encoder_pin
     }
     # Fresh extraction avoids trusting a pre-existing writable cache. Git discovery
     # remains in this checkout; -I prevents ambient modules mixing with archived ones.
-    with tempfile.TemporaryDirectory(prefix="comparison-source-", dir=REPO / ".cache") as tmp:
+    cache = REPO / ".cache"
+    cache.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="comparison-source-", dir=cache) as tmp:
         with tarfile.open(fileobj=io.BytesIO(payload)) as archive:
             archive.extractall(tmp, filter="data")
         result = subprocess.run(
