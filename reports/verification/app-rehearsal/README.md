@@ -12,6 +12,32 @@ selected, no outer test was opened, and no clinical/product gate is waived.
 
 ## Private replay consumer follow-up
 
+The corrected current-source receipts are [API](api-e76626b.json),
+[replay](replay-e76626b.json) and [browser](replay-browser-e76626b.json), produced
+at clean `e76626b` after main through #72/#80/#84/#85. The real API again matched
+25 origins/600 points against packet and direct inference. With the live API
+stopped, the real viewer matched all 24 medians, all 48 visible interval endpoints,
+the exact visible cutoff and elapsed UTC geometry, with zero discrepancies.
+No real timestamp/row/prediction was emitted in browser tool output or captured.
+The saved response is unchanged except `ReplayInfo`; its original mode and source
+provenance remain intact.
+
+The valid generated staggered-window replay matched five points and ten visible
+endpoints, retaining three missing target windows and the unavailable HRV reason.
+The [synthetic desktop](replay-utc-synthetic-desktop.png),
+[mobile cutoff](replay-utc-synthetic-phone-cutoff.png),
+[mobile intervals](replay-utc-synthetic-phone-intervals.png),
+[mobile bounds after local horizontal scroll](replay-utc-synthetic-phone-bounds.png)
+and [missing-cache error](replay-utc-synthetic-missing-cache.png) are bound by exact
+SHA256 and capture metadata in the browser receipt. Mobile body width is 390;
+only the focusable tables scroll horizontally. All screenshots contain generated
+synthetic content or an empty error, and belong to this corrected source.
+
+Local `make check`, with api/baselines extras installed, passed 687 tests, six
+subtests, five coordination checks and generated-contract checks. All 19 focused
+runtime/replay tests pass. Owned services and tabs were stopped. Full app/#22
+integration remains gated; this is the standalone replay consumer.
+
 The parent review of `e33ed3e` found a rendered fidelity blocker: the original
 viewer omitted `as_of` and interval endpoints, and its chart x coordinate was an
 ordinal index. Earlier browser receipts verified numeric points, recorded/generated
