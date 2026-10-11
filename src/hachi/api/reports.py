@@ -81,6 +81,11 @@ def now_utc() -> datetime:
     return datetime.now(UTC).replace(microsecond=0)
 
 
+def fallback_data_mode(subject_id: str) -> DataMode:
+    """For a subject without resolved data: synthetic ids stay labelled synthetic."""
+    return "synthetic" if subject_id.startswith("synthetic") else "real"
+
+
 @dataclass(frozen=True)
 class Context:
     catalog: Catalog
@@ -254,7 +259,8 @@ def _warning(code: WarningCode, message: str) -> ResultWarning:
 def run_report(context: Context, report_id: str, request: ReportRequest) -> ReportResult:
     body = request.root
     subject = context.catalog.subject(body.subject_id, context.metadata, context.workspace)
-    base = _Base(report_id, request, subject.data_mode if subject else "real", context.git_sha)
+    data_mode = subject.data_mode if subject else fallback_data_mode(body.subject_id)
+    base = _Base(report_id, request, data_mode, context.git_sha)
     if subject is None:
         return base.unavailable(
             "INSUFFICIENT_HISTORY", "A completed import or dataset history for this subject"

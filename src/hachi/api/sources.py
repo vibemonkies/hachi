@@ -10,9 +10,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-import pyarrow.compute as pc
-import pyarrow.parquet as pq
-
 from hachi.contracts.base import DataMode, DatasetSnapshotRef
 from hachi.contracts.metrics import Metric
 from hachi.contracts.tables import Observation, SourceKind
@@ -145,9 +142,3 @@ class SubjectData:
                     aggregate.interval_end_utc,
                     self.dataset_source_kind,
                 )
-
-
-def snapshot_subjects(snapshot: Path) -> frozenset[str]:
-    """Subjects present in a snapshot's daily table (cheap: one column)."""
-    table = pq.read_table(snapshot / "aggregates_daily.parquet", columns=["subject_id"])
-    return frozenset(pc.unique(table["subject_id"]).to_pylist())

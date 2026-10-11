@@ -298,7 +298,7 @@ class Service:
             latest = records[-1].status if records else None
             return build_coverage(
                 subject_id=subject_id,
-                data_mode=latest.data_mode if latest else "real",
+                data_mode=latest.data_mode if latest else reports.fallback_data_mode(subject_id),
                 snapshot=None,
                 tz_name=latest.declared_tz_name if latest else "UTC",
                 presence=(),
@@ -365,7 +365,8 @@ class Service:
             result = run_report(self.context, report_id, job.request)
         except Exception as exc:
             log.error("report %s failed (%s)", report_id, type(exc).__name__)
-            result = reports._Base(report_id, job.request, "real", self.settings.git_sha).error(
+            data_mode = reports.fallback_data_mode(job.request.root.subject_id)
+            result = reports._Base(report_id, job.request, data_mode, self.settings.git_sha).error(
                 "INTERNAL_ERROR", "The report could not be produced."
             )
         self.metadata.update_report(
@@ -425,10 +426,9 @@ class Service:
 
     def scenario(self, request: ScenarioRequest) -> ReportResult:
         subject = self.catalog.subject(request.subject_id, self.metadata, self.workspace)
-        if subject is not None:
-            data_mode: DataMode = subject.data_mode
-        else:
-            data_mode = "synthetic" if request.subject_id.startswith("synthetic") else "real"
+        data_mode: DataMode = (
+            subject.data_mode if subject else reports.fallback_data_mode(request.subject_id)
+        )
         return scenario_result(request, data_mode, self.settings.git_sha)
 
     # Deletion ---------------------------------------------------------------------------
