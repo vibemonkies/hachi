@@ -4,22 +4,22 @@ Research evidence only. Production recovery prediction abstains; no recovery dat
 
 ## Provenance and fixed protocol
 
-Clean source: `ff561b7bbfe94411f71568f69c1ef4b0ff3e087d` (`git_dirty=false`). The scientific choices and splits were committed before corrected CMU scores in `af09ba3`. Subsequent changes correct censoring/publication metadata and integrate main. CMU protocol version2 changes version/exposure metadata only; every other config field and both split protocols remain unchanged. No post-score tuning, refit or recalibration.
+Clean source: `ee1548795a7dc4f1c0d724c629d3b0697291a1b2` (`git_dirty=false`). The scientific choices and splits were committed before corrected CMU scores in `af09ba3`. Subsequent changes correct censoring/publication metadata and integrate main. CMU protocol version2 changes version/exposure metadata only; every other config field and both split protocols remain unchanged. No post-score tuning, refit or recalibration.
 
 Snapshot: `6a864b03b2d3ddf05abc42b699679dba39f1909bad2c3053c4b8adf4108faf09`.
 Combined config: `963555849e40dd594b57e488343636963f3bd576ab9f5c7ea69ea9d7aa2e5e95`.
 Split protocol: `60a4345a6feb8f4a192e6aec718e4b364d2f22a93ad8d227e1645d092ec6e82c`.
 Fold plan: `13dd73b4b3f2b6beabe105c5e577e86e935fa68edfdc117d8e9ebdc7c772fa5e`.
 Lock: `1b290745f51cf459018c95226823b49db1422e08817402bfc111fef0c30b1297`; Python `3.12.13`.
-Byte-identical runner receipt: [phase1.json](phase1.json), SHA256 `8349f596afc22a0747393da6df633097a2c53f8e1ebabdc34c78fee911508568`.
+Byte-identical runner receipt: [phase1.json](phase1.json), SHA256 `a9105205a01ba12a3cc0a6b159c6c51f3630f9ed1037c8255fe0483f6b9612e4`.
 
-Private packet: `/Users/ezzyrappeport/hachi/runs/NavyOwl/recovery-stanford-minimized-01`. Private weights, assignments and participant predictions stay local. All 33 files and 7 directories have no group/other permission bits.
+Private packet: `/Users/ezzyrappeport/hachi/runs/NavyOwl/recovery-stanford-disclosure-01`. Private weights, assignments and participant predictions stay local. All 33 files and 7 directories have no group/other permission bits.
 
 ```sh
 /Users/ezzyrappeport/hachi/runtime/navyowl/venv/bin/python -I -m hachi.models.recovery \
   --snapshot /Users/ezzyrappeport/hachi/data/derived/clinical-labels-2-stanford-covid19-wearables-2020-nbe-6a864b03b2d3 \
   --config configs/experiments/recovery/phase1.json \
-  --output /Users/ezzyrappeport/hachi/runs/NavyOwl/recovery-stanford-minimized-01
+  --output /Users/ezzyrappeport/hachi/runs/NavyOwl/recovery-stanford-disclosure-01
 ```
 
 The command ran in the isolated recovery worktree. Reproduction needs a new private output directory and the recorded clean source.

@@ -6,22 +6,22 @@ The [owner-confirmed registration record](https://github.com/vibemonkies/hachi/i
 
 ## Provenance and fixed protocol
 
-Clean source: `ff561b7bbfe94411f71568f69c1ef4b0ff3e087d` (`git_dirty=false`). The scientific choices and splits were committed before corrected CMU scores in `af09ba3`. Subsequent changes correct censoring/publication metadata and integrate main. CMU protocol version2 changes version/exposure metadata only; every other config field and both split protocols remain unchanged. No post-score tuning, refit or recalibration.
+Clean source: `ee1548795a7dc4f1c0d724c629d3b0697291a1b2` (`git_dirty=false`). The scientific choices and splits were committed before corrected CMU scores in `af09ba3`. Subsequent changes correct censoring/publication metadata and integrate main. CMU protocol version2 changes version/exposure metadata only; every other config field and both split protocols remain unchanged. No post-score tuning, refit or recalibration.
 
 Snapshot: `7c1429b102ebf5bcb5c0f94db0aba6c1e290d1b0b78aeae68c7105b3cfda38c3`.
 Combined config: `7182114cf43e29827fa8c155b3fea0eb370e2cffc00337ebd4ac694d35d0ca30`.
 Split protocol: `0f9b7b6f49ce382574ee3b1692ecbe4b9ce712991d1cd0ebef1376938d2e03bb`.
 Fold plan: `f95b01edbd73c7511e517b03a1bf9e4a887d19f416b2a172b523b4eb2d790016`.
 Lock: `1b290745f51cf459018c95226823b49db1422e08817402bfc111fef0c30b1297`; Python `3.12.13`.
-Byte-identical runner receipt: [cmu.json](cmu.json), SHA256 `5a9606cb414f0fbc0d3c357386ac57dc3a60882a877565df0f611192ddf436dc`.
+Byte-identical runner receipt: [cmu.json](cmu.json), SHA256 `4cde45fd20d78a2a484fb5550e67b72bd6874d95e049530384126096ca36cff6`.
 
-Private packet: `/Users/ezzyrappeport/hachi/runs/NavyOwl/recovery-cmu-minimized-01`. Private weights, assignments and participant predictions stay local. All 33 files and 7 directories have no group/other permission bits.
+Private packet: `/Users/ezzyrappeport/hachi/runs/NavyOwl/recovery-cmu-disclosure-01`. Private weights, assignments and participant predictions stay local. All 33 files and 7 directories have no group/other permission bits.
 
 ```sh
 /Users/ezzyrappeport/hachi/runtime/navyowl/venv/bin/python -I -m hachi.models.recovery \
   --snapshot /Users/ezzyrappeport/hachi/data/derived/clinical-labels-2-cmu-common-cold-project-retrieved-2026-10-10-7c1429b102eb \
   --config configs/experiments/recovery/cmu.json \
-  --output /Users/ezzyrappeport/hachi/runs/NavyOwl/recovery-cmu-minimized-01
+  --output /Users/ezzyrappeport/hachi/runs/NavyOwl/recovery-cmu-disclosure-01
 ```
 
 The command ran in the isolated recovery worktree. Reproduction needs a new private output directory and the recorded clean source.
@@ -38,7 +38,7 @@ The frozen primary horizon is2d, calibration1/2/3d, exports<=3d. Quarantine foll
 
 ## Development support and held-out comparison
 
-**Aggregate disclosure (B3).** Previously published development audits repeated #8 endpoint categories. Combined with the existing source-wide #8 audits, those counts made test-partition outcome totals derivable. Both cohort receipts now record historical aggregate exposure. Removing category breakdowns cannot restore past blindness. Task eligibility correlates with source categories, so test-partition label totals remain roughly inferable from #8's whole-cohort audit; where eligibility coincides, some categories may be exactly inferable. No test-total subtraction is performed or published. No new test-outcome read/scoring is authorized, and no blind-final-test claim is made. Parent retains any decision about the compromised partition.
+**Aggregate disclosure (B3).** Previously published development audits repeated #8 endpoint categories. Combined with the existing source-wide #8 audits, those counts made test-partition outcome totals derivable. Both cohort receipts now record historical aggregate exposure. Removing category breakdowns cannot restore past blindness. The published CMU task counts, including implicit zero exclusions, together with #8's source-wide audit allow exact derivation of the test partition's resolved and no-qualifying-run totals. The no-follow-up total remains hidden. This is a statement about the published fields, not a calculation of test counts. No test-total subtraction is performed or published. No new test-outcome read/scoring is authorized, and no blind-final-test claim is made. Parent retains any decision about the compromised partition.
 
 Publication receipt format3 allowlists #14 task eligibility and task-specific exclusions on development partitions, including per-fold audits. Full source-category counts remain only in runner-owned private `private-audit.json`. Disjoint validation task audits are summed once; no full-roster task eligibility audit is performed.
 
