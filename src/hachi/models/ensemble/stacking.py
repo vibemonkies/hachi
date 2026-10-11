@@ -143,7 +143,7 @@ def fit_stack(
     """Per decile, minimize pinball loss over complete meta points (linear programme)."""
     import numpy as np
     from scipy.optimize import linprog
-    from scipy.sparse import csr_matrix, hstack, identity
+    from scipy.sparse import csr_matrix, hstack, identity, vstack
 
     keys = sorted(
         k
@@ -158,14 +158,17 @@ def fit_stack(
     for level in DECILES:
         p = np.asarray([[meta[name][k].at(level) for name in members] for k in keys])
         # Variables [w (m), u (n), v (n)]: p w + u - v = y; sum w = 1; all >= 0.
-        equality = hstack(
-            [csr_matrix(p), identity(n, format="csr"), -identity(n, format="csr")], format="csr"
+        constraints = vstack(
+            [
+                hstack([csr_matrix(p), identity(n), -identity(n)]),
+                hstack([csr_matrix(np.ones((1, m))), csr_matrix((1, 2 * n))]),
+            ],
+            format="csc",
         )
-        simplex = csr_matrix(np.concatenate([np.ones(m), np.zeros(2 * n)])[None, :])
         cost = np.concatenate([np.zeros(m), np.full(n, level), np.full(n, 1 - level)])
         solved = linprog(
             cost,
-            A_eq=hstack([equality.T, simplex.T]).T,
+            A_eq=constraints,
             b_eq=np.concatenate([y, [1.0]]),
             bounds=(0, None),
             method="highs",

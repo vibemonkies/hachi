@@ -119,5 +119,17 @@
       "alerts": "none: physiology forecasts"
     },
     "post_selection_calibration": "after selection only, a point model's served interval may be recalibrated on the three folds' inner-validation residuals; recorded with its own provenance and never reported as independently calibrated coverage; the outer test stays sealed"
+  },
+  "amendment_2": {
+    "date": "2026-10-11",
+    "before_final_scoring": true,
+    "reason": "#11 (RoseElk, PR #73) published its frozen-encoder results before #12 could insert them, and its out-of-fold medians exist only for the inner validation folds, not for the amendment-1 meta folds",
+    "decision": "the #11 heads (ridge-handcrafted, +WBM, +MOMENT, WBM-only, MOMENT-only) enter as reported comparators on identical origins and in the representation ablation; they are not selection candidates, because their scores were already public and the predeclared residual-interval method needs meta-fold predictions they do not have",
+    "source": {
+      "file": "issue11-run-20261011T120409Z/oof-predictions.parquet",
+      "sha256": "bd131e03df9e1301d085a1f819adbfcc21533fa5691fecf55ccdbdf920805d16"
+    },
+    "cross_check": "#11's tree medians must equal #12's tree predictions point for point",
+    "selection_rule_changed": false
   }
 }
