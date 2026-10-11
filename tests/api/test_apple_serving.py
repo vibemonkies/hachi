@@ -147,8 +147,29 @@ def test_typical_watch_sampling_abstains_at_the_models_density_gates(apple_clien
 def test_admissions_keep_the_model_target_and_their_own_readiness():
     with pytest.raises(ValidationError, match="sealed availability rule"):
         SourceAdmission(source="apple_health", feature_policy=HR_POLICY, rationale=RATIONALE)
+    weaker = [
+        APPLE_POLICY.model_copy(update={"metric": "steps", "aggregation": "sum"}),
+        APPLE_POLICY.model_copy(update={"min_coverage": 0.0}),
+        APPLE_POLICY.model_copy(update={"min_observed_count": 2}),  # any difference refused
+    ]
+    for policy in weaker:
+        with pytest.raises(ValidationError, match="keeps the model's feature policy"):
+            ServingSpec(
+                format_version="hachi-serving-1",
+                task="physiology_forecast",
+                resolution="hour",
+                entry_point="hachi.models.baselines.load_artifact",
+                input="hourly_features",
+                feature_policy=HR_POLICY,
+                accepted_sources=[
+                    SourceAdmission(
+                        source="apple_health", feature_policy=policy, rationale=RATIONALE
+                    )
+                ],
+            )
+    assert admitting_serving().accepted_sources[0].feature_policy == APPLE_POLICY  # allowed
     steps = APPLE_POLICY.model_copy(update={"metric": "steps", "aggregation": "sum"})
-    with pytest.raises(ValidationError, match="own metric and aggregation"):
+    with pytest.raises(ValidationError, match="keeps the model's feature policy"):
         ServingSpec(
             format_version="hachi-serving-1",
             task="physiology_forecast",
