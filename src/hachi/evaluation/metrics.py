@@ -114,6 +114,25 @@ def forecast_metrics(
             )
         )
 
+    return _metric_report(
+        subjects,
+        metric=metric,
+        unit=unit,
+        bootstrap_samples=bootstrap_samples,
+        confidence=confidence,
+        seed=seed,
+    )
+
+
+def _metric_report(
+    subjects: Sequence[SubjectMetrics],
+    *,
+    metric: Metric,
+    unit: Unit,
+    bootstrap_samples: int,
+    confidence: float,
+    seed: int,
+) -> MetricReport:
     def aggregate(values: Sequence[float]) -> Estimate | None:
         return bootstrap_participant_mean(
             values, samples=bootstrap_samples, confidence=confidence, seed=seed
@@ -131,4 +150,33 @@ def forecast_metrics(
         aggregate([s.median_pinball_loss for s in subjects]),
         aggregate([s.interval_coverage for s in subjects if s.interval_coverage is not None]),
         aggregate([s.mean_interval_width for s in subjects if s.mean_interval_width is not None]),
+    )
+
+
+def combine_metric_reports(reports: Sequence[MetricReport], *, seed: int) -> MetricReport:
+    """Pool disjoint validation participants, retaining equal-person weighting.
+
+    Do not pool nested folds in which a participant is evaluated more than once.
+    Choose one outer fold's disjoint inner validation cohorts, or disjoint outer
+    test reports after per-outer selection. Model selection remains caller-owned.
+    """
+    if not reports:
+        raise ValueError("at least one metric report is required")
+    first = reports[0]
+    if any(
+        (r.metric, r.unit, r.weighting, r.bootstrap_samples, r.confidence)
+        != (first.metric, first.unit, first.weighting, first.bootstrap_samples, first.confidence)
+        for r in reports
+    ):
+        raise ValueError("combined reports must share metric, units and bootstrap protocol")
+    subjects = sorted((s for r in reports for s in r.subjects), key=lambda s: s.subject_id)
+    if len({s.subject_id for s in subjects}) != len(subjects):
+        raise ValueError("combined reports must have disjoint participants")
+    return _metric_report(
+        subjects,
+        metric=first.metric,
+        unit=first.unit,
+        bootstrap_samples=first.bootstrap_samples,
+        confidence=first.confidence,
+        seed=seed,
     )
