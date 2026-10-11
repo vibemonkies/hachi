@@ -7,7 +7,6 @@ unknown, never zero. A predictor at cutoff ``c`` uses the latest window whose as
 at or before ``c``, so recomputing from a snapshot truncated at ``c`` gives the same input.
 """
 
-import tomllib
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -76,8 +75,7 @@ class _Cell:
 
 def snapshot_timezone(snapshot: Path) -> str:
     """The local timezone the snapshot's pipeline config declares for its cohort."""
-    config = tomllib.loads(load_manifest(snapshot)["config"]["content"])
-    return config["local_timezone"]
+    return load_manifest(snapshot)["config"]["content"]["local_timezone"]
 
 
 def load_bins(snapshot: Path, subjects: Sequence[str] | None = None) -> list[FeatureBin]:
