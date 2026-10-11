@@ -1,0 +1,672 @@
+{
+  "base_protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "dataset_snapshot": {
+    "dataset_id": "pmdata",
+    "dataset_version": "simula-2020-04-24",
+    "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+  },
+  "definition": "thin minus full per participant on paired targets; positive = worse with Apple-like history",
+  "density_audit": {
+    "computed_before_scoring": true,
+    "frozen_admitted_hours": 46406,
+    "frozen_native_count_per_observed_hour": {
+      "median": 433,
+      "p05": 300,
+      "p95": 531
+    },
+    "hourly_bins": 54999,
+    "kept_samples": 556943,
+    "newly_admitted_hours": 268,
+    "samples": 20985494,
+    "share_of_frozen_admitted_hours_with_thinned_count_at_least": {
+      "10": 0.9816,
+      "12": 0.9619,
+      "3": 1.0,
+      "4": 1.0,
+      "5": 1.0,
+      "6": 1.0,
+      "8": 0.9952
+    },
+    "thinned_count_in_frozen_admitted_hours": {
+      "median": 12,
+      "min": 6,
+      "p01": 8,
+      "p05": 12,
+      "p10": 12
+    },
+    "thinned_hours_admitted_by_gate": 46674
+  },
+  "density_gate": {
+    "justification": "Apple-like history holds at most 12 heart-rate samples per hour (one per 5-minute slot), so the frozen gate of 30 native samples rejects every thinned hour. The frozen protocol admits an hour when at least half of its minutes hold a sample (coverage >= 0.5); under 5-minute thinning, 30 covered minutes always span at least 6 slots, so >= 6 of 12 slots (coverage >= 0.5 of slots) is the same rule at the thinned cadence. The pre-scoring audit confirms it: all 46,406 hours the frozen protocol admits keep >= 6 thinned samples (min 6, p01 8, median 12), and the gate newly admits 268 hours (0.6%). Coverage stays >= 0.5; target gates stay on full-density labels.",
+    "min_observed_count": 6
+  },
+  "full_density_crosscheck": {
+    "comparator_evaluations_matching_published_packet_index": "12/12",
+    "full_chronos_requests_equal_issue10": true
+  },
+  "full_feature_counts": {
+    "included": 46406,
+    "input_bins": 164997,
+    "low_count": 0,
+    "low_coverage": 0,
+    "missing": 8593,
+    "other_aggregation": 109998,
+    "other_metric": 0
+  },
+  "full_requests_sha256": "bacf077badbed44ff1348327fefdd5ea193164922c95d4f70dd52409ff5788e2",
+  "gate_in_other_denominators": {
+    "as_sampled_minute_density": "at least 6 sampled minutes of 60 (minute-density coverage >= 0.1), each in a distinct 5-minute slot",
+    "frozen_protocol_rule": "native count >= 30 and minute coverage >= 0.5; rejects every hour holding at most 12 samples",
+    "note": "A source that reports Apple HR coverage as sampled-minute density (12/60 = 0.2 at 5-minute cadence) would still abstain under coverage >= 0.5. This evidence supports the rule above, stated in that source's own denominator; it does not license relabelling one coverage as the other.",
+    "validated_rule": "at least 6 kept samples in the hour, at most one per UTC 5-minute slot, so at least 6 of the hour's 12 slots observed (slot coverage >= 0.5)"
+  },
+  "git_dirty": false,
+  "git_sha": "748aaa32745a6dbd77830e6a865c8fb975156081",
+  "models": {
+    "causal-hourly-tree-v1": {
+      "coverage": {
+        "full": {
+          "abstained_points": 118,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1481
+        },
+        "pairing": {
+          "both_abstained": 100,
+          "paired": 1481,
+          "thin_only": 18,
+          "unlabelled_or_ineligible": 249
+        },
+        "thin": {
+          "abstained_points": 100,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1499
+        }
+      },
+      "paired_full": {
+        "interval_coverage": null,
+        "mae": {
+          "confidence_interval": [
+            9.380857323875746,
+            11.302113281852039
+          ],
+          "participants": 12,
+          "value": 10.323923219908261
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.690428661937873,
+            5.6510566409260194
+          ],
+          "participants": 12,
+          "value": 5.161961609954131
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.977478058816462,
+            15.848604476327944
+          ],
+          "participants": 12,
+          "value": 14.385815029087288
+        }
+      },
+      "paired_thin": {
+        "interval_coverage": null,
+        "mae": {
+          "confidence_interval": [
+            9.326268535026324,
+            11.134596737610044
+          ],
+          "participants": 12,
+          "value": 10.179757305254151
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.663134267513162,
+            5.567298368805022
+          ],
+          "participants": 12,
+          "value": 5.089878652627076
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.987225393485263,
+            15.80838652001026
+          ],
+          "participants": 12,
+          "value": 14.337545460968762
+        }
+      },
+      "participants_worse_better": [
+        4,
+        8
+      ],
+      "per_fold_thin_minus_full_mae": [
+        0.033,
+        -0.193,
+        -0.272
+      ],
+      "thin_minus_full": {
+        "mae": {
+          "confidence_interval": [
+            -0.2991833652547005,
+            0.001392531357121135
+          ],
+          "participants": 12,
+          "value": -0.1441659146541098
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.14959168262735026,
+            0.0006962656785605675
+          ],
+          "participants": 12,
+          "value": -0.0720829573270549
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.18376485475437596,
+            0.08805358384017141
+          ],
+          "participants": 12,
+          "value": -0.0482695681185256
+        }
+      }
+    },
+    "chronos-2-zero-shot": {
+      "coverage": {
+        "full": {
+          "abstained_points": 0,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1599
+        },
+        "pairing": {
+          "paired": 1599,
+          "unlabelled_or_ineligible": 249
+        },
+        "thin": {
+          "abstained_points": 0,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1599
+        }
+      },
+      "paired_full": {
+        "interval_coverage": {
+          "confidence_interval": [
+            0.7790278228228024,
+            0.8455017667172274
+          ],
+          "participants": 12,
+          "value": 0.8123628375803609
+        },
+        "mae": {
+          "confidence_interval": [
+            7.691080268915542,
+            10.17092844973423
+          ],
+          "participants": 12,
+          "value": 8.939667320175072
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            3.845540134457771,
+            5.085464224867115
+          ],
+          "participants": 12,
+          "value": 4.469833660087536
+        },
+        "rmse": {
+          "confidence_interval": [
+            11.966291321026754,
+            15.967991545014915
+          ],
+          "participants": 12,
+          "value": 14.014986833152888
+        }
+      },
+      "paired_thin": {
+        "interval_coverage": {
+          "confidence_interval": [
+            0.7946801289457659,
+            0.8592858030008909
+          ],
+          "participants": 12,
+          "value": 0.8266697851592925
+        },
+        "mae": {
+          "confidence_interval": [
+            7.753673824105598,
+            10.116393161888976
+          ],
+          "participants": 12,
+          "value": 8.944825854153068
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            3.876836912052799,
+            5.058196580944488
+          ],
+          "participants": 12,
+          "value": 4.472412927076534
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.068872789294721,
+            15.901840678719037
+          ],
+          "participants": 12,
+          "value": 14.049608495492352
+        }
+      },
+      "participants_worse_better": [
+        6,
+        6
+      ],
+      "per_fold_thin_minus_full_mae": [
+        -0.111,
+        0.117,
+        0.009
+      ],
+      "thin_minus_full": {
+        "interval_coverage": {
+          "confidence_interval": [
+            0.0004527538167375222,
+            0.026972091709006135
+          ],
+          "participants": 12,
+          "value": 0.0143069475789315
+        },
+        "mae": {
+          "confidence_interval": [
+            -0.10767729741308253,
+            0.12876811624515033
+          ],
+          "participants": 12,
+          "value": 0.005158533977995594
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.053838648706541266,
+            0.06438405812257517
+          ],
+          "participants": 12,
+          "value": 0.002579266988997797
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.10679098128769468,
+            0.1717942512247598
+          ],
+          "participants": 12,
+          "value": 0.03462166233946632
+        }
+      }
+    },
+    "hourly-last-valid-v1": {
+      "coverage": {
+        "full": {
+          "abstained_points": 0,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1599
+        },
+        "pairing": {
+          "paired": 1599,
+          "unlabelled_or_ineligible": 249
+        },
+        "thin": {
+          "abstained_points": 0,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1599
+        }
+      },
+      "paired_full": {
+        "interval_coverage": null,
+        "mae": {
+          "confidence_interval": [
+            10.942346892345657,
+            13.011816214955356
+          ],
+          "participants": 12,
+          "value": 12.025532450745864
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            5.471173446172829,
+            6.505908107477678
+          ],
+          "participants": 12,
+          "value": 6.012766225372932
+        },
+        "rmse": {
+          "confidence_interval": [
+            15.144231375211465,
+            19.168482533210028
+          ],
+          "participants": 12,
+          "value": 17.214322318087323
+        }
+      },
+      "paired_thin": {
+        "interval_coverage": null,
+        "mae": {
+          "confidence_interval": [
+            10.968317882450263,
+            13.145418014433275
+          ],
+          "participants": 12,
+          "value": 12.08575191048842
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            5.4841589412251315,
+            6.572709007216638
+          ],
+          "participants": 12,
+          "value": 6.04287595524421
+        },
+        "rmse": {
+          "confidence_interval": [
+            15.285308477026884,
+            19.179765226082186
+          ],
+          "participants": 12,
+          "value": 17.305087964123643
+        }
+      },
+      "participants_worse_better": [
+        6,
+        6
+      ],
+      "per_fold_thin_minus_full_mae": [
+        -0.049,
+        0.288,
+        -0.058
+      ],
+      "thin_minus_full": {
+        "mae": {
+          "confidence_interval": [
+            -0.24980827739632647,
+            0.341531243316387
+          ],
+          "participants": 12,
+          "value": 0.060219459742557525
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.12490413869816323,
+            0.1707656216581935
+          ],
+          "participants": 12,
+          "value": 0.030109729871278763
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.18481250212174583,
+            0.38494867161003693
+          ],
+          "participants": 12,
+          "value": 0.09076564603632094
+        }
+      }
+    },
+    "train-population-mean-v1": {
+      "coverage": {
+        "full": {
+          "abstained_points": 0,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1599
+        },
+        "pairing": {
+          "paired": 1599,
+          "unlabelled_or_ineligible": 249
+        },
+        "thin": {
+          "abstained_points": 0,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1599
+        }
+      },
+      "paired_full": {
+        "interval_coverage": null,
+        "mae": {
+          "confidence_interval": [
+            10.269457472183735,
+            14.191326593356614
+          ],
+          "participants": 12,
+          "value": 12.195703254092995
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            5.134728736091867,
+            7.095663296678307
+          ],
+          "participants": 12,
+          "value": 6.097851627046498
+        },
+        "rmse": {
+          "confidence_interval": [
+            13.941232746512032,
+            18.388086393904043
+          ],
+          "participants": 12,
+          "value": 16.138935367634073
+        }
+      },
+      "paired_thin": {
+        "interval_coverage": null,
+        "mae": {
+          "confidence_interval": [
+            10.260460775396549,
+            14.171417172117847
+          ],
+          "participants": 12,
+          "value": 12.133041967786028
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            5.130230387698274,
+            7.0857085860589235
+          ],
+          "participants": 12,
+          "value": 6.066520983893014
+        },
+        "rmse": {
+          "confidence_interval": [
+            13.852711423326431,
+            18.459514444225206
+          ],
+          "participants": 12,
+          "value": 16.14149261877456
+        }
+      },
+      "participants_worse_better": [
+        6,
+        6
+      ],
+      "per_fold_thin_minus_full_mae": [
+        0.032,
+        -0.158,
+        -0.062
+      ],
+      "thin_minus_full": {
+        "mae": {
+          "confidence_interval": [
+            -0.1913957683561831,
+            0.08530504511505
+          ],
+          "participants": 12,
+          "value": -0.06266128630696903
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.09569788417809155,
+            0.042652522557525
+          ],
+          "participants": 12,
+          "value": -0.031330643153484515
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.10596123362276053,
+            0.12262088341020343
+          ],
+          "participants": 12,
+          "value": 0.0025572511404855134
+        }
+      }
+    },
+    "utc-seasonal-naive-v1": {
+      "coverage": {
+        "full": {
+          "abstained_points": 135,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1464
+        },
+        "pairing": {
+          "both_abstained": 126,
+          "paired": 1464,
+          "thin_only": 9,
+          "unlabelled_or_ineligible": 249
+        },
+        "thin": {
+          "abstained_points": 126,
+          "insufficient_history_points": 168,
+          "predicted_origins": 77,
+          "scored_points": 1473
+        }
+      },
+      "paired_full": {
+        "interval_coverage": null,
+        "mae": {
+          "confidence_interval": [
+            9.422525238518059,
+            12.942661497061493
+          ],
+          "participants": 12,
+          "value": 11.15451767800426
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.7112626192590294,
+            6.471330748530747
+          ],
+          "participants": 12,
+          "value": 5.57725883900213
+        },
+        "rmse": {
+          "confidence_interval": [
+            14.561298240095145,
+            19.73120794790601
+          ],
+          "participants": 12,
+          "value": 17.11349695988759
+        }
+      },
+      "paired_thin": {
+        "interval_coverage": null,
+        "mae": {
+          "confidence_interval": [
+            9.311438525732077,
+            12.643567491243472
+          ],
+          "participants": 12,
+          "value": 10.942984883036234
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.655719262866039,
+            6.321783745621736
+          ],
+          "participants": 12,
+          "value": 5.471492441518117
+        },
+        "rmse": {
+          "confidence_interval": [
+            14.23442942728546,
+            18.903767534544812
+          ],
+          "participants": 12,
+          "value": 16.551435370129266
+        }
+      },
+      "participants_worse_better": [
+        2,
+        10
+      ],
+      "per_fold_thin_minus_full_mae": [
+        -0.366,
+        -0.004,
+        -0.265
+      ],
+      "thin_minus_full": {
+        "mae": {
+          "confidence_interval": [
+            -0.32413719383997336,
+            -0.09247610368067512
+          ],
+          "participants": 12,
+          "value": -0.21153279496802546
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.16206859691998668,
+            -0.04623805184033756
+          ],
+          "participants": 12,
+          "value": -0.10576639748401273
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.8425331093441099,
+            -0.2851907847523476
+          ],
+          "participants": 12,
+          "value": -0.5620615897583258
+        }
+      }
+    }
+  },
+  "nested_plan_sha256": "df6fd2b36daf9514b7e2e1c16eb32de414c65712601371a9e08fc0b17b741c06",
+  "outer_test_sealed": true,
+  "question": "How much do the served hourly HR forecasters degrade when their history is Apple-like (one sample per 5 minutes) while targets stay full density?",
+  "scope": "PMData (Fitbit Versa 2) thinned to Apple-like cadence; outer fold 0 inner validation folds, test sealed. Not real Apple Watch data.",
+  "split_sha256": [
+    "13a312b2ecde7569eec1a16f8a3f0205904fd33448c331ed1d9a40b2c3324ec9",
+    "4b63051a10e7939caa4f8ea91e223dbb92f0c29b54df49dd82c4fd05af883f29",
+    "f385983ff18aca956675462daa091316b7e0dfb9fa8152bbd3009522b2192c2c"
+  ],
+  "thin_feature_counts": {
+    "included": 46674,
+    "input_bins": 54999,
+    "low_count": 0,
+    "low_coverage": 0,
+    "missing": 8325,
+    "other_aggregation": 0,
+    "other_metric": 0
+  },
+  "thin_requests_sha256": "3a2bcb87dc8a9c0edd6c0553bf78687d07b181e3f92f5c4297e441abf61d10f2",
+  "thinning": {
+    "keep": "earliest_start_per_utc_slot",
+    "metric": "heart_rate",
+    "pipeline_suffix": "thin300s",
+    "slot_seconds": 300
+  },
+  "thinning_counts": {
+    "bins": 54999,
+    "kept_samples": 556943,
+    "samples": 20985494
+  },
+  "validation_participants": 12,
+  "variant_file_sha256": "a5bd17c20c1956d7e98f0b2758f1e0323c18969e74d08609232ccdfdd083aa43",
+  "variant_protocol_sha256": "4aad3a87fa7fd390304031bd5e49b31ed2affe23edcfe6a6a9ea987323f7ee27",
+  "variant_sha256": "c47841731ba29add150f20d2e6bf3b697de0d1e6d3525e4aed69e7eda9e57356"
+}

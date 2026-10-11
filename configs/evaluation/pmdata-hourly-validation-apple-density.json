@@ -1,0 +1,129 @@
+{
+  "base_protocol": {
+    "path": "configs/evaluation/pmdata-hourly-validation.json",
+    "sha256": "d7bca15083b6496ce4d913ad8cdcf67b2875e284e68a6b578a55e1188ddd6b6a"
+  },
+  "thinning": {
+    "metric": "heart_rate",
+    "slot_seconds": 300,
+    "keep": "earliest_start_per_utc_slot",
+    "pipeline_suffix": "thin300s"
+  },
+  "density_gate": {
+    "min_observed_count": 6,
+    "justification": "Apple-like history holds at most 12 heart-rate samples per hour (one per 5-minute slot), so the frozen gate of 30 native samples rejects every thinned hour. The frozen protocol admits an hour when at least half of its minutes hold a sample (coverage >= 0.5); under 5-minute thinning, 30 covered minutes always span at least 6 slots, so >= 6 of 12 slots (coverage >= 0.5 of slots) is the same rule at the thinned cadence. The pre-scoring audit confirms it: all 46,406 hours the frozen protocol admits keep >= 6 thinned samples (min 6, p01 8, median 12), and the gate newly admits 268 hours (0.6%). Coverage stays >= 0.5; target gates stay on full-density labels."
+  },
+  "density_audit": {
+    "computed_before_scoring": true,
+    "samples": 20985494,
+    "kept_samples": 556943,
+    "hourly_bins": 54999,
+    "frozen_admitted_hours": 46406,
+    "frozen_native_count_per_observed_hour": {
+      "p05": 300,
+      "median": 433,
+      "p95": 531
+    },
+    "thinned_count_in_frozen_admitted_hours": {
+      "min": 6,
+      "p01": 8,
+      "p05": 12,
+      "p10": 12,
+      "median": 12
+    },
+    "share_of_frozen_admitted_hours_with_thinned_count_at_least": {
+      "3": 1.0,
+      "4": 1.0,
+      "5": 1.0,
+      "6": 1.0,
+      "8": 0.9952,
+      "10": 0.9816,
+      "12": 0.9619
+    },
+    "thinned_hours_admitted_by_gate": 46674,
+    "newly_admitted_hours": 268
+  },
+  "protocol": {
+    "split_created_at_utc": "2026-10-11T10:55:00Z",
+    "expected_snapshot": {
+      "dataset_id": "pmdata",
+      "dataset_version": "simula-2020-04-24",
+      "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+    },
+    "folds": {
+      "outer_folds": 4,
+      "inner_folds": 3,
+      "min_train_subjects": 4,
+      "seed": 42
+    },
+    "active_outer_fold": 0,
+    "feature_policy": {
+      "metric": "heart_rate",
+      "aggregation": "mean",
+      "min_coverage": 0.5,
+      "min_observed_count": 6,
+      "availability_rule": "pmdata-aggregate-final-at-latest-input"
+    },
+    "evaluation": {
+      "data_mode": "real",
+      "metric": "heart_rate",
+      "aggregation": "mean",
+      "history_policy": "causal_prefix",
+      "pretrained_cohort_overlap": "not_applicable",
+      "overlap_note": "Native CPU comparators; new-person validation with explicitly permitted personal history. PMData clock mapping and historical availability are documented assumptions, not observed synchronization.",
+      "bootstrap_samples": 1000,
+      "confidence": 0.95,
+      "min_target_coverage": 0.5,
+      "min_target_observed_count": 30
+    },
+    "evaluation_window": {
+      "start_utc": "2020-01-01T00:00:00Z",
+      "end_utc": "2020-01-08T00:00:00Z"
+    },
+    "lookback_hours": 48,
+    "min_history_hours": 24,
+    "horizon_hours": 24,
+    "cutoff_stride_hours": 24,
+    "embargo_hours": 0,
+    "baselines": [
+      {
+        "method": "last_valid",
+        "metric": "heart_rate",
+        "aggregation": "mean",
+        "max_age_hours": 48,
+        "seasonal_period_hours": 24,
+        "min_samples_per_hour": 6
+      },
+      {
+        "method": "seasonal_naive",
+        "metric": "heart_rate",
+        "aggregation": "mean",
+        "max_age_hours": 48,
+        "seasonal_period_hours": 24,
+        "min_samples_per_hour": 6
+      },
+      {
+        "method": "train_population_mean",
+        "metric": "heart_rate",
+        "aggregation": "mean",
+        "max_age_hours": 48,
+        "seasonal_period_hours": 24,
+        "min_samples_per_hour": 6
+      }
+    ],
+    "tree": {
+      "metric": "heart_rate",
+      "aggregation": "mean",
+      "lookback_hours": 48,
+      "min_history_hours": 24,
+      "min_samples_per_hour": 6,
+      "max_age_hours": 2,
+      "max_lead_hours": 23,
+      "max_depth": 5,
+      "min_samples_leaf": 20,
+      "min_training_examples": 100,
+      "seed": 42
+    },
+    "exclusions": []
+  }
+}
