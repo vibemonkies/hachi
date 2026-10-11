@@ -1093,10 +1093,26 @@
           "type": "number"
         },
         "lower": {
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null exactly for a point-only forecast."
         },
         "upper": {
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null exactly for a point-only forecast."
         }
       },
       "required": [
@@ -1112,6 +1128,7 @@
     },
     "ForecastSeries": {
       "additionalProperties": false,
+      "description": "A forecast with intervals, or a point-only forecast (`interval_calibration: \"none\"`).\n\nA point-only series has no interval and makes no coverage claim: every point's `lower` and\n`upper` and the series' `nominal_coverage` are null. Draw it as points, never as a band.",
       "properties": {
         "metric": {
           "$ref": "#/$defs/Metric"
@@ -1120,16 +1137,24 @@
           "$ref": "#/$defs/Unit"
         },
         "nominal_coverage": {
-          "description": "Intended probability that the outcome falls in [lower, upper].",
-          "exclusiveMaximum": 1.0,
-          "exclusiveMinimum": 0.0,
-          "type": "number"
+          "anyOf": [
+            {
+              "exclusiveMaximum": 1.0,
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Intended probability that the outcome falls in [lower, upper]. Null exactly for a point-only forecast."
         },
         "interval_calibration": {
-          "description": "'validated' only when held-out coverage was measured for this artifact.",
+          "description": "'validated' only when held-out coverage was measured for this artifact; 'none' for a point-only forecast, which has no interval.",
           "enum": [
             "validated",
-            "uncalibrated"
+            "uncalibrated",
+            "none"
           ],
           "type": "string"
         },
@@ -2675,6 +2700,31 @@
           "$ref": "#/$defs/ConfounderEntry"
         }
       ]
+    },
+    "SelfReportHistory": {
+      "additionalProperties": false,
+      "description": "GET /v1/subjects/{id}/observations response: every stored entry, in recording order.\n\nThe whole history comes in one response and may be empty. The 1-200 bound applies only\nto a single POST batch (`SelfReportRequest`). Entries are immutable once recorded.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/SelfReportEntry"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subject_id",
+        "entries"
+      ],
+      "title": "SelfReportHistory",
+      "type": "object"
     },
     "SelfReportRequest": {
       "additionalProperties": false,

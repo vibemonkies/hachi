@@ -41,6 +41,7 @@ from hachi.contracts import (
     ReportResult,
     RunManifest,
     ScenarioRequest,
+    SelfReportHistory,
     SelfReportRequest,
     SplitManifest,
     local_day_bounds,
@@ -303,6 +304,23 @@ def hourly_forecast() -> Doc:
             }
         ],
     )
+
+
+def point_only_forecast() -> Doc:
+    """A model with no interval: points only, no coverage claim, never drawn as a band."""
+    doc = hourly_forecast()
+    doc["report_id"] = "synthetic-report-forecast-point-only"
+    series = doc["forecast"]["series"][0]
+    series.update(nominal_coverage=None, interval_calibration="none", baseline=None)
+    for point in series["points"]:
+        point.update(lower=None, upper=None)
+    doc["forecast"]["series"] = [series]
+    doc["forecast"]["unavailable_metrics"] = [
+        {"metric": "steps", "reason_code": "NO_ARTIFACT_FOR_TASK"}
+    ]
+    doc["provenance"]["feature_coverage"] = coverage_list(heart_rate=0.92)
+    doc["warnings"] = []
+    return doc
 
 
 def daily_forecast() -> Doc:
@@ -577,6 +595,7 @@ def report_results() -> dict[str, Doc]:
     return {
         "ok-physiology-forecast-hourly": hourly_forecast(),
         "ok-physiology-forecast-daily": daily_forecast(),
+        "ok-physiology-forecast-point-only": point_only_forecast(),
         "ok-anomaly-alert": anomaly_alert(),
         "ok-anomaly-abstained-sparse": anomaly_abstained(),
         "ok-illness-onset": illness_onset(),
@@ -1029,10 +1048,23 @@ def run_manifests() -> dict[str, Doc]:
     }
 
 
+def self_report_histories() -> dict[str, Doc]:
+    recorded = self_report_requests()["symptoms-tests-and-alertness"]["entries"]
+    return {
+        "empty": {"schema_version": SCHEMA_VERSION, "subject_id": SUBJECT, "entries": []},
+        "recorded-entries": {
+            "schema_version": SCHEMA_VERSION,
+            "subject_id": SUBJECT,
+            "entries": recorded,
+        },
+    }
+
+
 VALID: dict[type[BaseModel], Callable[[], dict[str, Doc]]] = {
     ReportRequest: report_requests,
     ScenarioRequest: scenario_requests,
     SelfReportRequest: self_report_requests,
+    SelfReportHistory: self_report_histories,
     ReportResult: report_results,
     ReportJob: report_jobs,
     ImportStatus: import_statuses,
@@ -1100,6 +1132,18 @@ INVALID: list[tuple[type[BaseModel], str, str, Callable[[Doc], None], str]] = [
      _set("task", "cold_prediction"), "Expected status ok (with a known task)"),
     (ReportResult, "forecast-lower-above-median", "ok-physiology-forecast-hourly",
      _set("forecast.series.0.points.0.lower", 99.0), "lower <= median <= upper"),
+    (ReportResult, "forecast-one-bound-only", "ok-physiology-forecast-hourly",
+     _set("forecast.series.0.points.0.upper", None), "both interval bounds or neither"),
+    (ReportResult, "interval-forecast-without-bounds", "ok-physiology-forecast-hourly",
+     _all(_set("forecast.series.0.points.0.lower", None),
+          _set("forecast.series.0.points.0.upper", None)),
+     "points carry lower and upper exactly"),
+    (ReportResult, "point-only-forecast-claims-coverage", "ok-physiology-forecast-point-only",
+     _set("forecast.series.0.nominal_coverage", 0.5), "nominal_coverage is null exactly"),
+    (ReportResult, "point-only-forecast-with-band", "ok-physiology-forecast-point-only",
+     _all(_set("forecast.series.0.points.0.lower", 1.0),
+          _set("forecast.series.0.points.0.upper", 299.0)),
+     "points carry lower and upper exactly"),
     (ReportResult, "forecast-before-as-of", "ok-physiology-forecast-hourly",
      _set("as_of", "2026-10-10T08:00:00Z"), "start at or after as_of"),
     (ReportResult, "forecast-wrong-unit", "ok-physiology-forecast-hourly",
@@ -1153,6 +1197,8 @@ INVALID: list[tuple[type[BaseModel], str, str, Callable[[Doc], None], str]] = [
      _set("entries.3.entered_at_utc", "2026-10-09T23:00:00Z"), "cannot be recorded before"),
     (SelfReportRequest, "checkin-present-without-symptoms", "symptoms-tests-and-alertness",
      _set("entries.1.symptoms", []), "exactly when symptoms are present"),
+    (SelfReportHistory, "duplicate-entry-ids", "recorded-entries",
+     _set("entries.1.entry_id", "synthetic-entry-01"), "entry ids must not contain duplicates"),
     # Imports
     (ImportStatus, "failed-without-failure", "failed-malformed-xml",
      _set("failure", None), "failure is present exactly when"),

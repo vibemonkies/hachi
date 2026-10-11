@@ -135,15 +135,21 @@ class ForecastPoint(Contract):
     interval_end_utc: UtcDatetime
     local_date: date | None = Field(description="Local day for day-resolution points.")
     median: float
-    lower: float
-    upper: float
+    lower: float | None = Field(description="Null exactly for a point-only forecast.")
+    upper: float | None = Field(description="Null exactly for a point-only forecast.")
 
     @model_validator(mode="after")
     def _check(self) -> Self:
         require_ordered(
             self.interval_start_utc, self.interval_end_utc, "forecast point", allow_equal=False
         )
-        if not self.lower <= self.median <= self.upper:
+        if (self.lower is None) != (self.upper is None):
+            raise ValueError("a forecast point gives both interval bounds or neither")
+        if (
+            self.lower is not None
+            and self.upper is not None
+            and not self.lower <= self.median <= self.upper
+        ):
             raise ValueError("forecast interval must satisfy lower <= median <= upper")
         return self
 
@@ -156,23 +162,37 @@ class PersonalBaseline(Contract):
 
 
 class ForecastSeries(Contract):
+    """A forecast with intervals, or a point-only forecast (`interval_calibration: "none"`).
+
+    A point-only series has no interval and makes no coverage claim: every point's `lower` and
+    `upper` and the series' `nominal_coverage` are null. Draw it as points, never as a band.
+    """
+
     metric: Metric
     unit: Unit
-    nominal_coverage: Annotated[float, Field(gt=0.0, lt=1.0)] = Field(
-        description="Intended probability that the outcome falls in [lower, upper]."
+    nominal_coverage: Annotated[float, Field(gt=0.0, lt=1.0)] | None = Field(
+        description="Intended probability that the outcome falls in [lower, upper]. "
+        "Null exactly for a point-only forecast."
     )
-    interval_calibration: Literal["validated", "uncalibrated"] = Field(
-        description="'validated' only when held-out coverage was measured for this artifact."
+    interval_calibration: Literal["validated", "uncalibrated", "none"] = Field(
+        description="'validated' only when held-out coverage was measured for this artifact; "
+        "'none' for a point-only forecast, which has no interval."
     )
     baseline: PersonalBaseline | None
     points: Annotated[list[ForecastPoint], Field(min_length=1)]
 
     @model_validator(mode="after")
     def _check(self) -> Self:
+        point_only = self.interval_calibration == "none"
+        if point_only != (self.nominal_coverage is None):
+            raise ValueError("nominal_coverage is null exactly for a point-only forecast")
+        if any((p.lower is None) != point_only for p in self.points):
+            raise ValueError("points carry lower and upper exactly when the forecast has intervals")
         for p in self.points:
             seconds = (p.interval_end_utc - p.interval_start_utc).total_seconds()
             for value in (p.lower, p.median, p.upper):
-                check_metric_value(self.metric, self.unit, value, seconds, "forecast")
+                if value is not None:
+                    check_metric_value(self.metric, self.unit, value, seconds, "forecast")
         for a, b in zip(self.points, self.points[1:], strict=False):
             if b.interval_start_utc != a.interval_end_utc:
                 raise ValueError("forecast points must be ordered and contiguous")

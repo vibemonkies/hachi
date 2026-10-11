@@ -1,0 +1,243 @@
+{
+  "schema_version": "0.1",
+  "report_id": "synthetic-report-forecast-point-only",
+  "subject_id": "synthetic-001",
+  "as_of": "2026-10-10T07:00:00Z",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:05Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "warnings": [],
+  "replay": null,
+  "status": "ok",
+  "task": "physiology_forecast",
+  "provenance": {
+    "dataset_snapshot": {
+      "dataset_id": "synthetic",
+      "dataset_version": "0.1",
+      "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+    },
+    "artifact": {
+      "artifact_id": "synthetic-fixture-artifact",
+      "artifact_sha256": "cbc2a1fa300a95a9b516ea36bf8bf1d024ecdb13051fc8e52247822408b0a336"
+    },
+    "feature_coverage": [
+      {
+        "metric": "heart_rate",
+        "coverage": 0.92
+      }
+    ]
+  },
+  "forecast": {
+    "resolution": "hour",
+    "tz_name": "America/Los_Angeles",
+    "series": [
+      {
+        "metric": "heart_rate",
+        "unit": "bpm",
+        "nominal_coverage": null,
+        "interval_calibration": "none",
+        "baseline": null,
+        "points": [
+          {
+            "interval_start_utc": "2026-10-10T07:00:00Z",
+            "interval_end_utc": "2026-10-10T08:00:00Z",
+            "local_date": null,
+            "median": 57.6,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T08:00:00Z",
+            "interval_end_utc": "2026-10-10T09:00:00Z",
+            "local_date": null,
+            "median": 56.2,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T09:00:00Z",
+            "interval_end_utc": "2026-10-10T10:00:00Z",
+            "local_date": null,
+            "median": 55.3,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T10:00:00Z",
+            "interval_end_utc": "2026-10-10T11:00:00Z",
+            "local_date": null,
+            "median": 55.0,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T11:00:00Z",
+            "interval_end_utc": "2026-10-10T12:00:00Z",
+            "local_date": null,
+            "median": 55.3,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T12:00:00Z",
+            "interval_end_utc": "2026-10-10T13:00:00Z",
+            "local_date": null,
+            "median": 56.2,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T13:00:00Z",
+            "interval_end_utc": "2026-10-10T14:00:00Z",
+            "local_date": null,
+            "median": 57.6,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T14:00:00Z",
+            "interval_end_utc": "2026-10-10T15:00:00Z",
+            "local_date": null,
+            "median": 59.5,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T15:00:00Z",
+            "interval_end_utc": "2026-10-10T16:00:00Z",
+            "local_date": null,
+            "median": 61.7,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T16:00:00Z",
+            "interval_end_utc": "2026-10-10T17:00:00Z",
+            "local_date": null,
+            "median": 64.0,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T17:00:00Z",
+            "interval_end_utc": "2026-10-10T18:00:00Z",
+            "local_date": null,
+            "median": 66.3,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T18:00:00Z",
+            "interval_end_utc": "2026-10-10T19:00:00Z",
+            "local_date": null,
+            "median": 68.5,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T19:00:00Z",
+            "interval_end_utc": "2026-10-10T20:00:00Z",
+            "local_date": null,
+            "median": 70.4,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T20:00:00Z",
+            "interval_end_utc": "2026-10-10T21:00:00Z",
+            "local_date": null,
+            "median": 71.8,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T21:00:00Z",
+            "interval_end_utc": "2026-10-10T22:00:00Z",
+            "local_date": null,
+            "median": 72.7,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T22:00:00Z",
+            "interval_end_utc": "2026-10-10T23:00:00Z",
+            "local_date": null,
+            "median": 73.0,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-10T23:00:00Z",
+            "interval_end_utc": "2026-10-11T00:00:00Z",
+            "local_date": null,
+            "median": 72.7,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-11T00:00:00Z",
+            "interval_end_utc": "2026-10-11T01:00:00Z",
+            "local_date": null,
+            "median": 71.8,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-11T01:00:00Z",
+            "interval_end_utc": "2026-10-11T02:00:00Z",
+            "local_date": null,
+            "median": 70.4,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-11T02:00:00Z",
+            "interval_end_utc": "2026-10-11T03:00:00Z",
+            "local_date": null,
+            "median": 68.5,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-11T03:00:00Z",
+            "interval_end_utc": "2026-10-11T04:00:00Z",
+            "local_date": null,
+            "median": 66.3,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-11T04:00:00Z",
+            "interval_end_utc": "2026-10-11T05:00:00Z",
+            "local_date": null,
+            "median": 64.0,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-11T05:00:00Z",
+            "interval_end_utc": "2026-10-11T06:00:00Z",
+            "local_date": null,
+            "median": 61.7,
+            "lower": null,
+            "upper": null
+          },
+          {
+            "interval_start_utc": "2026-10-11T06:00:00Z",
+            "interval_end_utc": "2026-10-11T07:00:00Z",
+            "local_date": null,
+            "median": 59.5,
+            "lower": null,
+            "upper": null
+          }
+        ]
+      }
+    ],
+    "unavailable_metrics": [
+      {
+        "metric": "steps",
+        "reason_code": "NO_ARTIFACT_FOR_TASK"
+      }
+    ]
+  }
+}
