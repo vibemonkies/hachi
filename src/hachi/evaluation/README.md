@@ -140,6 +140,53 @@ record exclusions in the derived-input split manifest.
 with raw rows. Saved model source receipts also bind this feature adapter and
 shared causality/serialization helpers; prior artifacts require their prior code.
 
+## Nested participant folds
+
+`nested_participant_folds` builds deterministic, balanced grouped folds from
+participant IDs and explicit config/exclusions, without reading values or labels.
+Each eligible participant is held out in exactly one outer fold. Within each
+outer development cohort, every participant validates once across inner folds.
+Record exclusions travel with each split; whole-participant exclusions never
+enter any partition. Empty groups or a declared minimum training cohort violation
+are refused instead of silently reducing fold counts.
+
+```python
+from hachi.evaluation import NestedFoldConfig, nested_participant_folds
+
+plan = nested_participant_folds(
+    participant_roster,
+    NestedFoldConfig(
+        outer_folds=prespecified_outer_folds,
+        inner_folds=prespecified_inner_folds,
+        min_train_subjects=prespecified_minimum_training_cohort,
+        seed=prespecified_seed,
+    ),
+    exclusions=canonical_exclusions,
+)
+for fold in plan.folds:
+    # Canonical SplitManifest(..., fold=fold.outer_fold,
+    #     n_folds=plan.config.outer_folds, **fold.partitions())
+    # Use a manifest_id identifying BOTH outer and inner index.
+    # Fit preprocessing and model on train; select on validation; test stays sealed.
+    ...
+
+# Only after inner-only model/parameter selection is frozen for this outer fold:
+refit_partitions = plan.outer_partitions(outer_index)
+# Refit on all outer development participants. The same outer test remains held out.
+# Explicitly open a distinct test SplitManifest after recording selection/config hashes.
+```
+
+Persist the full nested plan privately and bind its `document_sha256` beside all
+canonical split/run hashes. The canonical fold field identifies the outer fold;
+inner indices live in the plan and distinct manifest IDs. Helpers never open test,
+choose models or assert that scientific selection occurred. Do not select global
+parameters from outer test performance. Combine outer-test predictions once per
+participant for the final report; inner validation results are selection evidence.
+Repeated episodes belonging to one participant follow that participant's partition;
+event-task window/ongoing-episode handling still needs the clinical #8 protocol.
+Fold counts and inclusion thresholds remain explicit scientific choices to freeze
+against the admitted cohort, with sensitivity reports rather than automatic defaults.
+
 ## Reproduce the software path
 
 From this worktree with its isolated environment:
@@ -225,7 +272,7 @@ examples**, not validated physiological models or the full #9 baseline suite.
 
 - #5's admitted, reproducible PMData snapshot and availability-preserving adapter;
   representative source-to-feature reconciliation and a nonempty real cohort.
-- Cohort-appropriate grouped/nested cross-validation and scientific split/count,
+- Cohort-appropriate use of the nested grouped-fold helper and scientific split/count,
   coverage, lookback, embargo, and bootstrap sensitivity choices frozen before
   test opening. This implementation supports one explicit fold at a time.
 - The agreed real baseline report with code/data/split hashes. Current checks
