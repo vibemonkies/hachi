@@ -1,0 +1,132 @@
+{
+  "artifact": {
+    "artifact_id": "stanford-causal-nightly-mad-v1",
+    "artifact_sha256": "a2a68abc93ab0ef760b5e5529491c11aa67b946a7af03b79aa88c8279bc9e747"
+  },
+  "confounders": "Exercise, alcohol, vaccination and travel unavailable; no absence inferred. Known symptomatic survey nights omitted from baseline.",
+  "data_mode": "real",
+  "dataset_snapshot": {
+    "dataset_id": "stanford-covid19-wearables",
+    "dataset_version": "2020-nbe",
+    "snapshot_sha256": "168d54133c8bc1c566f0b1a023d4f7ca04f54cecbadd3257fa4840e0031e8a33"
+  },
+  "definition": "Daily decision at next floating midnight scores the prior completed night. Horizon24 is the decision cadence, not a future illness probability.",
+  "git_dirty": false,
+  "git_sha": "ea09c7c5b473171695584cabcc4a63fd5b33b08b",
+  "native_archive_sha256": "52ca976e6c08daa0cf34b6b82f4fc69b8894c1eef66e598efa40197df4e380f4",
+  "native_counts": {
+    "heart_rate_included_points": 441941,
+    "heart_rate_input_rows": 5058755,
+    "heart_rate_outside_date_range": 3628451,
+    "heart_rate_outside_night": 988363,
+    "steps_included_points": 97555,
+    "steps_input_rows": 985330,
+    "steps_outside_date_range": 651960,
+    "steps_outside_night": 235815
+  },
+  "nested_plan_sha256": "13dd73b4b3f2b6beabe105c5e577e86e935fa68edfdc117d8e9ebdc7c772fa5e",
+  "outer_test_sealed": true,
+  "participants_with_control_days": 9,
+  "policies": {
+    "both": {
+      "alerted_fraction_of_scored_control_days": {
+        "confidence_interval": [
+          0.0,
+          0.17647058823529413
+        ],
+        "participants": 3,
+        "value": 0.05882352941176471
+      },
+      "counts": {
+        "abstained_cold_start": 6,
+        "abstained_missing_rest_measurement": 99,
+        "alert_episodes_intersecting_controls": 2,
+        "alerted_control_days": 3,
+        "confounder_records_available": 0,
+        "observed_control_days": 134,
+        "scored_control_days": 29
+      },
+      "episodes_per30_scored_control_days": {
+        "confidence_interval": [
+          0.0,
+          3.5294117647058822
+        ],
+        "participants": 3,
+        "value": 1.1764705882352942
+      },
+      "participants_with_scored_control_days": 3,
+      "pooled_episodes_per30_all_observed_control_days": 0.44776119402985076
+    },
+    "end": {
+      "alerted_fraction_of_scored_control_days": {
+        "confidence_interval": [
+          0.0,
+          0.17647058823529413
+        ],
+        "participants": 3,
+        "value": 0.05882352941176471
+      },
+      "counts": {
+        "abstained_cold_start": 6,
+        "abstained_missing_rest_measurement": 99,
+        "alert_episodes_intersecting_controls": 2,
+        "alerted_control_days": 3,
+        "confounder_records_available": 0,
+        "observed_control_days": 134,
+        "scored_control_days": 29
+      },
+      "episodes_per30_scored_control_days": {
+        "confidence_interval": [
+          0.0,
+          3.5294117647058822
+        ],
+        "participants": 3,
+        "value": 1.1764705882352942
+      },
+      "participants_with_scored_control_days": 3,
+      "pooled_episodes_per30_all_observed_control_days": 0.44776119402985076
+    },
+    "start": {
+      "alerted_fraction_of_scored_control_days": {
+        "confidence_interval": [
+          0.0,
+          0.17647058823529413
+        ],
+        "participants": 3,
+        "value": 0.05882352941176471
+      },
+      "counts": {
+        "abstained_cold_start": 6,
+        "abstained_missing_rest_measurement": 99,
+        "alert_episodes_intersecting_controls": 2,
+        "alerted_control_days": 3,
+        "confounder_records_available": 0,
+        "observed_control_days": 134,
+        "scored_control_days": 29
+      },
+      "episodes_per30_scored_control_days": {
+        "confidence_interval": [
+          0.0,
+          3.5294117647058822
+        ],
+        "participants": 3,
+        "value": 1.1764705882352942
+      },
+      "participants_with_scored_control_days": 3,
+      "pooled_episodes_per30_all_observed_control_days": 0.44776119402985076
+    }
+  },
+  "protocol_sha256": "22e7294ffff8ece3076a220dda827c13214d091646d5c65898fa6baf00fd95c6",
+  "replay": {
+    "decisions_replayed": 402,
+    "mismatches": 0
+  },
+  "source_sha256": {
+    "__init__.py": "35a616cd1f816b4690fb31c895a9f7ab862e23954476e355365e7f515b9a8b29",
+    "burden.py": "2055da1a309cd93e0e88ec85236ca6d9138c010f2a654252289792ebb8e239f4",
+    "rest.py": "1aed5f4cb3b1a6f24bf136bbe8434802d2797d3c5172792b6c4f9a09996d2d30",
+    "robust.py": "cea96d1b5bb1b909682071f205e0ae912bee12cb6dd7048fd29e3341f1bfdfb1",
+    "source.py": "1f2becf15d7a7b45cb5bf053de6ea9d8e2d52c02b284a7d35bd9eab4fe37cd39"
+  },
+  "validation_roster_participants": 90
+}

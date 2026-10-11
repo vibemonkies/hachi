@@ -1,8 +1,10 @@
-# Issue #7 — CPU evaluation groundwork
+# Issue #7 — causal physiology evaluation
 
-This implements the data-independent portion of #7, continued from NobleBadger's existing work without modifying its original checkout. The real-cohort
-acceptance gate now uses the merged #5 PMData reader and the protocol below. Synthetic results demonstrate
-software behavior, not forecast accuracy or real-data integration.
+This continues NobleBadger's evaluator without modifying its original checkout.
+The merged #5 reader and frozen protocol now have actual PMData validation,
+paired baselines, raw-source reconciliation and real-input leakage sentinels.
+See [the aggregate acceptance report](../../../reports/evaluation/pmdata-hourly-validation/README.md).
+Generated checks establish software behavior; they remain distinct from real metrics.
 
 ## Caller and boundaries
 
@@ -139,6 +141,26 @@ record exclusions in the derived-input split manifest.
 `observed_count` for their sample-count policy. They do not re-average hourly means
 with raw rows. Saved model source receipts also bind this feature adapter and
 shared causality/serialization helpers; prior artifacts require their prior code.
+
+## Bounded context beyond the lookback
+
+`evaluate_forecast` passes a predictor only the configured metric within the protocol
+lookback. A model variant that needs a longer window or a past-only covariate reads it
+from `hachi.evaluation.context`, keyed by the request's own subject and cutoff:
+
+```python
+from hachi.evaluation.context import ContextPolicy, context_index, hourly_grid
+
+policy = ContextPolicy(hours=168, channels=[protocol.feature_policy, steps_policy])
+index = context_index(bins, policy)  # each channel selected by its own HourlyFeaturePolicy
+window = index.window(request.subject_id, request.cutoff)  # metric -> completed, available bins
+values = hourly_grid(window["heart_rate"], request.cutoff, policy.hours)  # None = missing
+```
+
+A window holds only bins in `[cutoff - hours, cutoff)` that are `available_by` the
+cutoff. Absent channels stay empty, never zero. Origins, eligibility and fit inputs
+are unchanged. Record `document_sha256(policy)` per variant, and check that the last
+lookback hours equal `request.history` (as `tests/evaluation/test_context.py` does).
 
 ## Nested participant folds
 
@@ -301,13 +323,14 @@ No intervals, episode labels, automatic winner, or outer-test results are invent
 
 ## Remaining integration gates
 
-- #5's admitted, reproducible PMData snapshot and availability-preserving adapter;
-  representative source-to-feature reconciliation and a nonempty real cohort.
+- The admitted PMData snapshot, source-to-feature reconciliation and nonempty real
+  physiology cohort are verified in the acceptance report above.
 - Cohort-appropriate use of the nested grouped-fold helper and scientific split/count,
   coverage, lookback, embargo, and bootstrap sensitivity choices frozen before
   test opening. This implementation supports one explicit fold at a time.
-- The agreed real baseline report with code/data/split hashes. Current checks
-  establish causal software behavior only.
+- The primary real baseline report, paired comparisons, explicit hashes and two
+  validation sensitivities are published. Final model selection/test opening remain
+  later gates; this harness does not select a winner.
 - Outcome-specific episode grouping, illness/anomaly/recovery metrics, and
   supervised/stacking safeguards after their inputs/protocols are defined. This
   hourly physiology slice does not complete those parts of #7 or later issues.

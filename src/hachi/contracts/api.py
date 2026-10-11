@@ -21,7 +21,7 @@ from .base import (
     require_unique,
 )
 from .metrics import Metric, Unit
-from .requests import ReportRequest
+from .requests import ReportRequest, SelfReportEntry
 from .results import ReportResult, UnavailableReason
 from .tables import SourceKind
 
@@ -219,6 +219,26 @@ class ReportJob(Contract):
                 request.task,
             ):
                 raise ValueError("result must answer the request's subject, as_of and task")
+        return self
+
+
+# --- Self-reports --------------------------------------------------------------------------
+
+
+class SelfReportHistory(Contract):
+    """GET /v1/subjects/{id}/observations response: every stored entry, in recording order.
+
+    The whole history comes in one response and may be empty. The 1-200 bound applies only
+    to a single POST batch (`SelfReportRequest`). Entries are immutable once recorded.
+    """
+
+    schema_version: SchemaVersion
+    subject_id: SubjectId
+    entries: list[SelfReportEntry]
+
+    @model_validator(mode="after")
+    def _check(self) -> Self:
+        require_unique([e.entry_id for e in self.entries], "entry ids")
         return self
 
 

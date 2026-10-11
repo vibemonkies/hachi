@@ -1,0 +1,95 @@
+"""Every non-2xx response is an ApiError with a stable code and the request's id."""
+
+import json
+from typing import Any
+
+from pydantic import TypeAdapter, ValidationError
+
+from hachi.contracts.api import ApiError, ApiErrorCode, FieldIssue
+from hachi.contracts.base import SCHEMA_VERSION, Identifier, SubjectId
+
+STATUS: dict[ApiErrorCode, int] = {
+    "VALIDATION_FAILED": 422,
+    "SCHEMA_VERSION_UNSUPPORTED": 400,
+    "NOT_FOUND": 404,
+    "CONFLICT": 409,
+    "PAYLOAD_TOO_LARGE": 413,
+    "INTERNAL_ERROR": 500,
+}
+
+
+class ApiProblem(Exception):
+    def __init__(
+        self,
+        code: ApiErrorCode,
+        message: str,
+        *,
+        issues: list[FieldIssue] | None = None,
+        status: int | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.issues = issues or []
+        self.status = status or STATUS[code]
+
+    def document(self, request_id: str) -> ApiError:
+        return ApiError(
+            schema_version=SCHEMA_VERSION,
+            error_code=self.code,
+            message=self.message,
+            request_id=request_id,
+            field_issues=self.issues[:50],
+        )
+
+
+def _issue(location: tuple, message: str) -> FieldIssue:
+    path = ".".join(str(part) for part in location) or "body"
+    return FieldIssue(path=path[:200], message=(message or "invalid")[:2000])
+
+
+def validation_problem(error: ValidationError, prefix: tuple = ()) -> ApiProblem:
+    """Field issues name the location and rule only; submitted values are never echoed."""
+    issues = [_issue(prefix + tuple(e["loc"]), e["msg"]) for e in error.errors()]
+    return ApiProblem(
+        "VALIDATION_FAILED", "The request does not match the contract.", issues=issues
+    )
+
+
+def parse_body[T](adapter: TypeAdapter[T] | type, body: bytes) -> T:
+    """Strict JSON validation with the contract's own rules, plus a clear version error."""
+    try:
+        document: Any = json.loads(body)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ApiProblem(
+            "VALIDATION_FAILED", "The body is not valid JSON.", issues=[_issue(("body",), "")]
+        ) from exc
+    version = document.get("schema_version") if isinstance(document, dict) else None
+    if version not in (None, SCHEMA_VERSION):
+        raise ApiProblem(
+            "SCHEMA_VERSION_UNSUPPORTED",
+            f"This API speaks contract schema_version {SCHEMA_VERSION}.",
+            issues=[_issue(("body", "schema_version"), f"expected {SCHEMA_VERSION}")],
+        )
+    try:
+        if isinstance(adapter, TypeAdapter):
+            return adapter.validate_json(body)
+        return adapter.model_validate_json(body)
+    except ValidationError as exc:
+        raise validation_problem(exc, ("body",)) from exc
+
+
+_IDENTIFIER = TypeAdapter(Identifier)
+_SUBJECT = TypeAdapter(SubjectId)
+
+
+def path_id(value: str, label: str, *, subject: bool = False) -> str:
+    """Ids from the URL are opaque tokens; anything path-like is refused before any lookup."""
+    try:
+        return (_SUBJECT if subject else _IDENTIFIER).validate_python(value)
+    except ValidationError as exc:
+        raise ApiProblem(
+            "VALIDATION_FAILED",
+            f"{label} is not a valid id.",
+            issues=[_issue((label,), "letters, digits, '_' and '-' only")],
+        ) from exc
