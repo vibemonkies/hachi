@@ -36,9 +36,10 @@ docs/                   shared plan, contracts, evidence requirements
 .github/                issue and PR templates, CI
 src/hachi/contracts/    authoritative contract models (Justin; reviewed by both callers)
 contracts/              generated JSON Schema, TypeScript types, synthetic fixtures
+src/hachi/data/         dataset registry now; ingestion and harmonization next (Justin)
+configs/datasets/       dataset admission registry: terms, access, checksums (Justin)
 tests/                  Python tests
 # Planned implementation ownership (created by the corresponding issues):
-src/hachi/data/         ingestion and harmonization (Justin)
 src/hachi/api/          API and local persistence (Justin)
 src/hachi/models/       model adapters and training (Ezzy)
 src/hachi/evaluation/   splits, replay, metrics (Ezzy)

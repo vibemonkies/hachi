@@ -1,0 +1,44 @@
+schema_version = "0.1"
+dataset_id = "tiles-2018"
+name = "TILES-2018: Tracking IndiVidual performance with Sensors"
+version = "2018"
+status = "candidate"
+access = "registration"
+primary_url = "https://tiles-data.isi.edu/"
+catalog_checked_on = 2026-10-11
+citation = "Mundnich K, et al. TILES-2018, a longitudinal physiologic and behavioral data set of hospital workers. Sci Data 7, 354 (2020). doi:10.1038/s41597-020-00655-3"
+access_steps = [
+  "Sign up on the TILES data site and sign its data use agreement yourself (each teammate individually).",
+  "Download from the emailed link; the main record is about 100 GB, so fetch only the Fitbit and daily-survey parts.",
+]
+access_owner = "justin06lee"
+storage = "Only accounts of users who signed the DUA; not the shared GX10 account unless all three have signed."
+checksum_strategy = "SHA-256 per downloaded file."
+notes = [
+  "212 hospital staff for 10 weeks (2018): Fitbit Charge 2 HR (5 s to 15 min), steps, sleep stages and periods; daily surveys including sleep hours and stress.",
+  "The site's front page says the data sets are publicly available; the download path requires a signed DUA (reported by the research pass, confirm the wording when signing).",
+]
+
+[terms]
+license = "TILES data use agreement"
+license_url = "https://tiles-data.isi.edu/"
+commercial_use = "unclear"
+redistribution = "only_to_users_who_accepted"
+team_access = "each_user_must_accept"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://tiles-data.isi.edu/"
+quote = "If you use either of these data sets, we request that you cite the corresponding paper in your work."
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "physiology_forecast"
+role = "features"
+notes = "Ten weeks of Fitbit HR, steps and sleep with shift-work schedules."
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Baseline drift around shift-work and stress, a confounder for illness alerts."

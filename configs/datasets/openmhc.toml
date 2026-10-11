@@ -1,0 +1,50 @@
+# OpenMHC (My Heart Counts). The full dataset is unreleased; the XS development subset was
+# released on Harvard Dataverse on 2026-10-08.
+schema_version = "0.1"
+dataset_id = "openmhc"
+name = "OpenMHC-XS (My Heart Counts development subset)"
+version = "dataverse-4.0"
+status = "candidate"
+access = "registration"
+primary_url = "https://doi.org/10.7910/DVN/ZYMJF6"
+doi = "10.7910/DVN/ZYMJF6"
+catalog_checked_on = 2026-10-11
+citation = "Zhang, Schuetz, Johnson. OpenMHC-XS. Harvard Dataverse, V4 (2026). doi:10.7910/DVN/ZYMJF6; and the OpenMHC benchmark manuscript (arXiv 2607.16235, under review)."
+acknowledgement = "These data were contributed by users of the My Heart Counts Mobile Health Application study developed by Stanford University and Imperial College London."
+access_steps = [
+  "Each teammate requests access on the Dataverse page, completes the guestbook and accepts the Conditions for Use themselves.",
+  "Download the 37 restricted files (about 1.99 GB) and verify each against its published MD5.",
+  "Destroy the data when the project ends, as the conditions require.",
+]
+access_owner = "justin06lee"
+storage = "Only on accounts of users who accepted the conditions; not the shared GX10 account unless all three have. Report any breach within five business days."
+checksum_strategy = "Verify Dataverse's per-file MD5, then pin SHA-256 per file."
+notes = [
+  "The full dataset (11,894 users, about 38 GB) is still unreleased pending the paper; do not make ingestion depend on it.",
+  "The repository has no LICENSE file; its README says code MIT, models OpenRAIL, while the WBM checkpoint's Hugging Face card says CC BY 4.0. Resolve before redistributing any derived model.",
+  "Used by the model lane for the representation experiments in #11; each user requests access themselves.",
+]
+
+[terms]
+license = "Harvard Dataverse Conditions for Use (OpenMHC-XS)"
+license_url = "https://doi.org/10.7910/DVN/ZYMJF6"
+commercial_use = "prohibited"
+redistribution = "prohibited"
+team_access = "each_user_must_accept"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://doi.org/10.7910/DVN/ZYMJF6"
+quote = "solely for legitimate academic, scientific, or non-commercial research purposes"
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://doi.org/10.7910/DVN/ZYMJF6"
+quote = "may not be redistributed, sold, leased, licensed, or transferred to any third party under any circumstances"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "physiology_forecast"
+role = "features"
+notes = "Pretraining or frozen-representation candidate for #11; pin channel order, normalisation and mask semantics."

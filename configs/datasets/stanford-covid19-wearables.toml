@@ -1,0 +1,55 @@
+# Data released with Mishra et al. 2020: smartwatch HR and steps around COVID-19 and other
+# illnesses, with symptom-onset and diagnosis dates.
+schema_version = "0.1"
+dataset_id = "stanford-covid19-wearables"
+name = "Stanford COVID-19 wearables data (Mishra et al. 2020, phase 1)"
+version = "2020-nbe"
+status = "downloaded"
+access = "public"
+primary_url = "https://www.nature.com/articles/s41551-020-00640-6"
+doi = "10.1038/s41551-020-00640-6"
+catalog_checked_on = 2026-10-11
+citation = "Mishra T, Wang M, Metwally AA, et al. Pre-symptomatic detection of COVID-19 from smartwatch data. Nat Biomed Eng 4, 1208-1220 (2020). doi:10.1038/s41551-020-00640-6"
+access_steps = [
+  "Download https://storage.googleapis.com/gbsc-gcp-project-ipop_public/COVID-19/COVID-19-Wearables.zip (378,380,920 bytes).",
+  "Compare with the bucket's published MD5 (base64 q3rOD3RMLxkDc+e6A+uR+g==), then record the SHA-256 here and move the status to downloaded.",
+  "Read the archive's README for any data terms before using it.",
+]
+access_owner = "justin06lee"
+approved_users = ["justin06lee"]
+storage = "Any team machine or the GX10; attribution required."
+checksum_strategy = "Verify the GCS MD5 at download, then pin SHA-256 of the archive."
+blocked_capabilities = []
+notes = [
+  "Public research download stated in the paper's data availability section; neither the paper nor the bucket states a data license, so terms are recorded as unclear. Non-commercial research with citation only.",
+  "About 5,300 enrolled; 32 COVID-19-positive participants with smartwatch data. Small, but the only public cohort here with minute-level watch HR/steps around labeled illness onsets.",
+]
+
+[terms]
+license = "No explicit data license; public download from the paper's data availability statement"
+license_url = "https://www.nature.com/articles/s41551-020-00640-6"
+commercial_use = "unclear"
+redistribution = "unclear"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://www.nature.com/articles/s41551-020-00640-6"
+quote = "can be downloaded from https://storage.googleapis.com/gbsc-gcp-project-ipop_public/COVID-19/COVID-19-Wearables.zip"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "illness_onset"
+role = "outcome_labels"
+notes = "Symptom-onset and diagnosis dates with pre-onset watch data; evaluation-sized, not enough to train a calibrated model alone."
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Detection lead time and false alerts around real onsets, comparable with the published detectors."
+
+[[files]]
+name = "COVID-19-Wearables.zip"
+bytes = 378380920
+sha256 = "52ca976e6c08daa0cf34b6b82f4fc69b8894c1eef66e598efa40197df4e380f4"

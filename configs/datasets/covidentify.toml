@@ -1,0 +1,70 @@
+# CovIdentify: the only catalog cohort pairing consumer-wearable data with daily symptom
+# surveys and test results, so it carries the wearable illness-onset task.
+schema_version = "0.1"
+dataset_id = "covidentify"
+name = "CovIdentify"
+version = "1.0.0"
+status = "access_pending"
+access = "credentialed"
+primary_url = "https://physionet.org/content/covidentify/1.0.0/"
+doi = "10.13026/ncq1-vp79"
+catalog_checked_on = 2026-10-11
+citation = "Cho P, Shandhi MMH, Roghanizad A, Dunn J. CovIdentify Dataset (version 1.0.0). PhysioNet (2024). RRID:SCR_007345. https://doi.org/10.13026/ncq1-vp79; and the associated paper: A Method for Intelligent Allocation of Diagnostic Testing by Leveraging Data from Commercial Wearable Devices: A Case Study on COVID-19 (2022). https://doi.org/10.21203/rs.3.rs-1490524/v1"
+acknowledgement = "Standard PhysioNet citation: Pollard T, Moody BE, et al. PhysioNet as a global platform for biomedical research. Nature Health (2026). https://doi.org/10.1038/s44360-026-00096-z"
+access_steps = [
+  "Create a PhysioNet account at https://physionet.org/register/.",
+  "Complete the CITI course 'Data or Specimens Only Research' and keep the completion report.",
+  "Submit the PhysioNet credentialing application (profile settings > Credentialing), naming a reference; it is reviewed by hand.",
+  "Once credentialed, sign the PhysioNet Credentialed Health Data Use Agreement 1.5.0 on the CovIdentify project page.",
+  "Download the files. Every teammate who touches the data must complete the same steps themselves.",
+]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Only on machines and accounts used solely by one credentialed user who signed the DUA. Never on the shared GX10 Unix account: PhysioNet does not permit sharing within teams, and a shared login is sharing."
+checksum_strategy = "SHA-256 of each downloaded file, compared with PhysioNet's published SHA256SUMS.txt."
+blocked_capabilities = [
+  "Wearable illness-onset training and calibration (#13) until credentialing and DUA are complete.",
+  "Wearable predictors for recovery (#14) from this cohort.",
+  "Training on the shared GX10 account; needs a per-user account or a credentialed teammate's own machine.",
+  "Hosted-LLM processing of rows: PhysioNet counts sending data to an LLM API as sharing unless the service guarantees zero retention, no training and no human review.",
+]
+notes = [
+  "2,887 participants connected smartwatches (1,689 Garmin, 1,091 Fitbit, 107 Apple). Wearable data is daily only: device resting HR, min/median/mean/10th-percentile HR, and steps; minute data is not included. About 46 MB uncompressed.",
+  "Dates are replaced by days relative to enrollment (the API description says date-shifted); local time-of-day features are impossible.",
+  "362,108 daily surveys from 5,859 participants; COVID-19 test results are self-reported (132 positive, 1,157 negative among 1,289 reporting).",
+  "COVID-positive-test prediction is not common-cold prediction; a test date is not symptom onset.",
+]
+
+[terms]
+license = "PhysioNet Credentialed Health Data License 1.5.0; PhysioNet Credentialed Health Data Use Agreement 1.5.0"
+license_url = "https://physionet.org/content/covidentify/1.0.0/"
+commercial_use = "unclear"
+redistribution = "prohibited"
+team_access = "each_user_must_be_credentialed"
+shared_gx10_account = "prohibited"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://physionet.org/content/covidentify/1.0.0/"
+quote = "Only credentialed users who sign the DUA can access the files."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://physionet.org/content/covidentify/view-dua/1.0.0/"
+quote = "I will not share access to PhysioNet restricted data with anyone else."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://physionet.org/about/faq/"
+quote = "each user must obtain individual access rights. Sharing data within teams or classes is not permitted."
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "illness_onset"
+role = "outcome_labels"
+notes = "Daily symptom surveys and self-reported tests paired with daily wearable resting HR and steps; onset labels must come from symptoms, not test dates."
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Healthy-period alert burden and lead time on a multi-device cohort."

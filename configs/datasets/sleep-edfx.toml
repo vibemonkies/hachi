@@ -1,0 +1,34 @@
+schema_version = "0.1"
+dataset_id = "sleep-edfx"
+name = "Sleep-EDF Database Expanded"
+version = "1.0.0"
+status = "rejected_for_task"
+access = "public"
+primary_url = "https://physionet.org/content/sleep-edfx/1.0.0/"
+doi = "10.13026/C2X676"
+catalog_checked_on = 2026-10-11
+citation = "Kemp B, Zwinderman AH, Tuk B, Kamphuisen HAC, Oberye JJL. Analysis of a sleep-dependent neuronal feedback loop: the slow-wave microcontinuity of the EEG. IEEE-BME 47(9):1185-1194 (2000); plus the standard PhysioNet citation shown on the project page."
+access_steps = ["Download the 8.1 GB of EDF files from PhysioNet; no account is needed."]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Any team machine."
+checksum_strategy = "SHA-256 per file, compared with PhysioNet's SHA256SUMS.txt."
+blocked_capabilities = []
+tasks = []
+notes = [
+  "Rejected for the core tasks: EEG/EOG polysomnography with R&K hypnograms, not consumer-watch sleep summaries; relevant only to a clinical sleep-waveform branch (#24).",
+]
+
+[terms]
+license = "Open Data Commons Attribution License 1.0"
+license_url = "https://physionet.org/content/sleep-edfx/view-license/1.0.0/"
+commercial_use = "allowed"
+redistribution = "allowed_with_attribution"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://physionet.org/content/sleep-edfx/1.0.0/"
+quote = "Anyone can access the files, as long as they conform to the terms of the specified license."
+checked_on = 2026-10-11

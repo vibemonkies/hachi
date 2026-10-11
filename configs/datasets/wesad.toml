@@ -1,0 +1,34 @@
+schema_version = "0.1"
+dataset_id = "wesad"
+name = "WESAD: Wearable Stress and Affect Detection"
+version = "uci-465"
+status = "rejected_for_task"
+access = "public"
+primary_url = "https://archive.ics.uci.edu/dataset/465/wesad+wearable+stress+and+affect+detection"
+doi = "10.24432/C57K5T"
+catalog_checked_on = 2026-10-11
+citation = "Schmidt P, Reiss A, Duerichen R, Marberger C, Van Laerhoven K. Introducing WESAD, a Multimodal Dataset for Wearable Stress and Affect Detection. ICMI 2018. doi:10.1145/3242969.3242985"
+access_steps = ["Download the 2.5 GB archive from the UCI page or the University of Siegen host."]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Any team machine; non-commercial use only."
+checksum_strategy = "SHA-256 of the archive as downloaded."
+blocked_capabilities = []
+tasks = []
+notes = [
+  "Rejected for the core tasks: 15 subjects in a single lab stress session with 700 Hz chest and raw Empatica E4 signals; nothing longitudinal and no watch summaries.",
+]
+
+[terms]
+license = "University of Siegen terms: scientific, non-commercial use"
+license_url = "https://archive.ics.uci.edu/dataset/465/wesad+wearable+stress+and+affect+detection"
+commercial_use = "prohibited"
+redistribution = "unclear"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://archive.ics.uci.edu/dataset/465/wesad+wearable+stress+and+affect+detection"
+quote = "scientific, non-commercial purposes"
+checked_on = 2026-10-11

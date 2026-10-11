@@ -1,0 +1,47 @@
+schema_version = "0.1"
+dataset_id = "evidation-ili-2019-2020"
+name = "Evidation 2019-2020 Participatory Influenza-Like Illness Surveillance"
+version = "syn22891469"
+status = "candidate"
+access = "credentialed"
+primary_url = "https://www.synapse.org/#!Synapse:syn22891469"
+doi = "10.1016/j.patter.2020.100188"
+catalog_checked_on = 2026-10-11
+citation = "Shapiro A, et al. Characterizing COVID-19 and Influenza Illnesses in the Real World via Person-Generated Health Data. Patterns 2(1), 100188 (2021). doi:10.1016/j.patter.2020.100188"
+access_steps = [
+  "Complete Synapse certification and profile validation (same as Homekit2020).",
+  "Email a data-use statement and the signed Conditions for Use to EvidationILI@synapse.org; each teammate signs individually.",
+  "Expect possible monthly progress-report requests.",
+]
+access_owner = "justin06lee"
+storage = "Only accounts of approved users; not the shared GX10 account unless all three are approved."
+checksum_strategy = "Record Synapse's MD5 per file, then pin SHA-256."
+notes = [
+  "About 71,556 participants; illness events with self-reported onset and recovery dates and duration, including clinician-diagnosed COVID-19 (230), non-COVID flu (426) and pre-COVID flu (6,270); dense Fitbit data for a subset.",
+  "Released activity data is day-level only (steps, resting HR, sleep minutes); labels are self-reported.",
+  "Best available fit for censoring-aware recovery modelling.",
+]
+
+[terms]
+license = "Evidation ILI Conditions for Use (Synapse)"
+license_url = "https://www.synapse.org/#!Synapse:syn22891469"
+commercial_use = "unclear"
+redistribution = "prohibited"
+team_access = "each_user_must_accept"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = true
+
+[[terms.evidence]]
+url = "https://www.synapse.org/#!Synapse:syn22891469"
+quote = "may not be used for commercial advertisement"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "recovery"
+role = "outcome_labels"
+notes = "Self-reported onset and recovery dates per illness event."
+
+[[tasks]]
+task = "illness_onset"
+role = "outcome_labels"
+notes = "Daily resting HR, steps and sleep before self-reported ILI onset."
