@@ -297,10 +297,12 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
         "Horizon-straddling interval coarsening assumes non-informative observation.",
         "Few clusters/events limit bootstrap precision; fold intervals are descriptive.",
         "Distributions are hypothetical static landmark-covariate projections, not exact dates.",
-        "Source-wide #8 audits leave test-label totals roughly inferable from task support.",
         "Minimization removes category breakdowns; it cannot restore historical blinding.",
     ]
     if cohort == STANFORD:
+        receipt["limitations"].append(
+            "Source-wide #8 audits leave test-label totals roughly inferable from task support."
+        )
         receipt["limitations"].append(
             "Prior whole-roster audit exposed test aggregates; historical blinding is compromised."
         )
@@ -308,6 +310,10 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
             "Stanford retains original label-extent support and one-event gate; thin folds."
         )
     else:
+        receipt["limitations"].append(
+            "Published CMU task counts and #8's source-wide audit allow exact derivation "
+            "of test-partition resolved and no-qualifying-run totals; no counts computed."
+        )
         receipt["limitations"].append(
             "Earlier public CMU category counts enabled test-total derivation; exposure recorded."
         )
