@@ -1,0 +1,20 @@
+{
+  "compatible_snapshots": [
+    {
+      "dataset_id": "stanford-covid19-wearables",
+      "dataset_version": "2020-nbe",
+      "snapshot_sha256": "168d54133c8bc1c566f0b1a023d4f7ca04f54cecbadd3257fa4840e0031e8a33"
+    },
+    {
+      "dataset_id": "stanford-covid19-wearables",
+      "dataset_version": "2020-nbe",
+      "snapshot_sha256": "6a864b03b2d3ddf05abc42b699679dba39f1909bad2c3053c4b8adf4108faf09"
+    }
+  ],
+  "clock": "floating_local_shifted",
+  "roster": "all_subjects_before_task_eligibility",
+  "folds": {"outer_folds": 4, "inner_folds": 3, "min_train_subjects": 4, "seed": 42},
+  "active_outer_fold": 0,
+  "nested_plan_sha256": "13dd73b4b3f2b6beabe105c5e577e86e935fa68edfdc117d8e9ebdc7c772fa5e",
+  "split_created_at_utc": "2026-10-11T11:45:00Z"
+}
