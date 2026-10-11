@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+/.gx10-ssh-config
 /data/
 /private/
 /exports/

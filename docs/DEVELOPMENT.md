@@ -12,6 +12,20 @@ ssh asus@100.108.229.115
 
 Never put the password, tokens, or personal exports in this repo, issues, shell examples, or recordings. Do not change credentials or system services as part of an experiment.
 
+### Windows GX10 shortcut
+
+Create the ignored root file `.gx10-ssh-config` with the following content, replacing the `Include` path with your existing SSH profile:
+
+```sshconfig
+Host hachi-gx10
+    HostName 5asb
+    Include "C:/path/to/your/gx10/config"
+```
+
+The included profile keeps your existing authentication and known-host settings. Do not put passwords or private keys in the repository.
+
+From PowerShell at the repository root, run `.\gx10.ps1` for an interactive connection, `.\gx10.ps1 -G` to inspect the effective SSH configuration without connecting, or `.\gx10.ps1 hostname` to run a remote command. OpenSSH options such as `-v` can follow the shortcut before a remote command.
+
 ## Separate checkouts
 
 Each person uses their own local clone and their own remote checkout, virtual environment, cache, and metadata database path. The provisioner creates this layout:
