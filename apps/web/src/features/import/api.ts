@@ -35,6 +35,7 @@ export async function submitImport(
   timeZone: string,
   dataMode: DataMode,
   signal: AbortSignal,
+  apiBaseUrl: string,
 ): Promise<ImportStatus> {
   const sourceFormat = file.name.toLowerCase().endsWith(".zip")
     ? "apple_health_export_zip"
@@ -50,7 +51,7 @@ export async function submitImport(
     body: file,
     headers: { "Content-Type": "application/octet-stream" },
     signal,
-  });
+  }, apiBaseUrl);
   return readImportStatus(status);
 }
 
@@ -58,10 +59,11 @@ export async function pollImport(
   importId: string,
   signal: AbortSignal,
   onProgress: (status: ImportStatus) => void,
+  apiBaseUrl: string,
 ): Promise<ImportStatus> {
   for (;;) {
     const status = readImportStatus(
-      await requestJson<ImportStatus>(`/v1/imports/${encodeURIComponent(importId)}`, { signal }),
+      await requestJson<ImportStatus>(`/v1/imports/${encodeURIComponent(importId)}`, { signal }, apiBaseUrl),
     );
     onProgress(status);
     if (status.state === "succeeded" || status.state === "failed") return status;
@@ -73,12 +75,14 @@ export async function getCoverage(
   subjectId: string,
   asOf: string | null,
   signal: AbortSignal,
+  apiBaseUrl: string,
 ): Promise<Coverage> {
   const query = asOf ? `?as_of=${encodeURIComponent(asOf)}` : "";
   return readCoverage(
     await requestJson<Coverage>(
       `/v1/subjects/${encodeURIComponent(subjectId)}/coverage${query}`,
       { signal },
+      apiBaseUrl,
     ),
   );
 }
@@ -86,11 +90,12 @@ export async function getCoverage(
 export async function getInitialCoverage(
   subjectId: string,
   signal: AbortSignal,
+  apiBaseUrl: string,
 ): Promise<{ coverage: Coverage; asOf: string }> {
-  const initial = await getCoverage(subjectId, null, signal);
+  const initial = await getCoverage(subjectId, null, signal, apiBaseUrl);
   const asOf = latestHour(initial.span_end_utc);
   return {
-    coverage: asOf ? await getCoverage(subjectId, asOf, signal) : initial,
+    coverage: asOf ? await getCoverage(subjectId, asOf, signal, apiBaseUrl) : initial,
     asOf,
   };
 }

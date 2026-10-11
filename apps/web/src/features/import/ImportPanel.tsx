@@ -53,14 +53,14 @@ export function ImportPanel({
   workflow: Workflow;
   dispatch: Dispatch<Action>;
 }) {
-  const [subjectId, setSubjectId] = useState("synthetic-001");
+  const [subjectId, setSubjectId] = useState("");
   const [timeZone, setTimeZone] = useState(defaultTimeZone);
-  const [dataMode, setDataMode] = useState<"real" | "synthetic">("synthetic");
+  const [dataMode, setDataMode] = useState<"real" | "synthetic" | "">("");
   const [asOfDraft, setAsOfDraft] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const activeImport = workflow.kind === "uploading" || workflow.kind === "importing";
   const busy = activeImport || workflow.kind === "coverage-loading" || workflow.kind === "reporting";
-  const imported = "imported" in workflow ? workflow.imported : undefined;
+  const subject = "subject" in workflow ? workflow.subject : null;
   const coverage = "coverage" in workflow ? workflow.coverage : undefined;
   const currentAsOf = "asOf" in workflow ? workflow.asOf ?? "" : "";
 
@@ -76,7 +76,7 @@ export function ImportPanel({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file || !/^[A-Za-z0-9_-]+$/.test(subjectId)) return;
+    if (!file || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(subjectId) || !dataMode) return;
     const submission: ImportSubmission = { file, subjectId, timeZone, dataMode };
     dispatch({ type: "begin-import", operationId: crypto.randomUUID(), submission });
   }
@@ -89,6 +89,12 @@ export function ImportPanel({
       operationId: crypto.randomUUID(),
       asOf: asOfDraft,
     });
+  }
+
+  function openExistingSubject(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(subjectId)) return;
+    dispatch({ type: "begin-subject", operationId: crypto.randomUUID(), subjectId });
   }
 
   return (
@@ -116,8 +122,8 @@ export function ImportPanel({
             value={subjectId}
             disabled={busy}
             onChange={(event) => setSubjectId(event.target.value)}
-            pattern="[A-Za-z0-9_-]+"
-            title="Use only letters, digits, underscores, and hyphens."
+            pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,127}"
+            title="Start with a letter or digit. Use at most 128 letters, digits, underscores, or hyphens."
             required
           />
           <label htmlFor="timezone">Time zone in the export</label>
@@ -137,17 +143,51 @@ export function ImportPanel({
             disabled={busy}
             onChange={(event) => setDataMode(event.target.value as "real" | "synthetic")}
           >
+            <option value="" disabled>Choose the source mode</option>
             <option value="synthetic">Synthetic</option>
             <option value="real">Real</option>
           </select>
           <p className="caption">The mode must match the source. Upload only data approved for use in this workspace.</p>
-          <button disabled={busy || !file || !subjectId || !timeZone}>
+          <button disabled={busy || !file || !subjectId || !timeZone || !dataMode}>
             {activeImport ? "Importing…" : "Import Apple Health export"}
           </button>
           <button className="text-button" type="button" onClick={() => dispatch({ type: "reset" })}>
             {busy ? "Cancel operation" : "Clear workspace"}
           </button>
         </form>
+      </section>
+
+      <section className="import-panel existing-subject-panel">
+        <div>
+          <span className="eyebrow">Existing API subject</span>
+          <h2>Open saved history</h2>
+          <p>Enter a subject ID already available to the configured API. No upload or subject discovery is performed.</p>
+        </div>
+        <form onSubmit={openExistingSubject}>
+          <label htmlFor="existing-subject-id">Pseudonymous subject ID</label>
+          <input
+            id="existing-subject-id"
+            autoComplete="off"
+            value={subjectId}
+            disabled={busy}
+            onChange={(event) => setSubjectId(event.target.value)}
+            pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,127}"
+            title="Start with a letter or digit. Use at most 128 letters, digits, underscores, or hyphens."
+            required
+          />
+          <button disabled={busy || !subjectId}>Open subject coverage</button>
+        </form>
+      </section>
+
+      <section className="import-panel existing-subject-panel">
+        <div>
+          <span className="eyebrow">Saved API response</span>
+          <h2>Offline replay</h2>
+          <p>Load the replay provider’s saved report and its recorded provenance. This does not request a live report.</p>
+        </div>
+        <button type="button" disabled={busy} onClick={() => dispatch({ type: "begin-replay", operationId: crypto.randomUUID() })}>
+          Open saved replay
+        </button>
       </section>
 
       {activeImport && workflow.kind === "importing" && (
@@ -183,9 +223,9 @@ export function ImportPanel({
         </div>
       )}
 
-      {coverage && imported && (
+      {coverage && subject && (
         <CoveragePanel
-          imported={imported}
+          subject={subject}
           coverage={coverage}
           asOfDraft={asOfDraft}
           onAsOfChange={setAsOfDraft}
@@ -240,7 +280,7 @@ function ImportProgress({ status }: { status: ImportStatus }) {
 }
 
 function CoveragePanel({
-  imported,
+  subject,
   coverage,
   asOfDraft,
   onAsOfChange,
@@ -251,7 +291,7 @@ function CoveragePanel({
   reportReady,
   onReset,
 }: {
-  imported: ImportStatus;
+  subject: { subjectId: string; imported: ImportStatus | null };
   coverage: Coverage;
   asOfDraft: string;
   onAsOfChange: (value: string) => void;
@@ -274,7 +314,8 @@ function CoveragePanel({
           <button className="secondary" onClick={onReset}>Start a new import</button>
         </div>
         <p>
-          Import {imported.import_id} · {coverage.history} history · {coverage.generated_at_utc}.
+          {subject.imported ? <>Import {subject.imported.import_id} · </> : <>Subject {subject.subjectId} · </>}
+          {coverage.history} history · {coverage.generated_at_utc}.
           {coverage.span_start_utc && coverage.span_end_utc && (
             <> Available from {coverage.span_start_utc} through {coverage.span_end_utc}.</>
           )}
@@ -286,7 +327,7 @@ function CoveragePanel({
         )}
         {coverage.history === "empty" && (
           <div className="notice" role="status">
-            <h3>No observations were imported</h3>
+            <h3>No observations are available</h3>
             <p>An empty history stays empty. No missing values are treated as zero.</p>
           </div>
         )}

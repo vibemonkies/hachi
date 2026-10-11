@@ -1,10 +1,16 @@
-# Hachi fixture workspace
+# Hachi web client
 
-A local React, Vite, and TypeScript interface for the import, coverage, and report workflow. Every observation and output is synthetic. No model runs, personal records, uploads, persistence, or API integration are implemented.
+The React and Vite client uploads Apple Health exports, opens an existing API subject, reviews coverage at a UTC cutoff, and displays API forecast, anomaly, check-in, and schedule-comparison responses. It does not create report values in the browser.
+
+## Configure the API
+
+The development and preview servers proxy `/v1`, `/replay`, and `/healthz` to `http://127.0.0.1:8717` by default. Set `VITE_HACHI_API_PROXY_TARGET` in the Vite environment to use another loopback API port, such as `http://127.0.0.1:8720`. This keeps browser requests same-origin. Set `VITE_HACHI_API_BASE_URL` only when the browser should call a separately reachable API origin directly and that API allows the page's origin.
+
+The API base setting is shared by import, coverage, reports, check-ins, schedule comparisons, and saved replay. Subject IDs are entered explicitly; the app has no subject-discovery endpoint and never manufactures an import to open an existing subject.
 
 ## Run locally
 
-Use Node.js 22.14.0 and npm 11.6.0. Dependencies and the lockfile belong exclusively to this directory.
+Use Node.js 22.14.0 or later.
 
 ```powershell
 cd apps/web
@@ -12,43 +18,24 @@ npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite, normally `http://127.0.0.1:5173`. The development server binds to loopback. To build and serve the production artifact, run the following commands separately.
+Open the loopback URL printed by Vite. To create and serve the production client, run:
 
 ```powershell
 npm run build
 npm run preview
 ```
 
-The production artifact is `dist`. Inter is bundled from the pinned `@fontsource/inter` package under its SIL Open Font License. The package includes its license. Fonts and application assets are local. There are no remote fonts or application network requests at runtime.
+`npm run build` runs TypeScript compilation followed by the Vite production build. It does not run tests.
 
-## Explore the workflow
+## User flows and limits
 
-1. Choose Complete history and load the synthetic history. The demonstration delay is one second. Duplicate loads are disabled while pending. Cancel operation cancels the single App-owned timer.
-2. Review counts, missingness, units, and import period. Acknowledge coverage before choosing a report cutoff.
-3. Select one of the two named explicit UTC cutoff examples. Request a synthetic report, then open Overview, Forecast, or Anomaly monitor.
-4. Change the cutoff in Import & coverage. The previous report is removed immediately. Request again to display the distinct static bundle for the new cutoff.
-5. Use native section links and browser back/forward. The hash selects the section. Reload retains the section URL but clears all workflow state and previews.
+- **Import:** choose the export, pseudonymous subject ID, time zone, and source mode explicitly. The API validates and imports the file, then the UI polls status and loads coverage.
+- **Existing subject:** enter an already available subject ID. The UI reads its coverage directly; no import ID is invented.
+- **Reports:** review source coverage, units, gaps and task support, choose an exact UTC cutoff, and request forecast and anomaly reports. Point-only results have no interval band; unavailable reasons and API warnings remain visible.
+- **Check-ins:** Symptoms reads and writes saved observations for the selected subject through the API. It keeps event time separate from entry time and supports the API's correction and deletion behavior.
+- **Schedule comparison:** Sleep submits two schedules and explicit assumptions to the API. Until the scenario artifact is served, the UI shows the API's actual unavailable response.
+- **Offline replay:** load the saved report from `/replay/report`. It displays the saved data mode, source report ID, and replay timestamp. A missing replay fails visibly and never triggers a live report request.
 
-Scenario controls expose Complete history, Empty observations, Sparse history, Access failure, Import failure, Models unavailable, and Report failure. Empty history has no numeric substitute. Sparse history has explicit missing counts, an unavailable forecast, and a missing anomaly point. Access and import failures offer retry. Report failure offers retry at the same cutoff. Failure fixtures intentionally fail again until a different history is loaded. Reset clears the workflow and cancels pending completion.
+Apple Health input is not automatically admitted by a forecast artifact. The current PMData artifacts return `NO_ARTIFACT_FOR_TASK` for Apple input unless an operator has explicitly admitted an artifact. Admitted transfer is labeled unvalidated; sparse histories may abstain with `INSUFFICIENT_HISTORY`. Long reports remain in the running state while the client polls.
 
-Symptoms accepts only a synthetic preset symptom, severity, and bounded example event timestamp. The native datetime field is explicitly interpreted as UTC. The preview shows event time separately from actual entry creation time. It remains unsaved in component memory and clears on leaving the section or reloading. Do not enter real personal data.
-
-Sleep comparison selects named static examples with bedtime, wake time, wake date, time zone, and fixed prior sleep, caffeine, and light assumptions. Both example curves share a 0 to 100 illustration scale. The unsupported schedule returns unavailable. No equations or personalized predictions run.
-
-## Evidence limits
-
-Forecast values, intervals, baseline scores, and sleep curves are hand-authored illustrations. The forecast displays six selected hourly bins within a 24-hour horizon, not a complete 24-bin backend result. Intervals are illustrative and uncalibrated. Import-wide coverage counts are not cutoff-specific counts. Each report selects a static cutoff-specific bundle; values are never relabeled as a different cutoff. Missing values remain missing.
-
-The anomaly score illustrates absolute standardized deviation from an earlier historical baseline. It is not an illness probability. No alert threshold or measured alert burden is claimed. Illness onset and recovery remain unavailable with evidence requirements. Sleep indices have no measured scale or validated accuracy.
-
-## Code ownership and integration
-
-`src/workflow.ts` owns UI presentation shapes and allowed transitions. These are fixture types, not authoritative wire schemas. `src/fixtures.ts` owns all synthetic bundles. `src/App.tsx` owns the reducer, hash navigation, focus, announcements, and one cancellable demonstration timer. `src/sections.tsx` owns concrete forms and six section views. `src/components.tsx` owns the SVG plot and equivalent data table. The direct call chain is App to section to workflow or fixture. No router, context provider, external state library, job service, or operation-ID system is needed for one pending operation.
-
-The generated-type handoff from issues #3 and #16 is **PENDING**. Follow `../../docs/CONTRACTS.md` and `../../docs/PRODUCT.md`. A future single adapter must import generated DTOs, validate and normalize real responses into presentation shapes, and replace fixture selection and the timer with the actual import/report lifecycle. Backend ownership agreement has not been recorded. Real consent, authorization, uploads, persistence, polling, deletion, artifact compatibility, and API failures belong to later work. Revisit state requirements against actual contracts before integrating.
-
-## Verification and remaining gate
-
-`npm ci` and `npm run build` passed with Node 22.14.0, npm 11.6.0, TypeScript 7.0.2, and Vite 8.3.4. Vite transformed 23 modules and emitted the local asset bundle. The coordinator exercised the rendered workflow, error fixtures, cutoff changes, keyboard controls, symptom previews, and sleep examples. Production preview checks covered desktop and phone layouts. See the [browser observations and screenshots](evidence/README.md). No tests were created, modified, removed, or run.
-
-Issue #4 closure still requires another teammate to complete the browser walkthrough. Build success and coordinator review do not replace that gate. Backend agreement, real inference, and predictive validation remain pending.
+Real Apple export access, per-artifact source admission, model validation, and the completed real import-to-chart/API-value walkthrough remain separate acceptance gates. Saved-response replay is a separate source with its own replay timestamp and provenance; it must never fall through to a live request.

@@ -847,7 +847,7 @@ details[open]>summary {
   border-color: #e3c27b;
   background: #fff8e7;
 }
-.api-import-panel {
+.api-import-panel,.existing-subject-panel {
   max-width: 900px;
   display: grid;
   grid-template-columns: minmax(220px, .8fr) minmax(300px, 1.2fr);
@@ -858,10 +858,10 @@ details[open]>summary {
   border-radius: 8px;
   background: var(--surface);
 }
-.api-import-panel form {
+.api-import-panel form,.existing-subject-panel form {
   max-width: none;
 }
-.api-import-panel form button {
+.api-import-panel form button,.existing-subject-panel form button {
   display: block;
 }
 .eyebrow {
@@ -979,13 +979,13 @@ code {
 }
 
 @media (max-width: 900px) {
-  .api-import-panel {
+  .api-import-panel,.existing-subject-panel {
     grid-template-columns: 1fr;
     gap: 16px;
   }
 }
 @media (max-width: 650px) {
-  .api-import-panel,.result-card {
+  .api-import-panel,.existing-subject-panel,.result-card {
     padding: 18px;
   }
   .coverage-heading {

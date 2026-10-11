@@ -5,7 +5,7 @@ import type {
   ReportResult,
   SubjectId,
 } from "@hachi/contracts";
-import { isRecord, requestJson, waitForPoll } from "../api";
+import { ApiRequestError, apiUrl, isRecord, requestJson, waitForPoll } from "../api";
 
 export type TaskResult =
   | { kind: "result"; result: ReportResult }
@@ -13,7 +13,7 @@ export type TaskResult =
 
 export type ReportPair = { forecast: TaskResult; anomaly: TaskResult };
 
-function readReportJob(value: ReportJob): ReportJob {
+export function readReportJob(value: unknown): ReportJob {
   if (
     !isRecord(value) ||
     value.schema_version !== "0.1" ||
@@ -24,12 +24,40 @@ function readReportJob(value: ReportJob): ReportJob {
   ) {
     throw new Error("The Hachi API returned an invalid report job.");
   }
-  return value;
+  return value as unknown as ReportJob;
+}
+
+export async function readSavedReplay(
+  apiBaseUrl: string,
+  signal: AbortSignal,
+): Promise<ReportJob> {
+  let response: Response;
+  try {
+    response = await fetch(apiUrl("/replay/report", apiBaseUrl), { signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    throw new ApiRequestError("The offline replay provider could not be reached.");
+  }
+  if (!response.ok) {
+    throw new ApiRequestError(`No valid saved replay is available (${response.status}).`);
+  }
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new ApiRequestError("The offline replay provider returned unreadable data.");
+  }
+  const job = readReportJob(body);
+  if (job.state !== "completed" || !job.result?.replay) {
+    throw new ApiRequestError("The saved report is incomplete or lacks replay provenance.");
+  }
+  return job;
 }
 
 async function requestReport(
   request: PhysiologyForecastHourlyRequest | AnomalyRequest,
   signal: AbortSignal,
+  apiBaseUrl: string,
 ): Promise<ReportResult> {
   let job = readReportJob(
     await requestJson<ReportJob>("/v1/reports", {
@@ -37,13 +65,13 @@ async function requestReport(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
       signal,
-    }),
+    }, apiBaseUrl),
   );
 
   while (job.state !== "completed") {
     await waitForPoll(signal);
     job = readReportJob(
-      await requestJson<ReportJob>(`/v1/reports/${encodeURIComponent(job.report_id)}`, { signal }),
+      await requestJson<ReportJob>(`/v1/reports/${encodeURIComponent(job.report_id)}`, { signal }, apiBaseUrl),
     );
   }
 
@@ -54,9 +82,10 @@ async function requestReport(
 async function settleReport(
   request: PhysiologyForecastHourlyRequest | AnomalyRequest,
   signal: AbortSignal,
+  apiBaseUrl: string,
 ): Promise<TaskResult> {
   try {
-    return { kind: "result", result: await requestReport(request, signal) };
+    return { kind: "result", result: await requestReport(request, signal, apiBaseUrl) };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
     return {
@@ -70,6 +99,7 @@ export function requestForecastAndAnomaly(
   subjectId: SubjectId,
   asOf: string,
   signal: AbortSignal,
+  apiBaseUrl: string,
 ): Promise<ReportPair> {
   const forecast: PhysiologyForecastHourlyRequest = {
     schema_version: "0.1",
@@ -88,8 +118,8 @@ export function requestForecastAndAnomaly(
   };
 
   return Promise.all([
-    settleReport(forecast, signal),
-    settleReport(anomaly, signal),
+    settleReport(forecast, signal, apiBaseUrl),
+    settleReport(anomaly, signal, apiBaseUrl),
   ]).then(([forecastResult, anomalyResult]) => ({
     forecast: forecastResult,
     anomaly: anomalyResult,

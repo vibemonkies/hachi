@@ -1,8 +1,9 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { reducer, sections, type Section } from "./workflow";
 import { getCoverage, getInitialCoverage, pollImport, submitImport } from "./features/import/api";
-import { requestForecastAndAnomaly } from "./features/reports/api";
+import { readSavedReplay, requestForecastAndAnomaly } from "./features/reports/api";
 import { SectionView } from "./sections";
+const apiBaseUrl = import.meta.env.VITE_HACHI_API_BASE_URL?.replace(/\/$/, "") ?? "";
 export type Design = "task" | "summary" | "analysis";
 const labels: Record<Section, string> = {
   import: "Import & coverage",
@@ -11,6 +12,7 @@ const labels: Record<Section, string> = {
   anomaly: "Baseline deviation",
   symptoms: "Symptoms",
   sleep: "Sleep comparison",
+  replay: "Offline replay",
 };
 function currentSection(): Section {
   const hash = window.location.hash.slice(1);
@@ -54,6 +56,7 @@ export default function App() {
         workflow.submission.timeZone,
         workflow.submission.dataMode,
         signal,
+        apiBaseUrl,
       ).then(
         (status) => dispatch({ type: "import-created", operationId, status }),
         (error: unknown) => {
@@ -62,8 +65,11 @@ export default function App() {
         },
       );
     } else if (workflow.kind === "importing") {
-      pollImport(workflow.status.import_id, signal, (status) =>
-        dispatch({ type: "import-progress", operationId, status }),
+      pollImport(
+        workflow.status.import_id,
+        signal,
+        (status) => dispatch({ type: "import-progress", operationId, status }),
+        apiBaseUrl,
       ).then(
         (status) => dispatch({ type: "import-finished", operationId, coverageOperationId: crypto.randomUUID(), status }),
         (error: unknown) => {
@@ -73,8 +79,8 @@ export default function App() {
       );
     } else if (workflow.kind === "coverage-loading") {
       const request = workflow.asOf === null
-        ? getInitialCoverage(workflow.imported.subject_id, signal)
-        : getCoverage(workflow.imported.subject_id, workflow.asOf, signal).then((coverage) => ({ coverage, asOf: workflow.asOf ?? "" }));
+        ? getInitialCoverage(workflow.subject.subjectId, signal, apiBaseUrl)
+        : getCoverage(workflow.subject.subjectId, workflow.asOf, signal, apiBaseUrl).then((coverage) => ({ coverage, asOf: workflow.asOf ?? "" }));
       request.then(
         ({ coverage, asOf }) => dispatch({ type: "coverage-finished", operationId, coverage, asOf }),
         (error: unknown) => {
@@ -83,7 +89,7 @@ export default function App() {
         },
       );
     } else if (workflow.kind === "reporting") {
-      requestForecastAndAnomaly(workflow.imported.subject_id, workflow.asOf, signal).then(
+      requestForecastAndAnomaly(workflow.subject.subjectId, workflow.asOf, signal, apiBaseUrl).then(
         (reports) => dispatch({ type: "reports-finished", operationId, reports }),
         (error: unknown) => {
           if (!(error instanceof DOMException && error.name === "AbortError"))
@@ -91,6 +97,14 @@ export default function App() {
               forecast: { kind: "request-error", message: error instanceof Error ? error.message : "The forecast request failed." },
               anomaly: { kind: "request-error", message: error instanceof Error ? error.message : "The anomaly request failed." },
             } });
+        },
+      );
+    } else if (workflow.kind === "replay-loading") {
+      readSavedReplay(apiBaseUrl, signal).then(
+        (job) => dispatch({ type: "replay-finished", operationId, job }),
+        (error: unknown) => {
+          if (!(error instanceof DOMException && error.name === "AbortError"))
+            dispatch({ type: "replay-failed", operationId, message: error instanceof Error ? error.message : "The saved replay could not be loaded." });
         },
       );
     }
@@ -107,15 +121,22 @@ export default function App() {
     coverage: "History loaded. Review coverage.",
     reporting: "Forecast and anomaly reports are running.",
     report: "Reports are ready.",
+    "replay-loading": "Loading the saved offline replay.",
+    "replay-error": "The saved offline replay could not be loaded.",
+    "replay-report": "Saved offline replay loaded.",
   }[workflow.kind];
   const phase = section === "symptoms" || section === "sleep" ? "" : workflowPhase;
   const dataMode = workflow.kind === "coverage" || workflow.kind === "report"
     ? workflow.coverage.data_mode
     : workflow.kind === "coverage-error" && workflow.coverage
       ? workflow.coverage.data_mode
-        : "imported" in workflow
-        ? workflow.imported.data_mode
-        : null;
+        : workflow.kind === "coverage-loading" || workflow.kind === "coverage-error" || workflow.kind === "reporting"
+          ? workflow.subject.imported?.data_mode ?? null
+          : workflow.kind === "importing"
+            ? workflow.status.data_mode
+          : workflow.kind === "uploading" || workflow.kind === "import-error"
+              ? workflow.submission.dataMode
+              : null;
   return (
     <>
       <a
@@ -150,13 +171,13 @@ export default function App() {
             <span>Wearable research prototype</span>
             {dataMode ? <span className={`mode-badge mode-${dataMode}`}>{dataMode} data</span> : <span className="mode-badge">No data loaded</span>}
           </header>
-          <div className="synthetic-banner">Reports use the selected import and cutoff. Check provenance and mode before interpreting results.</div>
+          <div className="synthetic-banner">Reports use the selected subject and UTC cutoff. Check source mode and provenance before interpreting results.</div>
           <main id="main" tabIndex={-1}>
             <h1 ref={heading} tabIndex={-1}>
               {labels[section]}
             </h1>
             <p
-              className={["uploading", "importing", "coverage-loading", "reporting"].includes(workflow.kind) ? "phase" : "sr-only"}
+              className={["uploading", "importing", "coverage-loading", "reporting", "replay-loading"].includes(workflow.kind) ? "phase" : "sr-only"}
               role="status"
               aria-live="polite"
             >
@@ -167,6 +188,7 @@ export default function App() {
               workflow={workflow}
               dispatch={dispatch}
               design={design}
+              apiBaseUrl={apiBaseUrl}
             />
           </main>
         </div>

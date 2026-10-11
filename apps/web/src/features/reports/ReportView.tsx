@@ -26,14 +26,14 @@ const labels: Record<string, string> = {
 export function ReportView({
   section,
   design,
-  imported,
+  subject,
   coverage,
   asOf,
   reports,
 }: {
   section: Section;
   design: Design;
-  imported: ImportStatus;
+  subject: { subjectId: string; imported: ImportStatus | null };
   coverage: Coverage;
   asOf: string;
   reports: ReportPair;
@@ -52,7 +52,7 @@ export function ReportView({
       <div className="report-meta">
         <p>As of <strong>{asOf}</strong></p>
         <span className={`mode-badge mode-${coverage.data_mode}`}>{coverage.data_mode} data</span>
-        <span>Import · {imported.import_id}</span>
+        <span>{subject.imported ? `Import · ${subject.imported.import_id}` : `Subject · ${subject.subjectId}`}</span>
         <a href="#import">Review coverage or change cutoff</a>
       </div>
       {section === "overview" && (
@@ -80,7 +80,7 @@ function resultTitle(task: TaskResult, expectedTask: "physiology_forecast" | "an
   return result.task === "anomaly" ? result.anomaly.alert_state.replaceAll("_", " ") : `${result.forecast.series.length} signal series`;
 }
 
-function TaskResultPanel({
+export function TaskResultPanel({
   title,
   task,
   expectedTask,
@@ -96,9 +96,16 @@ function TaskResultPanel({
   }
   const result = task.result;
   if (result.status === "unavailable") {
+    const explanation = result.reason_code === "NO_ARTIFACT_FOR_TASK"
+      ? "No forecast model is set up for this data source yet."
+      : result.reason_code === "INSUFFICIENT_HISTORY"
+        ? "The available history is too sparse for this forecast."
+        : null;
     return (
       <div className="notice">
-        <h2>{title} unavailable · {result.reason_code}</h2>
+        <h2>{title} unavailable</h2>
+        {explanation && <p>{explanation}</p>}
+        <p>Reason · <code>{result.reason_code}</code></p>
         <div className="result-identity">
           <span className={`mode-badge mode-${result.data_mode}`}>{result.data_mode} data</span>
           {result.replay && <span>REPLAY · {result.replay.recorded_at_utc}</span>}

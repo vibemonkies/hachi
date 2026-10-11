@@ -16,6 +16,10 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+export function apiUrl(path: string, baseUrl: string): string {
+  return `${baseUrl.replace(/\/$/, "")}${path}`;
+}
+
 export function waitForPoll(signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
@@ -33,10 +37,11 @@ export function waitForPoll(signal: AbortSignal): Promise<void> {
 export async function requestJson<T extends ContractDocument>(
   path: string,
   init?: RequestInit,
+  baseUrl = "",
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(path, init);
+    response = await fetch(apiUrl(path, baseUrl), init);
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw new ApiRequestError("The local Hachi API could not be reached.");
