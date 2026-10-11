@@ -7,7 +7,9 @@ import logging
 import os
 import secrets
 import tempfile
-from collections.abc import AsyncIterator
+import threading
+from collections.abc import AsyncIterator, Iterator
+from contextlib import contextmanager
 from datetime import timedelta
 from pathlib import Path
 from typing import Literal
@@ -94,6 +96,9 @@ class Service:
         self.workspace = settings.workspace
         self.context = Context(catalog, metadata, settings.workspace, settings.git_sha)
         self.runner = JobRunner({"import": self.run_import, "report": self.run_report})
+        # Deletion is serialised against new records for the same subject.
+        self._subjects = threading.Lock()
+        self._deleting: set[str] = set()
 
     def start(self) -> None:
         private_directory(self.workspace.state)
@@ -111,6 +116,16 @@ class Service:
         return self.catalog.dataset_for(subject_id) is not None or self.metadata.subject_known(
             subject_id
         )
+
+    @contextmanager
+    def _writing(self, subject_id: str) -> Iterator[None]:
+        """Hold off deletion while a new record for this subject is written."""
+        with self._subjects:
+            if subject_id in self._deleting:
+                raise ApiProblem(
+                    "CONFLICT", "This subject is being deleted; try again after it finishes."
+                )
+            yield
 
     def _require_known(self, subject_id: str) -> None:
         if not self.known(subject_id):
@@ -152,28 +167,41 @@ class Service:
                 if _reusable_import(record):
                     return record.status, False
             import_id = "imp-" + secrets.token_hex(12)
-            directory = private_directory(self.workspace.import_directory(import_id))
-            os.replace(temporary, directory / ("upload" + UPLOAD_SUFFIX[params.source_format]))
-            now = now_utc()
-            status = ImportStatus(
-                schema_version=SCHEMA_VERSION,
-                import_id=import_id,
-                subject_id=params.subject_id,
-                data_mode=params.data_mode,
-                source_format=params.source_format,
-                declared_tz_name=params.tz_name,
-                state="pending",
-                created_at_utc=now,
-                updated_at_utc=now,
-                counts=None,
-                record_issues=[],
-                failure=None,
-            )
-            self.metadata.insert_import(key, upload_sha256, status)
+            with self._writing(params.subject_id):
+                directory = private_directory(self.workspace.import_directory(import_id))
+                try:
+                    os.replace(
+                        temporary, directory / ("upload" + UPLOAD_SUFFIX[params.source_format])
+                    )
+                    status = self._insert_import(key, upload_sha256, import_id, params)
+                except BaseException:
+                    remove_tree(directory)  # no record names it, so it must not outlive us
+                    raise
         finally:
             temporary.unlink(missing_ok=True)
         self.runner.submit("import", import_id)
         return status, True
+
+    def _insert_import(
+        self, key: str, upload_sha256: str, import_id: str, params: UploadParams
+    ) -> ImportStatus:
+        now = now_utc()
+        status = ImportStatus(
+            schema_version=SCHEMA_VERSION,
+            import_id=import_id,
+            subject_id=params.subject_id,
+            data_mode=params.data_mode,
+            source_format=params.source_format,
+            declared_tz_name=params.tz_name,
+            state="pending",
+            created_at_utc=now,
+            updated_at_utc=now,
+            counts=None,
+            record_issues=[],
+            failure=None,
+        )
+        self.metadata.insert_import(key, upload_sha256, status)
+        return status
 
     def get_import(self, import_id: str) -> ImportStatus:
         record = self.metadata.get_import(import_id)
@@ -347,7 +375,8 @@ class Service:
             request=request,
             result=None,
         )
-        self.metadata.insert_report(key, job)
+        with self._writing(body.subject_id):
+            self.metadata.insert_report(key, job)
         self.runner.submit("report", job.report_id)
         return job, True
 
@@ -420,7 +449,8 @@ class Service:
                 "CONFLICT", "Recorded entries are immutable; use a new entry_id.", issues=issues
             )
         if rows:
-            self.metadata.insert_self_reports(subject_id, rows)
+            with self._writing(subject_id):
+                self.metadata.insert_self_reports(subject_id, rows)
         return request, bool(rows)
 
     def self_report_history(self, subject_id: str) -> SelfReportHistory:
@@ -455,16 +485,35 @@ class Service:
                 issues=[FieldIssue(path="confirm", message="must equal the subject id")],
             )
         self._require_known(subject_id)
-        busy = any(
-            r.status.state in ("pending", "running")
-            for r in self.metadata.subject_imports(subject_id)
-        ) or any(j.state != "completed" for j in self.metadata.subject_reports(subject_id))
-        if busy:
-            raise ApiProblem(
-                "CONFLICT", "Jobs for this subject are still running; delete after they finish."
+        with self._subjects:
+            if subject_id in self._deleting:
+                raise ApiProblem("CONFLICT", "This subject is already being deleted.")
+            imports = self.metadata.subject_imports(subject_id)
+            busy = any(r.status.state in ("pending", "running") for r in imports) or any(
+                j.state != "completed" for j in self.metadata.subject_reports(subject_id)
             )
-        for import_id in self.metadata.delete_subject(subject_id):
-            remove_tree(self.workspace.import_directory(import_id))
+            if busy:
+                raise ApiProblem(
+                    "CONFLICT", "Jobs for this subject are still running; delete after they finish."
+                )
+            self._deleting.add(subject_id)
+        try:
+            # Private files go first and the records last: if a removal fails, the records
+            # still name every import, so the same deletion can simply be retried.
+            try:
+                for record in imports:
+                    remove_tree(self.workspace.import_directory(record.import_id))
+            except OSError as exc:
+                log.error("delete: private files not removed (%s)", type(exc).__name__)
+                raise ApiProblem(
+                    "INTERNAL_ERROR",
+                    "Some private files could not be removed, so no records were deleted. "
+                    "Retry the deletion.",
+                ) from exc
+            self.metadata.delete_subject(subject_id)
+        finally:
+            with self._subjects:
+                self._deleting.discard(subject_id)
 
     # Health -----------------------------------------------------------------------------
 
