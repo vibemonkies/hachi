@@ -109,7 +109,12 @@ tests because NumPy was not installed (441 passed, three skipped). Those source
 files are outside this lane and pass locally with the declared extras. The
 shared dependency/CI owner was notified with the
 [failed run](https://github.com/vibemonkies/hachi/actions/runs/38137946270).
-Do not merge until that CI gate is resolved and the tooling review passes.
+The upstream fix, PR68 (`9e6f651`), was integrated at a clean checkpoint. Base
+checks skip those optional numerical tests when their dependencies are absent;
+the existing CI `--extra baselines pytest tests/models` stage runs them with
+NumPy/SciPy installed. Runtime source is unchanged by that test-only integration,
+so the final real-data receipt remains bound to `4129197`. Do not merge until
+fresh CI and the independent tooling review pass.
 
 ## Outstanding acceptance gates
 
