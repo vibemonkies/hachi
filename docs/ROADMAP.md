@@ -4,10 +4,12 @@ The live work queue is [GitHub Issues](https://github.com/vibemonkies/hachi/issu
 
 ## Start in parallel
 
+Read the [per-person parallel groups and Git workflow](COORDINATION.md). Issue numbers are global, not a sequence each teammate repeats. The initial independent set is **#1 + #2 + #3 + #4**, split across their existing owners. Check active claims before starting another agent.
+
 | Person | Start now | Next responsibility |
 |---|---|---|
 | @ezzy1630 | #1: isolated GX10 runtime and GPU coordination | Evaluation harness, baselines, pretrained models, training and calibration |
-| @justin06lee | #3: executable contracts; #2: dataset admission/access | Real ingestion, labels, API and private storage |
+| @justin06lee | #2 and #3 simultaneously: dataset admission/access and executable contracts | Real ingestion, labels, API and private storage |
 | @CoffeeCoder1015 | #4: app shell and interaction flows | Alertness scenarios, dashboard/check-ins, integration and presentation |
 
 This is an initial division, not a skill ranking. Change assignees explicitly when the team agrees to swap. Shared schemas and root lockfiles have one coordinating owner. Separate remote checkouts, environments and databases prevent collisions; see [development workflow](DEVELOPMENT.md).
