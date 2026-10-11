@@ -183,12 +183,17 @@ def fit_survival(
     return SurvivalModel(beta, means, scales, conditional, supported_days, converged, _iteration)
 
 
-def truncate(row: Observation, days: int) -> Observation:
+def truncate(row: Observation, days: int) -> Observation | None:
     """A straddling interval conveys survival only through its lower bound minus one.
 
     Never turn an event interval that extends beyond support into an exact event
     at the support boundary, or assert survival through its unknown portion.
+    Return None for an interval with no positive known survival time at this horizon.
     """
+    if days < 1:
+        raise ValueError("a positive scoring horizon is required")
     if row.lower is not None and row.upper > days:
+        if row.lower == 1:
+            return None
         return Observation(row.subject, row.episode, row.covariates, None, min(days, row.lower - 1))
     return Observation(row.subject, row.episode, row.covariates, row.lower, min(days, row.upper))

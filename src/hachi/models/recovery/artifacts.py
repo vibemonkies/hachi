@@ -3,6 +3,7 @@
 import hashlib
 import os
 from dataclasses import dataclass
+from math import isfinite
 from pathlib import Path
 from typing import Literal
 
@@ -12,22 +13,33 @@ from hachi.contracts.base import ArtifactRef, Contract, Identifier, Sha256
 from hachi.contracts.results import RecoveryPayload, SurvivalPoint
 from hachi.evaluation.serialization import document_bytes, document_sha256
 
-from .clinical import ENDPOINT, FEATURES
+from .clinical import ENDPOINT
+from .cohorts import STANFORD, Cohort, cohort_named
 from .survival import SurvivalModel
 
 
 class Receipt(Contract):
     artifact_id: Identifier
-    format: Literal["recovery-research-1"]
+    format: Literal["recovery-research-2"]
     files: dict[str, Sha256]
 
 
 @dataclass(frozen=True)
 class RecoveryArtifact:
     model: SurvivalModel
+    cohort: Cohort = STANFORD
     endpoint: str = ENDPOINT
-    feature_order: tuple[str, ...] = FEATURES
     readiness: Literal["research_only"] = "research_only"
+
+    def __post_init__(self) -> None:
+        if self.cohort != cohort_named(self.cohort.name) or self.endpoint != ENDPOINT:
+            raise ValueError("artifact cohort/endpoint mismatch")
+        if len(self.model.means) != len(self.cohort.features):
+            raise ValueError("artifact predictor dimension differs from source schema")
+
+    @property
+    def feature_order(self) -> tuple[str, ...]:
+        return self.cohort.features
 
     def predict(self, episode_id: str, covariates: tuple[float, ...]) -> None:
         """Current evidence cannot authorize a clinical/serving recovery prediction."""
@@ -35,6 +47,8 @@ class RecoveryArtifact:
 
     def research_payload(self, episode_id: str, covariates: tuple[float, ...]) -> RecoveryPayload:
         """Explicit research path; relative days only, no unsupported quantile extrapolation."""
+        if len(covariates) != len(self.feature_order) or not all(isfinite(x) for x in covariates):
+            raise ValueError("research input must match the artifact's native predictor schema")
         curve = self.model.survival(covariates, self.model.supported_days)
         return RecoveryPayload(
             episode_id=episode_id,
@@ -65,7 +79,7 @@ def save_artifact(path: Path, artifact: RecoveryArtifact, artifact_id: str) -> A
     write_private(path / "source-sha256.json", source_hashes())
     receipt = Receipt(
         artifact_id=artifact_id,
-        format="recovery-research-1",
+        format="recovery-research-2",
         files={
             name: hashlib.sha256((path / name).read_bytes()).hexdigest()
             for name in ("model.json", "source-sha256.json")
@@ -102,6 +116,4 @@ def load_artifact(path: Path, expected: ArtifactRef) -> RecoveryArtifact:
     if sources != source_hashes():
         raise ValueError("recovery artifact implementation mismatch")
     artifact = TypeAdapter(RecoveryArtifact).validate_json(payloads["model.json"])
-    if artifact.endpoint != ENDPOINT or artifact.feature_order != FEATURES:
-        raise ValueError("recovery artifact endpoint/features mismatch")
     return artifact
