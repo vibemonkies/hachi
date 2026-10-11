@@ -1,0 +1,124 @@
+{
+  "model_id": "openmhc-wbm-dp",
+  "description": "OpenMHC reimplementation of Apple's WBM: bidirectional Mamba2 contrastive SSL encoder, a week of 168 hourly steps x 19 channels -> 256-d representation.",
+  "checkpoint": {
+    "repository": "MyHeartCounts/openmhc-wbm-dp",
+    "revision": "5db7e4598e1d1da3cdaeb04dce5e9b1ccaf21334",
+    "files": {
+      "model.ckpt": "0c00e6d928b1def326ca86700324a9a55efce5675c379f93f858ec3e85ad580d",
+      "normalization_stats.json": "5fb0b6138fbe96e067aedfb0e4b6eef31de4b2dfbd869cbf875bd26fcc54a9ca",
+      "openmhc_manifest.json": "7d713d5807a2312d3bc62dfd751b50976018b375b1330bc59d39e562c785c0b3",
+      "README.md": "af5129f2be84e56f94d7cd67881f2885d6b0e2b234f27ae55245c0e16b920aee"
+    },
+    "pickle_globals": [
+      "collections.OrderedDict",
+      "torch.FloatStorage",
+      "torch._utils._rebuild_tensor_v2"
+    ],
+    "load": "torch.load(weights_only=True); keys prefixed model./encoder. are stripped as in OpenMHC _load_wbm_encoder; a missing key is an error"
+  },
+  "architecture_source": {
+    "repository": "https://github.com/AshleyLab/OpenMHC",
+    "commit": "a2d67834d3cda721eac1cf02e583b3804d37621d",
+    "files": {
+      "src/downstream_evaluation/models/wbm/week_encoders_mamba2.py": "d48cac7895a273e8fb8d6ba405df3feeebf085efea55ccb279c71a1f768c1bfd",
+      "src/downstream_evaluation/models/wbm/tokenizers.py": "1d4c27e87352e808d7485603c52951df407f3ae24112e10177f30cf33c42af0c"
+    },
+    "use": "Fetched at run time from the pinned commit and hash-checked; not copied into this repository."
+  },
+  "arch": {
+    "in_dim": 38,
+    "embed_dim": 256,
+    "hidden_dim": 64,
+    "num_layers": 4,
+    "proj_dim": 128,
+    "dropout": 0.223
+  },
+  "input": {
+    "hours": 168,
+    "alignment": "seven local calendar days, local midnight to local midnight",
+    "layout": "[(value - mean) / std * present | missing], 38 features; missing = 1 where unknown",
+    "hourly_aggregation": "accumulations (steps, distance, flights, energy) nansum; heart rate nanmean; binary sleep/workout nanmax (OpenMHC forecasting_evaluation/INTERNALS.md)",
+    "heart_rate_unit": "beats per second: OpenMHC's normalization mean 1.2439 (74.6 bpm) and its extractors' *60 conversion; the CHANNEL_UNITS label 'bpm' is not the stored unit",
+    "normalization": {
+      "means": [
+        214.73160775291038,
+        151.31920547464205,
+        0.17906438971407923,
+        285.7412906757421,
+        216.28214707760358,
+        1.2438895086429234,
+        380.5288124197958,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "stds": [
+        550.5934579980234,
+        406.92503625199976,
+        1.4081657181459613,
+        597.1477073764198,
+        479.79082554424144,
+        0.2420088969759129,
+        639.7075094703501,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "normalized_channels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "source": "normalization_stats.json at the pinned revision"
+    },
+    "output": "r: unweighted mean over all 168 tokens of the backbone sequence, before the projection head (256-d)"
+  },
+  "kernels": {
+    "mamba-ssm": "2.2.4",
+    "causal-conv1d": "1.5.0.post8",
+    "runtime_lock": "infra/gx10/encoders"
+  },
+  "license": {
+    "declared": [
+      {
+        "where": "Hugging Face model card and repo metadata at the pinned revision",
+        "terms": "CC BY 4.0"
+      },
+      {
+        "where": "OpenMHC GitHub README, commit a2d67834",
+        "terms": "Code: MIT ... Models OpenRAIL"
+      },
+      {
+        "where": "OpenMHC GitHub repository",
+        "terms": "no LICENSE file"
+      }
+    ],
+    "relied_on": "CC BY 4.0, as stated where the weights are distributed (the pinned Hugging Face revision), with attribution to the MyHeartCounts/OpenMHC authors and arXiv 2607.16235.",
+    "conservative_constraints": "Because the README says OpenRAIL, Hachi also applies the stricter reading until the authors resolve it: research evaluation only, no redistribution of the checkpoint or any derived/fine-tuned model, no medical-advice use, weights stay outside Git.",
+    "citation": "OpenMHC benchmark (arXiv 2607.16235); Apple, Beyond Sensor Data (arXiv 2507.00191)."
+  },
+  "pretraining_cohort": "My Heart Counts training split (iPhone/Apple Watch, HealthKit). No known overlap with PMData (Fitbit Versa 2, Norway); recorded as 'none' with this rationale."
+}

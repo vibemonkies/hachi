@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from hachi.storage import Metadata, Workspace
 
 from .artifacts import ArtifactRefused, ServedArtifact, load_served_artifact
+from .gpu import Gx10Target, SshTransport
 from .settings import Settings
 from .sources import DatasetSnapshot, SnapshotRefused, SubjectData, open_dataset_snapshot
 
@@ -18,10 +19,11 @@ class Catalog:
     artifacts: tuple[ServedArtifact, ...] = ()
     # Sanitized reasons a configured snapshot or artifact is not served; health is degraded.
     problems: list[str] = field(default_factory=list)
+    gx10: Gx10Target | None = None
 
     @classmethod
     def load(cls, settings: Settings) -> "Catalog":
-        catalog = cls()
+        catalog = cls(gx10=gx10_target(settings))
         datasets = []
         for snapshot_id in settings.dataset_snapshots:
             assert settings.data_root is not None
@@ -47,7 +49,7 @@ class Catalog:
         artifacts = []
         for pin in settings.served_artifacts:
             try:
-                artifacts.append(load_served_artifact(settings.artifact_root, pin))
+                artifacts.append(load_served_artifact(settings.artifact_root, pin, catalog.gx10))
             except (ArtifactRefused, OSError, ValueError) as exc:
                 catalog.problems.append(f"artifact {pin.artifact_id}: {exc}")
         catalog.artifacts = tuple(artifacts)
@@ -89,3 +91,14 @@ class Catalog:
             tz_name=record.status.declared_tz_name,
             path=workspace.import_directory(record.import_id) / "snapshot.sqlite3",
         )
+
+
+def gx10_target(settings: Settings) -> Gx10Target | None:
+    if not settings.gx10_ssh or not settings.gx10_checkout:
+        return None
+    return Gx10Target(
+        transport=SshTransport(settings.gx10_ssh),
+        owner=settings.owner,
+        checkout=settings.gx10_checkout,
+        timeout_seconds=settings.gx10_timeout_seconds,
+    )

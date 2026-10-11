@@ -68,6 +68,17 @@ def main(argv: list[str] | None = None) -> int:
     handoff.add_argument("--base-url", required=True)
     handoff.add_argument("--packet", type=Path, required=True, help="evaluations/<model> dir")
     handoff.add_argument("--owner", help="GitHub login (default HACHI_OWNER)")
+    handoff.add_argument(
+        "--no-direct",
+        action="store_true",
+        help="compare with the packet only (skip re-running the model; saves GPU jobs)",
+    )
+    handoff.add_argument(
+        "--tolerance",
+        type=float,
+        default=0.0,
+        help="largest absolute difference counted as agreement (default exact)",
+    )
     args = parser.parse_args(argv)
 
     if args.command == "serve":
@@ -83,7 +94,25 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(str(exc))
         port = args.port or int(os.environ.get("HACHI_API_PORT", settings.port))
         extra = frozenset() if _loopback(args.host) else frozenset({args.host})
-        uvicorn.run(create_app(settings, extra_hosts=extra), host=args.host, port=port)
+        import logging
+
+        class SafeServerErrors(logging.Filter):
+            def filter(self, record: logging.LogRecord) -> bool:
+                if record.exc_info:
+                    error = record.exc_info[1]
+                    record.msg = "ASGI request failed (%s)"
+                    record.args = (type(error).__name__,)
+                    record.exc_info = None
+                    record.exc_text = None
+                    record.stack_info = None
+                return True
+
+        # Uvicorn access logs contain raw URL/query subject IDs; traceback messages
+        # may contain request values. Keep startup diagnostics and exception classes.
+        logging.getLogger("uvicorn.error").addFilter(SafeServerErrors())
+        uvicorn.run(
+            create_app(settings, extra_hosts=extra), host=args.host, port=port, access_log=False
+        )
         return 0
     if args.command == "handoff":
         return _handoff(args, parser)
@@ -93,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
             serving = (
                 ServingSpec.model_validate_json(args.serving.read_bytes())
                 if args.serving
-                else serving_from_protocol(args.protocol)
+                else serving_from_protocol(args.protocol, args.model)
             )
             pin = stage_artifact(root, args.model, args.packet, serving)
         else:
@@ -112,7 +141,11 @@ def main(argv: list[str] | None = None) -> int:
                 "aggregation": served.aggregation,
                 "input": served.serving.input,
                 "dataset_snapshot": served.run.dataset_snapshot.model_dump(),
-                "fit_as_of": served.model.fit_as_of.isoformat(),
+                "fit_as_of": (
+                    fit.isoformat() if (fit := getattr(served.model, "fit_as_of", None)) else None
+                ),
+                "requires_gpu": served.serving.requires_gpu,
+                "interval_nominal_coverage": served.serving.interval_nominal_coverage,
                 "lookback_hours": served.split.lookback_hours,
                 "min_history_hours": served.split.min_history_hours,
             },
@@ -122,19 +155,31 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def serving_from_protocol(path: Path) -> ServingSpec:
-    """Hourly-feature serving bound to the exact protocol file the run wrote."""
+def serving_from_protocol(path: Path, model_dir: Path) -> ServingSpec:
+    """Hourly-feature serving bound to the exact protocol file the run wrote.
+
+    A Chronos-2 artifact (#10/#12) is served on the GX10 with its own q0.1-q0.9 coverage;
+    a #9 baseline is served on the CPU and is point-only.
+    """
     data = path.read_bytes()
     protocol = json.loads(data)
+    model = json.loads((model_dir / "model.json").read_bytes())
+    chronos = model.get("format_version") == "chronos-2-artifact-1"
+    if chronos:
+        lower, upper = model["chronos"]["interval_lower"], model["chronos"]["interval_upper"]
     return ServingSpec(
         format_version="hachi-serving-1",
         task="physiology_forecast",
         resolution="hour",
-        entry_point="hachi.models.baselines.load_artifact",
+        entry_point="hachi.models.chronos.artifacts.load_artifact"
+        if chronos
+        else "hachi.models.baselines.load_artifact",
         input="hourly_features",
         feature_policy=HourlyFeaturePolicy.model_validate_json(
             json.dumps(protocol["feature_policy"])
         ),
+        interval_nominal_coverage=round(upper - lower, 10) if chronos else None,
+        requires_gpu=chronos,
         protocol_sha256=hashlib.sha256(data).hexdigest(),
     )
 
@@ -161,7 +206,14 @@ def _handoff(args, parser) -> int:
             print(json.dumps({"ok": False, "error": "a packet subject is not in a served dataset"}))
             return 1
         subjects[subject_id] = subject
-    outcome = run_handoff(args.base_url, args.packet, served, subjects)
+    outcome = run_handoff(
+        args.base_url,
+        args.packet,
+        served,
+        subjects,
+        direct=not args.no_direct,
+        tolerance=args.tolerance,
+    )
     print(json.dumps(outcome, indent=2, sort_keys=True))
     return 0 if outcome["agrees"] else 1
 

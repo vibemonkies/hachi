@@ -143,3 +143,9 @@ Default to a laptop-hosted UI and a backend reachable through a private SSH tunn
 Run the API with `uv run --extra api python -I -m hachi.api serve --owner <login>`. It listens on `127.0.0.1`, on port 8716 for justin06lee, 8717 for CoffeeCoder1015 and 8718 for ezzy1630. Its metadata goes in the owner's `state/metadata.sqlite3`. Served dataset snapshots and artifacts are pinned through environment variables; see [the API README](../src/hachi/api/README.md).
 
 Use a saved result from a real, identified inference run for offline replay if the GPU/network fails, with a visible replay label and timestamp. It is not a live run. No paid provider, public deployment, or external upload is required by this plan.
+
+Private roots, permitted shared-account storage, personal-case consent/display,
+retention and reproducible upload/delete/error checks are defined in
+[the private demo runbook](../infra/demo/README.md). The API is a trusted single-operator
+loopback service, not participant authentication. Use a separate runtime root for
+**each worker**, including multiple workers representing the same GitHub owner.

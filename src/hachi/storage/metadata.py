@@ -50,6 +50,21 @@ _MIGRATIONS: tuple[str, ...] = (
         UNIQUE (subject_id, entry_id)
     );
     """,
+    # Self-report corrections (#18): a version names the version it supersedes, and every
+    # version carries the id of its chain's original entry. Deleted ids leave a content-free
+    # tombstone so they are never reused.
+    """
+    ALTER TABLE self_reports ADD COLUMN root_id TEXT;
+    ALTER TABLE self_reports ADD COLUMN supersedes TEXT;
+    UPDATE self_reports SET root_id = entry_id WHERE root_id IS NULL;
+    CREATE INDEX self_reports_root ON self_reports (subject_id, root_id, seq);
+    CREATE TABLE self_report_tombstones (
+        subject_id TEXT NOT NULL,
+        entry_id TEXT NOT NULL,
+        deleted_at_utc TEXT NOT NULL,
+        PRIMARY KEY (subject_id, entry_id)
+    );
+    """,
 )
 
 
@@ -69,6 +84,12 @@ class SelfReportRow:
     entry_id: str
     kind: str
     entry_json: str
+    root_id: str | None = None  # the chain's original entry_id; None means this entry's own
+    supersedes: str | None = None
+
+    @property
+    def root(self) -> str:
+        return self.root_id or self.entry_id
 
 
 class Metadata:
@@ -80,6 +101,8 @@ class Metadata:
         self._connection = sqlite3.connect(path, check_same_thread=False, isolation_level=None)
         self._connection.execute("PRAGMA journal_mode=WAL")
         self._connection.execute("PRAGMA foreign_keys=ON")
+        # Personal documents must not survive deletion in SQLite free pages.
+        self._connection.execute("PRAGMA secure_delete=ON")
         self._connection.execute("PRAGMA busy_timeout=5000")
         self._migrate()
 
@@ -253,8 +276,10 @@ class Metadata:
     # Self-reports ----------------------------------------------------------------------
 
     def self_reports(self, subject_id: str) -> list[SelfReportRow]:
+        """Every stored version, in recording order."""
         rows = self._rows(
-            "SELECT entry_id, kind, entry_json FROM self_reports WHERE subject_id=? ORDER BY seq",
+            "SELECT entry_id, kind, entry_json, root_id, supersedes FROM self_reports "
+            "WHERE subject_id=? ORDER BY seq",
             (subject_id,),
         )
         return [SelfReportRow(*r) for r in rows]
@@ -262,28 +287,75 @@ class Metadata:
     def insert_self_reports(self, subject_id: str, rows: Iterable[SelfReportRow]) -> None:
         with self.transaction() as db:
             db.executemany(
-                "INSERT INTO self_reports (subject_id, entry_id, kind, entry_json) "
-                "VALUES (?, ?, ?, ?)",
-                [(subject_id, r.entry_id, r.kind, r.entry_json) for r in rows],
+                "INSERT INTO self_reports (subject_id, entry_id, kind, entry_json, root_id, "
+                "supersedes) VALUES (?, ?, ?, ?, ?, ?)",
+                [
+                    (subject_id, r.entry_id, r.kind, r.entry_json, r.root, r.supersedes)
+                    for r in rows
+                ],
             )
+
+    def self_report_tombstones(self, subject_id: str) -> set[str]:
+        rows = self._rows(
+            "SELECT entry_id FROM self_report_tombstones WHERE subject_id=?", (subject_id,)
+        )
+        return {r[0] for r in rows}
+
+    def delete_self_report_chain(
+        self, subject_id: str, root_id: str, deleted_at_utc: str, reports: Iterable[str]
+    ) -> list[str]:
+        """Erase every version of one entry, leave tombstones, and drop dependent reports."""
+        with self._lock:
+            with self.transaction() as db:
+                ids = [
+                    r[0]
+                    for r in db.execute(
+                        "SELECT entry_id FROM self_reports WHERE subject_id=? AND root_id=?",
+                        (subject_id, root_id),
+                    ).fetchall()
+                ]
+                db.execute(
+                    "DELETE FROM self_reports WHERE subject_id=? AND root_id=?",
+                    (subject_id, root_id),
+                )
+                db.executemany(
+                    "INSERT OR IGNORE INTO self_report_tombstones VALUES (?, ?, ?)",
+                    [(subject_id, entry_id, deleted_at_utc) for entry_id in ids],
+                )
+                db.executemany(
+                    "DELETE FROM report_jobs WHERE subject_id=? AND report_id=?",
+                    [(subject_id, report_id) for report_id in reports],
+                )
+            self._scrub()
+        return ids
+
+    def _scrub(self) -> None:
+        # WAL frames contain pre-deletion documents even with secure_delete enabled.
+        # This API owns its connection/database; an external reader blocking the
+        # checkpoint is an operator error, not successful deletion evidence.
+        busy, _, _ = self._connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+        if busy:
+            raise RuntimeError("personal metadata WAL checkpoint was blocked")
 
     # Subjects --------------------------------------------------------------------------
 
     def subject_known(self, subject_id: str) -> bool:
         return any(
             self._rows(f"SELECT 1 FROM {table} WHERE subject_id=? LIMIT 1", (subject_id,))
-            for table in ("imports", "report_jobs", "self_reports")
+            for table in ("imports", "report_jobs", "self_reports", "self_report_tombstones")
         )
 
     def delete_subject(self, subject_id: str) -> list[str]:
         """Remove every metadata row for the subject; returns the deleted import ids."""
-        with self.transaction() as db:
-            ids = [
-                r[0]
-                for r in db.execute(
-                    "SELECT import_id FROM imports WHERE subject_id=?", (subject_id,)
-                ).fetchall()
-            ]
-            for table in ("imports", "report_jobs", "self_reports"):
-                db.execute(f"DELETE FROM {table} WHERE subject_id=?", (subject_id,))
+        with self._lock:
+            with self.transaction() as db:
+                ids = [
+                    r[0]
+                    for r in db.execute(
+                        "SELECT import_id FROM imports WHERE subject_id=?", (subject_id,)
+                    ).fetchall()
+                ]
+                for table in ("imports", "report_jobs", "self_reports", "self_report_tombstones"):
+                    db.execute(f"DELETE FROM {table} WHERE subject_id=?", (subject_id,))
+            self._scrub()
         return ids
