@@ -1,0 +1,65 @@
+# CMU Common Cold Project: symptom-only onset and recovery labels after viral challenge (#8).
+# Variable names and codes come from "Aggregated Data Set_codebook_092015.pdf" (the five-study
+# file); the admitted archives are pinned in configs/datasets/cmu-common-cold-project.toml.
+#
+# CMU's Data-Sharing Agreement requires planned analyses to be registered with its Laboratory for
+# the Study of Stress, Immunity, and Disease before analysis. The build refuses to read the data
+# until [analysis_registration] records the submitted Data Analysis Form. Participant rows never
+# enter a hosted model's context: the adapter prints aggregate counts only.
+schema_version = "0.1"
+pipeline_version = "clinical-labels-1"
+dataset_id = "cmu-common-cold-project"
+data_file_archive = "Aggregated Cold Study (Studies 1-5) .zip"
+data_file_member = "FIVE_STUDY_DATA.dat"
+
+# There are no calendar dates in the labels: study day N (N days after the challenge on quarantine
+# Day 0) is written as relative_day_epoch + N days. Times carry no calendar meaning.
+clock = "relative_to_challenge"
+relative_day_epoch = 2000-01-01
+
+[analysis_registration]
+# Fill in once the Data Analysis Form is submitted, e.g.
+# submitted_on = 2026-10-12
+# reference = "Data Analysis Form emailed to the Laboratory for the Study of Stress, Immunity, and Disease"
+
+[studies]
+# study.id codes (codebook STUDYID). BCS used a clinician checklist instead of the daily Jackson
+# items, so its rows carry no daily symptom score and are excluded from symptom labels.
+0 = "bcs"
+1 = "pcs1"
+2 = "pcs2"
+3 = "pcs3"
+4 = "pmbc"
+
+[viruses]
+# Challenge-virus indicator (0/1) -> category and the contract pathogen for shedding cultures.
+rv2 = { category = "rhinovirus_challenge", pathogen = "other" }
+rv9 = { category = "rhinovirus_challenge", pathogen = "other" }
+rv14 = { category = "rhinovirus_challenge", pathogen = "other" }
+rv23 = { category = "rhinovirus_challenge", pathogen = "other" }
+rv39 = { category = "rhinovirus_challenge", pathogen = "other" }
+hanks = { category = "rhinovirus_challenge", pathogen = "other" }
+cov229e = { category = "coronavirus_229e_challenge", pathogen = "other" }
+rsv = { category = "rsv_challenge", pathogen = "rsv" }
+flu = { category = "influenza_challenge", pathogen = "influenza" }
+
+[symptoms]
+# Daily Modified Jackson total over 8 items rated 0-4 (nascon sneez runno srthr cough hdach chill
+# malais), baseline-adjusted: q<N>.jacksn_scr_adj = q<N>.jacksn_scr - q0.jacksn_scr, floored at 0.
+# q<N>.cold answers "Have a cold or flu?" (0 no, 1 yes). Thresholds are this project's prespecified
+# choices; the codebook defines no daily onset or resolution.
+score_column = "q{day}.jacksn_scr_adj"
+cold_column = "q{day}.cold"
+shed_column = "q{day}.shed"
+infected_column = "post.infected"
+# A day is symptomatic at an adjusted score of at least this (two mild items, or one moderate).
+symptomatic_min_score = 2
+# A day is symptom-free at an adjusted score of at most this and no "yes" to having a cold;
+# anything between is intermediate (neither onset nor recovery evidence).
+symptom_free_max_score = 1
+first_day = 1
+last_day = 6
+shed_last_day = 7
+# Assessment times are not documented, so a first symptomatic rating on day N places onset after
+# the previous day's assessment: the onset interval is days N-1 to N.
+onset_days_before_first_symptomatic = 1

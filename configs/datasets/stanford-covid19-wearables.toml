@@ -14,6 +14,7 @@ access_steps = [
   "Download https://storage.googleapis.com/gbsc-gcp-project-ipop_public/COVID-19/COVID-19-Wearables.zip (378,380,920 bytes).",
   "Compare with the bucket's published MD5 (base64 q3rOD3RMLxkDc+e6A+uR+g==), then record the SHA-256 here and move the status to downloaded.",
   "Read the archive's README for any data terms before using it.",
+  "Download the paper's Supplementary Data 1, https://static-content.springer.com/esm/art%3A10.1038%2Fs41551-020-00640-6/MediaObjects/41551_2020_640_MOESM3_ESM.xlsx (4,041,311 bytes). It holds the outcome labels: Supplementary Table 3 (category, symptom-onset, diagnosis and recovery dates) and Table 5 (daily symptom surveys). The archive itself has no labels.",
 ]
 access_owner = "justin06lee"
 approved_users = ["justin06lee"]
@@ -23,6 +24,7 @@ blocked_capabilities = []
 notes = [
   "Public research download stated in the paper's data availability section; neither the paper nor the bucket states a data license, so terms are recorded as unclear. Non-commercial research with citation only.",
   "About 5,300 enrolled; 32 COVID-19-positive participants with smartwatch data. Small, but the only public cohort here with minute-level watch HR/steps around labeled illness onsets.",
+  "Labels live only in the paper's Supplementary Data 1 workbook, pinned below with the archive. Its dates are shifted 'to obscure PHI' and are local calendar days, on the same clock as the archive's local wall-time CSVs. #8 builds the outcome labels from it (configs/outcomes/).",
 ]
 
 [terms]
@@ -53,3 +55,8 @@ notes = "Detection lead time and false alerts around real onsets, comparable wit
 name = "COVID-19-Wearables.zip"
 bytes = 378380920
 sha256 = "52ca976e6c08daa0cf34b6b82f4fc69b8894c1eef66e598efa40197df4e380f4"
+
+[[files]]
+name = "41551_2020_640_MOESM3_ESM.xlsx"
+bytes = 4041311
+sha256 = "cf89b4b7e6209905d48adce5c4a56d76ea661e4ebd7b439636df46adc5c198ec"
