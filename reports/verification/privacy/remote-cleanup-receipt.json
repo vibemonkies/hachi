@@ -8,7 +8,8 @@
     "pr": 87,
     "head_commit": "9e2e89144e40c1f76971b5a649118765042b8f44",
     "author": "WindyTrout",
-    "source_edited_by_privacy_lane": false
+    "source_edited_by_privacy_lane": false,
+    "merge_commit": "ecad5ec1d15712900177c22b7cb2befa04467a84"
   },
   "baseline": {
     "main_commit": "a7cbe0bf623d7b6ae0b5c76b0d66b1561193b7aa",
@@ -123,5 +124,22 @@
     "Generated local HTTP/filesystem/in-memory and parent-reported actual SSH file commands; no personal source read/transfer/deletion.",
     "Logical removal/error behavior, not SSD/APFS/backup physical erasure or participant authentication.",
     "No BatchMode authentication or inference parity claim from parent SSH PTY removal proof."
-  ]
+  ],
+  "integrated_replay": {
+    "source_commit": "5f8b225efa1ad588091191ac4c223d847a3933a4",
+    "source_clean": true,
+    "source_matches_main": true,
+    "focused_passed": 71,
+    "cli_checks_passed": 37,
+    "cli_git_sha": "5f8b225efa1ad588091191ac4c223d847a3933a4",
+    "cli_model_refs": [],
+    "safe_logs": true,
+    "service_log_sha256": "dc12d6cc15ff2f671c3cfa3ab05d7c3be842f81b08b17798643da518e799028f",
+    "scan_files": 688,
+    "scan_findings": {},
+    "participant_roster_checked": true,
+    "lint": "passed; 257 files formatted",
+    "real_source_data_deleted": false,
+    "ssh_or_gpu_jobs": 0
+  }
 }

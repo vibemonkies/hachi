@@ -28,7 +28,10 @@ roots, including unsealing self-created artifact directories for teardown.
 
 [remote-cleanup-receipt.json](remote-cleanup-receipt.json) binds the clean tested source
 `5a1d0b7` to 71 focused checks (44 independent remote, ten TCP correction, seventeen
-owner Chronos), production CLI37 and private-roster scan680/zero findings. Parent
+owner Chronos), production CLI37 and private-roster scan680/zero findings. After
+integrating merged PR87 (`ecad5ec`), clean `5f8b225` repeated those 71 focused
+checks and CLI37 with matched served SHA, safe logs and empty model refs; its
+current-tree/private-roster scan covered 688 files with zero findings and lint passed. Parent
 SnowyFortress separately executed the exact source SSH removal commands on newly
 generated GX10 files: seven of seven absent, whole owned run absent, sibling preserved
 and then cleaned. No GPU or existing worker state was touched; authenticated PTY
