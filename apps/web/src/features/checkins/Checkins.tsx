@@ -5,11 +5,13 @@ import type {
   SelfReportEntry,
   SelfReportHistory,
   SymptomOnsetEntry,
+  UtcDatetime,
 } from "../../../../../contracts/typescript/index";
 import { createCheckinApi, type CheckinApi } from "./client";
 import { EntryForm } from "./EntryForm";
 import { entryRequest, episodeRoot, label, supersededId } from "./form";
 import "./checkins.css";
+import { readCheckinHistory } from "./history";
 import { supportsCorrections } from "./schema";
 import { ResultStatus } from "./ResultStatus";
 
@@ -24,11 +26,11 @@ const message = (error: unknown) =>
 export function Checkins(props: {
   subjectId: string;
   apiBaseUrl: string;
-  asOf?: string;
+  asOf?: UtcDatetime;
 }) {
   return (
     <CheckinWorkspace
-      key={`${props.apiBaseUrl}|${props.subjectId}`}
+      key={`${props.apiBaseUrl}|${props.subjectId}|${props.asOf ?? ""}`}
       {...props}
     />
   );
@@ -40,7 +42,7 @@ function CheckinWorkspace({
 }: {
   subjectId: string;
   apiBaseUrl: string;
-  asOf?: string;
+  asOf?: UtcDatetime;
 }) {
   const api = useMemo(() => createCheckinApi(apiBaseUrl), [apiBaseUrl]);
   const [state, setState] = useState<HistoryState>({ kind: "loading" });
@@ -56,11 +58,10 @@ function CheckinWorkspace({
   const deletionTrigger = useRef<HTMLButtonElement | null>(null);
   const historyReload = useRef<HTMLButtonElement | null>(null);
   async function loadHistory() {
-    const history = await api.history(subjectId);
-    const versions = supportsCorrections
-      ? (await api.history(subjectId, "all")).entries
-      : history.entries;
-    return { kind: "ready", history, versions } satisfies HistoryState;
+    return {
+      kind: "ready",
+      ...(await readCheckinHistory(api, subjectId, asOf)),
+    } satisfies HistoryState;
   }
   async function deleteEntry(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,7 +116,7 @@ function CheckinWorkspace({
     return () => {
       active = false;
     };
-  }, [api, subjectId]);
+  }, [api, subjectId, asOf]);
   const entries = state.kind === "ready" ? state.history.entries : [];
   const versions = state.kind === "ready" ? state.versions : [];
   const currentOnsets = entries.filter(
