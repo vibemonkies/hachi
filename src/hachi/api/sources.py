@@ -1,0 +1,153 @@
+"""Where a subject's data comes from: an Apple Health import or an approved dataset snapshot.
+
+Both readers apply the cutoff rule at read time (`hachi.contracts.causality`): a record informs
+an as-of only if it had ended and become available by then.
+"""
+
+from collections.abc import Iterator
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Literal
+
+import pyarrow.compute as pc
+import pyarrow.parquet as pq
+
+from hachi.contracts.base import DataMode, DatasetSnapshotRef
+from hachi.contracts.metrics import Metric
+from hachi.contracts.tables import Observation, SourceKind
+from hachi.data import pmdata
+from hachi.data.apple_health import iter_observations as apple_observations
+from hachi.evaluation.features import HourlyFeature, HourlyFeaturePolicy, hourly_features
+from hachi.storage import child
+
+
+class SnapshotRefused(ValueError):
+    """A configured dataset snapshot failed verification or admission."""
+
+
+@dataclass(frozen=True)
+class Presence:
+    """One span during which a metric had usable data, for coverage."""
+
+    metric: Metric
+    start_utc: datetime
+    end_utc: datetime
+    source_kind: SourceKind
+
+
+@dataclass(frozen=True)
+class DatasetSnapshot:
+    snapshot_id: str
+    path: Path
+    ref: DatasetSnapshotRef
+    subjects: frozenset[str]
+    tz_name: str
+    source_kind: SourceKind
+    data_mode: DataMode
+
+
+def open_dataset_snapshot(
+    data_root: Path, snapshot_id: str, *, allow_unadmitted: bool = False
+) -> DatasetSnapshot:
+    """Verify checksums, manifest identity and archive admission before serving a snapshot."""
+    path = child(child(data_root, "derived"), snapshot_id)
+    if not path.is_dir():
+        raise SnapshotRefused(f"snapshot {snapshot_id} is not under the approved data root")
+    outcome = pmdata.verify(path)
+    if not outcome["ok"]:
+        raise SnapshotRefused(f"snapshot {snapshot_id} failed verification")
+    manifest = pmdata.load_manifest(path)
+    ref = DatasetSnapshotRef.model_validate(manifest["dataset_snapshot"])
+    try:
+        admission = pmdata.registry_admission(ref.dataset_id)
+        admitted = (
+            manifest["source"]["archive_sha256"] == admission.archive_sha256
+            and ref.dataset_version == admission.dataset_version
+        )
+    except (KeyError, ValueError):
+        admitted = False
+    if not admitted and not allow_unadmitted:
+        raise SnapshotRefused(f"snapshot {snapshot_id} was not built from an admitted archive")
+    content = manifest["config"]["content"]
+    return DatasetSnapshot(
+        snapshot_id=snapshot_id,
+        path=path,
+        ref=ref,
+        subjects=frozenset(manifest["subjects"]),
+        tz_name=content["local_timezone"],
+        source_kind=content["source_kind"],
+        data_mode="real" if admitted else "synthetic",
+    )
+
+
+@dataclass(frozen=True)
+class SubjectData:
+    """A resolved, read-only view of one subject's history."""
+
+    subject_id: str
+    kind: Literal["apple_import", "dataset_snapshot"]
+    data_mode: DataMode
+    snapshot: DatasetSnapshotRef
+    tz_name: str
+    path: Path
+    dataset_source_kind: SourceKind | None = None
+
+    @property
+    def provides_hourly_features(self) -> bool:
+        return self.kind == "dataset_snapshot"
+
+    def observations(
+        self, metric: Metric, as_of: datetime, start: datetime | None = None
+    ) -> list[Observation]:
+        """Recorded observations of one metric available by `as_of` and starting at `start`."""
+        if self.kind == "apple_import":
+            rows = (o for o in apple_observations(self.path, as_of=as_of) if o.metric == metric)
+        else:
+            rows = pmdata.iter_observations(
+                self.path, as_of=as_of, subjects=[self.subject_id], metrics=[metric], start=start
+            )
+        return [o for o in rows if start is None or o.start_utc >= start]
+
+    def hourly_features(
+        self, policy: HourlyFeaturePolicy, as_of: datetime, start: datetime | None = None
+    ) -> list[HourlyFeature]:
+        """Derived hourly bins final by `as_of`, selected by the model's own feature policy."""
+        if self.kind != "dataset_snapshot":
+            raise ValueError("only dataset snapshots provide derived hourly features")
+        bins = pmdata.iter_aggregates(
+            self.path, "hour", as_of=as_of, subjects=[self.subject_id], metrics=[policy.metric]
+        )
+        view = hourly_features(bins, policy)
+        return [f for f in view.features if start is None or f.start_utc >= start]
+
+    def presence(self, as_of: datetime | None) -> Iterator[Presence]:
+        """Spans with usable data, for coverage. Snapshots use their hourly and daily bins."""
+        if self.kind == "apple_import":
+            for o in apple_observations(self.path, as_of=as_of):
+                yield Presence(o.metric, o.start_utc, o.end_utc, o.source_kind)
+            return
+        assert self.dataset_source_kind is not None
+        hourly: set[str] = set()
+        for resolution in ("hour", "day"):
+            for aggregate, _ in pmdata.iter_aggregates(
+                self.path, resolution, as_of=as_of, subjects=[self.subject_id]
+            ):
+                if aggregate.value is None:
+                    continue
+                if resolution == "hour":
+                    hourly.add(aggregate.metric)
+                elif aggregate.metric in hourly:
+                    continue  # day bins only stand in for metrics without hourly bins
+                yield Presence(
+                    aggregate.metric,
+                    aggregate.interval_start_utc,
+                    aggregate.interval_end_utc,
+                    self.dataset_source_kind,
+                )
+
+
+def snapshot_subjects(snapshot: Path) -> frozenset[str]:
+    """Subjects present in a snapshot's daily table (cheap: one column)."""
+    table = pq.read_table(snapshot / "aggregates_daily.parquet", columns=["subject_id"])
+    return frozenset(pc.unique(table["subject_id"]).to_pylist())

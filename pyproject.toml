@@ -15,9 +15,14 @@ models = []
 baselines = [
     "scikit-learn>=1.9.1,<1.10",
 ]
+api = [
+    "fastapi>=0.120",
+    "uvicorn>=0.38",
+]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28",
     "jsonschema>=4.26.0",
     "pytest>=9.1.1",
     "ruff>=0.17.0",
