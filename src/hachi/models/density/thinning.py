@@ -18,33 +18,28 @@ sample's availability, never before the bin ends.
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Literal
 
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.dataset as ds
-from pydantic import Field
 
-from hachi.contracts.base import Contract
 from hachi.contracts.tables import Aggregate
 from hachi.data.pmdata import FeatureBin, iter_aggregates, load_manifest
 
+from .rule import ThinningRule
+
+__all__ = [
+    "ThinningRule",
+    "hourly_from_samples",
+    "hourly_min_coverage",
+    "read_samples",
+    "thin_samples",
+    "thinned_bins",
+]
+
 US = 1_000_000
 HOUR_US = 3600 * US
-
-
-class ThinningRule(Contract):
-    metric: Literal["heart_rate"] = "heart_rate"
-    slot_seconds: Annotated[int, Field(gt=0, le=3600)]
-    keep: Literal["earliest_start_per_utc_slot"] = "earliest_start_per_utc_slot"
-    pipeline_suffix: Annotated[str, Field(pattern=r"^[A-Za-z0-9._+-]{1,24}$")]
-
-    @property
-    def slots_per_hour(self) -> int:
-        if 3600 % self.slot_seconds:
-            raise ValueError("slots must tile the hour")
-        return 3600 // self.slot_seconds
 
 
 def thin_samples(table: pa.Table, rule: ThinningRule) -> pa.Table:
@@ -109,16 +104,21 @@ def read_samples(snapshot: Path, subjects: Sequence[str] | None = None) -> pa.Ta
     )
 
 
-def thinned_bins(snapshot: Path, rule: ThinningRule) -> tuple[list[FeatureBin], dict[str, int]]:
-    """Every original hourly HR-mean bin, recomputed from the thinned samples only."""
-    samples = read_samples(snapshot)
+def thinned_bins(
+    snapshot: Path, rule: ThinningRule, subjects: Sequence[str] | None = None
+) -> tuple[list[FeatureBin], dict[str, int]]:
+    """Every original hourly HR-mean bin, recomputed from the thinned samples only.
+
+    Slots never span subjects, so restricting to `subjects` gives exactly their bins.
+    """
+    samples = read_samples(snapshot, subjects)
     kept = thin_samples(samples, rule)
     hourly = hourly_from_samples(kept)
     threshold = hourly_min_coverage(snapshot)
     slots = rule.slots_per_hour
     bins: list[FeatureBin] = []
     counts = {"samples": samples.num_rows, "kept_samples": kept.num_rows, "bins": 0}
-    for original in iter_aggregates(snapshot, "hour", metrics=["heart_rate"]):
+    for original in iter_aggregates(snapshot, "hour", metrics=["heart_rate"], subjects=subjects):
         row = original.aggregate
         if row.aggregation != "mean":
             continue

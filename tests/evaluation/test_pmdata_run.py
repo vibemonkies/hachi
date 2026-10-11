@@ -16,11 +16,10 @@ def protocol():
     return pmdata_run.PMDataProtocol.model_validate_json(path.read_bytes())
 
 
-def test_run_boundary_keeps_test_sealed_and_artifacts_private(monkeypatch, tmp_path):
-    pytest.importorskip("sklearn")
+def generated_snapshot(monkeypatch, selected, offset: float = 0.0) -> list[FeatureBin]:
+    """Sixteen flat generated subjects patched in as the snapshot; returns their bins."""
     from datetime import timedelta
 
-    selected = protocol()
     subjects = [f"generated-{i}" for i in range(16)]
     bins = []
     for i, subject in enumerate(subjects):
@@ -37,7 +36,7 @@ def test_run_boundary_keeps_test_sealed_and_artifacts_private(monkeypatch, tmp_p
                 local_date=None,
                 tz_name="Europe/Oslo",
                 aggregation="mean",
-                value=float(65 + i),
+                value=float(65 + i) + offset,
                 null_reason=None,
                 observed_count=120,
                 coverage=1.0,
@@ -49,6 +48,13 @@ def test_run_boundary_keeps_test_sealed_and_artifacts_private(monkeypatch, tmp_p
     monkeypatch.setattr(pmdata_run, "dataset_snapshot_ref", lambda _: selected.expected_snapshot)
     monkeypatch.setattr(pmdata_run, "load_manifest", lambda _: {"subjects": subjects})
     monkeypatch.setattr(pmdata_run, "iter_aggregates", lambda *args, **kwargs: iter(bins))
+    return bins
+
+
+def test_run_boundary_keeps_test_sealed_and_artifacts_private(monkeypatch, tmp_path):
+    pytest.importorskip("sklearn")
+    selected = protocol()
+    generated_snapshot(monkeypatch, selected)
     output = tmp_path / "generated-run"
     summary = pmdata_run.run(tmp_path / "generated-snapshot", output, selected)
     assert summary["outer_test_sealed"] is True
@@ -78,3 +84,24 @@ def test_protocol_refuses_mismatched_seed_and_model_target():
                 "tree": selected.tree.model_copy(update={"metric": "hrv_sdnn"}),
             }
         )
+
+
+def test_replacement_history_feeds_models_while_labels_stay_the_snapshots(monkeypatch, tmp_path):
+    pytest.importorskip("sklearn")
+    selected = protocol()
+    generated_snapshot(monkeypatch, selected)
+    shifted = [  # what a predeclared variant might hand in: same bins, history 10 bpm higher
+        FeatureBin(
+            b.aggregate.model_copy(update={"value": b.aggregate.value + 10}), b.available_at_utc
+        )
+        for b in generated_snapshot(monkeypatch, selected)
+    ]
+    with pytest.raises(ValueError, match="needs its audit"):
+        pmdata_run.run(tmp_path / "s", tmp_path / "no-audit", selected, history=shifted)
+    output = tmp_path / "variant-run"
+    audit = {"rule": "generated +10 bpm history"}
+    summary = pmdata_run.run(tmp_path / "s", output, selected, history=shifted, history_audit=audit)
+    # last-valid repeats the shifted history; it is scored against the unshifted labels.
+    assert summary["models"]["hourly-last-valid-v1"]["metrics"]["mae"]["value"] == pytest.approx(10)
+    recorded = json.loads((output / "input-audit.json").read_text())
+    assert recorded["history"] == audit

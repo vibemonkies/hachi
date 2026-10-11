@@ -4,12 +4,16 @@
   # GX10: hachi.models.chronos inference.py on PRIVATE_DIR/{full,thin}/requests.jsonl (gpu-run)
   python -m hachi.models.density.run score --snapshot DIR --export PRIVATE_DIR \
       --gx10-full RUN --gx10-thin RUN --output PRIVATE_DIR/score
+  python -m hachi.models.density.run fit --snapshot DIR --output PRIVATE_DIR/fit
 
 Each model (the four #9 comparators and Chronos-2 zero-shot) is evaluated twice on the same
 sealed splits and the same full-density targets: once with the frozen protocol's full-density
 history, once with the predeclared variant's thinned history. Predictions are paired per
 participant, cutoff and target hour; abstentions on either side leave the pairing and are
 counted. Only the active outer fold's inner validation folds are scored; its test stays sealed.
+
+`fit` freezes the CPU comparators at the variant's gates for serving: the committed #9 runner
+fits, saves and replay-checks each model on thinned history, with full-density labels.
 """
 
 import argparse
@@ -31,6 +35,7 @@ import pyarrow.parquet as pq
 from hachi.evaluation import evaluate_forecast, hourly_features
 from hachi.evaluation.forecast import EvaluationResult, target_quality_eligible
 from hachi.evaluation.metrics import ScoredPoint, bootstrap_participant_mean, forecast_metrics
+from hachi.evaluation.pmdata_run import run as run_protocol
 from hachi.evaluation.serialization import document_bytes, document_sha256
 from hachi.models.chronos import AdapterLog, load_forecasts, replay_factory
 from hachi.models.chronos.pmdata import (
@@ -343,6 +348,20 @@ def run_score(snapshot: Path, export_dir: Path, gx10_full: Path, gx10_thin: Path
         raise
 
 
+def run_fit(snapshot: Path, output: Path) -> dict[str, Any]:
+    """Every CPU comparator frozen on the variant's thinned history, with its own packet."""
+    variant, base = load_variant(VARIANT)
+    bins, counts = thinned_bins(snapshot, variant.thinning)
+    audit = {
+        "variant_sha256": document_sha256(variant),
+        "variant_protocol_sha256": document_sha256(variant.protocol),
+        "base_protocol_sha256": document_sha256(base),
+        "thinning": variant.thinning.model_dump(),
+        "thinning_counts": counts,
+    }
+    return run_protocol(snapshot, output, variant.protocol, history=bins, history_audit=audit)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -355,10 +374,15 @@ def main() -> int:
     s.add_argument("--gx10-full", required=True, type=Path)
     s.add_argument("--gx10-thin", required=True, type=Path)
     s.add_argument("--output", required=True, type=Path)
+    f = sub.add_parser("fit")
+    f.add_argument("--snapshot", required=True, type=Path)
+    f.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     try:
         if args.command == "export":
             result = run_export(args.snapshot, args.output)
+        elif args.command == "fit":
+            result = run_fit(args.snapshot, args.output)
         else:
             result = run_score(
                 args.snapshot, args.export, args.gx10_full, args.gx10_thin, args.output

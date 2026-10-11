@@ -10,7 +10,7 @@ from pydantic import Field, model_validator
 from hachi.contracts.base import Contract, RelativePath, Sha256, Text
 from hachi.evaluation.pmdata_run import PMDataProtocol
 
-from .thinning import ThinningRule
+from .rule import ThinningRule
 
 REPO = Path(__file__).resolve().parents[4]
 

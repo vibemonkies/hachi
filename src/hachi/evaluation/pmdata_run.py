@@ -10,6 +10,7 @@ import subprocess
 import sys
 import traceback
 from collections import Counter, defaultdict
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -23,6 +24,7 @@ from hachi.contracts.manifests import Exclusion, ModelRef, RunManifest, SplitMan
 from hachi.contracts.tables import Aggregate
 from hachi.data.pmdata import (
     AGGREGATE_AVAILABILITY_RULE,
+    FeatureBin,
     dataset_snapshot_ref,
     iter_aggregates,
     load_manifest,
@@ -113,9 +115,13 @@ def _aggregate_metrics(report: MetricReport) -> dict[str, object]:
 
 
 def load_inputs(
-    snapshot: Path, protocol: PMDataProtocol
+    snapshot: Path, protocol: PMDataProtocol, history: Sequence[FeatureBin] | None = None
 ) -> tuple[NestedFoldPlan, HourlyFeatureView, tuple[Aggregate, ...]]:
-    """Verify the admitted snapshot and build the shared model-comparison inputs."""
+    """Verify the admitted snapshot and build the shared model-comparison inputs.
+
+    `history` replaces the model-input bins (a predeclared variant, e.g. thinned history);
+    labels always stay the snapshot's own aggregates.
+    """
     verified = verify(snapshot)
     if not verified["ok"] or dataset_snapshot_ref(snapshot) != protocol.expected_snapshot:
         raise ValueError("snapshot verification or admitted identity mismatch")
@@ -124,7 +130,7 @@ def load_inputs(
     )
     plan = nested_participant_folds(roster, protocol.folds, exclusions=protocol.exclusions)
     bins = tuple(iter_aggregates(snapshot, "hour", metrics=[protocol.evaluation.metric]))
-    view = hourly_features(bins, protocol.feature_policy)
+    view = hourly_features(bins if history is None else history, protocol.feature_policy)
     labels = tuple(b.aggregate for b in bins)
     return plan, view, labels
 
@@ -151,12 +157,25 @@ def fold_split(protocol: PMDataProtocol, fold: NestedFold) -> SplitManifest:
     )
 
 
-def run(snapshot: Path, output: Path, protocol: PMDataProtocol) -> dict[str, object]:
-    """Run only inner validation cohorts of one outer fold, exporting each frozen model."""
+def run(
+    snapshot: Path,
+    output: Path,
+    protocol: PMDataProtocol,
+    *,
+    history: Sequence[FeatureBin] | None = None,
+    history_audit: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Run only inner validation cohorts of one outer fold, exporting each frozen model.
+
+    With `history`, models see those bins instead of the snapshot's; `history_audit`
+    records how they were built in input-audit.json.
+    """
     output_created = False
     started = perf_counter()
     try:
-        plan, view, labels = load_inputs(snapshot, protocol)
+        if (history is None) != (history_audit is None):
+            raise ValueError("replacement history needs its audit, and only then")
+        plan, view, labels = load_inputs(snapshot, protocol, history)
         selected = [f for f in plan.folds if f.outer_fold == protocol.active_outer_fold]
         repo = Path(__file__).resolve().parents[3]
         git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
@@ -167,7 +186,10 @@ def run(snapshot: Path, output: Path, protocol: PMDataProtocol) -> dict[str, obj
         output_created = True
         _write_private(output / "protocol.json", protocol)
         _write_private(output / "fold-plan.json", plan)
-        _write_private(output / "input-audit.json", {"policy": view.policy, "counts": view.counts})
+        audit: dict[str, object] = {"policy": view.policy, "counts": view.counts}
+        if history_audit is not None:
+            audit["history"] = dict(history_audit)
+        _write_private(output / "input-audit.json", audit)
         reports: dict[str, list[MetricReport]] = defaultdict(list)
         counts: dict[str, Counter[str]] = defaultdict(Counter)
         artifacts: dict[str, list[dict[str, object]]] = defaultdict(list)
