@@ -13,6 +13,12 @@ operator root outside Git. It refuses dirty/uncommitted code and later checkout
 changes. Every invocation uses that same root and locked environment. Keep API
 8720 and web 5180 reserved for this worker; never stop somebody else's listener.
 
+The default published packet index is
+`reports/evaluation/pmdata-hourly-validation/packet-index.json`. Split, origin,
+evaluation and protocol hashes must match it, in addition to the packet's own
+checksums. Use `--packet-index` only for another reviewed frozen packet index with
+the same shape. Rehashing a changed private packet cannot satisfy this gate.
+
 ## Prepare and launch
 
 From a fresh isolated checkout, set private local paths. These are shell variables,

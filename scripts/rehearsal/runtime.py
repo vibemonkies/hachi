@@ -16,7 +16,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from hachi.api.__main__ import serving_from_protocol
@@ -60,6 +60,8 @@ class Operator(Contract):
     data_root: str
     snapshot_id: str
     packet: str
+    packet_index: str
+    packet_index_sha256: str
     artifact_pin: str
     api_port: int
     web_port: int
@@ -94,7 +96,12 @@ def load_operator(root: Path) -> Operator:
     return operator
 
 
-def validation_packet(packet: Path):
+def validation_packet(packet: Path, packet_index: Path):
+    published = json.loads(packet_index.read_bytes())
+    key = "/".join(packet.parts[-3:])
+    require(key in published["packets"], "Packet is not in the published frozen index")
+    for name, sha in published["packets"][key].items():
+        require(digest(packet / name) == sha, "Packet differs from published frozen evidence")
     run, evaluation = load_packet(packet)
     split = SplitManifest.model_validate_json((packet / "split.json").read_bytes())
     require(run.split_manifest_sha256 == digest(packet / "split.json"), "Split hash mismatch")
@@ -116,7 +123,9 @@ def prepare(args) -> dict:
         not args.runtime_root.resolve().is_relative_to(REPO), "Keep private runtime outside Git"
     )
     require(args.api_port != args.web_port, "API and web ports must differ")
-    run, _ = validation_packet(args.packet)
+    run, _ = validation_packet(args.packet, args.packet_index)
+    published = json.loads(args.packet_index.read_bytes())
+    require(digest(args.protocol) == published["protocol_sha256"], "Protocol is not frozen")
     root = private_directory(args.runtime_root.resolve())
     spec = serving_from_protocol(args.protocol)
     pin = stage_artifact(private_directory(root / "artifacts"), args.model, args.packet, spec)
@@ -127,6 +136,8 @@ def prepare(args) -> dict:
         data_root=str(args.data_root.resolve()),
         snapshot_id=args.snapshot_id,
         packet=str(args.packet.resolve()),
+        packet_index=str(args.packet_index.resolve()),
+        packet_index_sha256=digest(args.packet_index),
         artifact_pin=f"{pin.artifact_id}@{pin.artifact_sha256}",
         api_port=args.api_port,
         web_port=args.web_port,
@@ -219,8 +230,16 @@ def check(operator: Operator) -> dict:
     catalog = Catalog.load(settings)
     require(not catalog.problems, "Local inputs refused")
     served = load_served_artifact(settings.artifact_root, parse_pin(operator.artifact_pin))
-    run, evaluation = validation_packet(Path(operator.packet))
+    require(
+        digest(Path(operator.packet_index)) == operator.packet_index_sha256,
+        "Published packet index changed",
+    )
+    run, evaluation = validation_packet(Path(operator.packet), Path(operator.packet_index))
     require(served.ref == run.artifact, "Packet/artifact disagreement")
+    require(
+        served.serving.input == "hourly_features" and served.serving.feature_policy is not None,
+        "This rehearsal checks hourly-feature artifacts",
+    )
     client = Client(operator.api_port)
     status, payload = client.call("GET", "/healthz")
     require(status == 200, "Health request failed")
@@ -280,6 +299,19 @@ def check(operator: Operator) -> dict:
             require(
                 all(0 <= f.coverage <= 1 for f in result.provenance.feature_coverage),
                 "Invalid quality coverage",
+            )
+            history = subject.hourly_features(
+                served.serving.feature_policy,
+                cutoff,
+                start=cutoff - timedelta(hours=served.split.lookback_hours),
+            )
+            observed = {f.start_utc for f in history if f.value is not None}
+            require(
+                len(result.provenance.feature_coverage) == 1
+                and result.provenance.feature_coverage[0].metric == served.metric
+                and result.provenance.feature_coverage[0].coverage
+                == len(observed) / served.split.lookback_hours,
+                "Feature coverage differs from source history",
             )
             warnings.update(w.code for w in result.warnings)
             require(
@@ -361,6 +393,7 @@ def check(operator: Operator) -> dict:
         "dataset_snapshot": run.dataset_snapshot.model_dump(),
         "protocol_sha256": operator.protocol_sha256,
         "packet_sha256": digest(Path(operator.packet) / "sha256.json"),
+        "published_packet_index_sha256": operator.packet_index_sha256,
         "api_port": operator.api_port,
         "web_port": operator.web_port,
         "real": {
@@ -494,6 +527,11 @@ def main() -> int:
     p.add_argument("--snapshot-id", required=True)
     p.add_argument("--model", type=Path, required=True)
     p.add_argument("--packet", type=Path, required=True)
+    p.add_argument(
+        "--packet-index",
+        type=Path,
+        default=REPO / "reports/evaluation/pmdata-hourly-validation/packet-index.json",
+    )
     p.add_argument("--protocol", type=Path, required=True)
     p.add_argument("--api-port", type=int, default=8720)
     p.add_argument("--web-port", type=int, default=5180)
