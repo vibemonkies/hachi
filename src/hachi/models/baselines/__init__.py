@@ -8,12 +8,16 @@ from .forecast import (
     fit_baseline,
     hourly_values,
 )
+from .nightly import NightlyFeaturePolicy, NightlyFeatureResult, NightlyRequest, nightly_rest
 from .robust import NightlyRest, RobustConfig, nightly_deviation
 from .tree import TreeArtifact, TreeConfig, fit_tree, tree_factory
 
 __all__ = [
     "BaselineArtifact",
     "BaselineConfig",
+    "NightlyFeaturePolicy",
+    "NightlyFeatureResult",
+    "NightlyRequest",
     "NightlyRest",
     "RobustConfig",
     "TreeArtifact",
@@ -24,6 +28,7 @@ __all__ = [
     "hourly_values",
     "load_artifact",
     "nightly_deviation",
+    "nightly_rest",
     "save_artifact",
     "tree_factory",
 ]
