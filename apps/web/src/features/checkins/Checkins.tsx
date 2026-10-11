@@ -11,6 +11,7 @@ import { EntryForm } from "./EntryForm";
 import { entryRequest, episodeRoot, label, supersededId } from "./form";
 import "./checkins.css";
 import { supportsCorrections } from "./schema";
+import { ResultStatus } from "./ResultStatus";
 
 type HistoryState =
   | { kind: "loading" }
@@ -501,7 +502,10 @@ function RecoveryPanel({
         </p>
       )}
       {job?.result && (
-        <RecoveryResult result={job.result} episodeId={onset.entry_id} />
+        <>
+          <ResultStatus result={job.result} />
+          <RecoveryResult result={job.result} episodeId={onset.entry_id} />
+        </>
       )}
     </section>
   );

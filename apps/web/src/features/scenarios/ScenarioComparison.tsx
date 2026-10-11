@@ -9,6 +9,7 @@ import { TimeField, NumberField, Choice } from "../checkins/EntryForm";
 import { label } from "../checkins/form";
 import { scenarioRequest } from "./request";
 import "../checkins/checkins.css";
+import { ResultStatus } from "../checkins/ResultStatus";
 
 type State =
   | { kind: "idle" }
@@ -136,9 +137,7 @@ function Comparison({
               </li>
             ))}
           </ul>
-          <p>
-            Data mode · {state.result.data_mode}. Cutoff · {state.result.as_of}.
-          </p>
+          <ResultStatus result={state.result} />
           {state.result.status === "unavailable" ? (
             <div role="status">
               <h3>
@@ -239,9 +238,7 @@ function Curves({ result }: { result: AlertnessResult }) {
           observations. Evidence · {payload.validation.report}.
         </p>
       )}
-      {result.warnings.map((warning) => (
-        <p key={warning.code}>{warning.message}</p>
-      ))}
+
       <p>
         Artifact · {result.provenance.artifact.artifact_id}; code ·{" "}
         {result.git_sha}.
