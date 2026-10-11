@@ -100,6 +100,16 @@ real participant rows, predictions, IDs, weights or credentials.
 Checks: five focused evidence-integrity tests passed; Ruff check/format and
 `git diff --check` passed. After integrating main, API/evaluation/baseline tests
 passed **152/152** in 18.10 s. Web `npm ci` and `npm run build` passed.
+Full local `make check`, using the owned locked `api`/`baselines` environment
+without resync and read-only Bun 1.4.0, passed 496 pytest tests, five coordination
+tests, schema/fixture regeneration checks and generated TypeScript checks.
+
+PR69's initial default CI environment failed three newly merged #12 numerical
+tests because NumPy was not installed (441 passed, three skipped). Those source
+files are outside this lane and pass locally with the declared extras. The
+shared dependency/CI owner was notified with the
+[failed run](https://github.com/vibemonkies/hachi/actions/runs/38137946270).
+Do not merge until that CI gate is resolved and the tooling review passes.
 
 ## Outstanding acceptance gates
 
