@@ -302,3 +302,17 @@ The paired run scores all eight bins jointly. These are software-check counts on
 with test participants sealed. Packet and evaluator-source hashes and private
 0700/0600 storage modes are independently checked. Only the sanitized aggregate
 receipt is committed; predictions and split identifiers stay in ignored `runs/`.
+
+### Hourly adapter checkpoint
+
+On clean code commit `4cd9da72073e554b5ccb7ece3cf401630f3aaa9d`, the full suite
+passes 272 Python tests plus 5 coordination tests. All lint and generated schema,
+fixture, TypeScript staleness and compilation gates pass. The 70 focused
+evaluation/model/causality tests include derived/raw tree-fit parity, data-only
+artifact readback, future-readiness sentinels and explicit exclusion handling.
+A fresh generated-only four-model demo verifies saved-artifact prediction/count
+replay and all packet hashes/private modes under ignored
+`runs/issue-7-hourly-adapter-001`. The sanitized aggregate receipt is
+[`evidence/hourly-feature-adapter.json`](evidence/hourly-feature-adapter.json).
+It distinguishes the raw generated demo from derived-input tests and establishes
+no real-cohort accuracy or integration claim.
