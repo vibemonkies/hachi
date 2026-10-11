@@ -1487,7 +1487,7 @@
     },
     {
       "id": "simulation-parameters",
-      "text": "The pinned illustrative configuration is:\n\n```toml\n{config}\n```",
+      "text": "The pinned illustrative configuration is:\n\n```toml\n{config}\n```\n\n",
       "values": {
         "config": {
           "source": "scenario-config",

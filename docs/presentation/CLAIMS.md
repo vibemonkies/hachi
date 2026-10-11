@@ -517,6 +517,8 @@ anchor_local_hour = 15
 sample_minutes = 30
 ```
 
+
+
 Limit: Literature-derived concept and original implementation; parameters include disclosed assumptions, not population/personal fits. Root checked implementation equations, not independent validation of paper timing constants. Caffeine/light effects are not modeled.
 
 - `config`: source `scenario-config`, selector `exact text anchor`, exact value `"version = \"two-process-v1\"\ntau_wake_hours = 18.2\ntau_sleep_hours = 4.2\ninitial_pressure = 0.6\ncircadian_weight = 0.2\nanchor_local_hour = 15\nsample_minutes = 30"`.

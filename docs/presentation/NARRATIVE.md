@@ -216,7 +216,9 @@ initial_pressure = 0.6
 circadian_weight = 0.2
 anchor_local_hour = 15
 sample_minutes = 30
-``` [Evidence](CLAIMS.md#simulation-parameters).
+```
+
+ [Evidence](CLAIMS.md#simulation-parameters).
 
 Each alternative uses a disclosed synthetic prior-sleep block, then awake/sleep
 pressure propagation and a fixed circadian phase on elapsed UTC time. Missing local

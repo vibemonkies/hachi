@@ -38,6 +38,22 @@ class ClaimChecks(unittest.TestCase):
                 )
                 self.assertFalse(f"source measurement row `{anchor}`." in output)
 
+    def test_simulation_fence_closes_before_separate_evidence_paragraph(self):
+        claim = next(c for c in self.manifest["claims"] if c["id"] == "simulation-parameters")
+        config = claim["values"]["config"]["expected"]
+        outputs = checker.render(self.manifest)
+        for name, output in outputs.items():
+            with self.subTest(document=name):
+                self.assertTrue(
+                    f"```toml\n{config}\n```\n\n" in output,
+                    "configuration fence must close on a standalone line",
+                )
+        self.assertTrue(
+            "\n```\n\n [Evidence](CLAIMS.md#simulation-parameters).\n" in outputs["NARRATIVE.md"],
+            "evidence link must follow the closing fence in a separate paragraph",
+        )
+        self.assertNotIn("``` [Evidence]", outputs["NARRATIVE.md"])
+
     def test_altered_number_cannot_be_rounded_into_a_claim(self):
         manifest = self.changed()
         manifest["claims"][0]["values"]["people"]["expected"] += 1
