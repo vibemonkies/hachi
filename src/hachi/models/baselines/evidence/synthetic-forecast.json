@@ -1,0 +1,271 @@
+{
+  "coordination_tests": 5,
+  "data_mode": "synthetic",
+  "environment_sha256": "5185dbaf65e14ee9013c6f115214e5fbc367123ab22d2d938eb97ba5dd8904a5",
+  "focused_tests": 20,
+  "full_python_tests": 262,
+  "git_dirty": false,
+  "git_sha": "0f90edf733da897673a339cc4d4d880bcb67efd8",
+  "models": {
+    "causal-hourly-tree-v1": {
+      "artifact": {
+        "artifact_id": "causal-hourly-tree-v1-6050b1740f17d7ce",
+        "artifact_sha256": "d786eda2d3422ded190d8c1eaf14430bfff4e0fbcaf511c75157f5fc999093fe"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "elapsed_seconds": 0.13343012501718476,
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            1.00000000000019,
+            2.00000000000019
+          ],
+          "participants": 2,
+          "value": 1.50000000000019
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.500000000000095,
+            1.000000000000095
+          ],
+          "participants": 2,
+          "value": 0.750000000000095
+        },
+        "rmse": {
+          "confidence_interval": [
+            1.0012086958961415,
+            2.0006046217927302
+          ],
+          "participants": 2,
+          "value": 1.500906658844436
+        }
+      },
+      "packet_sha256": {
+        "config.json": "ee5ee31744c743e0275419302c413b57b3d7d387f9bae73d68b017942772c598",
+        "evaluation.json": "e8d8816dc881e0a2c6f2bc2e9028997beb1f7ce62a6c0c749340310647d86196",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "3de9e15e404e2fc00b6defc1fee79aa84c3c4f3bd8490c2c5739cb97f1841a69",
+        "source-sha256.json": "cf6f994c22404ace25f3f0029437a2078291ed5d1680146ec564240a3bb208a8",
+        "split.json": "8bec3f8d0df6e38bec7775186b9dd65dca051218f675afc38ea18ae4d9cf8f9f"
+      }
+    },
+    "hourly-last-valid-v1": {
+      "artifact": {
+        "artifact_id": "hourly-last-valid-v1-97bac19c66421744",
+        "artifact_sha256": "2a1faa01ac4afed51db578deb440524070b310ef315dee37bdbe2657ea86ecc1"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "elapsed_seconds": 0.003869583015330136,
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            1.1985860423127583,
+            1.1985860423127583
+          ],
+          "participants": 2,
+          "value": 1.1985860423127583
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.5992930211563792,
+            0.5992930211563792
+          ],
+          "participants": 2,
+          "value": 0.5992930211563792
+        },
+        "rmse": {
+          "confidence_interval": [
+            1.4657230659065732,
+            1.4657230659065732
+          ],
+          "participants": 2,
+          "value": 1.4657230659065732
+        }
+      },
+      "packet_sha256": {
+        "config.json": "ee5ee31744c743e0275419302c413b57b3d7d387f9bae73d68b017942772c598",
+        "evaluation.json": "4f8b76be50c56510bdcb4cb1c4fc925ff78c85ee3bf307c00c6741ed31b89b13",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "2ee972f4ec756b5fee07c21a323fd7fcbbcc76d3046bcebbe1125572225497a4",
+        "source-sha256.json": "cf6f994c22404ace25f3f0029437a2078291ed5d1680146ec564240a3bb208a8",
+        "split.json": "8bec3f8d0df6e38bec7775186b9dd65dca051218f675afc38ea18ae4d9cf8f9f"
+      }
+    },
+    "train-population-mean-v1": {
+      "artifact": {
+        "artifact_id": "train-population-mean-v1-bc102f90907bb0f3",
+        "artifact_sha256": "8fda859cbb11c8391b8cde3c39e4682ca714a5b52b19f7dcfe24defddfe384e2"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "elapsed_seconds": 0.0028469159733504057,
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            1.4663529952791272,
+            1.7163529952791272
+          ],
+          "participants": 2,
+          "value": 1.5913529952791272
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.7331764976395636,
+            0.8581764976395636
+          ],
+          "participants": 2,
+          "value": 0.7956764976395636
+        },
+        "rmse": {
+          "confidence_interval": [
+            1.7532903586720159,
+            1.9114865118872286
+          ],
+          "participants": 2,
+          "value": 1.8323884352796223
+        }
+      },
+      "packet_sha256": {
+        "config.json": "ee5ee31744c743e0275419302c413b57b3d7d387f9bae73d68b017942772c598",
+        "evaluation.json": "fc8d1f65b32eb65c4355ac9c95c8eae95bdf84e1f49ec52f20a7018ab15a770d",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "bad809baeeb7fc84f85654c47d9eec24f26e6b534b493100b38e871f3d6dd4bc",
+        "source-sha256.json": "cf6f994c22404ace25f3f0029437a2078291ed5d1680146ec564240a3bb208a8",
+        "split.json": "8bec3f8d0df6e38bec7775186b9dd65dca051218f675afc38ea18ae4d9cf8f9f"
+      }
+    },
+    "utc-seasonal-naive-v1": {
+      "artifact": {
+        "artifact_id": "utc-seasonal-naive-v1-29989b4d41bc7d39",
+        "artifact_sha256": "c45f535b5b9862d4b1cd2415df898cbb57cdb714757a5343a376151828fb9872"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "elapsed_seconds": 0.003352415980771184,
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            0.0,
+            0.0
+          ],
+          "participants": 2,
+          "value": 0.0
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.0,
+            0.0
+          ],
+          "participants": 2,
+          "value": 0.0
+        },
+        "rmse": {
+          "confidence_interval": [
+            0.0,
+            0.0
+          ],
+          "participants": 2,
+          "value": 0.0
+        }
+      },
+      "packet_sha256": {
+        "config.json": "ee5ee31744c743e0275419302c413b57b3d7d387f9bae73d68b017942772c598",
+        "evaluation.json": "9e3c90c0864bf47adf3e17f8961f51b047a613128efd5370bcc30da9d5ef96c8",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "191124acd4c01c0e7dce3f556054ba4fc96198f9635ee28ef7c07c84f8d7fbdd",
+        "source-sha256.json": "cf6f994c22404ace25f3f0029437a2078291ed5d1680146ec564240a3bb208a8",
+        "split.json": "8bec3f8d0df6e38bec7775186b9dd65dca051218f675afc38ea18ae4d9cf8f9f"
+      }
+    }
+  },
+  "numpy": "2.5.4",
+  "packet_hashes_and_private_modes_verified": true,
+  "python": "3.12.13",
+  "real_cohort_gate": "pending admitted PMData and frozen real protocol",
+  "scipy": "1.18.1",
+  "sklearn": "1.9.1",
+  "source_sha256": {
+    "__init__.py": "e2fb7e82110e73dfbe634534d8560272ef1ee1b91e9f432d789f64c5ca1c8116",
+    "artifacts.py": "f383f9cef246a633a740165d6f10d351623f1a717a63fbb2b14e6776c7892742",
+    "demo.py": "fecd79deef72197606a47e153b9ea8be24fd194aa03e86b5785968611bb5f010",
+    "forecast.py": "a546c03d8c588666eb3637a42c494e0fd908dbeb501c37cd057f94b87a1e51f7",
+    "nightsignal_reproduction.py": "0949ab9433bd3e4f6d1d235aa4f1cca776d8d24aee6ad3cfbe53d65502bef001",
+    "robust.py": "cea96d1b5bb1b909682071f205e0ae912bee12cb6dd7048fd29e3341f1bfdfb1",
+    "tree.py": "93753e0d61a5e205842da0857b752cd798d23a757097cdb09ef0a698c1a5a5f5"
+  },
+  "split_sha256": "8bec3f8d0df6e38bec7775186b9dd65dca051218f675afc38ea18ae4d9cf8f9f"
+}

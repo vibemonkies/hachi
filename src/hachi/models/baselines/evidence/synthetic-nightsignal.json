@@ -1,0 +1,34 @@
+{
+  "compatibility": "current locked numpy/pandas/matplotlib; palette alias and Agg only; upstream source unchanged",
+  "compatibility_lock_sha256": "5ee31441d3203bcecc2546d3b2f2ecd2b5cb8312afa878243463023634f74400",
+  "complete_two_elevated_nights_red": true,
+  "counts": {
+    "complete": {
+      "nights": 9,
+      "red": 1,
+      "yellow": 0
+    },
+    "gap_full": {
+      "nights": 11,
+      "red": 2,
+      "yellow": 0
+    },
+    "gap_prefix": {
+      "nights": 8,
+      "red": 0,
+      "yellow": 0
+    }
+  },
+  "data_mode": "synthetic",
+  "future_adjacent_night_creates_earlier_imputed_red": true,
+  "matplotlib": "3.11.2",
+  "model_id": "upstream-nightsignal-99b3bd7-plotcompat",
+  "numpy": "2.5.4",
+  "pandas": "3.0.6",
+  "plot_shim_sha256": "45d8b2f39a66bf1b07f5282a2dcb83677ad4a723b3f68621382e73e06571fff6",
+  "python": "3.12.13",
+  "runner_sha256": "0949ab9433bd3e4f6d1d235aa4f1cca776d8d24aee6ad3cfbe53d65502bef001",
+  "scope": "Fitbit input path; generated records only; no real cohort or alert burden",
+  "upstream_revision": "99b3bd7937e72d42c2670c7a259d9f9f8728dc06",
+  "upstream_source_sha256": "198487887166afa2c7f884d832c2c837d41f2973b684da0303ec5aa8ad54a999"
+}
