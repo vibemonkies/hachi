@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from xml.sax.saxutils import quoteattr
 
-from hachi.contracts.base import ArtifactRef, DatasetSnapshotRef
+from hachi.contracts.base import ArtifactRef
 from hachi.contracts.requests import (
     IllnessOnsetRequest,
     PhysiologyForecastHourlyRequest,
@@ -19,6 +19,7 @@ from hachi.evaluation.serialization import document_bytes, document_sha256
 
 from .lifecycle import (
     CaseRefused,
+    apple_snapshot_identity,
     digest,
     exclusive_write,
     preregister,
@@ -71,7 +72,7 @@ def fixture(inputs: Path, repo: Path) -> Prespecification:
         ],
     )
     inputs.mkdir(mode=0o700, exist_ok=False)
-    _, database, config = _generated_import(inputs)
+    audit, database, config = _generated_import(inputs)
     values = {
         "source.json": document_bytes(source),
         "model.json": document_bytes({"synthetic_fixture": True, "inference": "unavailable"}),
@@ -150,11 +151,7 @@ def fixture(inputs: Path, repo: Path) -> Prespecification:
                 path="import.sqlite3", sha256=digest(database.read_bytes())
             ),
             import_config=pin("import-config.json"),
-            dataset_snapshot=DatasetSnapshotRef(
-                dataset_id=config.dataset_id,
-                dataset_version="apple-generated-fixture-1",
-                snapshot_sha256=digest(database.read_bytes()),
-            ),
+            dataset_snapshot=apple_snapshot_identity(audit.xml_sha256, config),
         ),
         system=SystemPins(
             artifact=ArtifactRef(
@@ -262,7 +259,7 @@ def _generated_import(root: Path):
     exclusive_write(root / "export.xml", xml)
     database = root / "import.sqlite3"
     config = ImportConfig(
-        dataset_id="synthetic-apple",
+        dataset_id="synthetic-apple-health-export",
         subject_id="synthetic-only",
         declared_tz_name="UTC",
         data_mode="synthetic",

@@ -12,7 +12,7 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from hachi.contracts.base import Sha256, local_day_bounds
+from hachi.contracts.base import DatasetSnapshotRef, Sha256, local_day_bounds
 from hachi.contracts.requests import (
     PhysiologyForecastDailyRequest,
     PhysiologyForecastHourlyRequest,
@@ -24,6 +24,19 @@ from hachi.evaluation.serialization import document_bytes, document_sha256
 from .specification import CommittedTimeline, Prespecification, Receipt, ResultBatch, SourceSnapshot
 
 MAX_BYTES = 16 * 1024 * 1024
+# Compatibility with Service.run_import, checked through a generated service import.
+# Keep the CPU receipt caller independent of API runtime dependencies.
+APPLE_IMPORT_VERSION = "apple-health-import-1"
+
+
+def apple_snapshot_identity(xml_sha256: Sha256, config: ImportConfig) -> DatasetSnapshotRef:
+    return DatasetSnapshotRef(
+        dataset_id=config.dataset_id,
+        dataset_version=APPLE_IMPORT_VERSION,
+        snapshot_sha256=document_sha256(
+            {"xml_sha256": xml_sha256, "config": config, "importer": APPLE_IMPORT_VERSION}
+        ),
+    )
 
 
 class CaseRefused(ValueError):
@@ -140,6 +153,12 @@ def _verify_inputs(spec: Prespecification, inputs: Path, repo: Path) -> Verified
         or ImportConfig.model_validate_json(metadata.get("config", "null")) != config
     ):
         raise CaseRefused("import snapshot does not bind the pinned export and config")
+    if spec.inputs.dataset_snapshot != apple_snapshot_identity(
+        spec.inputs.export_xml.sha256, config
+    ):
+        raise CaseRefused(
+            "canonical import snapshot identity differs from the pinned export and config"
+        )
     timeline = CommittedTimeline.model_validate_json(
         private_read(inputs, spec.onset.sealed_timeline.path)
     )

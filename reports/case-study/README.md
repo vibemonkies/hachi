@@ -52,10 +52,15 @@ predictor. Onset bounds are plain text in this private document, and the exact
 cutoffs encode the lower bound. The operator is not blind to that bound.
 
 The version-2 format also pins the original export XML, exact canonical
-`ImportConfig`, and immutable imported SQLite bytes as a canonical
-`DatasetSnapshotRef`. The snapshot metadata must bind the same XML checksum and
-config, dataset and subject. Each ok result must name that exact input snapshot;
-available partial provenance must agree too. Request hashes retain unavailable
+`ImportConfig`, and immutable imported SQLite bytes with separate document pins.
+The canonical `DatasetSnapshotRef` uses the existing service's
+`apple-health-import-1` identity: a canonical hash of the XML checksum, full import
+config and importer version. This is distinct from the SQLite byte checksum;
+both are verified independently. A generated import through `Service.run_import`
+checks compatibility without a server or inference. The snapshot metadata must
+bind the same XML checksum and config, dataset and subject. Each ok result must
+name that exact input snapshot; available partial provenance must agree too.
+Request hashes retain unavailable
 and error results for the exact requested horizon even when no task payload
 exists. Supported physiology payloads must match resolution, metrics and every
 requested hourly/daily window. Clinical ok outputs remain refused.
@@ -137,9 +142,14 @@ held-out retrospective use, named storage/access/retention, and separate
 aggregate presentation permission. Justin records the dataset policy in
 `configs/datasets/personal-apple-export.toml`, receives the actual export, and
 holds future measurements/labels and the actual onset/recovery timeline.
-CoffeeCoder, the accountable #21 assignee, must agree to the protocol and reveal
-procedure on #21. #20's owner/parent must deliver scientific acceptance, the
-exact selected artifact/config/source/source-profile and reproduced inference;
+CoffeeCoder, the accountable #21 assignee, must explicitly agree to the exact
+cutoffs, half-open window and minus72 boundary interpretation, healthy comparison
+rules and reveal procedure on #21 **before real prespecification**. The generated
+protocol is preparation, not that approval. Any later clinical-ok implementation
+must also reconcile the clinical payload's horizon with its pinned request;
+clinical-ok outputs are currently always refused. #20's owner/parent must deliver
+scientific acceptance, the exact selected artifact/config/source/source-profile
+and reproduced inference;
 the current blocked false freeze cannot satisfy that gate. Real integration
 requires a later scoped implementation after this handoff, not an input flag.
 Ezzy explicitly reconfirmed that the actual export and illness timeline are not

@@ -9,6 +9,10 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from hachi.api.catalog import Catalog
+from hachi.api.service import Service
+from hachi.api.settings import Settings
+from hachi.contracts.api import ImportStatus
 from hachi.contracts.base import ArtifactRef, DatasetSnapshotRef
 from hachi.contracts.results import (
     ForecastPayload,
@@ -19,11 +23,18 @@ from hachi.contracts.results import (
     Provenance,
     ReportResult,
 )
+from hachi.data.apple_health import ImportConfig
 from hachi.evaluation.case_study import lifecycle as flow
 from hachi.evaluation.case_study.__main__ import main
-from hachi.evaluation.case_study.specification import Consent, Prespecification, ResultBatch
+from hachi.evaluation.case_study.specification import (
+    Consent,
+    InputPins,
+    Prespecification,
+    ResultBatch,
+)
 from hachi.evaluation.case_study.synthetic import fixture, parser_seam, unavailable_batch
 from hachi.evaluation.serialization import document_sha256
+from hachi.storage import Metadata, Workspace, private_directory
 
 
 @pytest.fixture
@@ -104,6 +115,85 @@ def test_foreign_input_snapshot_cannot_be_sealed(prepared):
     changed = ResultBatch.model_validate_json(json.dumps(values))
     with pytest.raises(flow.CaseRefused, match="snapshot"):
         flow.seal(root, pin, changed, inputs, repo)
+
+
+def test_canonical_import_identity_is_distinct_from_sqlite_byte_pin(prepared):
+    _, inputs, spec, _, _, _ = prepared
+    config = ImportConfig.model_validate_json((inputs / "import-config.json").read_bytes())
+    version = "apple-health-import-1"
+    canonical = DatasetSnapshotRef(
+        dataset_id=config.dataset_id,
+        dataset_version=version,
+        snapshot_sha256=document_sha256(
+            {"xml_sha256": spec.inputs.export_xml.sha256, "config": config, "importer": version}
+        ),
+    )
+    values = spec.inputs.model_dump(mode="json")
+    values["dataset_snapshot"] = canonical.model_dump(mode="json")
+    pins = InputPins.model_validate(values)
+    assert pins.dataset_snapshot.snapshot_sha256 != pins.import_snapshot.sha256
+    assert pins.dataset_snapshot == spec.inputs.dataset_snapshot
+
+
+def test_generated_service_import_matches_pinned_case_identity_and_seals(prepared):
+    repo, inputs, spec, root, pin, batch = prepared
+    workspace = Workspace("NavyDune", root.parent / "service")
+    private_directory(workspace.state)
+    directory = private_directory(workspace.import_directory("imp-synthetic-parity"))
+    (directory / "upload.xml").write_bytes((inputs / "export.xml").read_bytes())
+    metadata = Metadata(workspace.default_database)
+    try:
+        now = datetime.now(UTC).replace(microsecond=0)
+        status = ImportStatus(
+            schema_version="0.1",
+            import_id="imp-synthetic-parity",
+            subject_id=spec.requests[0].root.subject_id,
+            declared_tz_name="UTC",
+            source_format="apple_health_export_xml",
+            data_mode="synthetic",
+            state="pending",
+            created_at_utc=now,
+            updated_at_utc=now,
+            counts=None,
+            record_issues=[],
+            failure=None,
+        )
+        metadata.insert_import("generated-parity", spec.inputs.export_xml.sha256, status)
+        service = Service(
+            Settings(
+                owner="NavyDune",
+                workspace=workspace,
+                database=workspace.default_database,
+                git_sha=flow.source_snapshot(repo).git_sha,
+                artifact_root=workspace.root / "unused-artifacts",
+            ),
+            metadata,
+            Catalog(),
+        )
+        # Direct CPU import only: no server, background runner, catalog reads or inference.
+        service.run_import(status.import_id)
+        imported = metadata.get_import(status.import_id)
+        assert imported is not None and imported.status.state == "succeeded"
+        assert imported.snapshot == spec.inputs.dataset_snapshot
+        values = batch.model_dump(mode="json")
+        values["results"][0]["result"]["provenance"]["dataset_snapshot"] = (
+            imported.snapshot.model_dump(mode="json")
+        )
+        flow.seal(root, pin, ResultBatch.model_validate_json(json.dumps(values)), inputs, repo)
+    finally:
+        metadata.close()
+
+
+@pytest.mark.parametrize("field", ["dataset_version", "snapshot_sha256"])
+def test_incorrect_canonical_identity_refuses_preregistration(prepared, field):
+    repo, inputs, spec, root, _, _ = prepared
+    values = spec.model_dump(mode="json")
+    values["inputs"]["dataset_snapshot"][field] = (
+        "foreign-version" if field == "dataset_version" else spec.inputs.import_snapshot.sha256
+    )
+    changed = Prespecification.model_validate_json(json.dumps(values))
+    with pytest.raises(flow.CaseRefused, match="canonical import snapshot identity"):
+        flow.preregister(changed, inputs, repo, root.parent / "wrong-identity")
 
 
 def test_input_export_mutation_cannot_be_sealed(prepared):

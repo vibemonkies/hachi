@@ -79,12 +79,6 @@ class InputPins(Contract):
     import_config: DocumentPin
     dataset_snapshot: DatasetSnapshotRef
 
-    @model_validator(mode="after")
-    def _snapshot(self) -> Self:
-        if self.dataset_snapshot.snapshot_sha256 != self.import_snapshot.sha256:
-            raise ValueError("input snapshot identity must bind the imported SQLite bytes")
-        return self
-
 
 class OutcomeRule(Contract):
     forecast_window: Literal["start_inclusive_end_exclusive"]
