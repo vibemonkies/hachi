@@ -17,7 +17,7 @@ from hachi.data import pmdata
 from hachi.data.apple_health import iter_observations as apple_observations
 from hachi.data.apple_health.hourly import apple_hourly_features
 from hachi.evaluation.features import HourlyFeature, HourlyFeaturePolicy, hourly_features
-from hachi.models.density.rule import ThinningRule
+from hachi.models.density.rule import AppleMinuteThinning
 from hachi.storage import child
 
 
@@ -118,13 +118,14 @@ class SubjectData:
         policy: HourlyFeaturePolicy,
         as_of: datetime,
         start: datetime | None = None,
-        thinning: ThinningRule | None = None,
+        thinning: AppleMinuteThinning | None = None,
     ) -> list[HourlyFeature]:
         """Derived hourly bins final by `as_of`, selected by the model's own feature policy.
 
         Apple imports are sealed at each hour end by #78's source rule; the policy must carry
         that rule, so a PMData policy can never be stamped onto Apple bins. `thinning` rebuilds
-        bins the way a density-variant artifact was evaluated (#97), for either source.
+        bins the way a density-variant artifact was evaluated (#102), for either source; both
+        then report coverage as sampled minutes / 60.
         """
         if self.kind == "apple_import":
             slot = thinning.slot_seconds if thinning is not None else None

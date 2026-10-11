@@ -5,13 +5,14 @@ import hashlib
 import json
 import os
 import platform
+import re
 import resource
 import subprocess
 import sys
 import traceback
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
@@ -94,6 +95,23 @@ class PMDataProtocol(Contract):
         return self
 
 
+@dataclass(frozen=True)
+class ReplacementHistory:
+    """Model-input bins from a predeclared variant, such as thinned history.
+
+    `label` is appended to every packet's run_id and `audit` is written to input-audit.json,
+    so a variant packet never passes as full-density evidence. Labels stay the snapshot's own.
+    """
+
+    label: str
+    bins: Sequence[FeatureBin]
+    audit: Mapping[str, object]
+
+    def __post_init__(self) -> None:
+        if not re.fullmatch(r"[A-Za-z0-9._+-]{1,24}", self.label):
+            raise ValueError("a replacement history needs a short identifier label")
+
+
 def _write_private(path: Path, value: object) -> None:
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(descriptor, "wb") as stream:
@@ -162,20 +180,18 @@ def run(
     output: Path,
     protocol: PMDataProtocol,
     *,
-    history: Sequence[FeatureBin] | None = None,
-    history_audit: Mapping[str, object] | None = None,
+    history: ReplacementHistory | None = None,
 ) -> dict[str, object]:
     """Run only inner validation cohorts of one outer fold, exporting each frozen model.
 
-    With `history`, models see those bins instead of the snapshot's; `history_audit`
-    records how they were built in input-audit.json.
+    With `history`, models see its bins instead of the snapshot's (see ReplacementHistory).
     """
     output_created = False
     started = perf_counter()
     try:
-        if (history is None) != (history_audit is None):
-            raise ValueError("replacement history needs its audit, and only then")
-        plan, view, labels = load_inputs(snapshot, protocol, history)
+        plan, view, labels = load_inputs(
+            snapshot, protocol, None if history is None else history.bins
+        )
         selected = [f for f in plan.folds if f.outer_fold == protocol.active_outer_fold]
         repo = Path(__file__).resolve().parents[3]
         git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
@@ -187,8 +203,8 @@ def run(
         _write_private(output / "protocol.json", protocol)
         _write_private(output / "fold-plan.json", plan)
         audit: dict[str, object] = {"policy": view.policy, "counts": view.counts}
-        if history_audit is not None:
-            audit["history"] = dict(history_audit)
+        if history is not None:
+            audit["history"] = {"label": history.label, **history.audit}
         _write_private(output / "input-audit.json", audit)
         reports: dict[str, list[MetricReport]] = defaultdict(list)
         counts: dict[str, Counter[str]] = defaultdict(Counter)
@@ -245,7 +261,8 @@ def run(
                 elapsed[model.model_id] += perf_counter() - began
                 run_manifest = RunManifest(
                     schema_version="0.1",
-                    run_id=f"outer{fold.outer_fold}-inner{fold.inner_fold}-{model.model_id}",
+                    run_id=f"outer{fold.outer_fold}-inner{fold.inner_fold}-{model.model_id}"
+                    + ("" if history is None else f"-{history.label}"),
                     created_at_utc=now,
                     git_sha=git_sha,
                     git_dirty=dirty,

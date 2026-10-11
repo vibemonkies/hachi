@@ -10,7 +10,7 @@ from pydantic import Field, model_validator
 from hachi.contracts.base import Contract, RelativePath, Sha256, Text
 from hachi.evaluation.pmdata_run import PMDataProtocol
 
-from .rule import ThinningRule
+from .rule import AppleMinuteThinning, ThinningRule
 
 REPO = Path(__file__).resolve().parents[4]
 
@@ -25,12 +25,24 @@ class DensityGate(Contract):
     justification: Text
 
 
+class MinuteDensityGate(DensityGate):
+    """Amendment 1 gate, in the Apple helper's sampled-minute coverage."""
+
+    min_coverage: Annotated[float, Field(gt=0, le=1)]
+
+
+class Amendment(Contract):
+    amends_path: RelativePath
+    amends_sha256: Sha256
+    reason: Text
+
+
 class DensityVariant(Contract):
     """Wraps a full PMDataProtocol so every existing runner accepts it unchanged."""
 
     base_protocol: BaseProtocolRef
-    thinning: ThinningRule
-    density_gate: DensityGate
+    thinning: ThinningRule | AppleMinuteThinning
+    density_gate: DensityGate | MinuteDensityGate
     density_audit: dict[str, Any]
     protocol: PMDataProtocol
 
@@ -46,7 +58,16 @@ class DensityVariant(Contract):
             raise ValueError("every model-input density gate must equal the declared gate")
         if gate > self.thinning.slots_per_hour:
             raise ValueError("the gate cannot exceed the thinned samples an hour can hold")
+        minute = isinstance(self.thinning, AppleMinuteThinning)
+        if minute != isinstance(self.density_gate, MinuteDensityGate):
+            raise ValueError("Apple-minute coverage needs a minute-coverage gate, and only it")
+        if minute and self.protocol.feature_policy.min_coverage != self.density_gate.min_coverage:
+            raise ValueError("feature min_coverage must equal the declared minute-coverage gate")
         return self
+
+
+class AmendedDensityVariant(DensityVariant):
+    amendment: Amendment
 
 
 # Only these may differ from the frozen protocol; targets keep their full-density rules.
@@ -73,7 +94,13 @@ def _differences(a: Any, b: Any, path: tuple = ()) -> set[tuple]:
 
 def load_variant(path: Path) -> tuple[DensityVariant, PMDataProtocol]:
     """The variant and its frozen base, refusing any change beyond the density gates."""
-    variant = DensityVariant.model_validate_json(path.read_bytes())
+    raw = json.loads(path.read_bytes())
+    model = AmendedDensityVariant if "amendment" in raw else DensityVariant
+    variant = model.model_validate_json(path.read_bytes())
+    if isinstance(variant, AmendedDensityVariant):
+        amended = REPO / variant.amendment.amends_path
+        if hashlib.sha256(amended.read_bytes()).hexdigest() != variant.amendment.amends_sha256:
+            raise ValueError("the amended variant changed since the amendment was declared")
     base_path = REPO / variant.base_protocol.path
     if hashlib.sha256(base_path.read_bytes()).hexdigest() != variant.base_protocol.sha256:
         raise ValueError("the frozen base protocol changed since the variant was declared")
@@ -81,8 +108,13 @@ def load_variant(path: Path) -> tuple[DensityVariant, PMDataProtocol]:
     changed = _differences(
         json.loads(base.model_dump_json()), json.loads(variant.protocol.model_dump_json())
     )
-    if not changed <= ALLOWED:
+    allowed = ALLOWED | (
+        {("feature_policy", "min_coverage")}
+        if isinstance(variant.thinning, AppleMinuteThinning)
+        else set()
+    )
+    if not changed <= allowed:
         raise ValueError(
-            f"variant changes more than the density gates: {sorted(changed - ALLOWED)}"
+            f"variant changes more than the density gates: {sorted(changed - allowed)}"
         )
     return variant, base

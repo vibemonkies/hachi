@@ -175,15 +175,20 @@ def serving_from_protocol(
 
     A Chronos-2 artifact (#10/#12) is served on the GX10 with its own q0.1-q0.9 coverage;
     a #9 baseline is served on the CPU and is point-only. A predeclared density variant
-    (#97) is checked against its base protocol, and its thinning is served with the model.
+    (#102) is checked against its base protocol, and its thinning is served with the model.
     """
     data = path.read_bytes()
     protocol = json.loads(data)
     thinning = None
     if "thinning" in protocol:
         from hachi.models.density.config import load_variant
+        from hachi.models.density.rule import AppleMinuteThinning
 
         variant, _ = load_variant(path)
+        if not isinstance(variant.thinning, AppleMinuteThinning):
+            raise ValueError(
+                "only sampled-minute thinning (#102) is served: Apple bins keep minute coverage"
+            )
         protocol = variant.protocol.model_dump(mode="json")
         thinning = variant.thinning
     model = json.loads((model_dir / "model.json").read_bytes())

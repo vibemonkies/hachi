@@ -27,9 +27,10 @@ import pyarrow.dataset as ds
 from hachi.contracts.tables import Aggregate
 from hachi.data.pmdata import FeatureBin, iter_aggregates, load_manifest
 
-from .rule import ThinningRule
+from .rule import AppleMinuteThinning, ThinningRule
 
 __all__ = [
+    "AppleMinuteThinning",
     "ThinningRule",
     "hourly_from_samples",
     "hourly_min_coverage",
@@ -55,8 +56,10 @@ def thin_samples(table: pa.Table, rule: ThinningRule) -> pa.Table:
     return ordered.filter(pa.array(first))
 
 
-def hourly_from_samples(kept: pa.Table) -> dict[tuple[str, int], tuple[int, float, int, list[str]]]:
-    """(subject, hour start µs) -> (count, sum, latest availability µs, source ids)."""
+def hourly_from_samples(
+    kept: pa.Table,
+) -> dict[tuple[str, int], tuple[int, float, int, list[str], int]]:
+    """(subject, hour start µs) -> (count, sum, latest availability µs, source ids, minutes)."""
     hour = pc.multiply(
         pc.divide(pc.cast(kept["start_utc"], pa.int64()), pa.scalar(HOUR_US)),
         pa.scalar(HOUR_US),
@@ -68,6 +71,7 @@ def hourly_from_samples(kept: pa.Table) -> dict[tuple[str, int], tuple[int, floa
             "value": kept["value"],
             "available": pc.cast(kept["available_at_utc"], pa.int64()),
             "source_id": kept["source_id"],
+            "minute": pc.divide(pc.cast(kept["start_utc"], pa.int64()), pa.scalar(60 * US)),
         }
     )
     grouped = table.group_by(["subject_id", "hour"]).aggregate(
@@ -76,6 +80,7 @@ def hourly_from_samples(kept: pa.Table) -> dict[tuple[str, int], tuple[int, floa
             ("value", "sum"),
             ("available", "max"),
             ("source_id", "distinct"),
+            ("minute", "count_distinct"),
         ]
     )
     return {
@@ -84,6 +89,7 @@ def hourly_from_samples(kept: pa.Table) -> dict[tuple[str, int], tuple[int, floa
             r["value_sum"],
             r["available_max"],
             sorted(r["source_id_distinct"]),
+            r["minute_count_distinct"],
         )
         for r in grouped.to_pylist()
     }
@@ -124,12 +130,19 @@ def thinned_bins(
             continue
         start = int(row.interval_start_utc.timestamp() * US)
         end = row.interval_end_utc
-        count, total, latest, sources = hourly.get((row.subject_id, start), (0, 0.0, 0, []))
-        coverage = min(1.0, count / slots)
+        count, total, latest, sources, minutes = hourly.get(
+            (row.subject_id, start), (0, 0.0, 0, [], 0)
+        )
+        if isinstance(rule, AppleMinuteThinning):
+            coverage = minutes / 60
+            floor = 0.0  # like the Apple helper: only an empty bin is null
+        else:
+            coverage = min(1.0, count / slots)
+            floor = threshold
         if count == 0:
             value, reason, available = None, "no_observations", end
         else:
-            value = total / count if coverage >= threshold else None
+            value = total / count if coverage >= floor else None
             reason = None if value is not None else "insufficient_coverage"
             available = max(end, datetime.fromtimestamp(latest / US, UTC))
         aggregate = Aggregate.model_validate(

@@ -4,7 +4,7 @@
   # GX10: hachi.models.chronos inference.py on PRIVATE_DIR/{full,thin}/requests.jsonl (gpu-run)
   python -m hachi.models.density.run score --snapshot DIR --export PRIVATE_DIR \
       --gx10-full RUN --gx10-thin RUN --output PRIVATE_DIR/score
-  python -m hachi.models.density.run fit --snapshot DIR --output PRIVATE_DIR/fit
+  python -m hachi.models.density.run fit --snapshot DIR --variant FILE --output PRIVATE_DIR/fit
 
 Each model (the four #9 comparators and Chronos-2 zero-shot) is evaluated twice on the same
 sealed splits and the same full-density targets: once with the frozen protocol's full-density
@@ -12,8 +12,9 @@ history, once with the predeclared variant's thinned history. Predictions are pa
 participant, cutoff and target hour; abstentions on either side leave the pairing and are
 counted. Only the active outer fold's inner validation folds are scored; its test stays sealed.
 
-`fit` freezes the CPU comparators at the variant's gates for serving: the committed #9 runner
-fits, saves and replay-checks each model on thinned history, with full-density labels.
+`fit --variant FILE` freezes the CPU comparators at a variant's gates for serving: the committed
+#9 runner fits, saves and replay-checks each model on that variant's thinned history, with
+full-density labels, and labels every packet's run_id with the thinning's pipeline suffix.
 """
 
 import argparse
@@ -35,6 +36,7 @@ import pyarrow.parquet as pq
 from hachi.evaluation import evaluate_forecast, hourly_features
 from hachi.evaluation.forecast import EvaluationResult, target_quality_eligible
 from hachi.evaluation.metrics import ScoredPoint, bootstrap_participant_mean, forecast_metrics
+from hachi.evaluation.pmdata_run import ReplacementHistory
 from hachi.evaluation.pmdata_run import run as run_protocol
 from hachi.evaluation.serialization import document_bytes, document_sha256
 from hachi.models.chronos import AdapterLog, load_forecasts, replay_factory
@@ -68,13 +70,15 @@ def _write(path: Path, value: object) -> None:
         stream.write(value if isinstance(value, bytes) else document_bytes(value))
 
 
-def build_inputs(snapshot: Path) -> tuple[Inputs, Inputs, dict[str, Any]]:
+def build_inputs(
+    snapshot: Path, variant_path: Path = VARIANT, chronos_thin: Path = CHRONOS_THIN
+) -> tuple[Inputs, Inputs, dict[str, Any]]:
     """Full-density inputs (the frozen protocol) and thinned-history inputs (the variant)."""
-    variant, base = load_variant(VARIANT)
+    variant, base = load_variant(variant_path)
     full = prepare(
         snapshot, base, ChronosPMDataConfig.model_validate_json(CHRONOS_FULL.read_bytes())
     )
-    thin_config = ChronosPMDataConfig.model_validate_json(CHRONOS_THIN.read_bytes())
+    thin_config = ChronosPMDataConfig.model_validate_json(chronos_thin.read_bytes())
     bins, thin_counts = thinned_bins(snapshot, variant.thinning)
     view = hourly_features(bins, variant.protocol.feature_policy)
     probe = prepare(snapshot, variant.protocol, thin_config)  # same splits, binding checked
@@ -257,8 +261,8 @@ def _git() -> dict[str, Any]:
     return {"git_sha": sha, "git_dirty": dirty}
 
 
-def run_export(snapshot: Path, output: Path) -> dict[str, Any]:
-    full, thin, audit = build_inputs(snapshot)
+def run_export(snapshot: Path, output: Path, variant: Path, chronos: Path) -> dict[str, Any]:
+    full, thin, audit = build_inputs(snapshot, variant, chronos)
     output.mkdir(mode=0o700, parents=True, exist_ok=False)
     manifest = {
         **_git(),
@@ -270,8 +274,16 @@ def run_export(snapshot: Path, output: Path) -> dict[str, Any]:
     return manifest
 
 
-def run_score(snapshot: Path, export_dir: Path, gx10_full: Path, gx10_thin: Path, output: Path):
-    full, thin, audit = build_inputs(snapshot)
+def run_score(
+    snapshot: Path,
+    export_dir: Path,
+    gx10_full: Path,
+    gx10_thin: Path,
+    output: Path,
+    variant: Path,
+    chronos: Path,
+):
+    full, thin, audit = build_inputs(snapshot, variant, chronos)
     exported = json.loads((export_dir / "export.json").read_bytes())
     for key in ("variant_sha256", "variant_protocol_sha256", "base_protocol_sha256"):
         if exported[key] != audit[key]:
@@ -348,18 +360,23 @@ def run_score(snapshot: Path, export_dir: Path, gx10_full: Path, gx10_thin: Path
         raise
 
 
-def run_fit(snapshot: Path, output: Path) -> dict[str, Any]:
-    """Every CPU comparator frozen on the variant's thinned history, with its own packet."""
-    variant, base = load_variant(VARIANT)
+def run_fit(snapshot: Path, output: Path, variant_path: Path) -> dict[str, Any]:
+    """Every CPU comparator frozen on a variant's thinned history, with its own packet."""
+    variant, base = load_variant(variant_path)
     bins, counts = thinned_bins(snapshot, variant.thinning)
-    audit = {
-        "variant_sha256": document_sha256(variant),
-        "variant_protocol_sha256": document_sha256(variant.protocol),
-        "base_protocol_sha256": document_sha256(base),
-        "thinning": variant.thinning.model_dump(),
-        "thinning_counts": counts,
-    }
-    return run_protocol(snapshot, output, variant.protocol, history=bins, history_audit=audit)
+    history = ReplacementHistory(
+        label=variant.thinning.pipeline_suffix,
+        bins=bins,
+        audit={
+            "variant_file_sha256": hashlib.sha256(variant_path.read_bytes()).hexdigest(),
+            "variant_sha256": document_sha256(variant),
+            "variant_protocol_sha256": document_sha256(variant.protocol),
+            "base_protocol_sha256": document_sha256(base),
+            "thinning": variant.thinning.model_dump(),
+            "thinning_counts": counts,
+        },
+    )
+    return run_protocol(snapshot, output, variant.protocol, history=history)
 
 
 def main() -> int:
@@ -374,18 +391,28 @@ def main() -> int:
     s.add_argument("--gx10-full", required=True, type=Path)
     s.add_argument("--gx10-thin", required=True, type=Path)
     s.add_argument("--output", required=True, type=Path)
+    for command in (e, s):
+        command.add_argument("--variant", type=Path, default=VARIANT)
+        command.add_argument("--chronos-thin", type=Path, default=CHRONOS_THIN)
     f = sub.add_parser("fit")
     f.add_argument("--snapshot", required=True, type=Path)
     f.add_argument("--output", required=True, type=Path)
+    f.add_argument("--variant", required=True, type=Path)
     args = parser.parse_args()
     try:
         if args.command == "export":
-            result = run_export(args.snapshot, args.output)
+            result = run_export(args.snapshot, args.output, args.variant, args.chronos_thin)
         elif args.command == "fit":
-            result = run_fit(args.snapshot, args.output)
+            result = run_fit(args.snapshot, args.output, args.variant)
         else:
             result = run_score(
-                args.snapshot, args.export, args.gx10_full, args.gx10_thin, args.output
+                args.snapshot,
+                args.export,
+                args.gx10_full,
+                args.gx10_thin,
+                args.output,
+                args.variant,
+                args.chronos_thin,
             )
         print(json.dumps(result, indent=2, sort_keys=True, default=str))
         return 0

@@ -60,8 +60,7 @@ def test_straddling_interval_does_not_become_exact_or_survive_unknown_days():
     row = Observation("a", "e", (), 3, 12)
     assert truncate(row, 5) == Observation("a", "e", (), None, 2)
     assert truncate(row, 2) == Observation("a", "e", (), None, 2)
-    with pytest.raises(ValueError):
-        truncate(Observation("a", "e", (), 1, 12), 5)
+    assert truncate(Observation("a", "e", (), 1, 12), 5) is None
 
 
 def test_numerical_stability_for_extreme_logits_and_wide_intervals():

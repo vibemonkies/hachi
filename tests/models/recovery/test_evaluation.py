@@ -1,7 +1,7 @@
 import math
 
 from hachi.models.recovery.evaluation import calibration, compare, observable_at, supported_horizon
-from hachi.models.recovery.survival import Observation, SurvivalModel
+from hachi.models.recovery.survival import Observation, SurvivalModel, truncate
 
 
 def model(h=0.2):
@@ -27,6 +27,11 @@ def test_support_counts_people_not_repeated_episodes():
     assert supported_horizon(rows, 14, 2) == 3
 
 
+def test_known_at_risk_support_does_not_treat_wide_event_interval_as_unresolved():
+    rows = [Observation("a", "e1", (), 2, 20), Observation("b", "e2", (), None, 20)]
+    assert supported_horizon(rows, 14, 2, known_at_risk=True) == 1
+
+
 def test_cluster_bootstrap_and_uninformative_interval_exclusion():
     rows = [
         Observation("a", "1", (), 1, 20),
@@ -38,3 +43,7 @@ def test_cluster_bootstrap_and_uninformative_interval_exclusion():
     assert result["conditional_minus_baseline_nll_ci95"] == [0, 0]
     assert result["subjects"] == 2
     assert len(paired) == 2
+
+
+def test_public_truncation_returns_no_information_without_zero_day_censor():
+    assert truncate(Observation("synthetic", "e", (), 1, 20), 7) is None

@@ -1,18 +1,20 @@
-"""One prospective symptomatic landmark per labeled episode, after participant splitting."""
+"""Current symptom landmark in retrospectively ascertained episodes, after splitting."""
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from math import isfinite
 from pathlib import Path
 
 from hachi.data.clinical import read_table
 from hachi.data.clinical.tables import SURVEY_AVAILABILITY_RULE
 
+from .cohorts import STANFORD, Cohort
 from .survival import Observation
 
 ENDPOINT = "outcomes-1-sustained-symptom-free-2d"
-SCALE = "stanford-phase1-daily-survey-10-symptoms-severity-1-to-5"
-FEATURES = ("symptom_count", "max_severity", "severity_sum")
+SCALE = STANFORD.scale
+FEATURES = STANFORD.features
 
 
 @dataclass(frozen=True)
@@ -26,6 +28,7 @@ class Landmark:
 def landmarks(
     snapshot: Path,
     subjects: tuple[str, ...],
+    cohort: Cohort = STANFORD,
 ) -> tuple[list[Landmark], dict[str, int]]:
     """Labels define episode membership/outcomes only; they never enter predictors.
 
@@ -39,8 +42,11 @@ def landmarks(
     episodes = read_table(snapshot, "episodes", subjects).to_pylist()
     surveys = read_table(snapshot, "surveys", subjects).to_pylist()
     scores = read_table(snapshot, "symptom_scores", subjects).to_pylist()
-    wearable = read_table(snapshot, "wearable_days", subjects).to_pylist()
-    return build_landmarks(recovery, episodes, surveys, scores, wearable)
+    # CMU contains symptom challenge data, not paired wearables.
+    wearable = (
+        read_table(snapshot, "wearable_days", subjects).to_pylist() if cohort == STANFORD else []
+    )
+    return build_landmarks(recovery, episodes, surveys, scores, wearable, cohort)
 
 
 def build_landmarks(
@@ -49,14 +55,18 @@ def build_landmarks(
     surveys: list[dict],
     scores: list[dict],
     wearable: list[dict],
+    cohort: Cohort = STANFORD,
 ) -> tuple[list[Landmark], dict[str, int]]:
     by_subject: dict[str, list[date]] = defaultdict(list)
     for row in episodes:
         by_subject[row["subject_id"]].append(row["onset_first_day"])
     symptom_days: dict[str, list[date]] = defaultdict(list)
+    nonfree_days: dict[str, list[date]] = defaultdict(list)
     for row in surveys:
         if row["state"] == "symptomatic":
             symptom_days[row["subject_id"]].append(row["local_date"])
+        if row["state"] in ("symptomatic", "intermediate"):
+            nonfree_days[row["subject_id"]].append(row["local_date"])
     score_days = {(r["subject_id"], r["local_date"]): r for r in scores}
     if len(score_days) != len(scores):
         raise ValueError("duplicate daily symptom scores")
@@ -96,12 +106,21 @@ def build_landmarks(
             audit["excluded_no_current_score"] += 1
             continue
         if (
-            score["scale"] != SCALE
+            score["scale"] != cohort.scale
             or score["availability_rule"] != SURVEY_AVAILABILITY_RULE
             or score["available_at_utc"] != cutoff
         ):
             raise ValueError("symptom scale/availability differs from the frozen protocol")
-        if not all(isinstance(score[f], int) and score[f] >= 0 for f in FEATURES):
+        if any(score[f] is None for f in cohort.features):
+            audit["excluded_missing_current_score_value"] += 1
+            continue
+        if not all(
+            isinstance(score[f], (int, float))
+            and not isinstance(score[f], bool)
+            and isfinite(score[f])
+            and score[f] >= 0
+            for f in cohort.features
+        ):
             raise ValueError("missing/invalid current symptom predictors")
         if row["status"] == "resolved":
             lower = (row["resolution_first_day"] - day).days
@@ -111,14 +130,27 @@ def build_landmarks(
                 continue
         elif row["status"] == "right_censored":
             lower = None
-            upper = (row["follow_up_last_day"] - day).days
+            # A free final survey can be the first day of an eventual qualifying
+            # run, and a gap before it can contain the interval's earliest event.
+            # Only an observed non-free day proves unresolved state through it.
+            known_unresolved = max(
+                d
+                for d in nonfree_days[subject]
+                if day <= d <= row["follow_up_last_day"] and (next_onset is None or d < next_onset)
+            )
+            upper = (known_unresolved - day).days
+            audit["censor_bound_before_last_survey"] += known_unresolved < row["follow_up_last_day"]
         else:
             raise ValueError("unknown recovery label status")
         if upper < 1:
             audit["excluded_no_future_follow_up"] += 1
             continue
         observation = Observation(
-            subject, row["episode_id"], tuple(float(score[f]) for f in FEATURES), lower, upper
+            subject,
+            row["episode_id"],
+            tuple(float(score[f]) for f in cohort.features),
+            lower,
+            upper,
         )
         has_wearable = (subject, day) in paired
         result.append(Landmark(observation, cutoff, score["scale"], has_wearable))

@@ -10,7 +10,7 @@ access = "registration"
 primary_url = "https://www.cmu.edu/common-cold-project/data/index.html"
 catalog_checked_on = 2026-10-11
 citation = "Methods: The data were collected by the Laboratory for the Study of Stress, Immunity, and Disease at Carnegie Mellon University under the directorship of Sheldon Cohen, PhD; and were accessed via the Common Cold Project website (www.commoncoldproject.com; grant number NCCIH AT006694). Reference: Laboratory for the Study of Stress, Immunity, and Disease. (2016). Common Cold Project. Retrieved from http://www.commoncoldproject.com"
-acknowledgement = "Cite each study's grants: aggregated NCCIH AT006694; BCS NIAID R01 AI23072 and ONR N00014-88-K-0063; PCS1/PCS2 NIMH R01 MH50429 and NIH 5M01 RR00056; PMBC NHLBI P01 HL65111 and HL65112, MacArthur Network, NCI P30CA047904; PCS3 NIAID R01 AI066367, UL1 RR024153 and UL1 TR000005 (the CMU page also prints this number as TR0005 and RT000005), PA DOH 08-01-2, NCCIH RC1AT005799."
+acknowledgement = "Per CMU's citation guidance (https://www.cmu.edu/common-cold-project/how-to-cite-data-and-grants/index.html), every acknowledgement cites the Common Cold Project grant NCCIH AT006694, plus the primary and clinical/regulatory grants of each study whose data are used: BCS NIAID R01 AI23072; PCS1/PCS2 NIMH R01 MH50429 and NIH 5M01 RR00056; PMBC NHLBI P01 HL65111 and HL65112; PCS3 NIAID R01 AI066367, NIH UL1 RR024153 and UL1 TR000005 (the CMU page also prints this number as TR0005 and RT000005). Supplementary grants are cited only when an analysis uses variables from the assessments they funded: BCS ONR N00014-88-K-0063 (rubella and HSV-1 antibody); PMBC MacArthur Network (glucocorticoid resistance, Reactive Responding Scale, subjective socioeconomic status ladder, salivary cortisol, urinary catecholamines) and NCI P30CA047904 (catecholamines, cortisol, nasal, serum and stimulated cytokines); PCS3 PA DOH 08-01-2 (genotyping, cytokines, cortisol receptors), NCCIH RC1AT005799 (oxidative stress, telomere length) and MacArthur Network (cellular aging, genotyping)."
 access_steps = [
   "Read the CCP Data-Sharing Agreement at https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html.",
   "Complete the CCP registration form yourself; submitting it accepts the agreement. Registration is per person.",
@@ -70,6 +70,11 @@ checked_on = 2026-10-11
 [[terms.evidence]]
 url = "https://www.cmu.edu/common-cold-project/how-to-cite-data-and-grants/index.html"
 quote = "accessed via the Common Cold Project website (www.commoncoldproject.com; grant number NCCIH AT006694)"
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://www.cmu.edu/common-cold-project/how-to-cite-data-and-grants/index.html"
+quote = "Inclusion of these citations is appropriate only if your analysis includes variables derived from assessments that were supported by supplementary funding."
 checked_on = 2026-10-11
 
 [[files]]

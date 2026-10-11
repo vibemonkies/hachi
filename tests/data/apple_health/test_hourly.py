@@ -470,16 +470,17 @@ def test_private_numeric_index_is_memory_only_and_closes_on_failure(
 
 
 def thin_policy(**changes):
-    """The Apple-density variant's gate (#97): >= 6 of 12 five-minute slots."""
-    return policy(min_observed_count=6, **changes)
+    """Amendment 1's gate (#102): sampled-minute coverage >= 0.10 and >= 6 samples."""
+    return policy(min_coverage=0.1, min_observed_count=6, **changes)
 
 
-def test_thinning_keeps_the_earliest_sample_per_utc_slot_with_slot_coverage(tmp_path, config):
+def test_thinning_keeps_the_earliest_sample_per_utc_slot(tmp_path, config):
     _, _, path = run(tmp_path, config, [native(m, value=str(60 + m)) for m in range(30)])
     view = apple_hourly_features(path, thin_policy(), START + HOUR, thin_slot_seconds=300)
     (feature,) = view.features
     assert feature.aggregate.value == fmean(60 + m for m in (0, 5, 10, 15, 20, 25))
-    assert (feature.aggregate.observed_count, feature.aggregate.coverage) == (6, 0.5)
+    # Only rows are dropped: coverage stays the helper's own sampled minutes / 60.
+    assert (feature.aggregate.observed_count, feature.aggregate.coverage) == (6, 6 / 60)
     assert feature.aggregate.pipeline_version == "apple-hourly-1+thin300s"
     audit = view.audits[0]
     assert (audit.included_records, audit.excluded_by_thinning) == (6, 24)
@@ -491,27 +492,31 @@ def test_thinning_keeps_the_earliest_sample_per_utc_slot_with_slot_coverage(tmp_
         + audit.excluded_by_precedence
         + audit.excluded_by_thinning
     )
-    # Without thinning the same hour is the native minute-density bin, unchanged.
+    # Without thinning the same hour is the native bin, unchanged.
     native_view = apple_hourly_features(path, thin_policy(), START + HOUR)
     assert native_view.features[0].aggregate.value == 74.5
     assert native_view.audits[0].excluded_by_thinning == 0
 
 
-def test_five_minute_watch_cadence_passes_the_thinned_gate_only(tmp_path, config):
+def test_five_minute_watch_cadence_passes_the_thinned_gate(tmp_path, config):
     _, _, path = run(tmp_path, config, [native(m, value="62") for m in range(0, 60, 5)])
-    sampled = apple_hourly_features(path, thin_policy(), START + HOUR)
-    assert not sampled.features and sampled.counts["low_coverage"] == 1  # 12/60 minutes
+    assert apple_hourly_features(path, policy(), START + HOUR).counts["low_coverage"] == 1
     thinned = apple_hourly_features(path, thin_policy(), START + HOUR, thin_slot_seconds=300)
     (feature,) = thinned.features
-    assert (
-        feature.aggregate.observed_count,
-        feature.aggregate.coverage,
-        feature.aggregate.value,
-    ) == (12, 1.0, 62.0)
+    assert (feature.aggregate.observed_count, feature.aggregate.coverage) == (12, 12 / 60)
+    assert feature.aggregate.value == 62.0
     sparse = [native(m) for m in range(0, 25, 5)]  # five slots: one short of the gate
     _, _, few = run(tmp_path / "few", config, sparse)
     refused = apple_hourly_features(few, thin_policy(), START + HOUR, thin_slot_seconds=300)
     assert not refused.features and refused.counts["low_coverage"] == 1
+
+
+def test_thinning_refuses_clustered_minutes_the_validated_rule_never_admitted(tmp_path, config):
+    # Six samples in six minutes of one slot pass 0.10/6 natively, but hold one slot.
+    _, _, path = run(tmp_path, config, [native(m, value="62") for m in range(30, 36)])
+    assert len(apple_hourly_features(path, thin_policy(), START + HOUR).features) == 1
+    thinned = apple_hourly_features(path, thin_policy(), START + HOUR, thin_slot_seconds=300)
+    assert not thinned.features and thinned.counts["low_coverage"] == 1
 
 
 def test_thinning_runs_after_sealing_so_late_samples_never_win_a_slot(tmp_path, config):

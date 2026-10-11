@@ -96,12 +96,16 @@ def test_replacement_history_feeds_models_while_labels_stay_the_snapshots(monkey
         )
         for b in generated_snapshot(monkeypatch, selected)
     ]
-    with pytest.raises(ValueError, match="needs its audit"):
-        pmdata_run.run(tmp_path / "s", tmp_path / "no-audit", selected, history=shifted)
+    with pytest.raises(ValueError, match="identifier label"):
+        pmdata_run.ReplacementHistory("not a label", shifted, {})
+    history = pmdata_run.ReplacementHistory("plus10", shifted, {"rule": "generated +10 bpm"})
     output = tmp_path / "variant-run"
-    audit = {"rule": "generated +10 bpm history"}
-    summary = pmdata_run.run(tmp_path / "s", output, selected, history=shifted, history_audit=audit)
+    summary = pmdata_run.run(tmp_path / "s", output, selected, history=history)
     # last-valid repeats the shifted history; it is scored against the unshifted labels.
     assert summary["models"]["hourly-last-valid-v1"]["metrics"]["mae"]["value"] == pytest.approx(10)
     recorded = json.loads((output / "input-audit.json").read_text())
-    assert recorded["history"] == audit
+    assert recorded["history"] == {"label": "plus10", "rule": "generated +10 bpm"}
+    run_ids = {
+        json.loads(p.read_text())["run_id"] for p in output.glob("outer-*/evaluations/*/run.json")
+    }
+    assert run_ids and all(r.endswith("-plus10") for r in run_ids)  # never passes as full density

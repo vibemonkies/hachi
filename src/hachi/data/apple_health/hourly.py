@@ -89,9 +89,9 @@ def _aggregate_hour(
 ) -> _AppleFeatureBin:
     """Pure transform of selected rows already eligible at this hour's end.
 
-    With `thin_slot_seconds`, heart rate is thinned by the Apple-density variant's rule
-    (#97): the earliest-starting sample, then lowest record_id, per UTC slot; coverage is
-    then the share of the hour's slots holding a sample instead of sampled minutes.
+    With `thin_slot_seconds`, heart rate is thinned by the Apple-density rule (#97, #102):
+    the earliest-starting sample, then lowest record_id, per UTC slot. Only rows are
+    dropped; value, count and sampled-minute coverage are then computed as always.
     """
     end = start + HOUR
     included: list[Observation] = []
@@ -117,10 +117,7 @@ def _aggregate_hour(
         pipeline_version = f"{PIPELINE_VERSION}+thin{thin_slot_seconds}s"
     minutes = len({r.start_utc.minute for r in included}) if metric == "heart_rate" else 0
     seconds = _interval_seconds(included) if metric == "steps" else 0.0
-    if thin_slot_seconds is not None:
-        coverage = len(included) / (3600 // thin_slot_seconds)
-    else:
-        coverage = minutes / 60 if metric == "heart_rate" else seconds / 3600
+    coverage = minutes / 60 if metric == "heart_rate" else seconds / 3600
     values = [r.value for r in included]
     value: float | None = None
     if values:

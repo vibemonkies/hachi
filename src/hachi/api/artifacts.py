@@ -37,7 +37,7 @@ from hachi.models.baselines import BaselineArtifact, TreeArtifact, load_artifact
 from hachi.models.baselines.artifacts import Receipt
 from hachi.models.baselines.tree import FEATURES
 from hachi.models.chronos.artifacts import load_artifact as load_chronos_artifact
-from hachi.models.density.rule import ThinningRule
+from hachi.models.density.rule import AppleMinuteThinning
 from hachi.storage import child
 
 from .chronos import ENTRY_POINT as CHRONOS_ENTRY_POINT
@@ -99,11 +99,12 @@ class ServingSpec(Contract):
         default_factory=list,
         description="Other input sources this artifact may serve, each declared explicitly.",
     )
-    history_thinning: ThinningRule | None = Field(
+    history_thinning: AppleMinuteThinning | None = Field(
         default=None,
         description=(
-            "The evaluation thinned the model's history this way (a predeclared density "
-            "variant); served history from every source is thinned identically."
+            "The evaluation thinned the model's history this way (#102's predeclared density "
+            "variant, coverage in sampled minutes); served history from every source is "
+            "thinned identically."
         ),
     )
 

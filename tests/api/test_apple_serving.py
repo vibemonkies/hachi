@@ -14,7 +14,7 @@ from hachi.contracts.manifests import TimeWindow
 from hachi.data.apple_health.hourly import AVAILABILITY_RULE, apple_hourly_features
 from hachi.evaluation import ForecastInput
 from hachi.evaluation.features import hourly_features
-from hachi.models.density.rule import ThinningRule
+from hachi.models.density.rule import AppleMinuteThinning, ThinningRule
 
 from .conftest import HR_POLICY, export_xml, heart_rate_record, make_packet, upload, wait
 
@@ -200,10 +200,14 @@ def test_staging_records_an_explicit_apple_admission(tmp_path, data_root, snapsh
     assert admission.feature_policy == APPLE_POLICY and admission.rationale == RATIONALE
 
 
-# A density-variant artifact (#97): history thinned to one sample per UTC 5-minute slot and a
-# gate of >= 6 of 12 slots. Served history from every source is thinned the same way.
-THIN = ThinningRule(slot_seconds=300, pipeline_suffix="thin300s")
-THIN_POLICY = HR_POLICY.model_copy(update={"min_observed_count": 6})
+# A density-variant artifact (#102): history thinned to one sample per UTC 5-minute slot,
+# coverage in sampled minutes / 60, gate >= 0.10 and >= 6. Every source is thinned the same way.
+THIN = AppleMinuteThinning(
+    slot_seconds=300,
+    pipeline_suffix="thin300s-applemin",
+    coverage="distinct_sampled_minutes_per_60",
+)
+THIN_POLICY = HR_POLICY.model_copy(update={"min_coverage": 0.1, "min_observed_count": 6})
 THIN_RATIONALE = "Synthetic: validated for 5-minute cadence on PMData only; not on Apple devices."
 
 
@@ -299,7 +303,7 @@ def test_snapshot_history_is_thinned_per_subject_exactly_as_in_evaluation(data_r
             THIN_POLICY,
         ).features
         assert served == list(expected)
-        assert all(f.aggregate.pipeline_version.endswith("+thin300s") for f in served)
+        assert all(f.aggregate.pipeline_version.endswith("+thin300s-applemin") for f in served)
 
 
 def test_thinning_is_declared_with_a_gate_thinned_hours_can_meet():
@@ -309,6 +313,13 @@ def test_thinning_is_declared_with_a_gate_thinned_hours_can_meet():
             admitting_serving().model_dump()
             | {"feature_policy": too_strict, "accepted_sources": [], "history_thinning": THIN}
         )
+    slot_coverage = ThinningRule(slot_seconds=300, pipeline_suffix="thin300s").model_dump()
+    with pytest.raises(ValidationError):  # #97's slot-coverage rule: not a served construction
+        ServingSpec.model_validate(
+            admitting_serving().model_dump()
+            | {"feature_policy": THIN_POLICY.model_dump(), "accepted_sources": [],
+               "history_thinning": slot_coverage}
+        )  # fmt: skip
     with pytest.raises(ValidationError, match="thinned metric"):
         ServingSpec(
             format_version="hachi-serving-1",
@@ -327,12 +338,16 @@ def test_staging_a_density_variant_records_its_thinning_and_exact_gate(
     from hachi.api.__main__ import serving_from_protocol
     from hachi.models.density.config import REPO
 
-    variant = REPO / "configs/evaluation/pmdata-hourly-validation-apple-density.json"
+    variant = REPO / "configs/evaluation/pmdata-hourly-validation-apple-minute-density.json"
     packet = make_packet(tmp_path / "p", data_root / "derived" / snapshot_id)
     serving = serving_from_protocol(variant, packet.model_dir, THIN_RATIONALE)
     assert serving.history_thinning == THIN
     assert serving.feature_policy.min_observed_count == 6
-    assert serving.feature_policy.min_coverage == 0.5
+    assert serving.feature_policy.min_coverage == 0.1
+    # #97's slot-coverage variant is not served: the Apple helper keeps minute coverage.
+    original = REPO / "configs/evaluation/pmdata-hourly-validation-apple-density.json"
+    with pytest.raises(ValueError, match="sampled-minute thinning"):
+        serving_from_protocol(original, packet.model_dir, THIN_RATIONALE)
     (admission,) = serving.accepted_sources
     assert admission.feature_policy == serving.feature_policy.model_copy(
         update={"availability_rule": AVAILABILITY_RULE}

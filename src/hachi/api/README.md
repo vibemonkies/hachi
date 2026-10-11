@@ -170,24 +170,34 @@ Typical 5-minute Apple Watch HR fills about 12 minutes an hour, so it abstains a
 minute-density / 30-sample gate (`INSUFFICIENT_HISTORY`). Lowering those gates changes the
 model's input semantics and belongs to the model owner.
 
-### Density-variant artifacts (#97)
+### Density-variant artifacts (#97, #102)
 
-A model frozen on a predeclared density variant serves at that variant's gate instead. #97
-thinned PMData HR to the earliest sample per UTC 5-minute slot and gated hours at ≥ 6 of 12
-slots. Its artifacts come from `python -m hachi.models.density.run fit` and are staged with
-the variant file as `--protocol`. That records the variant's `feature_policy` and its rule as
-`history_thinning`:
+A model frozen on a predeclared density variant serves at that variant's gate. #102 (Amendment
+1 of #97) thins PMData HR to the earliest sample per UTC 5-minute slot. Coverage is distinct
+sampled minutes / 60, exactly as the Apple helper counts it, and the gate is coverage ≥ 0.10
+and ≥ 6 samples.
+
+Its artifacts come from `python -m hachi.models.density.run fit --variant <file>`. The runner
+labels every packet's `run_id` with the thinning's suffix and records the variant in
+`input-audit.json`. Stage them with the variant file as `--protocol`. That records the
+variant's `feature_policy` and its rule as `history_thinning`:
 
 ```json
 "history_thinning": {"metric": "heart_rate", "slot_seconds": 300,
-                     "keep": "earliest_start_per_utc_slot", "pipeline_suffix": "thin300s"}
+                     "keep": "earliest_start_per_utc_slot", "pipeline_suffix": "thin300s-applemin",
+                     "coverage": "distinct_sampled_minutes_per_60"}
 ```
 
-The API then thins every source's history the same way before applying the gate. PMData
-subjects use `thinned_bins`, which needs the `baselines` extra. Apple subjects use #78's sealed
-samples, thinned after sealing and source precedence. Coverage is the share of slots in both
-cases, so an Apple admission keeps the model's exact gate and no coverage is relabelled. The
-evidence is PMData only. An admission's rationale should say so, and `DEVICE_SHIFT` stays.
+The API then thins every source's history the same way before applying the gate:
+- **PMData subjects** use `thinned_bins`, which needs the `baselines` extra.
+- **Apple subjects** use #78's sealed samples, thinned after sealing and source precedence.
+  Only rows are dropped; coverage keeps the helper's own definition.
+
+Thinning matters for Apple. Natively, six samples in six consecutive minutes pass 0.10/6, but
+the validated rule needs them in six distinct slots. An Apple admission keeps the model's exact
+gate. #97's slot-coverage variant isn't served.
+
+The evidence is PMData only. An admission's rationale should say so, and `DEVICE_SHIFT` stays.
 
 The sealed-hour replay re-reads the import once per lookback hour, so its cost grows with
 history length times lookback (see the #78 README). It runs inside the report job, never in
