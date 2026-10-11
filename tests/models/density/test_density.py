@@ -8,6 +8,7 @@ pytest.importorskip("numpy", reason="thinning requires the optional baselines ex
 
 from hachi.models.density.config import REPO, load_variant
 from hachi.models.density.thinning import (
+    AppleMinuteThinning,
     ThinningRule,
     hourly_from_samples,
     thin_samples,
@@ -16,6 +17,7 @@ from hachi.models.density.thinning import (
 RULE = ThinningRule(slot_seconds=300, pipeline_suffix="thin300s")
 T0 = datetime(2020, 1, 1, tzinfo=UTC)
 VARIANT = REPO / "configs/evaluation/pmdata-hourly-validation-apple-density.json"
+AMENDED = REPO / "configs/evaluation/pmdata-hourly-validation-apple-minute-density.json"
 
 
 def samples(rows):
@@ -85,4 +87,33 @@ def test_variant_changes_only_the_model_input_density_gates(tmp_path):
     raw["protocol"]["tree"]["min_samples_per_hour"] = 5
     changed.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="declared gate"):
+        load_variant(changed)
+
+
+def test_hourly_rebinning_counts_distinct_sampled_minutes_like_the_apple_helper():
+    rule = AppleMinuteThinning(
+        slot_seconds=300, pipeline_suffix="x", coverage="distinct_sampled_minutes_per_60"
+    )
+    rows = [("a", f"r{i:02d}", i * 300 + 7, 60.0) for i in range(6)]
+    hourly = hourly_from_samples(thin_samples(samples(rows), rule))
+    count, _, _, _, minutes = hourly[("a", int(T0.timestamp() * 1_000_000))]
+    assert count == minutes == 6  # one kept sample per slot is one distinct minute
+
+
+def test_amendment_moves_only_the_minute_coverage_gate_and_pins_the_amended_variant(tmp_path):
+    variant, base = load_variant(AMENDED)
+    assert isinstance(variant.thinning, AppleMinuteThinning)
+    assert variant.protocol.feature_policy.min_coverage == 0.1
+    assert variant.protocol.feature_policy.min_observed_count == 6
+    assert variant.protocol.evaluation == base.evaluation
+    raw = json.loads(AMENDED.read_text())
+    raw["amendment"]["amends_sha256"] = "0" * 64
+    changed = tmp_path / "amended.json"
+    changed.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="amended variant changed"):
+        load_variant(changed)
+    raw = json.loads(VARIANT.read_text())
+    raw["protocol"]["feature_policy"]["min_coverage"] = 0.1  # slot variants may not move coverage
+    changed.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="more than the density gates"):
         load_variant(changed)

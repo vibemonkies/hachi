@@ -63,13 +63,15 @@ def _write(path: Path, value: object) -> None:
         stream.write(value if isinstance(value, bytes) else document_bytes(value))
 
 
-def build_inputs(snapshot: Path) -> tuple[Inputs, Inputs, dict[str, Any]]:
+def build_inputs(
+    snapshot: Path, variant_path: Path = VARIANT, chronos_thin: Path = CHRONOS_THIN
+) -> tuple[Inputs, Inputs, dict[str, Any]]:
     """Full-density inputs (the frozen protocol) and thinned-history inputs (the variant)."""
-    variant, base = load_variant(VARIANT)
+    variant, base = load_variant(variant_path)
     full = prepare(
         snapshot, base, ChronosPMDataConfig.model_validate_json(CHRONOS_FULL.read_bytes())
     )
-    thin_config = ChronosPMDataConfig.model_validate_json(CHRONOS_THIN.read_bytes())
+    thin_config = ChronosPMDataConfig.model_validate_json(chronos_thin.read_bytes())
     bins, thin_counts = thinned_bins(snapshot, variant.thinning)
     view = hourly_features(bins, variant.protocol.feature_policy)
     probe = prepare(snapshot, variant.protocol, thin_config)  # same splits, binding checked
@@ -252,8 +254,8 @@ def _git() -> dict[str, Any]:
     return {"git_sha": sha, "git_dirty": dirty}
 
 
-def run_export(snapshot: Path, output: Path) -> dict[str, Any]:
-    full, thin, audit = build_inputs(snapshot)
+def run_export(snapshot: Path, output: Path, variant: Path, chronos: Path) -> dict[str, Any]:
+    full, thin, audit = build_inputs(snapshot, variant, chronos)
     output.mkdir(mode=0o700, parents=True, exist_ok=False)
     manifest = {
         **_git(),
@@ -265,8 +267,16 @@ def run_export(snapshot: Path, output: Path) -> dict[str, Any]:
     return manifest
 
 
-def run_score(snapshot: Path, export_dir: Path, gx10_full: Path, gx10_thin: Path, output: Path):
-    full, thin, audit = build_inputs(snapshot)
+def run_score(
+    snapshot: Path,
+    export_dir: Path,
+    gx10_full: Path,
+    gx10_thin: Path,
+    output: Path,
+    variant: Path,
+    chronos: Path,
+):
+    full, thin, audit = build_inputs(snapshot, variant, chronos)
     exported = json.loads((export_dir / "export.json").read_bytes())
     for key in ("variant_sha256", "variant_protocol_sha256", "base_protocol_sha256"):
         if exported[key] != audit[key]:
@@ -355,13 +365,22 @@ def main() -> int:
     s.add_argument("--gx10-full", required=True, type=Path)
     s.add_argument("--gx10-thin", required=True, type=Path)
     s.add_argument("--output", required=True, type=Path)
+    for command in (e, s):
+        command.add_argument("--variant", type=Path, default=VARIANT)
+        command.add_argument("--chronos-thin", type=Path, default=CHRONOS_THIN)
     args = parser.parse_args()
     try:
         if args.command == "export":
-            result = run_export(args.snapshot, args.output)
+            result = run_export(args.snapshot, args.output, args.variant, args.chronos_thin)
         else:
             result = run_score(
-                args.snapshot, args.export, args.gx10_full, args.gx10_thin, args.output
+                args.snapshot,
+                args.export,
+                args.gx10_full,
+                args.gx10_thin,
+                args.output,
+                args.variant,
+                args.chronos_thin,
             )
         print(json.dumps(result, indent=2, sort_keys=True, default=str))
         return 0

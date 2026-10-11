@@ -1,4 +1,56 @@
 {
+  "amendment_1": {
+    "coverage_definition": "distinct sampled start minutes / 60, exactly as hachi.data.apple_health.hourly (apple-hour-end-sealed-native-v1); bins null only when empty",
+    "declared_at_commit": "8ce2530",
+    "density_audit": {
+      "computed_before_amended_scoring": true,
+      "coverage_definition": "distinct sampled start minutes / 60 (Apple helper)",
+      "distinct_sampled_minutes_equal_kept_count": true,
+      "frozen_admitted_hours": 46406,
+      "hourly_bins": 54999,
+      "kept_samples": 556943,
+      "minute_coverage_in_frozen_admitted_hours": {
+        "max": 0.2,
+        "median": 0.2,
+        "min": 0.1,
+        "p01": 0.1333,
+        "p05": 0.2
+      },
+      "same_inclusion_as_amended_variant": true,
+      "samples": 20985494,
+      "share_of_frozen_admitted_hours_with_minute_coverage_at_least": {
+        "0.10": 1.0,
+        "0.1167": 0.9952,
+        "0.1333": 0.9952,
+        "0.15": 0.989,
+        "0.1667": 0.9732,
+        "0.20": 0.9619
+      },
+      "thinned_hours_admitted": {
+        "coverage_0.10_count_6": 46674,
+        "coverage_0.15_count_6": 45897
+      }
+    },
+    "density_gate": {
+      "justification": "Coverage is computed exactly as the Apple serving helper does (hachi.data.apple_health.hourly, rule apple-hour-end-sealed-native-v1): distinct sampled start minutes / 60, with a bin null only when empty. At 5-minute cadence an hour holds at most 12 samples, so coverage is at most 0.2 and every typical Apple hour reports 0.2. The frozen protocol admits an hour with >= 30 covered minutes; under 5-minute thinning those span >= 6 slots, i.e. >= 6 distinct sampled minutes: coverage >= 0.10 with >= 6 samples is the frozen rule at this cadence in the Apple helper's own denominator. The audit confirms it: all 46,406 frozen-admitted hours keep coverage >= 0.10 (min 0.10, p01 0.133, median 0.20); coverage >= 0.15 would drop 1.1% of them with no structural basis.",
+      "min_coverage": 0.1,
+      "min_observed_count": 6
+    },
+    "reason": "BoldHorizon (hachi-issue-16): the original variant expressed coverage as the share of 5-minute slots holding a sample (12/12 = 1.0 at full 5-minute cadence), while served Apple features report distinct sampled minutes / 60 (12/60 = 0.2), so its coverage gate was not transferable. Declared after the original variant had been scored; it changes the coverage denominator only. Under thinning, minute coverage >= 0.10 holds exactly when the slot rule did, so the admitted hours are identical and no gate is chosen from scores. Evidence about cadence only: not a real Apple device, wear or physiology validation.",
+    "rerun_git_sha": "21a78e4",
+    "result": {
+      "admitted_thinned_hours": 46674,
+      "models_block_identical": true,
+      "paired_points_sha256": "d79f55a055ccb1af78535ab116d6d67a9c16a91718a2ffe628718d7372c645ed",
+      "summary_sha256": "f5144fc42f450ce87f9b30be7a72a1890455228ecc8324756df6db74c993ac2f",
+      "thin_evaluations_identical_predictions_and_counts": "15/15",
+      "thin_requests_sha256_identical": true
+    },
+    "scope": "Cadence evidence only; not real Apple device, wear or physiology validation. A served Apple model is a new artifact staged and evaluated at these gates, never an override of the original receipt (PR #91).",
+    "variant_file": "configs/evaluation/pmdata-hourly-validation-apple-minute-density.json",
+    "variant_file_sha256": "72c758192dc59b856086e30c5e55ae23258968524333385464a0222deaffffee",
+    "variant_protocol_sha256": "3629a9b8d98404edf187584375341e2f98351b363fc06a306895e5d229ab23f3"
+  },
   "base_protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
   "dataset_snapshot": {
     "dataset_id": "pmdata",
@@ -57,7 +109,7 @@
   "gate_in_other_denominators": {
     "as_sampled_minute_density": "at least 6 sampled minutes of 60 (minute-density coverage >= 0.1), each in a distinct 5-minute slot",
     "frozen_protocol_rule": "native count >= 30 and minute coverage >= 0.5; rejects every hour holding at most 12 samples",
-    "note": "A source that reports Apple HR coverage as sampled-minute density (12/60 = 0.2 at 5-minute cadence) would still abstain under coverage >= 0.5. This evidence supports the rule above, stated in that source's own denominator; it does not license relabelling one coverage as the other.",
+    "note": "Superseded by amendment_1, which validates the gate directly in the Apple helper's denominator: coverage (distinct sampled minutes / 60) >= 0.10 and count >= 6.",
     "validated_rule": "at least 6 kept samples in the hour, at most one per UTC 5-minute slot, so at least 6 of the hour's 12 slots observed (slot coverage >= 0.5)"
   },
   "git_dirty": false,
