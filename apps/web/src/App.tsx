@@ -2,11 +2,25 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { reducer, sections, type Section } from "./workflow";
 import { importFixture, reportFixture } from "./fixtures";
 import { SectionView } from "./sections";
+export type Design = "task" | "summary" | "analysis";
+const labels: Record<Section, string> = {
+  import: "Import & coverage",
+  overview: "Overview",
+  forecast: "Forecast",
+  anomaly: "Baseline deviation",
+  symptoms: "Symptoms",
+  sleep: "Sleep comparison",
+};
 function currentSection(): Section {
   const hash = window.location.hash.slice(1);
   return sections.includes(hash as Section) ? (hash as Section) : "import";
 }
 export default function App() {
+  const requestedDesign = new URLSearchParams(window.location.search).get("design");
+  const design: Design =
+    requestedDesign === "summary" || requestedDesign === "analysis"
+      ? requestedDesign
+      : "task";
   const [workflow, dispatch] = useReducer(reducer, { kind: "empty" });
   const [section, setSection] = useState<Section>(currentSection);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -45,7 +59,7 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [workflow]);
   const workflowPhase = {
-    empty: "Ready to load a synthetic history.",
+    empty: "",
     importing: "Loading synthetic history.",
     "no-observations": "No observations found.",
     "import-error": "Import failed.",
@@ -55,12 +69,7 @@ export default function App() {
     "report-error": "Report failed.",
     report: "Synthetic report ready.",
   }[workflow.kind];
-  const phase =
-    section === "symptoms"
-      ? "Symptom entries are synthetic previews held locally and not saved or sent."
-      : section === "sleep"
-        ? "Schedule comparisons use static synthetic illustrations."
-        : workflowPhase;
+  const phase = section === "symptoms" || section === "sleep" ? "" : workflowPhase;
   return (
     <>
       <a
@@ -73,78 +82,49 @@ export default function App() {
       >
         Skip to content
       </a>
-      <div className="workspace">
+      <div className="workspace" data-design={design}>
         <aside className="sidebar">
           <a className="brand" href="#import" aria-label="Hachi import">
             <span className="brand-mark">h</span>hachi
-            <span className="brand-dot">.</span>
           </a>
-          <p className="workspace-label">RESEARCH WORKSPACE</p>
           <nav aria-label="Workspace sections">
-            {sections.map((item, index) => (
+            {sections.map((item) => (
               <a
                 key={item}
                 href={`#${item}`}
                 aria-current={section === item ? "page" : undefined}
               >
-                <span className="nav-number">0{index + 1}</span>
-                {item === "import"
-                  ? "Import & coverage"
-                  : item === "anomaly"
-                    ? "Anomaly monitor"
-                    : item === "sleep"
-                      ? "Sleep comparison"
-                      : item[0].toUpperCase() + item.slice(1)}
+                {labels[item]}
               </a>
             ))}
           </nav>
-          <div className="sidebar-note">
-            <span className="status-dot" />
-            Local demonstration
-            <p>
-              Explore the workflow.
-              <br />
-              Understand the evidence.
-            </p>
-          </div>
         </aside>
         <div className="main-column">
           <header className="topbar">
-            <span>Hachi / Research prototype</span>
+            <span>Wearable research prototype</span>
             <span className="badge">SYNTHETIC DATA ONLY</span>
           </header>
           <div className="synthetic-banner">
-            Every observation and output is synthetic. No personal data,
-            diagnosis, or validated prediction.
+            Hand-authored synthetic demo. No model runs, personal data, or validated predictions.
           </div>
           <main id="main" tabIndex={-1}>
-            <div className="eyebrow">WEARABLE SIGNALS, WITH CONTEXT</div>
             <h1 ref={heading} tabIndex={-1}>
-              {section === "import"
-                ? "Start with the evidence."
-                : section === "overview"
-                  ? "Your research snapshot."
-                  : section === "forecast"
-                    ? "The next 24 hours."
-                    : section === "anomaly"
-                      ? "Change, in context."
-                      : section === "symptoms"
-                        ? "Give symptoms a timeline."
-                        : "Compare a different night."}
+              {labels[section]}
             </h1>
-            <p className="phase" role="status" aria-live="polite">
+            <p
+              className={workflow.kind === "importing" || workflow.kind === "reporting" ? "phase" : "sr-only"}
+              role="status"
+              aria-live="polite"
+            >
               {phase}
             </p>
             <SectionView
               section={section}
               workflow={workflow}
               dispatch={dispatch}
+              design={design}
             />
           </main>
-          <footer>
-            HACHI RESEARCH / FIXTURE EDITION{" "}
-            <span>Evidence before interpretation.</span>
-          </footer>
         </div>
       </div>
     </>
