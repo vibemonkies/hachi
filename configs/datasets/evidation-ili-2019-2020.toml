@@ -2,7 +2,7 @@ schema_version = "0.1"
 dataset_id = "evidation-ili-2019-2020"
 name = "Evidation 2019-2020 Participatory Influenza-Like Illness Surveillance"
 version = "syn22891469"
-status = "candidate"
+status = "rejected_for_task"
 access = "credentialed"
 primary_url = "https://www.synapse.org/#!Synapse:syn22891469"
 doi = "10.1016/j.patter.2020.100188"
@@ -17,6 +17,7 @@ access_owner = "justin06lee"
 storage = "Only accounts of approved users; not the shared GX10 account unless all three are approved."
 checksum_strategy = "Record Synapse's MD5 per file, then pin SHA-256."
 notes = [
+  "Not available for this project (recorded 2026-10-11, Justin's decision): Synapse certification and profile validation were never completed, so no access was requested and no data was obtained.",
   "About 71,556 participants; illness events with self-reported onset and recovery dates and duration, including clinician-diagnosed COVID-19 (230), non-COVID flu (426) and pre-COVID flu (6,270); dense Fitbit data for a subset.",
   "Released activity data is day-level only (steps, resting HR, sleep minutes); labels are self-reported.",
   "Best available fit for censoring-aware recovery modelling.",
