@@ -25,7 +25,7 @@ from hachi.api.catalog import Catalog
 from hachi.api.handoff import direct_inference, expected_points, load_packet
 from hachi.api.settings import Settings, git_dirty, git_sha, parse_pin
 from hachi.contracts.api import Coverage, HealthStatus, ImportStatus, ReportJob, SelfReportHistory
-from hachi.contracts.base import SCHEMA_VERSION, Contract
+from hachi.contracts.base import SCHEMA_VERSION, Contract, Identifier
 from hachi.contracts.manifests import SplitManifest
 from hachi.contracts.results import PhysiologyForecastResult, ReportResult
 from hachi.evaluation import ForecastEstimate
@@ -61,6 +61,7 @@ def write_private(path: Path, value: object) -> None:
 
 class Operator(Contract):
     format_version: str
+    owner: Identifier
     runtime_root: str
     data_root: str
     snapshot_id: str
@@ -77,7 +78,7 @@ class Operator(Contract):
         root = Path(self.runtime_root)
         return Settings.from_environment(
             environ={
-                "HACHI_OWNER": "ezzy1630",
+                "HACHI_OWNER": self.owner,
                 "HACHI_WORKSPACES": str(root / "workspaces"),
                 "HACHI_DB_PATH": str(root / "state" / "metadata.sqlite3"),
                 "HACHI_DATA_ROOT": self.data_root,
@@ -92,7 +93,7 @@ class Operator(Contract):
 
 def load_operator(root: Path) -> Operator:
     operator = Operator.model_validate_json((root / "operator.json").read_bytes())
-    require(operator.format_version == "hachi-rehearsal-1", "Unknown operator format")
+    require(operator.format_version == "hachi-rehearsal-2", "Unknown operator format")
     require(Path(operator.runtime_root).resolve() == root.resolve(), "Runtime root moved")
     require(operator.git_sha == git_sha(REPO), "Checkout changed; prepare a fresh runtime")
     require(git_dirty(REPO) is False, "Rehearsal requires a clean committed checkout")
@@ -136,7 +137,8 @@ def prepare(args) -> dict:
     pin = stage_artifact(private_directory(root / "artifacts"), args.model, args.packet, spec)
     require(pin == run.artifact, "Staged pin differs from frozen packet")
     operator = Operator(
-        format_version="hachi-rehearsal-1",
+        format_version="hachi-rehearsal-2",
+        owner=args.owner,
         runtime_root=str(root),
         data_root=str(args.data_root.resolve()),
         snapshot_id=args.snapshot_id,
@@ -399,6 +401,7 @@ def check(operator: Operator) -> dict:
         "format_version": "hachi-rehearsal-evidence-1",
         "recorded_at_utc": datetime.now(UTC).isoformat(),
         "git_sha": operator.git_sha,
+        "owner": operator.owner,
         "script_sha256": digest(Path(__file__)),
         "uv_lock_sha256": digest(REPO / "uv.lock"),
         "python": sys.version.split()[0],
@@ -407,6 +410,10 @@ def check(operator: Operator) -> dict:
         "protocol_sha256": operator.protocol_sha256,
         "packet_sha256": digest(Path(operator.packet) / "sha256.json"),
         "published_packet_index_sha256": operator.packet_index_sha256,
+        "published_packet_key": "/".join(Path(operator.packet).parts[-3:]),
+        "published_packet_digests": json.loads(Path(operator.packet_index).read_bytes())["packets"][
+            "/".join(Path(operator.packet).parts[-3:])
+        ],
         "api_port": operator.api_port,
         "web_port": operator.web_port,
         "real": {
@@ -535,6 +542,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("prepare")
+    p.add_argument("--owner", required=True)
     p.add_argument("--runtime-root", type=Path, required=True)
     p.add_argument("--data-root", type=Path, required=True)
     p.add_argument("--snapshot-id", required=True)

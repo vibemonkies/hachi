@@ -123,7 +123,8 @@ The upstream fix, PR68 (`9e6f651`), was integrated at a clean checkpoint. Base
 checks skip those optional numerical tests when their dependencies are absent;
 the existing CI `--extra baselines pytest tests/models` stage runs them with
 NumPy/SciPy installed. Runtime source is unchanged by that test-only integration,
-so the final real-data receipt remains bound to `4129197`. Do not merge until
+so the pre-privacy real-data receipt remains bound to `4129197`. The later
+post-privacy receipt is `api-88094a3.json` as described above. Do not merge until
 fresh CI and the independent tooling review pass.
 The original PR head `d2a49fe` passed all CI stages, including baselines and API
 extras, in run `38138236148`. The post-privacy head needs its own fresh CI result

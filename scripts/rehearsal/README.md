@@ -35,6 +35,7 @@ export HACHI_REHEARSAL_MODEL=hourly-last-valid-v1
 export HACHI_REHEARSAL_ARTIFACT=hourly-last-valid-v1-141306001b16e168
 uv sync --locked --extra api --extra baselines
 uv run --locked --extra api --extra baselines python scripts/rehearsal/runtime.py prepare \
+  --owner ezzy1630 \
   --runtime-root "$HACHI_REHEARSAL_ROOT" \
   --data-root "$HACHI_REHEARSAL_DATA" \
   --snapshot-id pmdata-features-1-simula-2020-04-24-06606ac2708b \
@@ -80,7 +81,8 @@ model or clinical evidence. A live response is saved mode 0600 under
 Build the exact reviewed #17 source in this same isolated worktree after its owner
 publishes it. Set its documented API origin to `http://127.0.0.1:8720`. Run `npm ci`
 in `apps/web` with an owned npm cache, then `npm run build`; serve `dist` with Vite
-preview on loopback port 5180 and `--strictPort`. Record web commit, build SHA,
+preview using `npm run preview -- --host 127.0.0.1 --port 5180 --strictPort`.
+Record web commit, build SHA,
 API `/healthz` Git SHA and artifact pin. Check served index bytes against `dist`.
 
 Use T3 `preview_status`, `preview_open`, snapshots and native controls. Screenshots
@@ -100,10 +102,60 @@ separately consented late case on #21. #15's sleep scenario and clinical #13/#14
 also retain their own acceptance gates. Record each unavailable/failing state
 honestly. Do not open test, tune on the friend case, or create consent/export.
 
-Offline replay must come from a saved **real** result, with visible replay mode,
-recorded timestamp and artifact/model identity, and pass the same numeric
-comparison with networking unavailable. There is no offline UI replay on current
-main; this remains an explicit gate rather than a synthetic fallback.
+## Private offline replay
+
+`replay.py` implements a versioned private cache, typed `ReportProvider` seam,
+read-only loopback transport and a dedicated rehearsal viewer. It consumes the
+authoritative `ReportJob`/`ReportResult` models, checks the generated contract schema
+hash and validates both the original and projected response. It never imports an
+inference client or attempts a live fallback. It does not modify the app or API.
+
+The cache preserves the whole completed original response, with its original
+`data_mode` (`real` or `synthetic`), generated time, code, artifact, snapshot,
+warnings and quality. Projection sets only `ReplayInfo`. Recording time is when
+the cache was saved, not when inference happened. The viewer visibly labels replay,
+original mode and both timestamps; point-only forecasts have no interval band or
+coverage claim. Unavailable/error results retain their actual reason codes.
+
+Only private regular files outside Git are accepted, bounded to 16 MiB. Cache files
+are created exclusively at mode 0600 under a 0700 parent. Symlinks, public files,
+pending jobs, already replayed sources and changed schema are refused. Pin the
+whole cache hash from the trusted save receipt separately: embedded checksums are
+integrity checks, not proof of source authenticity or permission. Saving a file
+alone does not establish that it came from a real admitted run; the API receipt
+and frozen packet provide that evidence for the actual rehearsal.
+
+With the owned API stopped, run in the same checkout/environment:
+
+```sh
+uv run python scripts/rehearsal/replay.py save \
+  --source "$HACHI_REHEARSAL_ROOT/private-results/live-report.json" \
+  --cache "$HACHI_REHEARSAL_ROOT/private-results/replay-cache.json" \
+  > "$HACHI_REHEARSAL_ROOT/replay-save.json"
+# Copy cache_sha256 from this trusted private save receipt into this variable.
+export HACHI_REPLAY_SHA=the_exact_cache_sha256
+uv run python scripts/rehearsal/replay.py check \
+  --cache "$HACHI_REHEARSAL_ROOT/private-results/replay-cache.json" \
+  --expected-cache-sha256 "$HACHI_REPLAY_SHA"
+uv run python scripts/rehearsal/replay.py serve \
+  --cache "$HACHI_REHEARSAL_ROOT/private-results/replay-cache.json" \
+  --expected-cache-sha256 "$HACHI_REPLAY_SHA" --port 5180
+```
+
+`GET /replay/report` returns the validated projected `ReportJob`; `/` renders it.
+Responses use `no-store`, no CORS, a restrictive CSP and no access/error logs.
+Missing/corrupt/mismatched caches produce an actionable visible replay error and
+HTTP 409, without paths, participant identifiers or validation values. The page
+omits subject/report identifiers, but real numeric predictions are still private.
+Never snapshot/screenshot a real replay page. Use only aggregate-returning private
+DOM/API comparisons. Use a distinctly synthetic cache for browser illustrations.
+No browser storage, service worker, mutation route or external asset is used.
+
+This viewer proves the independent consumer path. App replay integration remains
+pending Coffee's concrete #17 source handoff and narrowly agreed module/root wiring.
+Offline replay from a saved real result must pass the numeric/rendered comparison
+with the live API unavailable; final app acceptance still requires that same path
+through the reviewed app UI. It does not select a model or open outer test.
 
 ## Verification and cleanup
 
