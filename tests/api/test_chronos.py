@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -126,22 +126,27 @@ class FakeGx10:
 def chronos_pin(tmp_path, data_root, snapshot_id):
     """A staged zero-shot Chronos artifact with its packet, like SwiftGorge's receipt."""
 
-    def build(*, context=None, context_hours=48, covariates=(), **serving_changes):
+    def build(
+        *, context=None, context_hours=48, covariates=(), staged_protocol=True, **serving_changes
+    ):
+        base = tmp_path / f"chronos-{len(list(tmp_path.glob('chronos-*')))}"
+        base.mkdir()
+        # The synthetic packet's protocol is the one this model was "evaluated" under; the
+        # model pins its hash, as #10/#12 artifacts pin the PMData protocol's.
+        packet = make_packet(base / "baseline", data_root / "derived" / snapshot_id)
+        protocol_sha256 = hashlib.sha256(packet.protocol.read_bytes()).hexdigest()
         config = ChronosConfig(
             model=PIN, metric="heart_rate", aggregation="mean", context_hours=context_hours
         )
         artifact = ChronosArtifact(
             model_id="chronos-2-zero-shot",
             chronos=config,
-            protocol_sha256="a" * 64,
+            protocol_sha256=protocol_sha256,
             harness_lookback_hours=48,
             context_policy=context,
             past_covariates=list(covariates),
         )
-        base = tmp_path / f"chronos-{len(list(tmp_path.glob('chronos-*')))}"
-        base.mkdir()
         ref = save_artifact(base / "model", artifact, artifact_id="chronos-2-zero-shot-test")
-        packet = make_packet(base / "baseline", data_root / "derived" / snapshot_id)
         # Reuse the synthetic split/config; the run manifest names the Chronos artifact.
         split = (packet.packet_dir / "split.json").read_bytes()
         evaluation = (packet.packet_dir / "config.json").read_bytes()
@@ -181,11 +186,12 @@ def chronos_pin(tmp_path, data_root, snapshot_id):
             feature_policy=HR_POLICY,
             interval_nominal_coverage=0.8,
             requires_gpu=True,
-            protocol_sha256="a" * 64,
+            protocol_sha256=protocol_sha256,
         ).model_copy(update=serving_changes)
         root = base / "artifacts"  # one root per staging: artifacts are immutable
         root.mkdir()
-        return root, stage_artifact(root, base / "model", packet_dir, serving)
+        protocol = packet.protocol if staged_protocol else None
+        return root, stage_artifact(root, base / "model", packet_dir, serving, protocol)
 
     return build
 
@@ -461,3 +467,178 @@ def test_a_longer_context_is_built_exactly_as_12_evaluated_it(chronos_client):
 def test_longer_contexts_are_served_only_as_evaluated(chronos_pin, changes, refusal):
     with pytest.raises(ArtifactRefused, match=refusal):
         chronos_pin(**changes)
+
+
+def test_a_gpu_artifact_is_served_only_with_its_evaluated_protocol_and_gate(chronos_pin):
+    with pytest.raises(ArtifactRefused, match="carries the protocol"):
+        chronos_pin(staged_protocol=False)
+    with pytest.raises(ArtifactRefused, match="feature gate"):
+        chronos_pin(feature_policy=HR_POLICY.model_copy(update={"min_observed_count": 2}))
+
+
+def test_apple_subjects_get_no_long_context_forecast(chronos_client):
+    from .conftest import export_xml, heart_rate_record
+
+    client, fake, _ = chronos_client(artifact={"context": CONTEXT, "context_hours": 96})
+    records = [
+        heart_rate_record(f"2020-03-{day:02d} {hour:02d}:10:00 +0000", "64")
+        for day in (27, 28, 29)
+        for hour in range(24)
+    ]
+    assert upload(client, export_xml(records), subject="synthetic-apple-gpu").status_code == 202
+    wait(client)
+    result = report(client, FORECAST | {"subject_id": "synthetic-apple-gpu"}).result.root
+    assert (result.status, result.reason_code) == ("unavailable", "NO_ARTIFACT_FOR_TASK")
+    assert fake.jobs == []  # nothing about an Apple import reaches the GPU
+
+
+def test_a_context_that_disagrees_with_the_harness_history_fails_closed(
+    chronos_client, monkeypatch
+):
+    from hachi.api.sources import SubjectData
+    from hachi.evaluation.context import context_index
+
+    client, fake, _ = chronos_client(artifact={"context": CONTEXT, "context_hours": 96})
+    real = SubjectData.context_index
+
+    def missing_one_recent_hour(self, policy, cutoff):
+        rows = real(self, policy, cutoff)
+        bins = [  # rebuild the index without the latest hour, so its last 48 h differ
+            b
+            for b in iter_aggregates_for(self, cutoff)
+            if b.aggregate.interval_start_utc != cutoff - timedelta(hours=1)
+        ]
+        assert rows.policy == policy
+        return context_index(bins, policy)
+
+    monkeypatch.setattr(SubjectData, "context_index", missing_one_recent_hour)
+    result = report(client, FORECAST | {"as_of": "2020-03-30T12:00:00Z"}).result.root
+    assert (result.status, result.error_code) == ("error", "INFERENCE_FAILED")
+    assert fake.jobs == []
+
+
+def iter_aggregates_for(subject, cutoff):
+    from hachi.data.pmdata import iter_aggregates
+
+    return iter_aggregates(subject.path, "hour", as_of=cutoff, subjects=[subject.subject_id])
+
+
+def test_a_late_arriving_hour_inside_the_long_window_is_excluded(chronos_client, monkeypatch):
+    from hachi.api import sources
+    from hachi.data.pmdata import FeatureBin, iter_aggregates
+    from hachi.evaluation import ForecastInput
+    from hachi.evaluation.context import context_index
+    from hachi.models.chronos.adapter import extended_builder
+
+    client, fake, _ = chronos_client(artifact={"context": CONTEXT, "context_hours": 96})
+    cutoff = datetime(2020, 3, 30, 12, tzinfo=UTC)
+    late = datetime(2020, 3, 27, 20, tzinfo=UTC)  # beyond the 48 h harness, inside 96 h
+    real = sources.pmdata.iter_aggregates
+
+    def with_one_late_hour(*args, **kwargs):
+        for b in real(*args, **kwargs):
+            if b.aggregate.metric == "heart_rate" and b.aggregate.interval_start_utc == late:
+                b = FeatureBin(b.aggregate, cutoff + timedelta(hours=1))  # arrived after it
+            yield b
+
+    monkeypatch.setattr(sources.pmdata, "iter_aggregates", with_one_late_hour)
+    report(client, FORECAST | {"as_of": "2020-03-30T12:00:00Z"})
+    sent = fake.requests[0]["context"]
+    offset = int((late - (cutoff - timedelta(hours=96))) / timedelta(hours=1))
+    service = client.app.state.service
+    served = service.catalog.artifacts[0]
+    subject = service.catalog.subject("p01", service.metadata, service.workspace)
+    history = subject.hourly_features(HR_POLICY, cutoff, cutoff - timedelta(hours=48))
+    on_time = extended_builder(
+        served.model.config,
+        context_index(iter_aggregates(subject.path, "hour"), CONTEXT),
+        context_hours=96,
+        harness_lookback_hours=48,
+    )(ForecastInput("p01", cutoff, forecast_windows(cutoff), tuple(history)))
+    assert on_time.context[offset] is not None  # the hour holds data when it is on time
+    assert sent[offset] is None
+    assert sent[:offset] + sent[offset + 1 :] == list(
+        on_time.context[:offset] + on_time.context[offset + 1 :]
+    )
+
+
+def test_the_handoff_rebuilds_the_exact_gpu_request_for_an_export_check(chronos_client, tmp_path):
+    from hachi.api.handoff import export_request_ids, served_request_id
+
+    client, fake, _ = chronos_client(artifact={"context": CONTEXT, "context_hours": 96})
+    result = report(client, FORECAST | {"as_of": "2020-03-30T12:00:00Z"}).result.root
+    service = client.app.state.service
+    served = service.catalog.artifacts[0]
+    subject = service.catalog.subject("p01", service.metadata, service.workspace)
+    rebuilt = served_request_id(served, subject, result.as_of, 24)
+    assert rebuilt == fake.requests[0]["request_id"]  # no GPU job was needed to rebuild it
+    export = tmp_path / "requests.jsonl"
+    export.write_text(json.dumps({"request_id": rebuilt, "context": []}) + "\n")
+    assert rebuilt in export_request_ids(export)
+
+
+def test_run_handoff_checks_the_apis_requests_against_an_export(
+    chronos_client, monkeypatch, tmp_path
+):
+    from hachi.api import handoff
+    from hachi.api.handoff import served_request_id
+
+    client, fake, _ = chronos_client()
+
+    def through_client(base_url, method, path, body=None):
+        response = client.request(method, path, json=body)
+        return response.status_code, response.content
+
+    monkeypatch.setattr(handoff, "_call", through_client)
+    service = client.app.state.service
+    served = service.catalog.artifacts[0]
+    subject = service.catalog.subject("p01", service.metadata, service.workspace)
+    covered, uncovered = "2020-03-29T12:00:00Z", "2020-03-25T12:00:00Z"  # before any data
+    shown = report(client, FORECAST | {"as_of": covered}).result.root.forecast.series[0].points
+
+    def packet(estimates_for_uncovered):
+        directory = tmp_path / f"packet-{len(list(tmp_path.glob('packet-*')))}"
+        directory.mkdir()
+        for name in ("run.json", "split.json", "config.json"):
+            (directory / name).write_bytes((served.path / name).read_bytes())
+        targets = [{"hour": i} for i in range(24)]
+        evaluated = [{"median": p.median, "lower": p.lower, "upper": p.upper} for p in shown]
+        predictions = [{"origin": {"subject_id": "p01", "cutoff": covered, "targets": targets},
+                        "estimates": evaluated}]  # fmt: skip
+        if estimates_for_uncovered is not None:
+            predictions.append({
+                "origin": {"subject_id": "p01", "cutoff": uncovered, "targets": targets},
+                "estimates": estimates_for_uncovered,
+            })  # fmt: skip
+        (directory / "evaluation.json").write_text(json.dumps({"predictions": predictions}))
+        hashes = {
+            name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+            for name in ("run.json", "split.json", "config.json", "evaluation.json")
+        }
+        (directory / "sha256.json").write_text(json.dumps(hashes))
+        return directory
+
+    def export(*ids):
+        path = tmp_path / f"export-{len(list(tmp_path.glob('export-*')))}.jsonl"
+        path.write_text("".join(json.dumps({"request_id": i, "context": []}) + "\n" for i in ids))
+        return path
+
+    def run(packet_dir, export_path):
+        return handoff.run_handoff(
+            "http://test", packet_dir, served, {"p01": subject}, direct=False,
+            tolerance=1e-9, export_requests=export_path,
+        )  # fmt: skip
+
+    request_id = served_request_id(served, subject, datetime(2020, 3, 29, 12, tzinfo=UTC), 24)
+    assert request_id == fake.requests[0]["request_id"]
+    matched = run(packet(None), export(request_id))
+    assert matched["agrees"] and matched["vs_export_requests"] == {"compared": 1, "in_export": 1}
+    assert not run(packet(None), export("0" * 64))["agrees"]  # not the evaluator's input
+    assert not run(packet([None] * 24), export())["agrees"]  # nothing compared at all
+    abstained = run(packet([None] * 24), export(request_id))
+    assert abstained["vs_export_requests"]["api_abstained"] == 1 and abstained["agrees"]
+    evaluated = run(
+        packet([{"median": 70.0, "lower": 66.0, "upper": 74.0}] * 24), export(request_id)
+    )
+    assert evaluated["vs_export_requests"]["api_abstained_but_evaluated"] == 1
+    assert not evaluated["agrees"]

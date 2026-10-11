@@ -87,6 +87,12 @@ def main(argv: list[str] | None = None) -> int:
         help="compare with the packet only (skip re-running the model; saves GPU jobs)",
     )
     handoff.add_argument(
+        "--export-requests",
+        type=Path,
+        help="a GPU model's evaluator export (requests.jsonl): check the API's own request ids "
+        "against it, without running the GPU",
+    )
+    handoff.add_argument(
         "--tolerance",
         type=float,
         default=0.0,
@@ -248,6 +254,7 @@ def _handoff(args, parser) -> int:
         subjects,
         direct=not args.no_direct,
         tolerance=args.tolerance,
+        export_requests=args.export_requests,
     )
     print(json.dumps(outcome, indent=2, sort_keys=True))
     return 0 if outcome["agrees"] else 1

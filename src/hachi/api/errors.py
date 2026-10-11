@@ -113,6 +113,12 @@ def parse_body[T](adapter: TypeAdapter[T] | type, body: bytes) -> T:
         return adapter.model_validate_json(body)
     except ValidationError as exc:
         raise validation_problem(exc, ("body",)) from exc
+    except OverflowError as exc:  # a contract-valid local time whose UTC instant is out of range
+        raise ApiProblem(
+            "VALIDATION_FAILED",
+            "The request does not match the contract.",
+            issues=[_issue(("body",), "A date or time is outside the supported range.")],
+        ) from exc
 
 
 _IDENTIFIER = TypeAdapter(Identifier)
