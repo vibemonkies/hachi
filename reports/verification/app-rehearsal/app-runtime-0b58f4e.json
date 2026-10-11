@@ -1,0 +1,263 @@
+{
+  "format_version": "hachi-app-runtime-evidence-1",
+  "source_pr": "https://github.com/vibemonkies/hachi/pull/111",
+  "source_git_sha": "0b58f4e7358a1bcc1f29c036eac98c954a808449",
+  "worker": "JadeOx",
+  "owner": "ezzy1630",
+  "node": "26.3.1",
+  "npm": "11.16.0",
+  "python": "3.12.13",
+  "build_modules": 135,
+  "build_passed": true,
+  "source_clean": true,
+  "served_index_matches_dist": true,
+  "dist_index_sha256": "32979fec5c9aff59bfc73f1a09320392007176544c73f663a52afc059fbc374e",
+  "dist_manifest_sha256": "38692827dd684ad5743a31ab105abab96ce43ce4bf4c07f426add363684e146a",
+  "uv_lock_sha256": "1b290745f51cf459018c95226823b49db1422e08817402bfc111fef0c30b1297",
+  "npm_lock_sha256": "7f38e612c50775ca743ae0052ad7e6891ca5c094bcdcbaa794f59a1dc764a8cb",
+  "app_compare_sha256": "e7b463d930cc2577877bb6e85514282d463ccf720ad10979548f9152adbe10f3",
+  "api_receipt": "api-0b58f4e.json",
+  "replay_receipt": "replay-0b58f4e.json",
+  "comparisons": {
+    "live": {
+      "ok": true,
+      "view": "app-live",
+      "points_compared": 24,
+      "endpoints_compared": 48,
+      "numeric_mismatches": 0,
+      "time_mismatches": 0,
+      "geometry_mismatches": 0,
+      "units_match": true,
+      "point_only_honest": true,
+      "exact_tables_open": true,
+      "artifact_visible": true,
+      "snapshot_visible": true,
+      "code_visible": true,
+      "cutoff_visible": true,
+      "original_mode_visible": true,
+      "quality_visible": true,
+      "replay_provenance_visible": true,
+      "target_gap_windows": 0,
+      "live_result_equals_saved": true
+    },
+    "replay": {
+      "ok": true,
+      "view": "app-replay",
+      "points_compared": 24,
+      "endpoints_compared": 48,
+      "numeric_mismatches": 0,
+      "time_mismatches": 0,
+      "geometry_mismatches": 0,
+      "units_match": true,
+      "point_only_honest": true,
+      "exact_tables_open": true,
+      "artifact_visible": true,
+      "snapshot_visible": true,
+      "code_visible": true,
+      "cutoff_visible": true,
+      "original_mode_visible": true,
+      "quality_visible": true,
+      "replay_provenance_visible": true,
+      "target_gap_windows": 0,
+      "live_result_equals_saved": null
+    },
+    "synthetic_gap": {
+      "ok": true,
+      "view": "app-replay",
+      "points_compared": 5,
+      "endpoints_compared": 10,
+      "numeric_mismatches": 0,
+      "time_mismatches": 0,
+      "geometry_mismatches": 0,
+      "units_match": true,
+      "point_only_honest": true,
+      "exact_tables_open": true,
+      "artifact_visible": true,
+      "snapshot_visible": true,
+      "code_visible": true,
+      "cutoff_visible": true,
+      "original_mode_visible": true,
+      "quality_visible": true,
+      "replay_provenance_visible": true,
+      "target_gap_windows": 3,
+      "live_result_equals_saved": null
+    },
+    "missing_cache": {
+      "cache_missing_visible": true,
+      "chart_points": 0,
+      "retry_visible": true
+    },
+    "replay_network": {
+      "live_report_requests": 0,
+      "replay_requests": 2
+    },
+    "mobile_synthetic": {
+      "body_width": 390,
+      "page_overflow": false,
+      "local_chart_overflow": true,
+      "local_table_overflow": true,
+      "scroll_regions_focusable": true,
+      "synthetic_mode_visible": true
+    }
+  },
+  "method": {
+    "api_packet_direct": "25 frozen inner-validation origins; 600 points each reference; outer sealed",
+    "app_live": "one frozen validation origin, actual existing-subject/cutoff/buttons and API requests; 24 points/48 endpoints",
+    "private_input": "trusted private saved response supplies normal field input events locally; no report/state injection or value echo",
+    "app_oracle": "read-only local browser DOM vs validated response; whole live result equals saved response; packet equivalence from independent API oracle",
+    "replay": "actual app GET through separate Vite target with API stopped; original response equal except ReplayInfo",
+    "real_snapshots_or_screenshots": false,
+    "screenshots": "generated synthetic or empty error only"
+  },
+  "api_listener_absent_during_replay": true,
+  "synthetic_apple": {
+    "generated_records": 576,
+    "import": "succeeded",
+    "coverage_loaded": true,
+    "source_mode": "synthetic",
+    "forecast": "unavailable",
+    "reason": "NO_ARTIFACT_FOR_TASK",
+    "admission": "original CPU profile has no Apple admission",
+    "actual_apple_export_used": false
+  },
+  "focused_runtime_replay_tests": 19,
+  "screenshots": [
+    {
+      "file": "app-0b58-synthetic-apple-unavailable-phone.png",
+      "sha256": "171742f97685178c256c76092032358a975c2cdd1ba137e1e263cbb20d7e228f",
+      "bytes": 159067,
+      "illustration": "Generated Apple import, honest unavailable response",
+      "css_viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "captured_at_utc": "2026-10-11T16:13:20.723323+00:00",
+      "capture_time_basis": "original T3 screenshot file modification time",
+      "contains_real_data": false
+    },
+    {
+      "file": "app-0b58-synthetic-apple-coverage.png",
+      "sha256": "aa96b7d122b19cf950ae4ac48dcac45446e904a122a98a5896ee2a1f84f4589c",
+      "bytes": 168505,
+      "illustration": "Generated Apple import and coverage",
+      "css_viewport": {
+        "width": 1280,
+        "height": 1600
+      },
+      "captured_at_utc": "2026-10-11T16:13:20.893125+00:00",
+      "capture_time_basis": "original T3 screenshot file modification time",
+      "contains_real_data": false
+    },
+    {
+      "file": "app-0b58-missing-cache-phone.png",
+      "sha256": "793a965b43e00162779becd5d3f29c59e59bbaa896825a10dfd77f40fc1d206a",
+      "bytes": 83556,
+      "illustration": "Empty missing-cache error",
+      "css_viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "captured_at_utc": "2026-10-11T16:17:44.985172+00:00",
+      "capture_time_basis": "original T3 screenshot file modification time",
+      "contains_real_data": false
+    },
+    {
+      "file": "app-0b58-synthetic-gap-replay-desktop.png",
+      "sha256": "2b8b2777fc58c8a002bbff1dbd5e551f69b1bdd466e58dfececc5d0cf815c07f",
+      "bytes": 211066,
+      "illustration": "Generated five-point staggered-series replay",
+      "css_viewport": {
+        "width": 1280,
+        "height": 2700
+      },
+      "captured_at_utc": "2026-10-11T16:19:56.758769+00:00",
+      "capture_time_basis": "original T3 screenshot file modification time",
+      "contains_real_data": false
+    },
+    {
+      "file": "app-0b58-synthetic-gap-replay-phone.png",
+      "sha256": "fc0682be9bb68312c37760478d7515649d55b84047d24328a82e89ae2e5d4168",
+      "bytes": 151867,
+      "illustration": "Generated replay, original synthetic mode visible",
+      "css_viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "captured_at_utc": "2026-10-11T16:19:03.625408+00:00",
+      "capture_time_basis": "original T3 screenshot file modification time",
+      "contains_real_data": false
+    }
+  ],
+  "owned_listener_phases": [
+    {
+      "source_head": "0b58f4e7358a1bcc1f29c036eac98c954a808449",
+      "sessions": {
+        "api": 64437,
+        "web": 59523,
+        "replay": 7353
+      },
+      "listener_pids": {
+        "8720": [
+          26818
+        ],
+        "5180": [
+          26833
+        ],
+        "8729": [
+          34777
+        ]
+      }
+    },
+    {
+      "source_head": "0b58f4e7358a1bcc1f29c036eac98c954a808449",
+      "sessions": {
+        "api": 30384,
+        "web": 59523,
+        "replay": 6038
+      },
+      "listener_pids": {
+        "8720": [
+          50146
+        ],
+        "5180": [
+          26833
+        ],
+        "8729": [
+          50147
+        ]
+      }
+    }
+  ],
+  "shutdown": {
+    "api_initial_session_exit": 130,
+    "api_final_session_exit": 0,
+    "real_replay_initial_exit": 0,
+    "missing_cache_exit": 0,
+    "synthetic_gap_exit": 0,
+    "real_replay_final_exit": 0,
+    "web_exit": 130,
+    "signal": "retained own sessions interrupted with SIGINT; 130 is intentional shell interrupt",
+    "listeners_remaining": [],
+    "owned_tabs_closed": true,
+    "viewport_reset": true
+  },
+  "defects": [
+    {
+      "source": "apps/web/src/features/import/ImportPanel.tsx",
+      "finding": "HTML subject-ID patterns reject their unescaped hyphen under v flag; JS guards still protect requests",
+      "owner": "Coffee/#17",
+      "url": "https://github.com/vibemonkies/hachi/pull/111#issuecomment-6111003942",
+      "fixed_in_tested_head": false
+    }
+  ],
+  "gates": {
+    "functional_existing_pmdata_app": "observed at exact source head",
+    "private_actual_app_replay": "observed at exact source head",
+    "original_cpu_only": true,
+    "selected_720_hour_artifact_parity": "not exercised; remains required",
+    "pr107_corrected_apple_artifact": "not staged; separate root gate",
+    "actual_apple_case_export_timeline_consent": "unavailable/unconfirmed",
+    "full_issue_22": "incomplete",
+    "final_selection_calibration_test_freeze": "not authorized by this rehearsal"
+  }
+}

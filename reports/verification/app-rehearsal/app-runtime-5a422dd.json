@@ -1,0 +1,111 @@
+{
+  "format_version": "hachi-app-runtime-evidence-1",
+  "source_pr": "https://github.com/vibemonkies/hachi/pull/111",
+  "source_git_sha": "5a422ddb2f1d0dd2a5c4e1003a1c833cf430daca",
+  "dist_index_sha256": "4e1a8a289abad1af046d904b3e7054f189046762bdaf8c78f9faa4a37bda4eb5",
+  "dist_manifest_sha256": "8a2a8f029033768e20f642b8868c4b22e832adab8755d9a4b80b3645d7cc6d81",
+  "served_index_matches_dist": true,
+  "worker": "JadeOx",
+  "owner": "ezzy1630",
+  "source_clean": true,
+  "build_passed": true,
+  "build_modules": 135,
+  "app_compare_sha256": "e7b463d930cc2577877bb6e85514282d463ccf720ad10979548f9152adbe10f3",
+  "api_receipt": "api-5a422dd.json",
+  "replay_receipt": "replay-5a422dd.json",
+  "comparisons": {
+    "live": {
+      "ok": true,
+      "view": "app-live",
+      "points_compared": 24,
+      "endpoints_compared": 48,
+      "numeric_mismatches": 0,
+      "time_mismatches": 0,
+      "geometry_mismatches": 0,
+      "units_match": true,
+      "point_only_honest": true,
+      "exact_tables_open": true,
+      "artifact_visible": true,
+      "snapshot_visible": true,
+      "code_visible": true,
+      "cutoff_visible": true,
+      "original_mode_visible": true,
+      "quality_visible": true,
+      "replay_provenance_visible": true,
+      "target_gap_windows": 0,
+      "live_result_equals_saved": true
+    },
+    "replay": {
+      "ok": true,
+      "view": "app-replay",
+      "points_compared": 24,
+      "endpoints_compared": 48,
+      "numeric_mismatches": 0,
+      "time_mismatches": 0,
+      "geometry_mismatches": 0,
+      "units_match": true,
+      "point_only_honest": true,
+      "exact_tables_open": true,
+      "artifact_visible": true,
+      "snapshot_visible": true,
+      "code_visible": true,
+      "cutoff_visible": true,
+      "original_mode_visible": true,
+      "quality_visible": true,
+      "replay_provenance_visible": true,
+      "target_gap_windows": 0,
+      "live_result_equals_saved": null
+    },
+    "replay_network": {
+      "live_report_requests": 0,
+      "replay_requests": 3
+    }
+  },
+  "api_listener_absent_during_replay": true,
+  "native_subject_patterns_compile": true,
+  "method": {
+    "api_packet_direct": "25 frozen validation origins/600 exact points; outer sealed",
+    "app_live": "one origin/24 points/48 endpoints via native app workflow; saved input values supplied locally through ordinary input events",
+    "app_oracle": "whole live result equals saved result; DOM/table/SVG match; no report/state injection",
+    "app_replay": "actual separate Vite provider target; API stopped; no live report requests",
+    "initial_replay_check": "native click toggled an already-open retained table closed; exact_tables_open failed; reopened through native control and reran unchanged oracle successfully",
+    "real_snapshots_or_screenshots": false,
+    "synthetic_screenshots_reused": false
+  },
+  "owned_listener_phase": {
+    "source_head": "5a422ddb2f1d0dd2a5c4e1003a1c833cf430daca",
+    "sessions": {
+      "api": 48573,
+      "web": 46826,
+      "replay": 87659
+    },
+    "listener_pids": {
+      "8720": [
+        72939
+      ],
+      "5180": [
+        72954
+      ],
+      "8729": [
+        74444
+      ]
+    }
+  },
+  "shutdown": {
+    "api_exit": 130,
+    "web_exit": 130,
+    "replay_exit": 0,
+    "signal": "intentional SIGINT of retained own sessions",
+    "listeners_remaining": [],
+    "owned_tab_closed": true
+  },
+  "gates": {
+    "original_cpu_only": true,
+    "fractional_cutoff_form_proof": "Coffee/Misty owned; not exercised by this private whole-second origin",
+    "synthetic_broader_paths": "producing 0b58f4e receipt, not repeated here",
+    "selected_720_hour_artifact_parity": "not exercised",
+    "pr107_corrected_artifact": "not staged",
+    "actual_apple_export_timeline_consent": "unavailable/unconfirmed",
+    "full_issue_22": "incomplete"
+  }
+}
