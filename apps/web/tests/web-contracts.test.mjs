@@ -32,6 +32,20 @@ async function withFetch(handler, operation) {
   }
 }
 
+function makeAnomalyJob(forecastJob, anomalyResult) {
+  return {
+    ...structuredClone(forecastJob),
+    report_id: anomalyResult.report_id,
+    request: {
+      schema_version: "0.1",
+      subject_id: anomalyResult.subject_id,
+      as_of: anomalyResult.as_of,
+      task: "anomaly",
+    },
+    result: anomalyResult,
+  };
+}
+
 before(async () => {
   await build({
     root: webRoot,
@@ -69,6 +83,54 @@ test("public contract fixtures are accepted without mutation", { concurrency: fa
     assert.equal(modules.parseContractDocument(kind, document), document);
     assert.equal(JSON.stringify(document), before);
   }
+});
+
+test("valid import, coverage, and report clients accept matching public responses", { concurrency: false }, async () => {
+  const importStatus = await fixture("contracts/fixtures/ImportStatus/running.json");
+  const coverage = await fixture("contracts/fixtures/Coverage/typical.json");
+  const forecastJob = await fixture("contracts/fixtures/ReportJob/completed.json");
+  const anomalyResult = await fixture("contracts/fixtures/ReportResult/ok-anomaly-alert.json");
+  const anomalyJob = makeAnomalyJob(forecastJob, anomalyResult);
+  const calls = [];
+
+  const results = await withFetch(async (input, init) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.includes("/imports?")) return response(importStatus);
+    if (url.includes("/coverage")) return response(coverage);
+    const request = JSON.parse(init.body);
+    return response(request.task === "anomaly" ? anomalyJob : forecastJob);
+  }, async () => {
+    const imported = await modules.submitImport(
+      new File(["<xml />"], "export.xml"),
+      "synthetic-001",
+      "America/Los_Angeles",
+      "synthetic",
+      new AbortController().signal,
+      "http://api.example.test",
+    );
+    const covered = await modules.getCoverage(
+      "synthetic-001",
+      null,
+      new AbortController().signal,
+      "http://api.example.test",
+    );
+    const reports = await modules.requestForecastAndAnomaly(
+      "synthetic-001",
+      "2026-10-10T07:00:00Z",
+      new AbortController().signal,
+      "http://api.example.test",
+    );
+    return { imported, covered, reports };
+  });
+
+  assert.equal(results.imported.import_id, importStatus.import_id);
+  assert.equal(results.covered.subject_id, coverage.subject_id);
+  assert.equal(results.reports.forecast.kind, "result");
+  assert.equal(results.reports.forecast.result.task, "physiology_forecast");
+  assert.equal(results.reports.anomaly.kind, "result");
+  assert.equal(results.reports.anomaly.result.task, "anomaly");
+  assert.equal(calls.length, 4);
 });
 
 test("import, coverage, and report clients reject malformed nested documents", { concurrency: false }, async () => {
@@ -118,18 +180,31 @@ test("import, coverage, and report clients reject malformed nested documents", {
   assert.match(pair.anomaly.message, /invalid report job/);
 });
 
-test("Vite keeps live API and saved replay on separate proxy targets", { concurrency: false }, async () => {
-  const loaded = await loadConfigFromFile(
-    { command: "serve", mode: "test" },
-    fileURLToPath(new URL("../vite.config.ts", import.meta.url)),
-    webRoot,
-  );
-  const proxy = loaded.config.server?.proxy;
-  assert.equal(proxy["/v1"].target, "http://127.0.0.1:8717");
-  assert.equal(proxy["/replay"].target, "http://127.0.0.1:5180");
-  assert.notEqual(proxy["/v1"].target, proxy["/replay"].target);
-  assert.equal(proxy["/v1"].changeOrigin, true);
-  assert.equal(proxy["/replay"].changeOrigin, true);
+test("Vite keeps custom live API and saved replay targets separate without rewrites", { concurrency: false }, async () => {
+  const keys = ["VITE_HACHI_API_PROXY_TARGET", "VITE_HACHI_REPLAY_PROXY_TARGET"];
+  const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  try {
+    process.env.VITE_HACHI_API_PROXY_TARGET = "http://api.example.test:8717";
+    process.env.VITE_HACHI_REPLAY_PROXY_TARGET = "http://replay.example.test:5180";
+    const loaded = await loadConfigFromFile(
+      { command: "serve", mode: "test" },
+      fileURLToPath(new URL("../vite.config.ts", import.meta.url)),
+      webRoot,
+    );
+    const proxy = loaded.config.server?.proxy;
+    assert.equal(proxy["/v1"].target, "http://api.example.test:8717");
+    assert.equal(proxy["/replay"].target, "http://replay.example.test:5180");
+    assert.notEqual(proxy["/v1"].target, proxy["/replay"].target);
+    assert.equal(proxy["/v1"].changeOrigin, true);
+    assert.equal(proxy["/replay"].changeOrigin, true);
+    assert.equal(proxy["/v1"].rewrite, undefined);
+    assert.equal(proxy["/replay"].rewrite, undefined);
+  } finally {
+    for (const key of keys) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
+  }
 });
 
 test("saved replay stays same-origin and refuses a 409 live fallback", { concurrency: false }, async () => {
@@ -166,17 +241,7 @@ test("saved replay stays same-origin and refuses a 409 live fallback", { concurr
 test("report clients reject request and result identity mismatches", { concurrency: false }, async () => {
   const forecastJob = await fixture("contracts/fixtures/ReportJob/completed.json");
   const anomalyResult = await fixture("contracts/fixtures/ReportResult/ok-anomaly-alert.json");
-  const anomalyJob = {
-    ...structuredClone(forecastJob),
-    report_id: anomalyResult.report_id,
-    request: {
-      schema_version: "0.1",
-      subject_id: anomalyResult.subject_id,
-      as_of: anomalyResult.as_of,
-      task: "anomaly",
-    },
-    result: anomalyResult,
-  };
+  const anomalyJob = makeAnomalyJob(forecastJob, anomalyResult);
   const calls = [];
 
   const pair = await withFetch(async (input, init) => {
