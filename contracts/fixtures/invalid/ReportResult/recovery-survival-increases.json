@@ -1,0 +1,66 @@
+{
+  "schema_version": "0.1",
+  "report_id": "synthetic-report-recovery",
+  "subject_id": "synthetic-001",
+  "as_of": "2026-10-10T07:00:00Z",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:05Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "warnings": [],
+  "replay": null,
+  "status": "ok",
+  "task": "recovery",
+  "provenance": {
+    "dataset_snapshot": {
+      "dataset_id": "synthetic",
+      "dataset_version": "0.1",
+      "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+    },
+    "artifact": {
+      "artifact_id": "synthetic-fixture-artifact",
+      "artifact_sha256": "cbc2a1fa300a95a9b516ea36bf8bf1d024ecdb13051fc8e52247822408b0a336"
+    },
+    "feature_coverage": [
+      {
+        "metric": "resting_heart_rate_vendor",
+        "coverage": 1.0
+      }
+    ]
+  },
+  "recovery": {
+    "episode_id": "synthetic-episode-01",
+    "endpoint_definition": "Two consecutive symptom-free daily check-ins (synthetic fixture definition)",
+    "survival": [
+      {
+        "days_after_as_of": 0.0,
+        "probability_still_symptomatic": 1.0
+      },
+      {
+        "days_after_as_of": 1.0,
+        "probability_still_symptomatic": 0.93
+      },
+      {
+        "days_after_as_of": 2.0,
+        "probability_still_symptomatic": 0.78
+      },
+      {
+        "days_after_as_of": 3.0,
+        "probability_still_symptomatic": 0.95
+      },
+      {
+        "days_after_as_of": 5.0,
+        "probability_still_symptomatic": 0.34
+      },
+      {
+        "days_after_as_of": 7.0,
+        "probability_still_symptomatic": 0.18
+      },
+      {
+        "days_after_as_of": 10.0,
+        "probability_still_symptomatic": 0.08
+      }
+    ],
+    "median_days_after_as_of": 3.5,
+    "supported_follow_up_days": 10.0
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1",
+  "report_id": "synthetic-report-unavailable",
+  "subject_id": "synthetic-001",
+  "as_of": "2026-10-10T07:00:00",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:05Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "warnings": [],
+  "replay": null,
+  "status": "unavailable",
+  "task": "illness_onset",
+  "reason_code": "NO_VALIDATED_ILLNESS_ARTIFACT",
+  "requirements": [
+    "Labeled cohort evaluation and calibrated artifact"
+  ],
+  "provenance": null
+}

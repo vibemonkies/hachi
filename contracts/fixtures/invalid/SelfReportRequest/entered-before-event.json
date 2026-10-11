@@ -1,0 +1,75 @@
+{
+  "schema_version": "0.1",
+  "entries": [
+    {
+      "kind": "symptom_onset",
+      "entry_id": "synthetic-entry-01",
+      "entered_at_utc": "2026-10-07T21:00:00Z",
+      "onset_earliest_utc": "2026-10-07T07:00:00Z",
+      "onset_latest_utc": "2026-10-07T19:00:00Z",
+      "symptoms": [
+        "sore_throat",
+        "fatigue",
+        "congestion"
+      ],
+      "severity": 2
+    },
+    {
+      "kind": "symptom_checkin",
+      "entry_id": "synthetic-entry-02",
+      "entered_at_utc": "2026-10-09T21:00:00Z",
+      "period_start_utc": "2026-10-09T07:00:00Z",
+      "period_end_utc": "2026-10-10T07:00:00Z",
+      "symptoms_present": true,
+      "symptoms": [
+        "congestion",
+        "cough"
+      ],
+      "severity": 1
+    },
+    {
+      "kind": "test_result",
+      "entry_id": "synthetic-entry-03",
+      "entered_at_utc": "2026-10-08T17:00:00Z",
+      "pathogen": "sars_cov_2",
+      "method": "antigen",
+      "result": "negative",
+      "collected_earliest_utc": "2026-10-08T15:00:00Z",
+      "collected_latest_utc": "2026-10-08T16:00:00Z"
+    },
+    {
+      "kind": "alertness_rating",
+      "entry_id": "synthetic-entry-04",
+      "entered_at_utc": "2026-10-09T23:00:00Z",
+      "rated_at_utc": "2026-10-10T00:00:00Z",
+      "scale": "kss_1_9",
+      "value": 6
+    },
+    {
+      "kind": "pvt_result",
+      "entry_id": "synthetic-entry-05",
+      "entered_at_utc": "2026-10-10T00:10:00Z",
+      "started_at_utc": "2026-10-10T00:05:00Z",
+      "duration_seconds": 180,
+      "trials": 31,
+      "mean_reaction_time_ms": 312.5,
+      "lapses": 2
+    },
+    {
+      "kind": "confounder",
+      "entry_id": "synthetic-entry-06",
+      "entered_at_utc": "2026-10-07T03:00:00Z",
+      "factor": "intense_exercise",
+      "occurred_earliest_utc": "2026-10-06T22:00:00Z",
+      "occurred_latest_utc": "2026-10-07T00:00:00Z"
+    },
+    {
+      "kind": "symptom_resolution",
+      "entry_id": "synthetic-entry-07",
+      "entered_at_utc": "2026-10-10T17:00:00Z",
+      "onset_entry_id": "synthetic-entry-01",
+      "resolved_earliest_utc": "2026-10-10T07:00:00Z",
+      "resolved_latest_utc": "2026-10-10T15:00:00Z"
+    }
+  ]
+}

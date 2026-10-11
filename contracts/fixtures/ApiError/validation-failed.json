@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.1",
+  "error_code": "VALIDATION_FAILED",
+  "message": "The report request is invalid.",
+  "request_id": "synthetic-request-0001",
+  "field_issues": [
+    {
+      "path": "horizon_hours",
+      "message": "Input should be 24, 48 or 72"
+    }
+  ]
+}

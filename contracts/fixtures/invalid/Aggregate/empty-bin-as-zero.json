@@ -1,0 +1,18 @@
+{
+  "dataset_id": "synthetic",
+  "subject_id": "synthetic-001",
+  "metric": "steps",
+  "unit": "count",
+  "resolution": "hour",
+  "interval_start_utc": "2026-10-10T02:00:00Z",
+  "interval_end_utc": "2026-10-10T03:00:00Z",
+  "local_date": null,
+  "tz_name": null,
+  "aggregation": "sum",
+  "value": 0.0,
+  "null_reason": null,
+  "observed_count": 0,
+  "coverage": 0.0,
+  "source_ids": [],
+  "pipeline_version": "0.1.0"
+}

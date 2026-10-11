@@ -1,0 +1,37 @@
+{
+  "schema_version": "0.1",
+  "import_id": "synthetic-import-01",
+  "subject_id": "synthetic-001",
+  "data_mode": "synthetic",
+  "source_format": "apple_health_export_zip",
+  "declared_tz_name": "America/Los_Angeles",
+  "created_at_utc": "2026-10-10T05:00:00Z",
+  "state": "succeeded",
+  "updated_at_utc": "2026-10-10T05:03:00Z",
+  "counts": {
+    "records_seen": 1284311,
+    "records_accepted": 1190402,
+    "records_duplicate": 61250,
+    "records_unsupported": 31987,
+    "records_rejected": 512,
+    "records_quarantined": 160
+  },
+  "record_issues": [
+    {
+      "disposition": "rejected",
+      "code": "INVALID_TIMESTAMP",
+      "count": 300
+    },
+    {
+      "disposition": "rejected",
+      "code": "END_BEFORE_START",
+      "count": 212
+    },
+    {
+      "disposition": "quarantined",
+      "code": "UNKNOWN_UNIT",
+      "count": 160
+    }
+  ],
+  "failure": null
+}

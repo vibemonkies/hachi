@@ -1,0 +1,19 @@
+{
+  "dataset_id": "synthetic-pmdata-like",
+  "subject_id": "synthetic-001",
+  "record_id": "6aaacd24ff5853a7d8f96bc21e9ae77b",
+  "source_kind": "fitness_tracker",
+  "source_id": "synthetic-source-tracker",
+  "device_model": null,
+  "metric": "sleep_asleep_deep",
+  "value": 1500.0,
+  "unit": "s",
+  "start_utc": "2026-10-10T04:00:00Z",
+  "end_utc": "2026-10-10T04:25:00Z",
+  "available_at_utc": "2026-10-10T16:00:00Z",
+  "availability": "assumed",
+  "availability_rule": "synthetic-sleep-synced-by-noon",
+  "tz_name": "America/Los_Angeles",
+  "utc_offset_minutes": null,
+  "tz_provenance": "dataset_documentation"
+}

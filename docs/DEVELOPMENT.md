@@ -34,6 +34,21 @@ The runtime issue implements a small cooperative wrapper using `flock` that hold
 
 Prove the runtime with a tensor operation **and** one forward/backward step of the intended model, then capture exact image digest or locked packages, architecture, GPU device, elapsed time, and peak memory where measurable. Test Mamba kernels explicitly for WBM; a successful import is insufficient. If WBM is blocked, preserve the failure and evaluate a compatible candidate while leaving the original gate visible. Do not overwrite the existing `~/venv`, `~/unsloth`, or unrelated installations.
 
+## Local toolchain
+
+Python 3.12 (matching the GX10) is pinned in `.python-version` and installed by uv; `uv.lock` pins every Python package. The `contracts/` package uses bun, with `contracts/bun.lock`. From the repository root:
+
+| Command | Effect |
+|---|---|
+| `make` | `setup`, `build` and `check` in one go |
+| `make setup` | Install the locked Python and bun environments |
+| `make build` | Regenerate `contracts/schema`, `contracts/typescript` and `contracts/fixtures` from `src/hachi/contracts` |
+| `make check` | Ruff on `src/`, `tests/` and `contracts/`, pytest, the coordination script's tests, and checks that every generated file is current; CI runs this on every push |
+
+Never edit generated contract files by hand. Change the models in `src/hachi/contracts/` (or fixture definitions in `contracts/scripts/build_fixtures.py`), run `make build`, and commit the source and generated files together.
+
+The base install and the `dev` group are CPU-only. Lane dependencies go in optional groups (`uv add --optional data …`, `--optional api …`, `--optional models …`). GPU and model packages belong only in `models`, so CPU development and CI never install them.
+
 ## Branch and PR workflow
 
 ```sh

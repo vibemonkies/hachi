@@ -1,0 +1,77 @@
+{
+  "schema_version": "0.1",
+  "report_id": "synthetic-report-anomaly-sparse",
+  "subject_id": "synthetic-001",
+  "as_of": "2026-10-10T07:00:00Z",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-10T07:00:05Z",
+  "git_sha": "0000000000000000000000000000000000000000",
+  "warnings": [
+    {
+      "code": "SPARSE_HISTORY",
+      "message": "Too few overnight readings to estimate a personal baseline."
+    }
+  ],
+  "replay": null,
+  "status": "ok",
+  "task": "anomaly",
+  "provenance": {
+    "dataset_snapshot": {
+      "dataset_id": "synthetic",
+      "dataset_version": "0.1",
+      "snapshot_sha256": "cffe17508970418dd6a4616c5185db1d6d07d039bebaa656c1c0b8c3dac863c1"
+    },
+    "artifact": {
+      "artifact_id": "synthetic-fixture-artifact",
+      "artifact_sha256": "cbc2a1fa300a95a9b516ea36bf8bf1d024ecdb13051fc8e52247822408b0a336"
+    },
+    "feature_coverage": [
+      {
+        "metric": "heart_rate",
+        "coverage": 0.18
+      }
+    ]
+  },
+  "anomaly": {
+    "score_definition": "Robust z-score of overnight resting heart rate against the trailing 28-day personal median, using only data available at each cutoff (synthetic fixture)",
+    "alert_state": "abstained",
+    "score": null,
+    "alert_threshold": 3.0,
+    "baseline_window_start_utc": "2026-09-11T07:00:00Z",
+    "baseline_window_end_utc": "2026-10-09T07:00:00Z",
+    "changed_features": [],
+    "timeline": [
+      {
+        "interval_start_utc": "2026-10-05T07:00:00Z",
+        "interval_end_utc": "2026-10-06T07:00:00Z",
+        "score": null,
+        "alert": false
+      },
+      {
+        "interval_start_utc": "2026-10-06T07:00:00Z",
+        "interval_end_utc": "2026-10-07T07:00:00Z",
+        "score": null,
+        "alert": false
+      },
+      {
+        "interval_start_utc": "2026-10-07T07:00:00Z",
+        "interval_end_utc": "2026-10-08T07:00:00Z",
+        "score": 0.4,
+        "alert": false
+      },
+      {
+        "interval_start_utc": "2026-10-08T07:00:00Z",
+        "interval_end_utc": "2026-10-09T07:00:00Z",
+        "score": null,
+        "alert": false
+      },
+      {
+        "interval_start_utc": "2026-10-09T07:00:00Z",
+        "interval_end_utc": "2026-10-10T07:00:00Z",
+        "score": null,
+        "alert": false
+      }
+    ],
+    "observed_alert_burden": null
+  }
+}

@@ -2,7 +2,7 @@
 
 Personal physiological forecasting from wearable history, with measured uncertainty and traceable evidence.
 
-**Status: build plan and collaboration setup. No Hachi model has been trained, no app is implemented, and no predictive accuracy has been established.**
+**Status: build plan, collaboration setup and shared contracts v0.1. No Hachi model has been trained, no app is implemented, and no predictive accuracy has been established.**
 
 ## Start here
 
@@ -33,17 +33,23 @@ Pretrained models are candidates, not automatic improvements. The training path 
 
 ```text
 docs/                   shared plan, contracts, evidence requirements
-.github/                issue and PR templates
+.github/                issue and PR templates, CI
+src/hachi/contracts/    authoritative contract models (Justin; reviewed by both callers)
+contracts/              generated JSON Schema, TypeScript types, synthetic fixtures
+tests/                  Python tests
 # Planned implementation ownership (created by the corresponding issues):
 src/hachi/data/         ingestion and harmonization (Justin)
 src/hachi/api/          API and local persistence (Justin)
 src/hachi/models/       model adapters and training (Ezzy)
 src/hachi/evaluation/   splits, replay, metrics (Ezzy)
-apps/web/              product UI (CoffeeCoder)
-contracts/             generated schemas and synthetic fixtures (Justin; reviewed by both callers)
-configs/               versioned experiment and feature definitions
-reports/               reviewed, aggregate-only experiment reports
+apps/web/               product UI (CoffeeCoder)
+configs/                versioned experiment and feature definitions
+reports/                reviewed, aggregate-only experiment reports
 ```
+
+## Development
+
+Install [uv](https://docs.astral.sh/uv/) and [bun](https://bun.sh/), then run `make`. It installs the locked environments, regenerates the contracts and runs every check CI runs. `make build` regenerates the JSON Schema, TypeScript types and fixtures after a contract change; `make check` runs lint, tests and the generated-file checks. See the [development workflow](docs/DEVELOPMENT.md#local-toolchain).
 
 Raw exports, participant-level tables, credentials, checkpoints, and private run artifacts stay outside Git. This is a private repository, but repository privacy is not permission to copy another person's health data into it.
 

@@ -1,0 +1,16 @@
+{
+  "dataset_id": "synthetic",
+  "subject_id": "synthetic-001",
+  "label_source": "study_survey",
+  "kind": "symptom_episode",
+  "episode_id": "synthetic-episode-00",
+  "onset_earliest_utc": "2026-09-28T07:00:00Z",
+  "onset_latest_utc": "2026-09-28T19:00:00Z",
+  "resolution_status": "resolved",
+  "resolution_earliest_utc": "2026-10-03T07:00:00Z",
+  "resolution_latest_utc": "2026-10-04T07:00:00Z",
+  "resolution_definition": "synthetic-two-symptom-free-checkins",
+  "last_follow_up_utc": "2026-10-07T07:00:00Z",
+  "observed_at_utc": "2026-09-29T07:00:00Z",
+  "confidence": "confirmed"
+}

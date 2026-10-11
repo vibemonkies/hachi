@@ -35,5 +35,10 @@ __pycache__/
 .cache/
 node_modules/
 dist/
-coverage/
+# Anchored: an unanchored `coverage/` also hides any folder named Coverage on
+# case-insensitive filesystems, such as contracts/fixtures/Coverage/.
+/coverage/
+/apps/*/coverage/
+.coverage
+htmlcov/
 .DS_Store

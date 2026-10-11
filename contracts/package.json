@@ -1,0 +1,21 @@
+{
+  "name": "@hachi/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generated TypeScript types, JSON Schema and synthetic fixtures for the Hachi contracts.",
+  "type": "module",
+  "types": "./typescript/index.ts",
+  "exports": {
+    ".": "./typescript/index.ts",
+    "./schema": "./schema/hachi.schema.json",
+    "./fixtures/*": "./fixtures/*"
+  },
+  "scripts": {
+    "generate": "bun scripts/generate.ts",
+    "check": "bun scripts/generate.ts --check && tsc --noEmit"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "^16.0.0",
+    "typescript": "^7.0.2"
+  }
+}
