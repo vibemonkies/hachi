@@ -223,7 +223,7 @@ function Curves({ result }: { result: AlertnessResult }) {
                 {curve.points.map((point) => (
                   <tr key={point.time_utc}>
                     <td>{point.time_utc}</td>
-                    <td>{point.value.toFixed(3)}</td>
+                    <td>{point.value}</td>
                   </tr>
                 ))}
               </tbody>
@@ -257,8 +257,16 @@ function CurvePlot({
     (curve) => curve.schedule_id === scheduleId,
   );
   if (!curve) return null;
-  const start = Date.parse(curve.points[0].time_utc);
-  const end = Date.parse(curve.points[curve.points.length - 1].time_utc);
+  const start = Math.min(
+    ...result.alertness.curves.map((curve) =>
+      Date.parse(curve.points[0].time_utc),
+    ),
+  );
+  const end = Math.max(
+    ...result.alertness.curves.map((curve) =>
+      Date.parse(curve.points[curve.points.length - 1].time_utc),
+    ),
+  );
   const scale = result.alertness.scale;
   if (end <= start || scale.maximum <= scale.minimum)
     return (
@@ -295,10 +303,10 @@ function CurvePlot({
         {scale.minimum}
       </text>
       <text x="45" y="205" fontSize="12" fill="currentColor">
-        {curve.points[0].time_utc}
+        {new Date(start).toISOString()}
       </text>
       <text x="685" y="205" textAnchor="end" fontSize="12" fill="currentColor">
-        {curve.points[curve.points.length - 1].time_utc}
+        {new Date(end).toISOString()}
       </text>
     </svg>
   );
