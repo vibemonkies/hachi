@@ -8,7 +8,7 @@ from pathlib import Path
 from hachi.evaluation.clinical_protocol import ClinicalProtocol
 from hachi.evaluation.serialization import document_sha256
 
-from .pretrained_features import load_chronos_features
+from .pretrained_features import build_meanpool_features, load_chronos_features
 from .pretrained_protocol import REPO, load_pretrained_protocol
 from .protocol import load_protocol
 from .run import run, write_private
@@ -18,7 +18,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshot", type=Path, required=True)
     parser.add_argument("--context-packet", type=Path, required=True)
-    parser.add_argument("--chronos-inference", type=Path, required=True)
+    parser.add_argument("--family", choices=["meanpool_hr", "chronos_hr"], default="chronos_hr")
+    parser.add_argument("--chronos-inference", type=Path)
     parser.add_argument(
         "--output", type=Path, required=True, help="fresh private CPU run directory"
     )
@@ -28,14 +29,20 @@ def main() -> int:
     args = parser.parse_args()
     if args.output.exists():
         parser.error("--output must be a fresh private run directory")
+    if args.family == "chronos_hr" and args.chronos_inference is None:
+        parser.error("Chronos features require the queued --chronos-inference packet")
     try:
         comparison = load_pretrained_protocol(args.comparison)
         task = load_protocol(REPO / comparison.task_protocol.path)
         clinical = ClinicalProtocol.model_validate_json(
             (REPO / comparison.clinical_protocol.path).read_bytes()
         )
-        features = load_chronos_features(
-            args.snapshot, args.context_packet, args.chronos_inference, comparison
+        features = (
+            build_meanpool_features(args.snapshot, args.context_packet, comparison)
+            if args.family == "meanpool_hr"
+            else load_chronos_features(
+                args.snapshot, args.context_packet, args.chronos_inference, comparison
+            )
         )
         result = run(
             args.snapshot,

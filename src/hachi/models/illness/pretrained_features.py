@@ -122,7 +122,10 @@ def load_chronos_features(
         raise ValueError("feature packet differs from frozen context/participant policy")
     representation = next(r for r in comparison.representations if r.name == "chronos_hr")
     assert isinstance(representation, FrozenRepresentation)
-    spec = json.loads((REPO / representation.model_spec.path).read_bytes())
+    spec_path = REPO / representation.model_spec.path
+    if sha(spec_path) != representation.model_spec.sha256:
+        raise ValueError("Chronos specification differs from frozen file pin")
+    spec = json.loads(spec_path.read_bytes())
     receipt_path = inference / "inference.json"
     output = inference / "embeddings.jsonl"
     receipt = json.loads(receipt_path.read_bytes())
@@ -160,3 +163,54 @@ def load_chronos_features(
     }
     names = representation_feature_names(representation)
     return join_vectors("chronos_hr", names, vectors, context_joins(packet), provenance)
+
+
+def build_meanpool_features(
+    snapshot: Path, packet: Path, comparison: PretrainedProtocol
+) -> FrozenFeatures:
+    """Run the actual #11 nonlearned summary locally; no model weights or GPU required."""
+    import numpy as np
+
+    from hachi.models.encoders.requests import model_inputs
+    from hachi.models.encoders.requests import read_requests as encoder_requests
+
+    from .pretrained_protocol import MeanPoolRepresentation
+
+    verified = verify_packet(snapshot, packet)
+    if (
+        verified["protocol_sha256"] != comparison.context_protocol.sha256
+        or verified["shared_protocol_sha256"] != comparison.clinical_protocol.sha256
+    ):
+        raise ValueError("summary packet differs from frozen context/participant policy")
+    representation = next(r for r in comparison.representations if r.name == "meanpool_hr")
+    assert isinstance(representation, MeanPoolRepresentation)
+    spec_path = REPO / representation.input_spec.path
+    if sha(spec_path) != representation.input_spec.sha256:
+        raise ValueError("summary input specification differs from frozen file pin")
+    hashes, values, policy = encoder_requests(packet / "encoder-requests.jsonl")
+    if policy != comparison.context_protocol.sha256:
+        raise ValueError("summary request policy differs from frozen context")
+    normalization = json.loads(spec_path.read_bytes())["input"]["normalization"]
+    matrix = model_inputs(
+        values, np.asarray(normalization["means"]), np.asarray(normalization["stds"])
+    )["meanpool_hr"]
+    if matrix.shape != (len(hashes), 76) or not np.isfinite(matrix).all():
+        raise ValueError("actual MeanPool output differs from finite summary specification")
+    vectors = {key: tuple(float(v) for v in row) for key, row in zip(hashes, matrix, strict=True)}
+    provenance = {
+        "comparison_sha256": document_sha256(comparison),
+        "requests_sha256": sha(packet / "encoder-requests.jsonl"),
+        "features_sha256": document_sha256(vectors),
+        "input_spec_sha256": representation.input_spec.sha256,
+        "consumer_source_sha256": sha(REPO / "src/hachi/models/encoders/requests.py"),
+        "summary_source_sha256": sha(REPO / "src/hachi/models/encoders/specs.py"),
+        "join_file_sha256": sha(packet / "joins.json"),
+    }
+    return join_vectors(
+        "meanpool_hr",
+        representation_feature_names(representation),
+        vectors,
+        context_joins(packet),
+        provenance,
+        encoder=True,
+    )

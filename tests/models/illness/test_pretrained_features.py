@@ -131,3 +131,46 @@ def test_output_boundary_rejects_bad_vectors_even_with_updated_checksum(feature_
     (inference / "inference.json").write_bytes(document_bytes(receipt))
     with pytest.raises((ValueError, ValidationError)):
         load_chronos_features(packet, packet, inference, COMPARISON)
+
+
+def test_direct_loader_cannot_substitute_changed_spec_even_with_matching_receipt(
+    feature_packet, tmp_path, monkeypatch
+):
+    packet, inference, _ = feature_packet
+    spec_path = tmp_path / "infra/gx10/model.json"
+    spec_path.parent.mkdir(parents=True)
+    spec = json.loads(Path("infra/gx10/model.json").read_bytes())
+    spec["revision"] = "b" * 40
+    spec_path.write_bytes(document_bytes(spec))
+    monkeypatch.setattr("hachi.models.illness.pretrained_features.REPO", tmp_path)
+    with pytest.raises(ValueError, match="frozen file pin"):
+        load_chronos_features(packet, packet, inference, COMPARISON)
+
+
+def test_actual_meanpool_consumer_binds_summary_width_and_private_encoder_joins(feature_packet):
+    from hachi.models.illness.pretrained_features import build_meanpool_features
+
+    packet, _, cutoff = feature_packet
+    request = dict(
+        context_policy_sha256=COMPARISON.context_protocol.sha256,
+        hours=168,
+        first_hour_local=0,
+        channels={"heart_rate": [60.0] * 168},
+        units={"heart_rate": "bpm"},
+    )
+    request["request_sha256"] = document_sha256(request)
+    (packet / "encoder-requests.jsonl").write_bytes(document_bytes(request))
+    joins = json.loads((packet / "joins.json").read_bytes())
+    for row in joins:
+        if row["request_id"]:
+            row["encoder_request_sha256"] = request["request_sha256"]
+    (packet / "joins.json").write_bytes(document_bytes(joins))
+    features = build_meanpool_features(packet, packet, COMPARISON)
+    for inner in range(3):
+        points = features.by_inner[inner].points
+        assert len(features.by_inner[inner].feature_names) == 76
+        assert points[0].values[5] == 1.0  # HR60bpm -> one count/s before summary.
+        assert points[0].values[19 + 5] == 0.0  # HR observed mask.
+        assert points[1].values == (None,) * 76
+        assert features.supported_by_inner[inner] == {("synthetic-person", cutoff)}
+    assert features.name == "meanpool_hr" and "weights_sha256" not in features.provenance
