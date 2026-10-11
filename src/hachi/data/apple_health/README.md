@@ -165,7 +165,7 @@ records. It is **not** scientific readiness or real Apple forecast validation.
 Serving must retain the original frozen artifact/protocol receipt and separately
 declare any accepted Apple input rule. Low-density history abstains at the existing
 0.5/30 HR gates; no friend export or held case was used to choose them. Generated
-Apple HTTP-to-artifact evidence, once wired, is synthetic transport proof; #21's
+Apple HTTP-to-artifact evidence is synthetic transport proof; #21's
 actual consented export and source-transfer validation remain separate gates.
 
 The focused tests exercise density versus duration, unchanged gates, late higher
@@ -238,9 +238,8 @@ python tests/data/apple_health/hourly_benchmark.py prepare --run-root /private/o
 python tests/data/apple_health/hourly_benchmark.py measure --run-root /private/owner/hourly-bench --output /private/owner/hourly-bench/timing.json
 ```
 
-These are helper measurements. The prior ~70-second API-path result from GreenHawk
-and WindyTrout remains the integration baseline until the same native volume and
-context are measured through the source-admitted serving path. No parser/store,
+These are helper measurements. The separate actual HTTP measurements below address
+the prior ~70-second API-path gate for the tested CPU artifact. No parser/store,
 evaluation-contract, artifact descriptor or model-gate changes are part of this
 performance change.
 
@@ -258,3 +257,43 @@ After the audit update, the same checksum/code-verified artifact again produced
 at the earlier cutoff; their later audit receipt counted 30 late exclusions while
 every prior feature, identity and readiness remained identical. The original CPU
 receipt verified without a descriptor or shared feature-contract override.
+
+### Generated HTTP transport against the original frozen CPU artifact
+
+At producing integration `a31f247`, a fresh isolated loopback API on port 8722
+staged that **same original** checksum/code-verified #9 artifact and evaluation
+packet. Its serving profile retained the PMData policy and protocol hash and added
+an explicit Apple policy with identical metric, aggregation and 0.5/30 gates, the
+sealed Apple rule, and rationale “Generated transport proof only; not validated
+on Apple data.” No PMData observations or source calendar dates entered these
+generated Apple inputs.
+
+| Generated native volume | Import through HTTP | First report | Uncached second report | Result |
+| --- | ---: | ---: | ---: | --- |
+| 105,120 points, 12/hour | 8.742 s | 0.705 s | 0.645 s | `INSUFFICIENT_HISTORY` at original gates |
+| 525,600 points, 60/hour | 49.339 s | 2.799 s | 2.918 s | 24/24 exact points per report versus direct inference |
+
+Both use a 48-hour context. The second request uses a distinct subsecond `as_of`
+with the same floored native cutoff, so report idempotency cannot supply a cached
+result. These are wall times from POST to completed report, including polling;
+the first sparse report is the fresh API process's first forecast, while the first
+dense report follows its separate upload in that process. The OS cache was not
+evicted. Every successful response stays `synthetic`, point-only with null bounds,
+and carries `DEVICE_SHIFT` with the explicit unvalidated rationale. The private
+aggregate receipt SHA256 is
+`4157ff85e8fbdc595ad324ce29ede8ad1e71783114f10cef9eb020f536f62a8d`.
+
+A separate HTTP append sentinel imported 2,880 generated records, then a new batch
+for the same synthetic subject with 30 future-created higher-priority updates and
+one record whose event end was still in the future. A new uncached report at the
+original native cutoff kept all 24 forecast points identical. All 48 prior features,
+identities, readiness and earlier audit receipts matched exactly. At a later audit
+cutoff the 30 creations were counted as permanently excluded late inputs; the
+future-end record stayed unknown. The original model receipt verified throughout.
+Owned services were stopped and port 8722 released after each probe.
+
+This proves generated upload → imported snapshot → source-admitted hourly inputs
+→ the actual frozen CPU artifact over HTTP. It does not establish Apple clinical
+or population accuracy, calibration, #21's actual consented case, or compatibility
+for every artifact. Source admissions remain per artifact; the serving owner owns
+metadata validation and the separate scientific/source-transfer gate.
