@@ -4,9 +4,11 @@ import argparse
 import hashlib
 import io
 import json
+import math
 import subprocess
 import tarfile
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 
 from pydantic import TypeAdapter
@@ -16,6 +18,7 @@ from hachi.data.clinical.windows import onset_labels
 from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
 from hachi.evaluation.serialization import document_sha256
 
+from .data import at_risk_windows
 from .metrics import Score, paired_auprc
 from .metrics import report as metric_report
 from .protocol import load_protocol
@@ -39,6 +42,38 @@ def input_hashes(root: Path) -> dict[str, str]:
         for p in sorted(root.rglob("*.json"))
         if p.is_file()
     }
+
+
+def validate_predictions(snapshot, root, plan, protocol) -> None:
+    """Receipts alone do not prove that a saved scored row belonged to its fold."""
+    for fold in plan.folds:
+        if fold.outer_fold != protocol.active_outer_fold:
+            continue
+        expected, _ = at_risk_windows(snapshot, fold.validation_subjects, protocol)
+        for horizon in protocol.horizons_hours:
+            target = {(w.subject_id, w.cutoff): w for w in expected if w.horizon_hours == horizon}
+            for candidate in protocol.candidate_order:
+                packet = root / f"inner-{fold.inner_fold}-{horizon}h-{candidate}"
+                split = json.loads((packet / "split.json").read_bytes())
+                if split["test_opened_at_utc"] is not None or any(
+                    tuple(split[key]) != tuple(value) for key, value in fold.partitions().items()
+                ):
+                    raise ValueError("private packet split differs from sealed clinical fold")
+                rows = TypeAdapter(list[Score]).validate_json(
+                    (packet / "predictions.json").read_bytes()
+                )
+                actual = {(s.window.subject_id, s.window.cutoff): s.window for s in rows}
+                if len(actual) != len(rows) or set(actual) != set(target):
+                    raise ValueError("scored rows differ from eligible validation cohort")
+                for score in rows:
+                    window = score.window
+                    if not math.isfinite(score.probability) or not 0 <= score.probability <= 1:
+                        raise ValueError("invalid saved probability")
+                    if (
+                        replace(window, features=window.features[:4])
+                        != target[(window.subject_id, window.cutoff)]
+                    ):
+                        raise ValueError("saved targets or survey predictors differ from snapshot")
 
 
 def label_grid_check(snapshot: Path, clinical: ClinicalProtocol) -> dict:
@@ -74,7 +109,8 @@ def replay(packets: list[Path], scoring_commit: str, base_python: Path) -> dict:
             archive.extractall(temporary, filter="data")
         result = subprocess.run(
             [
-                str(base_python.resolve()),
+                # Resolving a venv executable symlink would discard its pyvenv.cfg.
+                str(base_python.absolute()),
                 "-I",
                 str(Path(__file__).with_name("replay.py")),
                 "--scoring-source",
@@ -103,6 +139,7 @@ def assemble(
         raise ValueError("all frozen feature families required")
     protocol = load_protocol(protocol_path)
     clinical = ClinicalProtocol.model_validate_json(clinical_path.read_bytes())
+    plan = clinical_fold_plan(snapshot, clinical)
     summaries, identities, provenance = {}, set(), {}
     producer = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
     for name in ("evidence.py", "replay.py"):
@@ -110,6 +147,10 @@ def assemble(
         committed = subprocess.check_output(["git", "show", f"{producer}:{relative}"], cwd=REPO)
         if committed != Path(__file__).with_name(name).read_bytes():
             raise ValueError("commit evidence implementation before report generation")
+    if subprocess.check_output(
+        ["git", "diff", "HEAD", "--name-only", "--", "src/hachi"], cwd=REPO, text=True
+    ):
+        raise ValueError("tracked report dependencies differ from producing commit")
     for family, root in roots.items():
         raw = json.loads((root / "summary.json").read_bytes())
         if raw["git_dirty"] or raw["outer_test_status"] != "sealed":
@@ -119,6 +160,7 @@ def assemble(
         ):
             raise ValueError("packet protocol differs from supplied protocol")
         identities.add((raw["git_sha"], raw["fold_plan_sha256"]))
+        validate_predictions(snapshot, root, plan, protocol)
         public = dict(raw)
         public["fold_evidence"] = [
             {k: v for k, v in row.items() if k != "threshold"} for row in raw["fold_evidence"]
@@ -139,7 +181,7 @@ def assemble(
     if len(identities) != 1:
         raise ValueError("feature family source/fold identities differ")
     scoring_commit, fold_hash = next(iter(identities))
-    if fold_hash != document_sha256(clinical_fold_plan(snapshot, clinical)):
+    if fold_hash != document_sha256(plan):
         raise ValueError("packet fold plan differs from verified clinical plan")
     grid = label_grid_check(snapshot, clinical)
     comparisons = {
@@ -210,7 +252,22 @@ def assemble(
                     "source-only rerun changed scientific protocol or aggregate results"
                 )
             reruns[family] = {
+                "previous_packet_name": root.name,
+                "current_packet_name": roots[family].name,
                 "previous_scoring_commit": old["git_sha"],
+                "implementation_changed_paths": subprocess.check_output(
+                    [
+                        "git",
+                        "diff",
+                        "--name-only",
+                        old["git_sha"],
+                        scoring_commit,
+                        "--",
+                        "src/hachi/models/illness",
+                    ],
+                    cwd=REPO,
+                    text=True,
+                ).splitlines(),
                 "scientific_protocol_and_aggregate_results_identical": equal,
                 "files_sha256": input_hashes(root),
             }
@@ -387,13 +444,27 @@ def render(report: dict) -> str:
             "unchanged and delivered comparison status is separately derived by the"
             " assembly."
         ),
-        (
-            "- The -001 runs were scored at 4ac23a9, then -002 at 722f51a after "
-            "lazy optional-dependency imports and TYPE_CHECKING packaging changes "
-            "only. Task/shared protocols, folds, labels, all aggregate metrics and "
-            "selections match exactly. No scientific feature, calibration or "
-            "selection setting changed after viewing scores."
+        "- Prior-run reconciliation: "
+        + (
+            "; ".join(
+                f"{r['previous_packet_name']} at {r['previous_scoring_commit']} versus "
+                f"{r['current_packet_name']} at {report['source_commit']}: "
+                "protocols/folds/labels/aggregate metrics/selections identical"
+                for r in report["report_provenance"]["source_only_rerun_comparison"].values()
+            )
+            if report["report_provenance"]["source_only_rerun_comparison"]
+            else "not checked; no prior packets supplied"
         ),
+        "- Original -001 to -002 source change: lazy optional-dependency imports and "
+        "TYPE_CHECKING packaging; no scientific feature/calibration/selection setting changed. "
+        "Changed source paths are recorded beside the verified aggregate equality."
+        if report["report_provenance"]["source_only_rerun_comparison"]
+        and all(
+            r["previous_scoring_commit"].startswith("4ac23a9")
+            and report["source_commit"].startswith("722f51a")
+            for r in report["report_provenance"]["source_only_rerun_comparison"].values()
+        )
+        else "- No source-only implementation history assertion for unchecked run pairs.",
         "",
         "## Eligible validation denominators",
         "",
