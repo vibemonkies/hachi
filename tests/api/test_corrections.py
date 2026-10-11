@@ -166,3 +166,21 @@ def test_older_databases_migrate_with_their_entries_as_chain_roots(tmp_path):
     assert (row.root, row.supersedes) == ("old-1", None)
     assert metadata.self_report_tombstones("s") == set()
     metadata.close()
+
+
+def test_a_superseded_resolution_still_protects_its_onset(client):
+    other = ONSET | {"entry_id": "onset-2", "entered_at_utc": "2026-09-02T09:00:00Z"}
+    moved = RESOLUTION | {
+        "entry_id": "resolved-1b",
+        "supersedes": "resolved-1",
+        "entered_at_utc": "2026-09-06T09:00:00Z",
+        "onset_entry_id": "onset-2",
+    }
+    assert post(client, ONSET, other, RESOLUTION, moved).status_code == 201
+    # The current resolution names onset-2, but the retained original still names onset-1.
+    assert client.delete(f"{PATH}/onset-1", params={"confirm": "onset-1"}).status_code == 409
+    assert (
+        client.delete(f"{PATH}/resolved-1b", params={"confirm": "resolved-1b"}).status_code == 204
+    )
+    assert client.delete(f"{PATH}/onset-1", params={"confirm": "onset-1"}).status_code == 204
+    assert [e.entry_id for e in history(client, versions="all").entries] == ["onset-2"]
