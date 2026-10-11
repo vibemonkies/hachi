@@ -1,9 +1,11 @@
 # Illness and recovery labels (#8): cohorts, snapshots and access blockers
 
-What #8 delivered: the locked outcome definitions, the Stanford COVID-19 label snapshots, and where each illness cohort stands. Everything here is aggregate. Participant-level tables stay in approved storage (`$HACHI_DATA_ROOT/derived/`, and read-only on the GX10 at `~/hachi/data/derived/`). The per-dataset machine reports are beside this file:
+What #8 delivered: the locked outcome definitions, the Stanford COVID-19 label snapshots, and where each illness cohort stands. Everything here is aggregate. Participant-level tables stay in approved storage (`$HACHI_DATA_ROOT/derived/`, and read-only on the GX10 at `~/hachi/data/derived/`). The per-dataset machine reports for the current snapshots are beside this file:
 
-- [`clinical-labels-1-stanford-covid19-wearables-2020-nbe.json`](clinical-labels-1-stanford-covid19-wearables-2020-nbe.json) / [`.md`](clinical-labels-1-stanford-covid19-wearables-2020-nbe.md)
-- [`clinical-labels-1-stanford-covid19-wearables-phase2-2022-nm.json`](clinical-labels-1-stanford-covid19-wearables-phase2-2022-nm.json) / [`.md`](clinical-labels-1-stanford-covid19-wearables-phase2-2022-nm.md)
+- [`clinical-labels-2-stanford-covid19-wearables-2020-nbe.json`](clinical-labels-2-stanford-covid19-wearables-2020-nbe.json) / [`.md`](clinical-labels-2-stanford-covid19-wearables-2020-nbe.md)
+- [`clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm.json`](clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm.json) / [`.md`](clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm.md)
+
+The `clinical-labels-1` snapshots (first published in PR #58; reports `clinical-labels-1-*`) are superseded. Every table and the audit are byte-identical to `clinical-labels-2`, which only adds `symptom_scores.parquet`. Both stay in place, read-only.
 
 Code and definitions: [`src/hachi/data/clinical/`](../../src/hachi/data/clinical/README.md) and [`configs/outcomes/`](../../configs/outcomes/definitions.toml) (`definitions_version = "outcomes-1"`).
 
@@ -11,23 +13,23 @@ Code and definitions: [`src/hachi/data/clinical/`](../../src/hachi/data/clinical
 
 | | Stanford phase 1 (Mishra 2020) | Stanford phase 2 (Alavi 2022) |
 |---|---|---|
-| Snapshot id | `clinical-labels-1-stanford-covid19-wearables-2020-nbe-168d54133c8b` | `clinical-labels-1-stanford-covid19-wearables-phase2-2022-nm-1360e4624f99` |
-| `DatasetSnapshotRef` | `stanford-covid19-wearables` / `2020-nbe` / `168d54133c8bc1c566f0b1a023d4f7ca04f54cecbadd3257fa4840e0031e8a33` | `stanford-covid19-wearables-phase2` / `2022-nm` / `1360e4624f994eb9b7806da02391f74d26ffe0b08d57546cb69cdd2fa68cc748` |
+| Snapshot id | `clinical-labels-2-stanford-covid19-wearables-2020-nbe-6a864b03b2d3` | `clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm-bbbca036d9e5` |
+| `DatasetSnapshotRef` | `stanford-covid19-wearables` / `2020-nbe` / `6a864b03b2d3ddf05abc42b699679dba39f1909bad2c3053c4b8adf4108faf09` | `stanford-covid19-wearables-phase2` / `2022-nm` / `bbbca036d9e5500351ddfab1b43e2c9622626389c1f6f881244035cfc300cd70` |
 | Sources (registry-pinned) | `COVID-19-Wearables.zip` (378,380,920 B, `52ca976e…80f4`) + `41551_2020_640_MOESM3_ESM.xlsx` (4,041,311 B, `cf89b4b7…98ec`) | `COVID-19-Phase2-Wearables.zip` (5,537,624,129 B, `c90b1314…c994`) + `41591_2021_1593_MOESM3_ESM.xlsx` (25,369 B, `166f8465…08e3b3`) |
-| Built from | commit `f0ad975`, clean tree, 10 s | commit `d49ff43`, clean tree, 372 s (1.4 GB peak RSS) |
-| Rows | outcomes 246, episodes 59, recovery 118, onset_windows 14,481, subjects 121, status_intervals 562, surveys 794, wearable_days 11,729 | outcomes 2,337, episodes 66, recovery 66, onset_windows 365,377, subjects 2,122, status_intervals 2,122, surveys 0, wearable_days 266,348 |
+| Built from | commit `18ec9fc`, clean tree, 10 s | commit `18ec9fc`, clean tree, 235 s (about 1.4 GB peak RSS) |
+| Rows | outcomes 246, episodes 59, recovery 118, onset_windows 14,481, subjects 121, status_intervals 562, surveys 794, symptom_scores 794, wearable_days 11,729 | outcomes 2,337, episodes 66, recovery 66, onset_windows 365,377, subjects 2,122, status_intervals 2,122, surveys 0, symptom_scores 0, wearable_days 266,348 |
 | Locations | Mac `$HACHI_DATA_ROOT/derived/<id>/`; GX10 `~/hachi/data/derived/<id>/` (read-only) | same |
 
-Built with `HACHI_DATA_ROOT=/Volumes/T7/Stockpile/hachi.datasets uv run python -I -m hachi.data.clinical build <dataset_id> --report-dir reports/data`, from a clean tree. The label code is identical at both commits. The later commit adds only `reconcile` and two phase 2 archive fixes: repeated CSV headers, and unpadded hours in the clock check. Phase 1's archive has neither, so its snapshot is unchanged.
+Built with `HACHI_DATA_ROOT=/Volumes/T7/Stockpile/hachi.datasets uv run python -I -m hachi.data.clinical build <dataset_id> --report-dir reports/data`, from a clean tree.
 
 ## Verification
 
 - **`verify --full`** passes for both snapshots: every file matches `SHA256SUMS` and the manifest, the snapshot hash and directory name agree, and every outcome row re-validates against the shared contracts.
-- **Deterministic rebuild.** An independent phase 1 build into a scratch directory gave the same snapshot id and a byte-identical `SHA256SUMS`, covering all ten files including the manifest and audit.
+- **Deterministic rebuild.** An independent phase 1 build into a scratch directory gave the same snapshot id and a byte-identical `SHA256SUMS`, covering all eleven files including the manifest and audit. The phase 2 build reproduced every table and the audit of the earlier `clinical-labels-1` phase 2 build byte for byte.
 - **`reconcile`** re-reads each source workbook and checks the snapshot by a separate route, without the label engine. It found 0 mismatches. Phase 1 checks: 59 episode onsets are reported dates; reported onsets are accounted for in all 47 participants (merged relapses included); positive tests equal the reported diagnosis dates in all 47; 794 answered survey days have the state their raw answers imply; all 33 accepted self-reported recoveries are reported dates; and 48 episodes whose onset day is a cutoff are `positive` or excluded there. Phase 2 checks: all 84 positives' test dates are matched, all 66 episode onsets are reported dates, and the 66 own-onset cutoffs are positive.
 - **Paper cross-check.** Phase 1 yields 27 test-confirmed COVID-19 episodes, matching the paper's "32 COVID-19-positive participants (27 confirmed)". Phase 2 yields 84 positives, 66 with a symptom onset.
 - **GX10.** Both snapshots and both label workbooks are on the GX10 read-only, and `sha256sum -c SHA256SUMS` passes in each directory.
-- **Synthetic tests** (`tests/data/clinical/`, 35 tests) cover every definition, both archive layouts with their quirks, the CMU adapter and its gate, tamper detection, read-only output, admission refusal and report sanitization.
+- **Synthetic tests** (`tests/data/clinical/`, 36 tests) cover every definition, both archive layouts with their quirks, the CMU adapter and its gate, tamper detection, read-only output, admission refusal and report sanitization.
 
 ## Cohort audit
 
@@ -48,6 +50,7 @@ Counts are participants unless stated otherwise. Day precision throughout. On th
 | Positive tests (no negative tests released) | 36: 29 linked, 7 unlinked | 84: 61 linked, 23 unlinked (18 asymptomatic, 5 far from onset) |
 | Test day − onset day, linked tests | median 3 (IQR 1–5, range 0–14) | median 2 (IQR 1–3, range −5 to 8) |
 | Survey rows / answered survey days / rows with no answer | 1,461 / 794 / 637 | none |
+| Per-day severity (`symptom_scores`, one row per answered survey day) | 794 days from 35 participants; 544 with at least one symptom; max severity 1/2/3/4/5 on 186/84/113/113/48 days | none |
 | Unknown-status periods (no survey, outside episodes) | 151 periods, 11,602 days | 2,187 periods, 367,433 days |
 
 **Onset windows at local midnight.** Phase 1 has 14,481 cutoffs, 11,638 of them with wearable records the day before. Phase 2 has 365,377 cutoffs.
