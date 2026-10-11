@@ -1,0 +1,3561 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-hachi-schema-version": "0.1",
+  "$defs": {
+    "Aggregate": {
+      "additionalProperties": false,
+      "description": "One metric summarised over an hourly or local-day bin.\n\nAn empty bin is missing (`value` null with a `null_reason`), never zero.",
+      "properties": {
+        "dataset_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "unit": {
+          "$ref": "#/$defs/Unit"
+        },
+        "resolution": {
+          "$ref": "#/$defs/Resolution"
+        },
+        "interval_start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "interval_end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "local_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Local calendar day. Required for day bins."
+        },
+        "tz_name": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IanaTimezone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Timezone of local_date. Required for days."
+        },
+        "aggregation": {
+          "$ref": "#/$defs/Aggregation"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "null_reason": {
+          "anyOf": [
+            {
+              "enum": [
+                "no_observations",
+                "insufficient_coverage",
+                "quarantined"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_count": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "coverage": {
+          "description": "Fraction of the bin with usable observations.",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "source_ids": {
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          },
+          "type": "array"
+        },
+        "pipeline_version": {
+          "$ref": "#/$defs/VersionString"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "subject_id",
+        "metric",
+        "unit",
+        "resolution",
+        "interval_start_utc",
+        "interval_end_utc",
+        "local_date",
+        "tz_name",
+        "aggregation",
+        "value",
+        "null_reason",
+        "observed_count",
+        "coverage",
+        "source_ids",
+        "pipeline_version"
+      ],
+      "title": "Aggregate",
+      "type": "object"
+    },
+    "Aggregation": {
+      "enum": [
+        "mean",
+        "median",
+        "min",
+        "max",
+        "sum"
+      ],
+      "type": "string"
+    },
+    "AlertBurden": {
+      "additionalProperties": false,
+      "properties": {
+        "false_alert_episodes_per_30_healthy_days": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "evaluation_report": {
+          "$ref": "#/$defs/Text"
+        }
+      },
+      "required": [
+        "false_alert_episodes_per_30_healthy_days",
+        "evaluation_report"
+      ],
+      "title": "AlertBurden",
+      "type": "object"
+    },
+    "AlertnessCurve": {
+      "additionalProperties": false,
+      "properties": {
+        "schedule_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "points": {
+          "items": {
+            "$ref": "#/$defs/AlertnessPoint"
+          },
+          "minItems": 2,
+          "type": "array"
+        }
+      },
+      "required": [
+        "schedule_id",
+        "points"
+      ],
+      "title": "AlertnessCurve",
+      "type": "object"
+    },
+    "AlertnessPayload": {
+      "additionalProperties": false,
+      "description": "A simulation shows assumptions, never an accuracy claim.",
+      "properties": {
+        "mode": {
+          "enum": [
+            "simulation",
+            "validated_prediction"
+          ],
+          "type": "string"
+        },
+        "model_description": {
+          "$ref": "#/$defs/Text",
+          "description": "Equations or implementation, with citation."
+        },
+        "scale": {
+          "$ref": "#/$defs/AlertnessScale"
+        },
+        "tz_name": {
+          "$ref": "#/$defs/IanaTimezone"
+        },
+        "assumptions": {
+          "$ref": "#/$defs/ScenarioAssumptions"
+        },
+        "curves": {
+          "items": {
+            "$ref": "#/$defs/AlertnessCurve"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "validation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AlertnessValidation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Required for validated_prediction; must be null for a simulation."
+        }
+      },
+      "required": [
+        "mode",
+        "model_description",
+        "scale",
+        "tz_name",
+        "assumptions",
+        "curves",
+        "validation"
+      ],
+      "title": "AlertnessPayload",
+      "type": "object"
+    },
+    "AlertnessPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "time_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "time_utc",
+        "value"
+      ],
+      "title": "AlertnessPoint",
+      "type": "object"
+    },
+    "AlertnessRatingEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "entry_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "entered_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the person recorded this entry."
+        },
+        "kind": {
+          "const": "alertness_rating",
+          "type": "string"
+        },
+        "rated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "scale": {
+          "const": "kss_1_9",
+          "description": "Karolinska Sleepiness Scale: 1 extremely alert, 9 very sleepy.",
+          "type": "string"
+        },
+        "value": {
+          "maximum": 9,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "entry_id",
+        "entered_at_utc",
+        "kind",
+        "rated_at_utc",
+        "scale",
+        "value"
+      ],
+      "title": "AlertnessRatingEntry",
+      "type": "object"
+    },
+    "AlertnessResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "generated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/ResultWarning"
+          },
+          "type": "array"
+        },
+        "replay": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplayInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "const": "ok",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "task": {
+          "const": "alertness",
+          "type": "string"
+        },
+        "alertness": {
+          "$ref": "#/$defs/AlertnessPayload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "report_id",
+        "subject_id",
+        "as_of",
+        "data_mode",
+        "generated_at_utc",
+        "git_sha",
+        "warnings",
+        "replay",
+        "status",
+        "provenance",
+        "task",
+        "alertness"
+      ],
+      "title": "AlertnessResult",
+      "type": "object"
+    },
+    "AlertnessScale": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/Text"
+        },
+        "unit": {
+          "$ref": "#/$defs/Text"
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "higher_is_more_alert": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "unit",
+        "minimum",
+        "maximum",
+        "higher_is_more_alert"
+      ],
+      "title": "AlertnessScale",
+      "type": "object"
+    },
+    "AlertnessValidation": {
+      "additionalProperties": false,
+      "properties": {
+        "report": {
+          "$ref": "#/$defs/Text",
+          "description": "Aggregate evaluation report backing the prediction."
+        },
+        "metric": {
+          "$ref": "#/$defs/Text"
+        },
+        "value": {
+          "type": "number"
+        },
+        "n_observations": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "report",
+        "metric",
+        "value",
+        "n_observations"
+      ],
+      "title": "AlertnessValidation",
+      "type": "object"
+    },
+    "AnomalyPayload": {
+      "additionalProperties": false,
+      "description": "Deviation from the person's own baseline. This is not an illness probability.",
+      "properties": {
+        "score_definition": {
+          "$ref": "#/$defs/Text",
+          "description": "What the score measures; higher is more unusual."
+        },
+        "alert_state": {
+          "enum": [
+            "no_alert",
+            "alert",
+            "abstained"
+          ],
+          "type": "string"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "alert_threshold": {
+          "type": "number"
+        },
+        "baseline_window_start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "baseline_window_end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "changed_features": {
+          "items": {
+            "$ref": "#/$defs/ChangedFeature"
+          },
+          "type": "array"
+        },
+        "timeline": {
+          "items": {
+            "$ref": "#/$defs/AnomalyTimelinePoint"
+          },
+          "type": "array"
+        },
+        "observed_alert_burden": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AlertBurden"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null until measured."
+        }
+      },
+      "required": [
+        "score_definition",
+        "alert_state",
+        "score",
+        "alert_threshold",
+        "baseline_window_start_utc",
+        "baseline_window_end_utc",
+        "changed_features",
+        "timeline",
+        "observed_alert_burden"
+      ],
+      "title": "AnomalyPayload",
+      "type": "object"
+    },
+    "AnomalyRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "Cutoff. Only data available by this instant is used."
+        },
+        "task": {
+          "const": "anomaly",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subject_id",
+        "as_of",
+        "task"
+      ],
+      "title": "AnomalyRequest",
+      "type": "object"
+    },
+    "AnomalyResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "generated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/ResultWarning"
+          },
+          "type": "array"
+        },
+        "replay": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplayInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "const": "ok",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "task": {
+          "const": "anomaly",
+          "type": "string"
+        },
+        "anomaly": {
+          "$ref": "#/$defs/AnomalyPayload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "report_id",
+        "subject_id",
+        "as_of",
+        "data_mode",
+        "generated_at_utc",
+        "git_sha",
+        "warnings",
+        "replay",
+        "status",
+        "provenance",
+        "task",
+        "anomaly"
+      ],
+      "title": "AnomalyResult",
+      "type": "object"
+    },
+    "AnomalyTimelinePoint": {
+      "additionalProperties": false,
+      "properties": {
+        "interval_start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "interval_end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null when the detector abstained."
+        },
+        "alert": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "interval_start_utc",
+        "interval_end_utc",
+        "score",
+        "alert"
+      ],
+      "title": "AnomalyTimelinePoint",
+      "type": "object"
+    },
+    "ApiError": {
+      "additionalProperties": false,
+      "description": "Body of every non-2xx API response.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "error_code": {
+          "$ref": "#/$defs/ApiErrorCode"
+        },
+        "message": {
+          "$ref": "#/$defs/Text"
+        },
+        "request_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "field_issues": {
+          "items": {
+            "$ref": "#/$defs/FieldIssue"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "error_code",
+        "message",
+        "request_id",
+        "field_issues"
+      ],
+      "title": "ApiError",
+      "type": "object"
+    },
+    "ApiErrorCode": {
+      "enum": [
+        "VALIDATION_FAILED",
+        "SCHEMA_VERSION_UNSUPPORTED",
+        "NOT_FOUND",
+        "CONFLICT",
+        "PAYLOAD_TOO_LARGE",
+        "INTERNAL_ERROR"
+      ],
+      "type": "string"
+    },
+    "ArtifactRef": {
+      "additionalProperties": false,
+      "description": "Identifies an immutable model artifact directory by id and checksum.",
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "artifact_sha256": {
+          "$ref": "#/$defs/Sha256"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "artifact_sha256"
+      ],
+      "title": "ArtifactRef",
+      "type": "object"
+    },
+    "CalibrationRef": {
+      "additionalProperties": false,
+      "properties": {
+        "cohort": {
+          "$ref": "#/$defs/Text"
+        },
+        "version": {
+          "$ref": "#/$defs/VersionString"
+        },
+        "method": {
+          "$ref": "#/$defs/Text"
+        }
+      },
+      "required": [
+        "cohort",
+        "version",
+        "method"
+      ],
+      "title": "CalibrationRef",
+      "type": "object"
+    },
+    "ChangedFeature": {
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "unit": {
+          "$ref": "#/$defs/Unit"
+        },
+        "observed": {
+          "type": "number"
+        },
+        "baseline_median": {
+          "type": "number"
+        },
+        "robust_z": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "metric",
+        "unit",
+        "observed",
+        "baseline_median",
+        "robust_z"
+      ],
+      "title": "ChangedFeature",
+      "type": "object"
+    },
+    "ConfounderEntry": {
+      "additionalProperties": false,
+      "description": "Something that can move physiology without illness.",
+      "properties": {
+        "entry_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "entered_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the person recorded this entry."
+        },
+        "kind": {
+          "const": "confounder",
+          "type": "string"
+        },
+        "factor": {
+          "enum": [
+            "alcohol",
+            "vaccination",
+            "travel",
+            "intense_exercise",
+            "sleep_loss",
+            "medication",
+            "other"
+          ],
+          "type": "string"
+        },
+        "occurred_earliest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "occurred_latest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        }
+      },
+      "required": [
+        "entry_id",
+        "entered_at_utc",
+        "kind",
+        "factor",
+        "occurred_earliest_utc",
+        "occurred_latest_utc"
+      ],
+      "title": "ConfounderEntry",
+      "type": "object"
+    },
+    "Coverage": {
+      "additionalProperties": false,
+      "description": "GET /v1/subjects/{id}/coverage response: what data exists and what it can support.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "generated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "dataset_snapshot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DatasetSnapshotRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "history": {
+          "enum": [
+            "empty",
+            "insufficient",
+            "sufficient"
+          ],
+          "type": "string"
+        },
+        "span_start_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UtcDatetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "span_end_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UtcDatetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricCoverage"
+          },
+          "type": "array"
+        },
+        "task_support": {
+          "items": {
+            "$ref": "#/$defs/TaskSupport"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subject_id",
+        "data_mode",
+        "generated_at_utc",
+        "dataset_snapshot",
+        "history",
+        "span_start_utc",
+        "span_end_utc",
+        "metrics",
+        "task_support"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "DataMode": {
+      "description": "Whether a document derives from real observations or a synthetic fixture.",
+      "enum": [
+        "real",
+        "synthetic"
+      ],
+      "type": "string"
+    },
+    "DatasetSnapshotRef": {
+      "additionalProperties": false,
+      "description": "Identifies the exact dataset snapshot a document was computed from.",
+      "properties": {
+        "dataset_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "dataset_version": {
+          "$ref": "#/$defs/VersionString"
+        },
+        "snapshot_sha256": {
+          "$ref": "#/$defs/Sha256"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "dataset_version",
+        "snapshot_sha256"
+      ],
+      "title": "DatasetSnapshotRef",
+      "type": "object"
+    },
+    "ErrorResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "generated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/ResultWarning"
+          },
+          "type": "array"
+        },
+        "replay": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplayInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "const": "error",
+          "type": "string"
+        },
+        "task": {
+          "$ref": "#/$defs/TaskName"
+        },
+        "error_code": {
+          "$ref": "#/$defs/ReportErrorCode"
+        },
+        "message": {
+          "$ref": "#/$defs/Text",
+          "description": "Safe to show; contains no participant data."
+        }
+      },
+      "required": [
+        "schema_version",
+        "report_id",
+        "subject_id",
+        "as_of",
+        "data_mode",
+        "generated_at_utc",
+        "git_sha",
+        "warnings",
+        "replay",
+        "status",
+        "task",
+        "error_code",
+        "message"
+      ],
+      "title": "ErrorResult",
+      "type": "object"
+    },
+    "Exclusion": {
+      "additionalProperties": false,
+      "properties": {
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "record_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null excludes the whole subject."
+        },
+        "reason": {
+          "$ref": "#/$defs/Text"
+        }
+      },
+      "required": [
+        "subject_id",
+        "record_id",
+        "reason"
+      ],
+      "title": "Exclusion",
+      "type": "object"
+    },
+    "FeatureCoverage": {
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "coverage": {
+          "description": "Fraction of the lookback window with usable observations.",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "metric",
+        "coverage"
+      ],
+      "title": "FeatureCoverage",
+      "type": "object"
+    },
+    "FeatureName": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+      "type": "string"
+    },
+    "FieldIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "message": {
+          "$ref": "#/$defs/Text"
+        }
+      },
+      "required": [
+        "path",
+        "message"
+      ],
+      "title": "FieldIssue",
+      "type": "object"
+    },
+    "ForecastPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "resolution": {
+          "$ref": "#/$defs/Resolution"
+        },
+        "tz_name": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IanaTimezone"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Required for day resolution."
+        },
+        "series": {
+          "items": {
+            "$ref": "#/$defs/ForecastSeries"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "unavailable_metrics": {
+          "items": {
+            "$ref": "#/$defs/MetricUnavailable"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "resolution",
+        "tz_name",
+        "series",
+        "unavailable_metrics"
+      ],
+      "title": "ForecastPayload",
+      "type": "object"
+    },
+    "ForecastPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "interval_start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "interval_end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "local_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Local day for day-resolution points."
+        },
+        "median": {
+          "type": "number"
+        },
+        "lower": {
+          "type": "number"
+        },
+        "upper": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "interval_start_utc",
+        "interval_end_utc",
+        "local_date",
+        "median",
+        "lower",
+        "upper"
+      ],
+      "title": "ForecastPoint",
+      "type": "object"
+    },
+    "ForecastSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "unit": {
+          "$ref": "#/$defs/Unit"
+        },
+        "nominal_coverage": {
+          "description": "Intended probability that the outcome falls in [lower, upper].",
+          "exclusiveMaximum": 1.0,
+          "exclusiveMinimum": 0.0,
+          "type": "number"
+        },
+        "interval_calibration": {
+          "description": "'validated' only when held-out coverage was measured for this artifact.",
+          "enum": [
+            "validated",
+            "uncalibrated"
+          ],
+          "type": "string"
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PersonalBaseline"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "points": {
+          "items": {
+            "$ref": "#/$defs/ForecastPoint"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "metric",
+        "unit",
+        "nominal_coverage",
+        "interval_calibration",
+        "baseline",
+        "points"
+      ],
+      "title": "ForecastSeries",
+      "type": "object"
+    },
+    "GitSha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "HealthStatus": {
+      "additionalProperties": false,
+      "description": "GET /healthz response. Contains no participant data.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "degraded"
+          ],
+          "type": "string"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/ArtifactRef"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "git_sha",
+        "artifacts"
+      ],
+      "title": "HealthStatus",
+      "type": "object"
+    },
+    "IanaTimezone": {
+      "description": "IANA timezone name. Local time decides day and sleep boundaries.",
+      "type": "string"
+    },
+    "Identifier": {
+      "description": "Opaque id of letters, digits, '_' and '-'; never usable as a path.",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+      "type": "string"
+    },
+    "IllnessOnsetPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "horizon_hours": {
+          "enum": [
+            24,
+            48,
+            72
+          ],
+          "type": "integer"
+        },
+        "onset_probability": {
+          "$ref": "#/$defs/Probability",
+          "description": "Probability of a new symptom onset within the horizon after as_of."
+        },
+        "target_definition": {
+          "$ref": "#/$defs/Text"
+        },
+        "calibration": {
+          "$ref": "#/$defs/CalibrationRef"
+        },
+        "distribution_status": {
+          "enum": [
+            "in_distribution",
+            "out_of_distribution",
+            "unknown"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "horizon_hours",
+        "onset_probability",
+        "target_definition",
+        "calibration",
+        "distribution_status"
+      ],
+      "title": "IllnessOnsetPayload",
+      "type": "object"
+    },
+    "IllnessOnsetRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "Cutoff. Only data available by this instant is used."
+        },
+        "task": {
+          "const": "illness_onset",
+          "type": "string"
+        },
+        "horizon_hours": {
+          "enum": [
+            24,
+            48,
+            72
+          ],
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subject_id",
+        "as_of",
+        "task",
+        "horizon_hours"
+      ],
+      "title": "IllnessOnsetRequest",
+      "type": "object"
+    },
+    "IllnessOnsetResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "generated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/ResultWarning"
+          },
+          "type": "array"
+        },
+        "replay": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplayInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "const": "ok",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "task": {
+          "const": "illness_onset",
+          "type": "string"
+        },
+        "illness_onset": {
+          "$ref": "#/$defs/IllnessOnsetPayload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "report_id",
+        "subject_id",
+        "as_of",
+        "data_mode",
+        "generated_at_utc",
+        "git_sha",
+        "warnings",
+        "replay",
+        "status",
+        "provenance",
+        "task",
+        "illness_onset"
+      ],
+      "title": "IllnessOnsetResult",
+      "type": "object"
+    },
+    "ImportCounts": {
+      "additionalProperties": false,
+      "description": "Every record seen lands in exactly one bucket.",
+      "properties": {
+        "records_seen": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "records_accepted": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "records_duplicate": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "records_unsupported": {
+          "description": "Valid records of a type Hachi does not use.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "records_rejected": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "records_quarantined": {
+          "description": "Records held back instead of guessed, e.g. an unknown unit.",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "records_seen",
+        "records_accepted",
+        "records_duplicate",
+        "records_unsupported",
+        "records_rejected",
+        "records_quarantined"
+      ],
+      "title": "ImportCounts",
+      "type": "object"
+    },
+    "ImportErrorCode": {
+      "enum": [
+        "FILE_TOO_LARGE",
+        "ARCHIVE_UNSAFE",
+        "MALFORMED_XML",
+        "NOT_AN_APPLE_HEALTH_EXPORT",
+        "UNSUPPORTED_FORMAT",
+        "INTERNAL_ERROR"
+      ],
+      "type": "string"
+    },
+    "ImportFailure": {
+      "additionalProperties": false,
+      "properties": {
+        "error_code": {
+          "$ref": "#/$defs/ImportErrorCode"
+        },
+        "message": {
+          "$ref": "#/$defs/Text"
+        },
+        "action": {
+          "$ref": "#/$defs/Text",
+          "description": "What the person can do next."
+        }
+      },
+      "required": [
+        "error_code",
+        "message",
+        "action"
+      ],
+      "title": "ImportFailure",
+      "type": "object"
+    },
+    "ImportStatus": {
+      "additionalProperties": false,
+      "description": "GET /v1/imports/{id} response.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "import_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "source_format": {
+          "enum": [
+            "apple_health_export_zip",
+            "apple_health_export_xml",
+            "pmdata_archive",
+            "synthetic"
+          ],
+          "type": "string"
+        },
+        "declared_tz_name": {
+          "$ref": "#/$defs/IanaTimezone"
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "running",
+            "succeeded",
+            "failed"
+          ],
+          "type": "string"
+        },
+        "created_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "updated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "counts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImportCounts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "record_issues": {
+          "items": {
+            "$ref": "#/$defs/RecordIssueSummary"
+          },
+          "type": "array"
+        },
+        "failure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImportFailure"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "import_id",
+        "subject_id",
+        "data_mode",
+        "source_format",
+        "declared_tz_name",
+        "state",
+        "created_at_utc",
+        "updated_at_utc",
+        "counts",
+        "record_issues",
+        "failure"
+      ],
+      "title": "ImportStatus",
+      "type": "object"
+    },
+    "LabelSource": {
+      "enum": [
+        "study_survey",
+        "self_report",
+        "clinician",
+        "derived"
+      ],
+      "type": "string"
+    },
+    "Metric": {
+      "enum": [
+        "heart_rate",
+        "resting_heart_rate_vendor",
+        "hrv_sdnn",
+        "hrv_rmssd",
+        "respiratory_rate",
+        "oxygen_saturation",
+        "wrist_temperature_deviation",
+        "body_temperature",
+        "steps",
+        "active_energy",
+        "walking_running_distance",
+        "sleep_in_bed",
+        "sleep_asleep_unspecified",
+        "sleep_asleep_core",
+        "sleep_asleep_deep",
+        "sleep_asleep_rem",
+        "sleep_awake"
+      ],
+      "type": "string"
+    },
+    "MetricCoverage": {
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "unit": {
+          "$ref": "#/$defs/Unit"
+        },
+        "first_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "last_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "days_with_data": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "coverage": {
+          "description": "Fraction of the subject's span with usable observations of this metric.",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        "longest_gap_hours": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "source_kinds": {
+          "items": {
+            "$ref": "#/$defs/SourceKind"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "metric",
+        "unit",
+        "first_utc",
+        "last_utc",
+        "days_with_data",
+        "coverage",
+        "longest_gap_hours",
+        "source_kinds"
+      ],
+      "title": "MetricCoverage",
+      "type": "object"
+    },
+    "MetricUnavailable": {
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "reason_code": {
+          "$ref": "#/$defs/UnavailableReason"
+        }
+      },
+      "required": [
+        "metric",
+        "reason_code"
+      ],
+      "title": "MetricUnavailable",
+      "type": "object"
+    },
+    "ModelRef": {
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "checkpoint_source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Text"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Upstream checkpoint, e.g. a Hub repo id."
+        },
+        "checkpoint_revision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VersionString"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "license": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "model_id",
+        "checkpoint_source",
+        "checkpoint_revision",
+        "license"
+      ],
+      "title": "ModelRef",
+      "type": "object"
+    },
+    "Observation": {
+      "additionalProperties": false,
+      "description": "One source measurement, as recorded, in canonical units.\n\n`source_id` is a pseudonymous stable id used for deduplication precedence. Raw source\nnames (for example \"Alex's Apple Watch\") can contain personal names and stay out of\ncanonical tables.",
+      "properties": {
+        "dataset_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "record_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "source_kind": {
+          "$ref": "#/$defs/SourceKind"
+        },
+        "source_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "device_model": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metric": {
+          "$ref": "#/$defs/Metric"
+        },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "$ref": "#/$defs/Unit"
+        },
+        "start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "available_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the record became available to the system. Features at a cutoff may only use records whose end and availability are both at or before it."
+        },
+        "availability": {
+          "description": "'observed' when the source records availability (e.g. Apple creationDate); 'assumed' when a documented rule supplied it.",
+          "enum": [
+            "observed",
+            "assumed"
+          ],
+          "type": "string"
+        },
+        "availability_rule": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Id of the documented availability assumption. Required iff assumed."
+        },
+        "tz_name": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IanaTimezone"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "utc_offset_minutes": {
+          "anyOf": [
+            {
+              "maximum": 840,
+              "minimum": -720,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tz_provenance": {
+          "enum": [
+            "record_offset",
+            "user_declared",
+            "dataset_documentation",
+            "unknown"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "subject_id",
+        "record_id",
+        "source_kind",
+        "source_id",
+        "device_model",
+        "metric",
+        "value",
+        "unit",
+        "start_utc",
+        "end_utc",
+        "available_at_utc",
+        "availability",
+        "availability_rule",
+        "tz_name",
+        "utc_offset_minutes",
+        "tz_provenance"
+      ],
+      "title": "Observation",
+      "type": "object"
+    },
+    "Outcome": {
+      "description": "An outcome-table row: a symptom episode, a test result, or a period of unknown status.",
+      "discriminator": {
+        "mapping": {
+          "status_unknown": "#/$defs/StatusUnknown",
+          "symptom_episode": "#/$defs/SymptomEpisode",
+          "test_result": "#/$defs/TestResult"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/SymptomEpisode"
+        },
+        {
+          "$ref": "#/$defs/TestResult"
+        },
+        {
+          "$ref": "#/$defs/StatusUnknown"
+        }
+      ],
+      "title": "Outcome"
+    },
+    "PartialProvenance": {
+      "additionalProperties": false,
+      "description": "Whatever was resolved before a result became unavailable or failed.",
+      "properties": {
+        "dataset_snapshot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DatasetSnapshotRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "artifact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArtifactRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "feature_coverage": {
+          "items": {
+            "$ref": "#/$defs/FeatureCoverage"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "dataset_snapshot",
+        "artifact",
+        "feature_coverage"
+      ],
+      "title": "PartialProvenance",
+      "type": "object"
+    },
+    "PersonalBaseline": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "definition": {
+          "$ref": "#/$defs/Text"
+        },
+        "window_start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "window_end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        }
+      },
+      "required": [
+        "value",
+        "definition",
+        "window_start_utc",
+        "window_end_utc"
+      ],
+      "title": "PersonalBaseline",
+      "type": "object"
+    },
+    "PhysiologyForecastDailyRequest": {
+      "additionalProperties": false,
+      "description": "Forecast the next completed local day after `as_of`.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "Cutoff. Only data available by this instant is used."
+        },
+        "task": {
+          "const": "physiology_forecast",
+          "type": "string"
+        },
+        "metrics": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Metric"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Metrics to forecast; null requests every supported metric."
+        },
+        "resolution": {
+          "const": "day",
+          "type": "string"
+        },
+        "horizon_days": {
+          "const": 1,
+          "default": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subject_id",
+        "as_of",
+        "task",
+        "resolution"
+      ],
+      "title": "PhysiologyForecastDailyRequest",
+      "type": "object"
+    },
+    "PhysiologyForecastHourlyRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "Cutoff. Only data available by this instant is used."
+        },
+        "task": {
+          "const": "physiology_forecast",
+          "type": "string"
+        },
+        "metrics": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Metric"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Metrics to forecast; null requests every supported metric."
+        },
+        "resolution": {
+          "const": "hour",
+          "type": "string"
+        },
+        "horizon_hours": {
+          "default": 24,
+          "maximum": 24,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subject_id",
+        "as_of",
+        "task",
+        "resolution"
+      ],
+      "title": "PhysiologyForecastHourlyRequest",
+      "type": "object"
+    },
+    "PhysiologyForecastResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "generated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/ResultWarning"
+          },
+          "type": "array"
+        },
+        "replay": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplayInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "const": "ok",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "task": {
+          "const": "physiology_forecast",
+          "type": "string"
+        },
+        "forecast": {
+          "$ref": "#/$defs/ForecastPayload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "report_id",
+        "subject_id",
+        "as_of",
+        "data_mode",
+        "generated_at_utc",
+        "git_sha",
+        "warnings",
+        "replay",
+        "status",
+        "provenance",
+        "task",
+        "forecast"
+      ],
+      "title": "PhysiologyForecastResult",
+      "type": "object"
+    },
+    "Probability": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "type": "number"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset_snapshot": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DatasetSnapshotRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Required for every task except an alertness simulation."
+        },
+        "artifact": {
+          "$ref": "#/$defs/ArtifactRef"
+        },
+        "feature_coverage": {
+          "items": {
+            "$ref": "#/$defs/FeatureCoverage"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "dataset_snapshot",
+        "artifact",
+        "feature_coverage"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "PvtResultEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "entry_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "entered_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the person recorded this entry."
+        },
+        "kind": {
+          "const": "pvt_result",
+          "type": "string"
+        },
+        "started_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "duration_seconds": {
+          "maximum": 900,
+          "minimum": 60,
+          "type": "integer"
+        },
+        "trials": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "mean_reaction_time_ms": {
+          "exclusiveMinimum": 0,
+          "maximum": 10000,
+          "type": "number"
+        },
+        "lapses": {
+          "description": "Responses slower than 500 ms.",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "entry_id",
+        "entered_at_utc",
+        "kind",
+        "started_at_utc",
+        "duration_seconds",
+        "trials",
+        "mean_reaction_time_ms",
+        "lapses"
+      ],
+      "title": "PvtResultEntry",
+      "type": "object"
+    },
+    "RecordIssueCode": {
+      "enum": [
+        "UNKNOWN_UNIT",
+        "INVALID_TIMESTAMP",
+        "END_BEFORE_START",
+        "VALUE_OUT_OF_RANGE",
+        "MISSING_FIELD"
+      ],
+      "type": "string"
+    },
+    "RecordIssueSummary": {
+      "additionalProperties": false,
+      "description": "Aggregate count per issue. Raw records never appear in API responses.",
+      "properties": {
+        "disposition": {
+          "enum": [
+            "rejected",
+            "quarantined"
+          ],
+          "type": "string"
+        },
+        "code": {
+          "$ref": "#/$defs/RecordIssueCode"
+        },
+        "count": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "disposition",
+        "code",
+        "count"
+      ],
+      "title": "RecordIssueSummary",
+      "type": "object"
+    },
+    "RecoveryPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "episode_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "endpoint_definition": {
+          "$ref": "#/$defs/Text"
+        },
+        "survival": {
+          "items": {
+            "$ref": "#/$defs/SurvivalPoint"
+          },
+          "minItems": 2,
+          "type": "array"
+        },
+        "median_days_after_as_of": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null when the median is not reached within supported follow-up."
+        },
+        "supported_follow_up_days": {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "episode_id",
+        "endpoint_definition",
+        "survival",
+        "median_days_after_as_of",
+        "supported_follow_up_days"
+      ],
+      "title": "RecoveryPayload",
+      "type": "object"
+    },
+    "RecoveryRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "Cutoff. Only data available by this instant is used."
+        },
+        "task": {
+          "const": "recovery",
+          "type": "string"
+        },
+        "episode_id": {
+          "$ref": "#/$defs/Identifier"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subject_id",
+        "as_of",
+        "task",
+        "episode_id"
+      ],
+      "title": "RecoveryRequest",
+      "type": "object"
+    },
+    "RecoveryResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "generated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/ResultWarning"
+          },
+          "type": "array"
+        },
+        "replay": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplayInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "const": "ok",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "task": {
+          "const": "recovery",
+          "type": "string"
+        },
+        "recovery": {
+          "$ref": "#/$defs/RecoveryPayload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "report_id",
+        "subject_id",
+        "as_of",
+        "data_mode",
+        "generated_at_utc",
+        "git_sha",
+        "warnings",
+        "replay",
+        "status",
+        "provenance",
+        "task",
+        "recovery"
+      ],
+      "title": "RecoveryResult",
+      "type": "object"
+    },
+    "RelativePath": {
+      "description": "Path relative to an approved storage root; no '..' segments.",
+      "pattern": "^[A-Za-z0-9_][A-Za-z0-9._/-]{0,255}$",
+      "type": "string"
+    },
+    "ReplayInfo": {
+      "additionalProperties": false,
+      "description": "Present when a saved result is shown instead of a live run.",
+      "properties": {
+        "source_report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "recorded_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        }
+      },
+      "required": [
+        "source_report_id",
+        "recorded_at_utc"
+      ],
+      "title": "ReplayInfo",
+      "type": "object"
+    },
+    "ReportErrorCode": {
+      "enum": [
+        "ARTIFACT_INTEGRITY_FAILED",
+        "ARTIFACT_INCOMPATIBLE",
+        "DATA_READ_FAILED",
+        "INFERENCE_FAILED",
+        "INFERENCE_TIMEOUT",
+        "GPU_UNAVAILABLE",
+        "INTERNAL_ERROR"
+      ],
+      "type": "string"
+    },
+    "ReportJob": {
+      "additionalProperties": false,
+      "description": "POST /v1/reports and GET /v1/reports/{id} response. Poll until state is completed.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "state": {
+          "enum": [
+            "queued",
+            "running",
+            "completed"
+          ],
+          "type": "string"
+        },
+        "submitted_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "updated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "request": {
+          "$ref": "#/$defs/ReportRequest"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReportResult"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "report_id",
+        "state",
+        "submitted_at_utc",
+        "updated_at_utc",
+        "request",
+        "result"
+      ],
+      "title": "ReportJob",
+      "type": "object"
+    },
+    "ReportRequest": {
+      "description": "POST /v1/reports body. Alertness goes through POST /v1/scenarios instead.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/PhysiologyForecastHourlyRequest"
+        },
+        {
+          "$ref": "#/$defs/PhysiologyForecastDailyRequest"
+        },
+        {
+          "$ref": "#/$defs/AnomalyRequest"
+        },
+        {
+          "$ref": "#/$defs/IllnessOnsetRequest"
+        },
+        {
+          "$ref": "#/$defs/RecoveryRequest"
+        }
+      ],
+      "title": "ReportRequest"
+    },
+    "ReportResult": {
+      "description": "A report outcome. Narrow on `status`, then on `task`.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/PhysiologyForecastResult"
+        },
+        {
+          "$ref": "#/$defs/AnomalyResult"
+        },
+        {
+          "$ref": "#/$defs/IllnessOnsetResult"
+        },
+        {
+          "$ref": "#/$defs/RecoveryResult"
+        },
+        {
+          "$ref": "#/$defs/AlertnessResult"
+        },
+        {
+          "$ref": "#/$defs/UnavailableResult"
+        },
+        {
+          "$ref": "#/$defs/ErrorResult"
+        }
+      ],
+      "title": "ReportResult"
+    },
+    "Resolution": {
+      "enum": [
+        "hour",
+        "day"
+      ],
+      "type": "string"
+    },
+    "ResultWarning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/WarningCode"
+        },
+        "message": {
+          "$ref": "#/$defs/Text"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ResultWarning",
+      "type": "object"
+    },
+    "RunManifest": {
+      "additionalProperties": false,
+      "description": "Everything needed to trace a prediction back to its code, data, model and environment.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "run_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "created_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "git_dirty": {
+          "description": "True when the run used uncommitted code.",
+          "type": "boolean"
+        },
+        "config_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "dataset_snapshot": {
+          "$ref": "#/$defs/DatasetSnapshotRef"
+        },
+        "split_manifest_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "task": {
+          "$ref": "#/$defs/TaskName"
+        },
+        "feature_order": {
+          "items": {
+            "$ref": "#/$defs/FeatureName"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelRef"
+        },
+        "environment_sha256": {
+          "$ref": "#/$defs/Sha256",
+          "description": "Digest of the lockfile or container image."
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "artifact": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArtifactRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null for runs that export no artifact."
+        },
+        "metrics_paths": {
+          "items": {
+            "$ref": "#/$defs/RelativePath"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "run_id",
+        "created_at_utc",
+        "git_sha",
+        "git_dirty",
+        "config_sha256",
+        "dataset_snapshot",
+        "split_manifest_sha256",
+        "task",
+        "feature_order",
+        "model",
+        "environment_sha256",
+        "seed",
+        "artifact",
+        "metrics_paths"
+      ],
+      "title": "RunManifest",
+      "type": "object"
+    },
+    "ScenarioAssumptions": {
+      "additionalProperties": false,
+      "description": "Explicit inputs the simulation depends on. Nothing is silently defaulted.",
+      "properties": {
+        "prior_sleep_hours": {
+          "description": "Sleep obtained in the 24 hours before the first scenario bedtime.",
+          "maximum": 24,
+          "minimum": 0,
+          "type": "number"
+        },
+        "caffeine": {
+          "enum": [
+            "none",
+            "not_modeled"
+          ],
+          "type": "string"
+        },
+        "light_exposure": {
+          "const": "not_modeled",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prior_sleep_hours",
+        "caffeine",
+        "light_exposure"
+      ],
+      "title": "ScenarioAssumptions",
+      "type": "object"
+    },
+    "ScenarioRequest": {
+      "additionalProperties": false,
+      "description": "POST /v1/scenarios body: compare candidate sleep schedules for one subject.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "tz_name": {
+          "$ref": "#/$defs/IanaTimezone"
+        },
+        "schedules": {
+          "items": {
+            "$ref": "#/$defs/SleepSchedule"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "type": "array"
+        },
+        "assumptions": {
+          "$ref": "#/$defs/ScenarioAssumptions"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subject_id",
+        "tz_name",
+        "schedules",
+        "assumptions"
+      ],
+      "title": "ScenarioRequest",
+      "type": "object"
+    },
+    "SchemaVersion": {
+      "const": "0.1",
+      "type": "string"
+    },
+    "SelfReportEntry": {
+      "discriminator": {
+        "mapping": {
+          "alertness_rating": "#/$defs/AlertnessRatingEntry",
+          "confounder": "#/$defs/ConfounderEntry",
+          "pvt_result": "#/$defs/PvtResultEntry",
+          "symptom_checkin": "#/$defs/SymptomCheckInEntry",
+          "symptom_onset": "#/$defs/SymptomOnsetEntry",
+          "symptom_resolution": "#/$defs/SymptomResolutionEntry",
+          "test_result": "#/$defs/TestResultEntry"
+        },
+        "propertyName": "kind"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/SymptomOnsetEntry"
+        },
+        {
+          "$ref": "#/$defs/SymptomCheckInEntry"
+        },
+        {
+          "$ref": "#/$defs/SymptomResolutionEntry"
+        },
+        {
+          "$ref": "#/$defs/TestResultEntry"
+        },
+        {
+          "$ref": "#/$defs/AlertnessRatingEntry"
+        },
+        {
+          "$ref": "#/$defs/PvtResultEntry"
+        },
+        {
+          "$ref": "#/$defs/ConfounderEntry"
+        }
+      ]
+    },
+    "SelfReportRequest": {
+      "additionalProperties": false,
+      "description": "POST /v1/subjects/{id}/observations body.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/SelfReportEntry"
+          },
+          "maxItems": 200,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "entries"
+      ],
+      "title": "SelfReportRequest",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "1 mild, 2 moderate, 3 severe.",
+      "enum": [
+        1,
+        2,
+        3
+      ],
+      "type": "integer"
+    },
+    "Sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "SleepSchedule": {
+      "additionalProperties": false,
+      "properties": {
+        "schedule_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "bedtime_local": {
+          "description": "Local wall-clock time, without an offset.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "wake_time_local": {
+          "description": "Local wall-clock time, without an offset.",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schedule_id",
+        "bedtime_local",
+        "wake_time_local"
+      ],
+      "title": "SleepSchedule",
+      "type": "object"
+    },
+    "SourceKind": {
+      "enum": [
+        "watch",
+        "phone",
+        "ring",
+        "fitness_tracker",
+        "third_party_app",
+        "manual_entry",
+        "research_device",
+        "unknown"
+      ],
+      "type": "string"
+    },
+    "SplitManifest": {
+      "additionalProperties": false,
+      "description": "Participant-grouped partitions and rolling-origin settings for one evaluation fold.\n\nImmutable once `test_opened_at_utc` is set; changes produce a new manifest id.",
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "manifest_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "created_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "dataset_snapshot": {
+          "$ref": "#/$defs/DatasetSnapshotRef"
+        },
+        "task": {
+          "$ref": "#/$defs/TaskName"
+        },
+        "fold": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "n_folds": {
+          "anyOf": [
+            {
+              "minimum": 2,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "train_subjects": {
+          "items": {
+            "$ref": "#/$defs/SubjectId"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "validation_subjects": {
+          "items": {
+            "$ref": "#/$defs/SubjectId"
+          },
+          "type": "array"
+        },
+        "test_subjects": {
+          "items": {
+            "$ref": "#/$defs/SubjectId"
+          },
+          "type": "array"
+        },
+        "exclusions": {
+          "items": {
+            "$ref": "#/$defs/Exclusion"
+          },
+          "type": "array"
+        },
+        "lookback_hours": {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        "horizon_hours": {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        "embargo_hours": {
+          "description": "Gap purged between the cutoff and the first target window.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cutoff_stride_hours": {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        "min_history_hours": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "evaluation_window": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimeWindow"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "test_opened_at_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UtcDatetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "manifest_id",
+        "created_at_utc",
+        "dataset_snapshot",
+        "task",
+        "fold",
+        "n_folds",
+        "train_subjects",
+        "validation_subjects",
+        "test_subjects",
+        "exclusions",
+        "lookback_hours",
+        "horizon_hours",
+        "embargo_hours",
+        "cutoff_stride_hours",
+        "min_history_hours",
+        "evaluation_window",
+        "seed",
+        "test_opened_at_utc"
+      ],
+      "title": "SplitManifest",
+      "type": "object"
+    },
+    "StatusUnknown": {
+      "additionalProperties": false,
+      "description": "An interval without outcome information. Unknown is not healthy.",
+      "properties": {
+        "kind": {
+          "const": "status_unknown",
+          "type": "string"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "reason": {
+          "enum": [
+            "no_survey",
+            "lost_to_follow_up",
+            "withdrawn",
+            "other"
+          ],
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "dataset_id",
+        "subject_id",
+        "start_utc",
+        "end_utc",
+        "reason",
+        "note"
+      ],
+      "title": "StatusUnknown",
+      "type": "object"
+    },
+    "SubjectId": {
+      "description": "Pseudonymous subject id. Identity mapping stays outside Git.",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+      "type": "string"
+    },
+    "SurvivalPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "days_after_as_of": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "probability_still_symptomatic": {
+          "$ref": "#/$defs/Probability"
+        }
+      },
+      "required": [
+        "days_after_as_of",
+        "probability_still_symptomatic"
+      ],
+      "title": "SurvivalPoint",
+      "type": "object"
+    },
+    "Symptom": {
+      "enum": [
+        "fever",
+        "chills",
+        "cough",
+        "sore_throat",
+        "runny_nose",
+        "congestion",
+        "headache",
+        "fatigue",
+        "body_aches",
+        "shortness_of_breath",
+        "loss_of_taste_or_smell",
+        "nausea",
+        "diarrhea",
+        "other"
+      ],
+      "type": "string"
+    },
+    "SymptomCheckInEntry": {
+      "additionalProperties": false,
+      "description": "Status over a period. A check-in records absence too; no check-in means unknown.",
+      "properties": {
+        "entry_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "entered_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the person recorded this entry."
+        },
+        "kind": {
+          "const": "symptom_checkin",
+          "type": "string"
+        },
+        "period_start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "period_end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "symptoms_present": {
+          "type": "boolean"
+        },
+        "symptoms": {
+          "items": {
+            "$ref": "#/$defs/Symptom"
+          },
+          "type": "array"
+        },
+        "severity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Severity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "entry_id",
+        "entered_at_utc",
+        "kind",
+        "period_start_utc",
+        "period_end_utc",
+        "symptoms_present",
+        "symptoms",
+        "severity"
+      ],
+      "title": "SymptomCheckInEntry",
+      "type": "object"
+    },
+    "SymptomEpisode": {
+      "additionalProperties": false,
+      "description": "A labeled symptom episode. Onset and resolution are intervals expressing uncertainty.",
+      "properties": {
+        "kind": {
+          "const": "symptom_episode",
+          "type": "string"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "episode_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "onset_earliest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "onset_latest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "resolution_status": {
+          "enum": [
+            "resolved",
+            "right_censored"
+          ],
+          "type": "string"
+        },
+        "resolution_earliest_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UtcDatetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolution_latest_utc": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UtcDatetime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resolution_definition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Id of the prespecified resolution endpoint. Required when resolved."
+        },
+        "last_follow_up_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "End of observation for this episode; the censoring time if unresolved."
+        },
+        "observed_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the label was recorded."
+        },
+        "label_source": {
+          "$ref": "#/$defs/LabelSource"
+        },
+        "confidence": {
+          "enum": [
+            "confirmed",
+            "probable",
+            "uncertain"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "dataset_id",
+        "subject_id",
+        "episode_id",
+        "onset_earliest_utc",
+        "onset_latest_utc",
+        "resolution_status",
+        "resolution_earliest_utc",
+        "resolution_latest_utc",
+        "resolution_definition",
+        "last_follow_up_utc",
+        "observed_at_utc",
+        "label_source",
+        "confidence"
+      ],
+      "title": "SymptomEpisode",
+      "type": "object"
+    },
+    "SymptomOnsetEntry": {
+      "additionalProperties": false,
+      "description": "Symptoms began somewhere in [onset_earliest_utc, onset_latest_utc].",
+      "properties": {
+        "entry_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "entered_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the person recorded this entry."
+        },
+        "kind": {
+          "const": "symptom_onset",
+          "type": "string"
+        },
+        "onset_earliest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "onset_latest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "symptoms": {
+          "items": {
+            "$ref": "#/$defs/Symptom"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "required": [
+        "entry_id",
+        "entered_at_utc",
+        "kind",
+        "onset_earliest_utc",
+        "onset_latest_utc",
+        "symptoms",
+        "severity"
+      ],
+      "title": "SymptomOnsetEntry",
+      "type": "object"
+    },
+    "SymptomResolutionEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "entry_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "entered_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the person recorded this entry."
+        },
+        "kind": {
+          "const": "symptom_resolution",
+          "type": "string"
+        },
+        "onset_entry_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "resolved_earliest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "resolved_latest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        }
+      },
+      "required": [
+        "entry_id",
+        "entered_at_utc",
+        "kind",
+        "onset_entry_id",
+        "resolved_earliest_utc",
+        "resolved_latest_utc"
+      ],
+      "title": "SymptomResolutionEntry",
+      "type": "object"
+    },
+    "TaskName": {
+      "enum": [
+        "physiology_forecast",
+        "anomaly",
+        "illness_onset",
+        "recovery",
+        "alertness"
+      ],
+      "type": "string"
+    },
+    "TaskSupport": {
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "$ref": "#/$defs/TaskName"
+        },
+        "supported": {
+          "type": "boolean"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UnavailableReason"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "task",
+        "supported",
+        "reason_code"
+      ],
+      "title": "TaskSupport",
+      "type": "object"
+    },
+    "TestResult": {
+      "additionalProperties": false,
+      "description": "A diagnostic test. A test date is not a symptom onset and is never used as one.",
+      "properties": {
+        "kind": {
+          "const": "test_result",
+          "type": "string"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "test_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "episode_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pathogen": {
+          "enum": [
+            "sars_cov_2",
+            "influenza",
+            "rsv",
+            "other",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "method": {
+          "enum": [
+            "pcr",
+            "antigen",
+            "other",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "result": {
+          "enum": [
+            "positive",
+            "negative",
+            "inconclusive"
+          ],
+          "type": "string"
+        },
+        "collected_earliest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "collected_latest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "observed_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "label_source": {
+          "$ref": "#/$defs/LabelSource"
+        }
+      },
+      "required": [
+        "kind",
+        "dataset_id",
+        "subject_id",
+        "test_id",
+        "episode_id",
+        "pathogen",
+        "method",
+        "result",
+        "collected_earliest_utc",
+        "collected_latest_utc",
+        "observed_at_utc",
+        "label_source"
+      ],
+      "title": "TestResult",
+      "type": "object"
+    },
+    "TestResultEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "entry_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "entered_at_utc": {
+          "$ref": "#/$defs/UtcDatetime",
+          "description": "When the person recorded this entry."
+        },
+        "kind": {
+          "const": "test_result",
+          "type": "string"
+        },
+        "pathogen": {
+          "enum": [
+            "sars_cov_2",
+            "influenza",
+            "rsv",
+            "other",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "method": {
+          "enum": [
+            "pcr",
+            "antigen",
+            "other",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "result": {
+          "enum": [
+            "positive",
+            "negative",
+            "inconclusive"
+          ],
+          "type": "string"
+        },
+        "collected_earliest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "collected_latest_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        }
+      },
+      "required": [
+        "entry_id",
+        "entered_at_utc",
+        "kind",
+        "pathogen",
+        "method",
+        "result",
+        "collected_earliest_utc",
+        "collected_latest_utc"
+      ],
+      "title": "TestResultEntry",
+      "type": "object"
+    },
+    "Text": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "type": "string"
+    },
+    "TimeWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "start_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "end_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        }
+      },
+      "required": [
+        "start_utc",
+        "end_utc"
+      ],
+      "title": "TimeWindow",
+      "type": "object"
+    },
+    "UnavailableReason": {
+      "enum": [
+        "NO_VALIDATED_ILLNESS_ARTIFACT",
+        "NO_VALIDATED_RECOVERY_ARTIFACT",
+        "NO_ARTIFACT_FOR_TASK",
+        "INSUFFICIENT_HISTORY",
+        "NO_SUPPORTED_METRICS",
+        "METRIC_NOT_OBSERVED",
+        "LOW_COVERAGE",
+        "ONGOING_EPISODE",
+        "NO_ONGOING_EPISODE",
+        "LABELS_UNAVAILABLE",
+        "DATA_ACCESS_PENDING"
+      ],
+      "type": "string"
+    },
+    "UnavailableResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "$ref": "#/$defs/SchemaVersion"
+        },
+        "report_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "subject_id": {
+          "$ref": "#/$defs/SubjectId"
+        },
+        "as_of": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "data_mode": {
+          "$ref": "#/$defs/DataMode"
+        },
+        "generated_at_utc": {
+          "$ref": "#/$defs/UtcDatetime"
+        },
+        "git_sha": {
+          "$ref": "#/$defs/GitSha"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/ResultWarning"
+          },
+          "type": "array"
+        },
+        "replay": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReplayInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "const": "unavailable",
+          "type": "string"
+        },
+        "task": {
+          "$ref": "#/$defs/TaskName"
+        },
+        "reason_code": {
+          "$ref": "#/$defs/UnavailableReason"
+        },
+        "requirements": {
+          "description": "What would have to exist for this result to become available.",
+          "items": {
+            "$ref": "#/$defs/Text"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PartialProvenance"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "report_id",
+        "subject_id",
+        "as_of",
+        "data_mode",
+        "generated_at_utc",
+        "git_sha",
+        "warnings",
+        "replay",
+        "status",
+        "task",
+        "reason_code",
+        "requirements",
+        "provenance"
+      ],
+      "title": "UnavailableResult",
+      "type": "object"
+    },
+    "Unit": {
+      "enum": [
+        "bpm",
+        "ms",
+        "breaths_per_min",
+        "percent",
+        "degC",
+        "count",
+        "kcal",
+        "m",
+        "s"
+      ],
+      "type": "string"
+    },
+    "UtcDatetime": {
+      "description": "UTC instant in ISO 8601. Naive and non-UTC timestamps are rejected.",
+      "format": "date-time",
+      "type": "string"
+    },
+    "VersionString": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$",
+      "type": "string"
+    },
+    "WarningCode": {
+      "enum": [
+        "LOW_COVERAGE",
+        "SPARSE_HISTORY",
+        "UNCALIBRATED_INTERVALS",
+        "DEVICE_SHIFT",
+        "OUT_OF_DISTRIBUTION",
+        "STALE_DATA"
+      ],
+      "type": "string"
+    }
+  },
+  "title": "HachiContracts",
+  "description": "Hachi contracts v0.1. Generated from src/hachi/contracts."
+}
