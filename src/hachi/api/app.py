@@ -193,7 +193,7 @@ def create_app(
 
     @app.exception_handler(Exception)
     async def unexpected(request: Request, exc: Exception) -> Response:
-        log.error("unhandled %s on %s", type(exc).__name__, request.url.path)
+        log.error("unhandled %s during %s request", type(exc).__name__, request.method)
         return _error(request, ApiProblem("INTERNAL_ERROR", "Something went wrong."))
 
     errors: dict[int | str, dict[str, Any]] = {
