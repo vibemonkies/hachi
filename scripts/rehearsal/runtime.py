@@ -25,7 +25,7 @@ from hachi.api.catalog import Catalog
 from hachi.api.handoff import direct_inference, expected_points, load_packet
 from hachi.api.settings import Settings, git_dirty, git_sha, parse_pin
 from hachi.contracts.api import Coverage, HealthStatus, ImportStatus, ReportJob, SelfReportHistory
-from hachi.contracts.base import SCHEMA_VERSION, Contract
+from hachi.contracts.base import SCHEMA_VERSION, Contract, Identifier
 from hachi.contracts.manifests import SplitManifest
 from hachi.contracts.results import PhysiologyForecastResult, ReportResult
 from hachi.evaluation import ForecastEstimate
@@ -61,6 +61,7 @@ def write_private(path: Path, value: object) -> None:
 
 class Operator(Contract):
     format_version: str
+    owner: Identifier
     runtime_root: str
     data_root: str
     snapshot_id: str
@@ -77,7 +78,7 @@ class Operator(Contract):
         root = Path(self.runtime_root)
         return Settings.from_environment(
             environ={
-                "HACHI_OWNER": "ezzy1630",
+                "HACHI_OWNER": self.owner,
                 "HACHI_WORKSPACES": str(root / "workspaces"),
                 "HACHI_DB_PATH": str(root / "state" / "metadata.sqlite3"),
                 "HACHI_DATA_ROOT": self.data_root,
@@ -92,7 +93,7 @@ class Operator(Contract):
 
 def load_operator(root: Path) -> Operator:
     operator = Operator.model_validate_json((root / "operator.json").read_bytes())
-    require(operator.format_version == "hachi-rehearsal-1", "Unknown operator format")
+    require(operator.format_version == "hachi-rehearsal-2", "Unknown operator format")
     require(Path(operator.runtime_root).resolve() == root.resolve(), "Runtime root moved")
     require(operator.git_sha == git_sha(REPO), "Checkout changed; prepare a fresh runtime")
     require(git_dirty(REPO) is False, "Rehearsal requires a clean committed checkout")
@@ -110,15 +111,52 @@ def validation_packet(packet: Path, packet_index: Path):
     run, evaluation = load_packet(packet)
     split = SplitManifest.model_validate_json((packet / "split.json").read_bytes())
     require(run.split_manifest_sha256 == digest(packet / "split.json"), "Split hash mismatch")
+    require_validation_origins(split, evaluation["predictions"])
+    return run, evaluation
+
+
+def require_validation_origins(split: SplitManifest, predictions: list) -> None:
     require(split.test_opened_at_utc is None, "Outer test must remain sealed")
-    require(bool(evaluation["predictions"]), "Packet has no origins")
+    require(bool(predictions), "Packet has no origins")
     validation = set(split.validation_subjects)
     require(not validation.intersection(split.test_subjects), "Split overlap")
     require(
-        all(p["origin"]["subject_id"] in validation for p in evaluation["predictions"]),
+        all(p["origin"]["subject_id"] in validation for p in predictions),
         "Only inner-validation origins may be rehearsed",
     )
-    return run, evaluation
+
+
+def require_point_only(
+    result: PhysiologyForecastResult, metric: str, source_coverage: float
+) -> None:
+    require(len(result.forecast.series) == 1, "Unexpected forecast series count")
+    series = result.forecast.series[0]
+    require(series.metric == metric and series.unit == "bpm", "Metric/unit differs")
+    require(
+        series.interval_calibration == "none" and series.nominal_coverage is None,
+        "Point forecast claims intervals",
+    )
+    require(
+        all(p.lower is None and p.upper is None for p in series.points),
+        "Point forecast has bounds",
+    )
+    require(
+        len(result.provenance.feature_coverage) == 1
+        and result.provenance.feature_coverage[0].metric == metric
+        and result.provenance.feature_coverage[0].coverage == source_coverage,
+        "Feature coverage differs from source history",
+    )
+    require(
+        all(w.code != "UNCALIBRATED_INTERVALS" for w in result.warnings),
+        "Point forecast carries interval warning",
+    )
+
+
+def require_abstention(status: str, expected: dict, direct: dict) -> None:
+    require(
+        status == "unavailable" and not expected and not direct,
+        "Unexpected forecast failure/abstention",
+    )
 
 
 def prepare(args) -> dict:
@@ -132,11 +170,12 @@ def prepare(args) -> dict:
     published = json.loads(args.packet_index.read_bytes())
     require(digest(args.protocol) == published["protocol_sha256"], "Protocol is not frozen")
     root = private_directory(args.runtime_root.resolve())
-    spec = serving_from_protocol(args.protocol)
+    spec = serving_from_protocol(args.protocol, args.model)
     pin = stage_artifact(private_directory(root / "artifacts"), args.model, args.packet, spec)
     require(pin == run.artifact, "Staged pin differs from frozen packet")
     operator = Operator(
-        format_version="hachi-rehearsal-1",
+        format_version="hachi-rehearsal-2",
+        owner=args.owner,
         runtime_root=str(root),
         data_root=str(args.data_root.resolve()),
         snapshot_id=args.snapshot_id,
@@ -298,44 +337,17 @@ def check(operator: Operator) -> dict:
                 result.provenance.dataset_snapshot == run.dataset_snapshot,
                 "Result snapshot differs",
             )
-            require(len(result.forecast.series) == 1, "Unexpected forecast series count")
-            series = result.forecast.series[0]
-            require(series.metric == served.metric and series.unit == "bpm", "Metric/unit differs")
-            require(
-                series.interval_calibration == "none" and series.nominal_coverage is None,
-                "Point forecast claims intervals",
-            )
-            require(
-                all(p.lower is None and p.upper is None for p in series.points),
-                "Point forecast has bounds",
-            )
-            require(
-                all(0 <= f.coverage <= 1 for f in result.provenance.feature_coverage),
-                "Invalid quality coverage",
-            )
             history = subject.hourly_features(
                 served.serving.feature_policy,
                 cutoff,
                 start=cutoff - timedelta(hours=served.split.lookback_hours),
             )
             observed = {f.start_utc for f in history if f.value is not None}
-            require(
-                len(result.provenance.feature_coverage) == 1
-                and result.provenance.feature_coverage[0].metric == served.metric
-                and result.provenance.feature_coverage[0].coverage
-                == len(observed) / served.split.lookback_hours,
-                "Feature coverage differs from source history",
-            )
+            require_point_only(result, served.metric, len(observed) / served.split.lookback_hours)
             warnings.update(w.code for w in result.warnings)
-            require(
-                "UNCALIBRATED_INTERVALS" not in warnings, "Point forecast carries interval warning"
-            )
-            shown = {p.interval_start_utc: p.median for p in series.points}
+            shown = {p.interval_start_utc: p.median for p in result.forecast.series[0].points}
         else:
-            require(
-                result.status == "unavailable" and not expected and not direct,
-                "Unexpected forecast failure/abstention",
-            )
+            require_abstention(result.status, expected, direct)
         for name, reference in (("packet", expected), ("direct", direct)):
             summary = agreement(shown, reference)
             for key, value in summary.items():
@@ -399,6 +411,7 @@ def check(operator: Operator) -> dict:
         "format_version": "hachi-rehearsal-evidence-1",
         "recorded_at_utc": datetime.now(UTC).isoformat(),
         "git_sha": operator.git_sha,
+        "owner": operator.owner,
         "script_sha256": digest(Path(__file__)),
         "uv_lock_sha256": digest(REPO / "uv.lock"),
         "python": sys.version.split()[0],
@@ -407,6 +420,10 @@ def check(operator: Operator) -> dict:
         "protocol_sha256": operator.protocol_sha256,
         "packet_sha256": digest(Path(operator.packet) / "sha256.json"),
         "published_packet_index_sha256": operator.packet_index_sha256,
+        "published_packet_key": "/".join(Path(operator.packet).parts[-3:]),
+        "published_packet_digests": json.loads(Path(operator.packet_index).read_bytes())["packets"][
+            "/".join(Path(operator.packet).parts[-3:])
+        ],
         "api_port": operator.api_port,
         "web_port": operator.web_port,
         "real": {
@@ -535,6 +552,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("prepare")
+    p.add_argument("--owner", required=True)
     p.add_argument("--runtime-root", type=Path, required=True)
     p.add_argument("--data-root", type=Path, required=True)
     p.add_argument("--snapshot-id", required=True)

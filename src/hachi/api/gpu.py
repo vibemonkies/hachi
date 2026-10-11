@@ -13,11 +13,18 @@ back `inference.json` and `predictions.jsonl`, and verifies before anything is u
 A busy GPU (gpu-run exit 75), an unreachable host or a failed job is `GpuUnavailable`; a
 job past its deadline is `GpuTimeout`; output that fails verification is
 `GpuOutputRejected`. Nothing is ever guessed in their place.
+
+Nothing derived from the request outlives it on the GX10. After every job, successful or
+not (including a failed write, an unreadable output or an unexpected error), the request
+file and the job's whole run directory are removed. When the job's end is unknown (a local
+timeout or a lost SSH session) its processes, found by the unique run id, are terminated
+first, so nothing can be written after the removal. If termination or any removal cannot
+be confirmed, `GpuCleanupFailed` withholds the forecast; failures are never suppressed.
 """
 
-import contextlib
 import hashlib
 import json
+import re
 import secrets
 import shlex
 import subprocess
@@ -51,6 +58,10 @@ class GpuOutputRejected(RuntimeError):
     """The job's output failed identity or integrity checks."""
 
 
+class GpuCleanupFailed(GpuOutputRejected):
+    """Request or prediction files could not be removed from the GX10."""
+
+
 class Transport(Protocol):
     """Remote operations on the GX10. SSH in production; a fake in tests."""
 
@@ -63,6 +74,11 @@ class Transport(Protocol):
     def read(self, path: str) -> bytes: ...
 
     def remove(self, path: str) -> None: ...
+
+    def remove_tree(self, path: str) -> None: ...
+
+    def terminate(self, marker: str) -> None:
+        """Stop every process whose command line holds `marker`; raise unless none remain."""
 
 
 @dataclass(frozen=True)
@@ -118,7 +134,21 @@ class SshTransport:
         return self._ssh(f"cat {shlex.quote(path)}")
 
     def remove(self, path: str) -> None:
-        self._ssh(f"rm -f {shlex.quote(path)}")
+        quoted = shlex.quote(path)
+        self._ssh(f"rm -f -- {quoted} && ! test -e {quoted}")
+
+    def remove_tree(self, path: str) -> None:
+        quoted = shlex.quote(path)
+        self._ssh(f"rm -rf -- {quoted} && ! test -e {quoted}")
+
+    def terminate(self, marker: str) -> None:
+        # "[a]pi-…" matches the job's command lines but not this shell's own, which holds
+        # the bracketed spelling; the marker is letters, digits and '-' only.
+        pattern = shlex.quote(f"[{marker[0]}]{marker[1:]}")
+        self._ssh(
+            f"pkill -TERM -f -- {pattern}; sleep 2; pkill -KILL -f -- {pattern}; sleep 1; "
+            f"! pgrep -f -- {pattern} >/dev/null"
+        )
 
 
 @dataclass(frozen=True)
@@ -172,9 +202,14 @@ def chronos_quantiles(target: Gx10Target, pin: ChronosModelPin, row: dict) -> Qu
         "--latency-samples",
         "0",
     ]
-    target.transport.write(request_path, request_bytes)
+    if not re.fullmatch(r"api-chronos-[0-9TZ]+-[0-9a-f]{8}", run_id):
+        raise AssertionError("cleanup only ever targets this client's own run directory")
+    failure: Exception | None = None
+    ended = False  # the remote job reached a known end, so nothing more will be written
     try:
+        target.transport.write(request_path, request_bytes)
         code = target.transport.run(command, target.checkout, target.timeout_seconds)
+        ended = code != SSH_FAILURE
         if code == GPU_BUSY:
             raise GpuUnavailable("the GX10 GPU is busy with another job")
         if code == SSH_FAILURE:
@@ -183,13 +218,37 @@ def chronos_quantiles(target: Gx10Target, pin: ChronosModelPin, row: dict) -> Qu
             raise GpuTimeout("the GPU job did not finish in time (queue wait included)")
         if code != 0:
             raise GpuUnavailable(f"the GX10 job failed (exit {code})")
-        evidence_bytes = target.transport.read(f"{run_dir}/inference.json")
         predictions = target.transport.read(f"{run_dir}/predictions.jsonl")
-    finally:
-        # The request file is private to the owner workspace even if this cleanup fails.
-        with contextlib.suppress(GpuUnavailable, GpuTimeout):
-            target.transport.remove(request_path)
+        evidence_bytes = target.transport.read(f"{run_dir}/inference.json")
+    except Exception as exc:  # every failure still cleans up below, then is re-raised
+        failure = exc
+    stuck = _clean_up(target.transport, run_id, request_path, run_dir, terminate=not ended)
+    if stuck:
+        raise GpuCleanupFailed(f"could not confirm removal of {', '.join(stuck)}") from failure
+    if failure is not None:
+        raise failure
     return _verified(evidence_bytes, predictions, request_bytes, row, pin, run_id)
+
+
+def _clean_up(
+    transport: Transport, run_id: str, request_path: str, run_dir: str, *, terminate: bool
+) -> list[str]:
+    """Attempt every step even when one fails; return what could not be confirmed."""
+    stuck = []
+    if terminate:
+        try:
+            transport.terminate(run_id)
+        except (GpuUnavailable, GpuTimeout):
+            stuck.append("the remote job")
+    for label, remove, path in (
+        ("the request", transport.remove, request_path),
+        ("the run directory", transport.remove_tree, run_dir),
+    ):
+        try:
+            remove(path)
+        except (GpuUnavailable, GpuTimeout):
+            stuck.append(label)
+    return stuck
 
 
 def _verified(
