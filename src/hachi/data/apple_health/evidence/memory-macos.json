@@ -1,0 +1,41 @@
+{
+  "expat": "expat_2.6.3",
+  "platform": "darwin",
+  "python": "3.12.13",
+  "runs": [
+    {
+      "baseline_peak_rss_bytes": 39059456,
+      "data_mode": "synthetic",
+      "database_bytes": 5861376,
+      "elapsed_seconds": 0.2408599170157686,
+      "input_bytes": 1110025,
+      "peak_rss_bytes": 46891008,
+      "readback_records": 5000,
+      "records": 5000,
+      "records_accepted": 5000,
+      "xml_sha256": "fb74bcf384e7fd7351520e114ccea1288fcbcfdaffd8e973307f32d4d4211b9e"
+    },
+    {
+      "baseline_peak_rss_bytes": 38961152,
+      "data_mode": "synthetic",
+      "database_bytes": 58368000,
+      "elapsed_seconds": 2.7430791670340113,
+      "input_bytes": 11100025,
+      "peak_rss_bytes": 49954816,
+      "readback_records": 50000,
+      "records": 50000,
+      "records_accepted": 50000,
+      "xml_sha256": "8d66a1acef38e072711b2d08d37a257a3d301133b781fa5d2b988bb6d5f97dce"
+    }
+  ],
+  "source_sha256": {
+    "__init__.py": "096648bcf61c9fd6cb29fe9da859b6865c15c1aa7de61480e2fc24b7d779de41",
+    "__main__.py": "89d7910f77200818e91cf6cf0d96e76ddd5b5888f216658379fdace6a1cba5c4",
+    "benchmark.py": "d5d13ddaee2c453913557df6d5abcb7b5582bbf02be84bc7d673c433f60de7da",
+    "importer.py": "3cada8566fd6446cfe0fbe17e48492709833172efb871b1109a8f908685e00ae",
+    "normalization.py": "b4aa3220b186042369227f9b667000bdbc363bc052c5f80407c0d029804dba30",
+    "security.py": "cefda34a3ee9d3d03d2fb10ce4e14950fb654d52b3bffc3888b6a496502caa42",
+    "store.py": "63431ba85ad014aff6f0bde89009ff41d65055c0eba877d05901012a5d60e444"
+  },
+  "sqlite": "3.50.4"
+}
