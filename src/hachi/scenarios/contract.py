@@ -57,27 +57,46 @@ def build_result(
         "Equation concepts are literature-derived; implementation is original, with no "
         "software code license asserted or borrowed."
     )
-    return AlertnessResult.model_validate({
-        "schema_version": request.schema_version,
-        "report_id": "synthetic-scenario-result",
-        "subject_id": request.subject_id,
-        "as_of": min(s.bedtime for s in scenario.schedules),
-        "generated_at_utc": generated_at,
-        "git_sha": git_sha,
-        "data_mode": "synthetic",
-        "warnings": [], "replay": None, "status": "ok", "task": "alertness",
-        "provenance": {
-            "dataset_snapshot": None,
-            "artifact": {"artifact_id": config.version, "artifact_sha256": artifact_sha256},
-            "feature_coverage": [],
-        },
-        "alertness": {
-            "mode": "simulation", "validation": None, "model_description": description,
-            "scale": {"name": "Illustrative relative alertness", "unit": "dimensionless",
-                      "minimum": 0.0, "maximum": 1.0, "higher_is_more_alert": True},
-            "tz_name": request.tz_name, "assumptions": request.assumptions,
-            "curves": [{"schedule_id": c.schedule_id,
-                        "points": [{"time_utc": p.time_utc, "value": p.alertness}
-                                   for p in c.points]} for c in curves],
-        },
-    })
+    return AlertnessResult.model_validate(
+        {
+            "schema_version": request.schema_version,
+            "report_id": "synthetic-scenario-result",
+            "subject_id": request.subject_id,
+            "as_of": min(s.bedtime for s in scenario.schedules),
+            "generated_at_utc": generated_at,
+            "git_sha": git_sha,
+            "data_mode": "synthetic",
+            "warnings": [],
+            "replay": None,
+            "status": "ok",
+            "task": "alertness",
+            "provenance": {
+                "dataset_snapshot": None,
+                "artifact": {"artifact_id": config.version, "artifact_sha256": artifact_sha256},
+                "feature_coverage": [],
+            },
+            "alertness": {
+                "mode": "simulation",
+                "validation": None,
+                "model_description": description,
+                "scale": {
+                    "name": "Illustrative relative alertness",
+                    "unit": "dimensionless",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "higher_is_more_alert": True,
+                },
+                "tz_name": request.tz_name,
+                "assumptions": request.assumptions,
+                "curves": [
+                    {
+                        "schedule_id": c.schedule_id,
+                        "points": [
+                            {"time_utc": p.time_utc, "value": p.alertness} for p in c.points
+                        ],
+                    }
+                    for c in curves
+                ],
+            },
+        }
+    )

@@ -96,9 +96,7 @@ def simulate(scenario: Scenario, config: ModelConfig) -> tuple[Curve, ...]:
             s = 1 - (1 - wake_pressure) * exp(-awake / config.tau_wake_hours)
             phase = (instant - scenario.anchor).total_seconds() / 3600
             c = cos(2 * pi * phase / 24)
-            a = (1 - s + config.circadian_weight * (c + 1)) / (
-                1 + 2 * config.circadian_weight
-            )
+            a = (1 - s + config.circadian_weight * (c + 1)) / (1 + 2 * config.circadian_weight)
             points.append(Point(instant.astimezone(UTC), s, c, a))
             if instant == end:
                 break
