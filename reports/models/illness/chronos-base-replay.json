@@ -1,0 +1,9 @@
+{
+  "artifacts_reloaded": 18,
+  "decision_mismatches": 0,
+  "max_probability_difference": 5.329070518200751e-15,
+  "numpy_absent": true,
+  "predictions_replayed": 816,
+  "scoring_commit": "f15a1686a22c496fb2b8138942b6283acaee8273",
+  "sklearn_absent": true
+}
