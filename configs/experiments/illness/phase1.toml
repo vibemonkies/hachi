@@ -1,0 +1,37 @@
+protocol_id = "phase1-incident-onset-development-v1"
+dataset_id = "stanford-covid19-wearables"
+snapshot_sha256 = "168d54133c8bc1c566f0b1a023d4f7ca04f54cecbadd3257fa4840e0031e8a33"
+definitions_version = "outcomes-1"
+clock = "floating_local_shifted"
+target = "any-reported-illness-incident-symptom-onset"
+horizons_hours = [24, 48, 72]
+cutoff_stride_hours = 24
+active_outer_fold = 0
+outer_folds = 4
+inner_folds = 3
+min_train_subjects = 4
+seed = 42
+calibration_fraction = 0.25
+feature_lookback_days = 7
+candidate_order = ["prevalence", "logistic", "tree"]
+logistic_c = 1.0
+tree_max_depth = 2
+tree_min_samples_leaf = 10
+calibration_c = 1.0
+max_false_alert_episodes_per_30_negative_cutoff_days = 1.0
+bootstrap_replicates = 1000
+confidence_level = 0.95
+reliability_bins = 5
+selection_metric = "auprc"
+selection_min_paired_improvement = 0.0
+selection_requires_positive_ci_lower_bound = true
+# Outer-test opening is deliberately unsupported by this development runner.
+# Split calibration participants by hash within each inner training cohort.
+# Median imputation/scaling/model fit use fit participants only.
+# Sigmoid calibration and burden thresholds use calibration participants only.
+# Daily negative cutoff exposure is selected survey-confirmed at-risk time;
+# it is not population healthy time. Unknown and excluded rows never score.
+# Alert episodes merge adjacent daily alerts; lead time retains onset day intervals.
+# Selection promotes a candidate only on paired participant-bootstrap AUPRC
+# improvement with 95% lower bound > 0, and validation burden <= prespecified cap.
+# Otherwise retain prevalence, or report unavailable when calibration lacks classes.
