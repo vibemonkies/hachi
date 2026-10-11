@@ -21,7 +21,12 @@ def scenario_from_request(request: ScenarioRequest, config: ModelConfig) -> Scen
     )
     earliest = min(schedules, key=lambda s: (s.bedtime, s.schedule_id))
     local_date = earliest.bedtime.astimezone(zone).date()
-    anchor = datetime.combine(local_date, time(config.anchor_local_hour), zone).astimezone(UTC)
+    local_anchor = datetime.combine(local_date, time(config.anchor_local_hour))
+    anchor = local_anchor.replace(tzinfo=zone, fold=0).astimezone(UTC)
+    if anchor.astimezone(zone).replace(tzinfo=None) != local_anchor:
+        raise ValueError(
+            f"anchor {local_anchor.isoformat()} does not exist in {zone.key} (DST gap)"
+        )
     return Scenario(schedules, request.assumptions.prior_sleep_hours, anchor)
 
 
