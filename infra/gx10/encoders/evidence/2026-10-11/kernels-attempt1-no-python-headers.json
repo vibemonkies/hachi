@@ -1,0 +1,90 @@
+{
+  "host": {
+    "machine": "aarch64",
+    "python": "3.12.3"
+  },
+  "device": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "versions": {
+    "torch": "2.8.0+cu129",
+    "triton": "3.4.0",
+    "mamba-ssm": "2.2.4",
+    "causal-conv1d": "1.5.0.post8",
+    "einops": "0.8.2"
+  },
+  "torch_cuda": "12.9",
+  "triton_ptxas_path": null,
+  "tolerances": {
+    "forward": 0.002,
+    "backward": 0.01
+  },
+  "cases": {
+    "causal_conv1d_cuda": {
+      "output_shape": [
+        2,
+        768,
+        168
+      ],
+      "forward_relative_error": 6.943011001964663e-08,
+      "gradient_relative_errors": {
+        "0": 1.9736131864201993e-07,
+        "1": 1.4348653629958267e-07,
+        "2": 1.2150434283859782e-07
+      },
+      "finite": true,
+      "kernel_forward_ms_first_call": 2.744,
+      "kernel_backward_ms_first_call": 238.687,
+      "passed": true
+    },
+    "selective_scan_cuda": {
+      "output_shape": [
+        2,
+        64,
+        168
+      ],
+      "forward_relative_error": 1.3170626342306336e-06,
+      "gradient_relative_errors": {
+        "0": 1.712984144246373e-06,
+        "1": 8.889731489871274e-07,
+        "2": 1.7376278788808075e-06,
+        "3": 1.1447492498315073e-06,
+        "4": 1.0917934349606308e-06,
+        "5": 1.511209776318285e-07
+      },
+      "finite": true,
+      "kernel_forward_ms_first_call": 18.396,
+      "kernel_backward_ms_first_call": 25.815,
+      "passed": true
+    },
+    "ssd_chunk_scan_triton": {
+      "passed": false,
+      "error": "CalledProcessError: Command '['/usr/bin/gcc', '/tmp/tmplawitco2/cuda_utils.c', '-O3', '-shared', '-fPIC', '-Wno-psabi', '-o', '/tmp/tmplawitco2/cuda_utils.cpython-312-aarch64-linux-gnu.so', '-lcuda', '-L/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/lib', '-L/lib/aarch64-linux-gnu', '-I/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/include', '-I/tmp/tmplawitco2', '-I/usr/include/python3.12']' returned non-zero exit status 1.",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 246, in main\n    report[\"cases\"][name] = case(device)\n                            ^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 118, in case_chunk_scan\n    return compare(\n           ^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 38, in compare\n    k_out = kernel(*k_inputs)\n            ^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 119, in <lambda>\n    lambda *t: mamba_chunk_scan_combined(*t[:5], chunk_size=256, D=t[5]),\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/mamba_ssm/ops/triton/ssd_combined.py\", line 581, in mamba_chunk_scan_combined\n    return MambaChunkScanCombinedFn.apply(x, dt, A, B, C, chunk_size, D, z, dt_bias, initial_states, seq_idx, cu_seqlens, dt_softplus, dt_limit, return_final_states, return_varlen_states)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/torch/autograd/function.py\", line 576, in apply\n    return super().apply(*args, **kwargs)  # type: ignore[misc]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/mamba_ssm/ops/triton/ssd_combined.py\", line 540, in forward\n    out, out_x, dt_out, dA_cumsum, states, final_states, *rest = _mamba_chunk_scan_combined_fwd(x, dt, A, B, C, chunk_size, D=D, z=z, dt_bias=dt_bias, initial_states=initial_states, seq_idx=seq_idx, cu_seqlens=cu_seqlens, dt_softplus=dt_softplus, dt_limit=dt_limit)\n                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/mamba_ssm/ops/triton/ssd_combined.py\", line 312, in _mamba_chunk_scan_combined_fwd\n    dA_cumsum, dt = _chunk_cumsum_fwd(dt, A, chunk_size, dt_bias=dt_bias, dt_softplus=dt_softplus, dt_limit=dt_limit)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsubprocess.CalledProcessError: Command '['/usr/bin/gcc', '/tmp/tmplawitco2/cuda_utils.c', '-O3', '-shared', '-fPIC', '-Wno-psabi', '-o', '/tmp/tmplawitco2/cuda_utils.cpython-312-aarch64-linux-gnu.so', '-lcuda', '-L/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/lib', '-L/lib/aarch64-linux-gnu', '-I/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/include', '-I/tmp/tmplawitco2', '-I/usr/include/python3.12']' returned non-zero exit status 1.\n"
+    },
+    "mamba2_fused_conv_scan_norm_triton": {
+      "passed": false,
+      "error": "CalledProcessError: Command '['/usr/bin/gcc', '/tmp/tmpiirfiv8a/cuda_utils.c', '-O3', '-shared', '-fPIC', '-Wno-psabi', '-o', '/tmp/tmpiirfiv8a/cuda_utils.cpython-312-aarch64-linux-gnu.so', '-lcuda', '-L/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/lib', '-L/lib/aarch64-linux-gnu', '-I/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/include', '-I/tmp/tmpiirfiv8a', '-I/usr/include/python3.12']' returned non-zero exit status 1.",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 246, in main\n    report[\"cases\"][name] = case(device)\n                            ^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 178, in case_fused_mamba2\n    return compare(\n           ^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 38, in compare\n    k_out = kernel(*k_inputs)\n            ^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 158, in run\n    return fn(\n           ^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/mamba_ssm/ops/triton/ssd_combined.py\", line 930, in mamba_split_conv1d_scan_combined\n    return MambaSplitConv1dScanCombinedFn.apply(zxbcdt, conv1d_weight, conv1d_bias, dt_bias, A, D, chunk_size, initial_states, seq_idx, dt_limit, return_final_states, activation, rmsnorm_weight, rmsnorm_eps, outproj_weight, outproj_bias, headdim, ngroups, norm_before_gate)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/torch/autograd/function.py\", line 576, in apply\n    return super().apply(*args, **kwargs)  # type: ignore[misc]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/torch/amp/autocast_mode.py\", line 517, in decorate_fwd\n    return fwd(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/mamba_ssm/ops/triton/ssd_combined.py\", line 795, in forward\n    out_x, _, dt_out, dA_cumsum, states, final_states = _mamba_chunk_scan_combined_fwd(x, dt, A, B, C, chunk_size=chunk_size, D=D, z=None, dt_bias=dt_bias, initial_states=initial_states, seq_idx=seq_idx, dt_softplus=True, dt_limit=dt_limit)\n                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsubprocess.CalledProcessError: Command '['/usr/bin/gcc', '/tmp/tmpiirfiv8a/cuda_utils.c', '-O3', '-shared', '-fPIC', '-Wno-psabi', '-o', '/tmp/tmpiirfiv8a/cuda_utils.cpython-312-aarch64-linux-gnu.so', '-lcuda', '-L/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/lib', '-L/lib/aarch64-linux-gnu', '-I/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/include', '-I/tmp/tmpiirfiv8a', '-I/usr/include/python3.12']' returned non-zero exit status 1.\n"
+    },
+    "mamba2_module_fused_vs_unfused": {
+      "passed": false,
+      "error": "CalledProcessError: Command '['/usr/bin/gcc', '/tmp/tmpu_hvvh2r/cuda_utils.c', '-O3', '-shared', '-fPIC', '-Wno-psabi', '-o', '/tmp/tmpu_hvvh2r/cuda_utils.cpython-312-aarch64-linux-gnu.so', '-lcuda', '-L/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/lib', '-L/lib/aarch64-linux-gnu', '-I/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/include', '-I/tmp/tmpu_hvvh2r', '-I/usr/include/python3.12']' returned non-zero exit status 1.",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 246, in main\n    report[\"cases\"][name] = case(device)\n                            ^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 196, in case_module_paths\n    return compare(path(True), path(False), [u], 15)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 38, in compare\n    k_out = kernel(*k_inputs)\n            ^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/verify_kernels.py\", line 192, in run\n    return block(u)\n           ^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1773, in _wrapped_call_impl\n    return self._call_impl(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/torch/nn/modules/module.py\", line 1784, in _call_impl\n    return forward_call(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/mamba_ssm/modules/mamba2.py\", line 185, in forward\n    out = mamba_split_conv1d_scan_combined(\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/mamba_ssm/ops/triton/ssd_combined.py\", line 930, in mamba_split_conv1d_scan_combined\n    return MambaSplitConv1dScanCombinedFn.apply(zxbcdt, conv1d_weight, conv1d_bias, dt_bias, A, D, chunk_size, initial_states, seq_idx, dt_limit, return_final_states, activation, rmsnorm_weight, rmsnorm_eps, outproj_weight, outproj_bias, headdim, ngroups, norm_before_gate)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nsubprocess.CalledProcessError: Command '['/usr/bin/gcc', '/tmp/tmpu_hvvh2r/cuda_utils.c', '-O3', '-shared', '-fPIC', '-Wno-psabi', '-o', '/tmp/tmpu_hvvh2r/cuda_utils.cpython-312-aarch64-linux-gnu.so', '-lcuda', '-L/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/lib', '-L/lib/aarch64-linux-gnu', '-I/home/asus/hachi/workspaces/justin06lee/envs/ea5d6c71db9ca4a6/lib/python3.12/site-packages/triton/backends/nvidia/include', '-I/tmp/tmpu_hvvh2r', '-I/usr/include/python3.12']' returned non-zero exit status 1.\n"
+    }
+  },
+  "extensions": {
+    "selective_scan_cuda": {
+      "file": "selective_scan_cuda.cpython-312-aarch64-linux-gnu.so",
+      "sha256": "d4decbaea078813704f926b8de0f567a8ddd6dda91d5f36e06cf75b74c95765e"
+    },
+    "causal_conv1d_cuda": {
+      "file": "causal_conv1d_cuda.cpython-312-aarch64-linux-gnu.so",
+      "sha256": "c033a669aeaf2162e82d246d8df1886160f05337d52bd0e9a25264173667cfab"
+    }
+  },
+  "peak_cuda_allocated_mib": 26.7,
+  "passed": false
+}

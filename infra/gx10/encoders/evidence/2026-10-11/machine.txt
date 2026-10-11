@@ -1,0 +1,3 @@
+NVIDIA GB10, 580.142, 12.1
+Linux 6.17.0-1014-nvidia aarch64
+Python 3.12.3
