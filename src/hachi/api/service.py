@@ -163,11 +163,13 @@ class Service:
             key = document_sha256(
                 {"upload_sha256": upload_sha256, "params": params, "importer": IMPORTER_VERSION}
             )
-            for record in self.metadata.imports_with_key(key):
-                if _reusable_import(record):
-                    return record.status, False
             import_id = "imp-" + secrets.token_hex(12)
+            # Reuse and creation share the deletion guard: a subject being deleted can
+            # neither gain an import nor hand back one that is about to disappear.
             with self._writing(params.subject_id):
+                for record in self.metadata.imports_with_key(key):
+                    if _reusable_import(record):
+                        return record.status, False
                 directory = private_directory(self.workspace.import_directory(import_id))
                 try:
                     os.replace(
