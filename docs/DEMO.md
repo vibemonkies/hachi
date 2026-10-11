@@ -1,12 +1,12 @@
 # Hachi demonstration preparation
 
 **Full #22/#23 dry-run acceptance is open.** This runbook prepares a truthful
-demonstration; no live/replay dry run was executed by the #23 preparation worker.
-The existing source-bound independent rehearsal receipts are described in
-[the narrative](presentation/NARRATIVE.md). They are separate from the missing
-published root-app path and final artifact freeze. Accepted development selection
-and the published standalone simulator are described in the updated narrative;
-neither supplies the missing whole-app rehearsal.
+demonstration; no fresh combined live/replay dry run has been recorded at current
+main. Existing receipts prove separate product paths at their producing revisions:
+the original CPU PMData app and offline replay, and the integrated synthetic sleep
+scenario. They do not combine into one current-main run or establish final model
+acceptance. The accepted development selection and standalone simulator remain
+separate from the final artifact freeze.
 
 ## Presenter sequence and roles
 
@@ -17,7 +17,7 @@ Proposals only; humans have not confirmed availability or assignments.
 | Problem and supported physiology | Ezzy | Why personal signal history is useful; a real forecast, actual future observations and baseline comparison when approved. Show coverage and held-out limits. |
 | Sources, causal architecture and inference | Justin | Admission, native cutoff/availability, participant split, exact code/artifact/source identity, API provenance. |
 | Pretraining/training evidence and failures | Ezzy with Justin | Accepted development selection, actual fine-tuning/ensembles, paired negative results, no-gain representations, abstention/burden and selection optimism. |
-| Product and replay | CoffeeCoder | Published app import/status/error → quality → forecast/anomaly → check-ins → sleep comparison. Retain unavailable clinical states. Replay must remain labeled with original mode/time/artifact. |
+| Product and replay | CoffeeCoder | App import, report, forecast, check-ins, sleep comparison, and replay. Retain unavailable clinical states. Label replay with the original mode, time, and artifact. |
 | Privacy, personal case and remaining gates | Team | Public aggregates/synthetic illustrations; separate consents and one-person retrospective limit. Name missing full-scope gates explicitly. |
 
 Use [NARRATIVE.md](presentation/NARRATIVE.md) as speaker notes and
@@ -42,27 +42,46 @@ anchors, and generated narrative/ledger equality. It does not score data, read p
 artifacts, verify consent, select a model, open test or prove a runtime. A failure
 blocks use of the numerical notes. Do not update hashes to bypass a source change.
 
-## Gate the actual demonstration
+## Reuse the delivered #17 and #18 rehearsal evidence
 
-Before running the full path, obtain the accepted #20 packet/selection/freeze and
-selected export, Coffee's published #17 app source and agreed wiring, #21's real
-case/timeline/separate consent handoff, and #22's integration plan. Root controls
-scientific acceptance and any test opening; finalization tooling is not permission.
-These full-path handoffs are missing. #12's development-selected native loader and
-#15's standalone conditional simulator are accepted scoped inputs, with no final
-freeze/test or API/full-app acceptance. Stop full-demo acceptance here until the
-remaining handoffs exist.
+The receipts below cover different runs and data modes. Keep their producing
+revisions attached when you prepare a presentation or a new rehearsal.
 
-A deliberately reduced independent CPU research rehearsal may use only the approved
-PMData inner-validation packet and original frozen baseline. Its scope must say
-“independent rehearsal consumer; no final-selected model or full app acceptance.”
-It cannot be called the final system. Do not access reserved outer-test participants.
+| Rehearsal slice | Producing source and receipt | What it establishes |
+|---|---|---|
+| Original CPU PMData API handoff | [#16/#17 acceptance map](verification/issue17-acceptance.md) and [API receipt](../reports/verification/app-rehearsal/api-5a422dd.json), produced from PR111 `5a422dd` | 25 origins and 600 points matched the frozen packet and direct inference. The original CPU artifact, PMData snapshot, and evaluated protocol are identified. |
+| Root app live report and offline replay | [PR114 rehearsal record](../reports/verification/app-rehearsal/README.md#corrected-app-follow-up-at-pr111-5a422dd) | One existing PMData origin rendered 24 points and 48 interval endpoints. The app matched the saved response live and with the API stopped. The receipt retains its original artifact, snapshot, code, units, quality, cutoff, and real mode. |
+| Integrated sleep-scenario form | [Merged #18 native scenario receipt](../apps/web/evidence/issue18-windows-20261011/README.md) in [PR119](https://github.com/vibemonkies/hachi/pull/119), with backend observation commit `7777928` | The native app sent a scenario request to the API and rendered two synthetic curves. All 70 displayed timestamps and values matched the API response. A full reload cleared the transient result; reopening the synthetic subject and resubmitting reproduced it. |
+
+The PMData receipts are real research-data evidence. The sleep scenario is a
+dimensionless synthetic simulation with null validation and dataset snapshot. Do
+not present these receipts as a single combined current-main run. The #17 receipt
+is bound to its producing app commit, and the #18 receipt is bound to its later
+Windows runtime. Neither proves that a new checkout has run the complete flow.
+
+The #17 app and #18 scenario interaction are now delivered. The remaining full
+product demonstration still needs the accepted #20 packet, selected export and
+freeze, plus #21's real case, timeline, and separate consent handoff. Root controls
+scientific acceptance and any test opening. Finalization tooling does not grant
+permission. Do not describe the current development selection or conditional
+simulator as a final model.
+
+A deliberately reduced CPU rehearsal may use the approved PMData inner-validation
+packet and original frozen baseline. Label it “original CPU PMData rehearsal; no
+final-selected model or full app acceptance.” Do not access reserved outer-test
+participants. Use the existing authorized owner workflow for any private source or
+runtime operation. This document grants no new data access or processing authority.
 
 ## Optional standalone synthetic scenario exercise
 
-The accepted public simulator description and exact parameter/request bytes are
-pinned in the manifest. With the repository's existing dependencies available, use
-an owned external output directory for a future exercise:
+The standalone CLI and the integrated scenario form are different paths. The
+integrated form was observed through the native app and API in the
+[#18 scenario receipt](../apps/web/evidence/issue18-windows-20261011/README.md).
+It uses synthetic schedules, shows the assumptions and simulation status, and has
+no subject-data snapshot or validation result. Use that receipt for the observed
+app path. Use the standalone CLI below only when you need its separate SVG output.
+With the repository's existing dependencies available, use an owned external
+output directory:
 
 ```sh
 SCENARIO_RUN=$(mktemp -d /tmp/hachi-23-scenario.XXXXXX)
@@ -78,8 +97,8 @@ archived implementation/configuration artifact outside Git; do not copy its cont
 into public presentation docs. Preserve simulation/synthetic mode, null validation,
 disclosed prior-history/phase assumptions and unmodeled caffeine/light effects.
 Root's accepted CLI/equation/rendering checks are historical supplied evidence;
-the #23 worker has not run this exercise. This optional exercise does not validate
-ratings/PVT, integrate an API/app, or satisfy the full live/replay rehearsal.
+the #23 worker has not run this exercise. The CLI does not validate ratings/PVT,
+reproduce the integrated form, or satisfy the full live/replay rehearsal.
 
 ## Isolated live baseline and offline consumer instructions
 
@@ -102,23 +121,28 @@ For a new authorized rehearsal:
    through actual HTTP and inspect its exit status and sanitized aggregate result.
    Compare health/code/artifact/source/config identity and every expected point
    against the frozen packet and fresh direct inference, including missing/extra points.
-4. For the complete app, build the exact published reviewed #17 source with its
-   documented API origin and owned package cache. Record served build/index hash.
-   Drive actual controls. No injection into UI state, synthetic replacement or
-   unpublished source copy qualifies. Without that source, record this step blocked.
-5. Save a completed original real result through `replay.py save` to a new private
+4. Build the published app from the same clean checkout and record its commit,
+   served build/index hash, and API identity. Use the actual import and report
+   controls. Historical PR114 observations remain bound to `5a422dd`; do not use
+   them as proof that a different build rendered the same real response. Do not
+   inject report state or replace the real path with a synthetic fixture.
+5. Use the integrated sleep-scenario form only as a separately labeled synthetic
+   simulation. The [#18 receipt](../apps/web/evidence/issue18-windows-20261011/README.md)
+   records the exact request, response comparison, and reload behavior. Do not
+   describe it as a personal forecast or clinical validation.
+6. Save a completed original real result through `replay.py save` to a new private
    cache. Retain the trusted whole-cache digest outside the cache. Stop only the
    retained owned live service; confirm it is unavailable. Check/serve the pinned
    cache without a live fallback.
-6. Privately run the source `browser_compare.js` using the collaborative T3 browser,
+7. Privately run the source `browser_compare.js` using the collaborative T3 browser,
    with aggregate-only output. Compare rendered medians, units, quality/provenance,
    cutoff and every interval endpoint, elapsed-time geometry, real/replay labels and
    point-only absence of an interval band. Never snapshot or screenshot real charts,
    log participant DOM/network payloads, or put real values/dates in public receipts.
-7. Exercise missing/corrupt cache visibly with no fallback. Use distinctly generated
+8. Exercise missing/corrupt cache visibly with no fallback. Use distinctly generated
    synthetic data for public desktop/mobile screenshots, unsupported/empty states,
    malformed import and network/job failures. Treat those as transport/UI checks.
-8. Stop only retained owned services and close owned browser tabs. Confirm listeners
+9. Stop only retained owned services and close owned browser tabs. Confirm listeners
    gone. Retain private replay/source/operator files in approved storage and publish
    reviewed aggregate receipts only.
 
