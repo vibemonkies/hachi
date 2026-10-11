@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.serving
                 else serving_from_protocol(args.protocol, args.model, args.admit_apple)
             )
-            pin = stage_artifact(root, args.model, args.packet, serving)
+            pin = stage_artifact(root, args.model, args.packet, serving, args.protocol)
         else:
             pin = parse_pin(args.pin)
         served = load_served_artifact(root, pin)

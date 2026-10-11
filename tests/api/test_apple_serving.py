@@ -7,7 +7,13 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
-from hachi.api.artifacts import ServingSpec, SourceAdmission, stage_artifact
+from hachi.api.artifacts import (
+    ArtifactRefused,
+    ServingSpec,
+    SourceAdmission,
+    load_served_artifact,
+    stage_artifact,
+)
 from hachi.api.sources import SubjectData
 from hachi.contracts.api import Coverage, ReportJob
 from hachi.contracts.manifests import TimeWindow
@@ -60,7 +66,7 @@ def apple_client(tmp_path, data_root, snapshot_id, open_client, make_settings):
     )
     root = tmp_path / "apple-artifacts"
     root.mkdir()
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     client = open_client(make_settings(artifact_root=root, served_artifacts=(pin,)))
     return client, pin
 
@@ -211,8 +217,7 @@ THIN_POLICY = HR_POLICY.model_copy(update={"min_coverage": 0.1, "min_observed_co
 THIN_RATIONALE = "Synthetic: validated for 5-minute cadence on PMData only; not on Apple devices."
 
 
-@pytest.fixture
-def thinned_client(tmp_path, data_root, snapshot_id, open_client, make_settings):
+def thinned_serving() -> ServingSpec:
     serving = admitting_serving(
         feature_policy=THIN_POLICY,
         history_thinning=THIN,
@@ -226,15 +231,25 @@ def thinned_client(tmp_path, data_root, snapshot_id, open_client, make_settings)
             )
         ],
     )
+    return ServingSpec.model_validate(serving.model_dump())  # re-validated as staged
+
+
+def plain_serving(policy=THIN_POLICY) -> ServingSpec:
+    return admitting_serving(feature_policy=policy, accepted_sources=[])
+
+
+@pytest.fixture
+def thinned_client(tmp_path, data_root, snapshot_id, open_client, make_settings):
+    # A thinned packet: its protocol is the variant and its run_id carries the runner's label.
     packet = make_packet(
         tmp_path / "thin-packet",
         data_root / "derived" / snapshot_id,
-        serving=ServingSpec.model_validate(serving.model_dump()),  # re-validated as staged
+        serving=thinned_serving(),
         artifact_id="synthetic-last-valid-hr-thin300s",
     )
     root = tmp_path / "thin-artifacts"
     root.mkdir()
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     return open_client(make_settings(artifact_root=root, served_artifacts=(pin,))), pin
 
 
@@ -353,3 +368,88 @@ def test_staging_a_density_variant_records_its_thinning_and_exact_gate(
         update={"availability_rule": AVAILABILITY_RULE}
     )
     assert serving.protocol_sha256 == hashlib.sha256(variant.read_bytes()).hexdigest()
+
+
+SUFFIX = THIN.pipeline_suffix
+
+
+@pytest.mark.parametrize(
+    ("serving", "options", "refusal"),
+    [
+        # A full-density packet (no run_id label) is never served thinned at the looser gate,
+        pytest.param(thinned_serving, {"evaluated_thinning": THIN, "run_label": None},
+                     "history label", id="full-packet-variant-protocol-served-thinned"),
+        pytest.param(thinned_serving, {"evaluated_thinning": None, "run_label": None},
+                     "history thinning", id="full-packet-served-thinned"),
+        # and a thinned packet is never served unthinned.
+        pytest.param(plain_serving, {"evaluated_thinning": None, "run_label": SUFFIX},
+                     "history label", id="thinned-packet-base-protocol-served-unthinned"),
+        pytest.param(plain_serving, {"evaluated_thinning": THIN, "run_label": SUFFIX},
+                     "history thinning", id="thinned-packet-served-unthinned"),
+        # The served gate is the evaluated one, never one written into serving.json.
+        pytest.param(lambda: plain_serving(HR_POLICY), {"evaluated_policy": THIN_POLICY},
+                     "feature gate", id="gate-not-evaluated"),
+    ],
+)  # fmt: skip
+def test_served_thinning_and_gate_are_bound_to_the_evaluated_protocol(
+    tmp_path, data_root, snapshot_id, serving, options, refusal
+):
+    packet = make_packet(
+        tmp_path / "packet", data_root / "derived" / snapshot_id, serving=serving(), **options
+    )
+    root = tmp_path / "root"
+    root.mkdir()
+    with pytest.raises(ArtifactRefused, match=refusal) as refused:
+        stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
+    assert refused.value.code == "ARTIFACT_INCOMPATIBLE"
+    assert list(root.iterdir()) == []  # nothing staged
+
+
+def test_a_staged_artifact_is_checked_again_at_load(tmp_path, data_root, snapshot_id):
+    import shutil
+
+    from hachi.evaluation.serialization import document_bytes
+
+    packet = make_packet(
+        tmp_path / "p", data_root / "derived" / snapshot_id, serving=thinned_serving()
+    )
+    root = tmp_path / "root"
+    root.mkdir()
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
+    assert load_served_artifact(root, pin).serving.history_thinning == THIN
+
+    def edited(name, edit):
+        copy = tmp_path / name
+        shutil.copytree(root, copy)
+        for path in [copy, *copy.rglob("*")]:
+            path.chmod(0o700)
+        edit(copy / pin.artifact_id)
+        return copy
+
+    unthinned = thinned_serving().model_copy(
+        update={"history_thinning": None, "protocol_sha256": packet.serving.protocol_sha256}
+    )
+    cases = {
+        "history thinning": lambda d: (d / "serving.json").write_bytes(document_bytes(unthinned)),
+        "carries the protocol": lambda d: (d / "protocol.json").unlink(),
+        "another protocol": lambda d: (d / "protocol.json").write_bytes(b'{"swapped": true}'),
+    }
+    for refusal, edit in cases.items():
+        with pytest.raises(ArtifactRefused, match=refusal):
+            load_served_artifact(edited(refusal.replace(" ", "-"), edit), pin)
+
+
+def test_dataset_subjects_without_numpy_get_a_clear_unavailable(thinned_client, monkeypatch):
+    import importlib.util
+
+    client, _ = thinned_client
+    upload(client, apple_hr_export(72, every_minutes=5), subject="synthetic-apple-watch")
+    wait(client)
+    real = importlib.util.find_spec
+    monkeypatch.setattr(
+        importlib.util, "find_spec", lambda name, *a: None if name == "numpy" else real(name, *a)
+    )
+    snapshot = forecast(client, "p01").result.root
+    assert (snapshot.status, snapshot.reason_code) == ("unavailable", "NO_ARTIFACT_FOR_TASK")
+    assert "baselines extra" in snapshot.requirements[0]
+    assert forecast(client, "synthetic-apple-watch").result.root.status == "ok"  # pure Python

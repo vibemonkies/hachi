@@ -113,6 +113,8 @@ declares `interval_nominal_coverage`. Such intervals stay `uncalibrated`, with a
   split.json    sha256 must equal run.split_manifest_sha256
   config.json   sha256 must equal run.config_sha256 (EvaluationConfig)
   serving.json  ServingSpec: input kind, feature policy, protocol hash
+  protocol.json the protocol (or density variant) the packet was evaluated under;
+                required for CPU artifacts
 ```
 
 Loading refuses an artifact when any of these checks fails:
@@ -123,6 +125,12 @@ Loading refuses an artifact when any of these checks fails:
 - A manifest fails strict schema validation.
 - The baseline implementation does not match the code it was saved with.
 - The model, evaluation, feature policy and feature order disagree.
+- A CPU artifact's served gate or thinning isn't the evaluated one. The staged protocol must
+  match `serving.protocol_sha256`, its evaluation must be the packet's `config.json` and its
+  split parameters the packet's split. The served `feature_policy` and `history_thinning`
+  must equal the protocol's. The packet's `run_id` must carry exactly that thinning's label
+  (`-<model_id>-<suffix>`), or none for an unthinned protocol. So a full-density packet is
+  never served thinned, and a thinned packet is never served unthinned.
 
 Stage an artifact straight from a run's output:
 
@@ -189,9 +197,14 @@ variant's `feature_policy` and its rule as `history_thinning`:
 ```
 
 The API then thins every source's history the same way before applying the gate:
-- **PMData subjects** use `thinned_bins`, which needs the `baselines` extra.
+- **PMData subjects** use `thinned_bins`, which needs the `baselines` extra. Without it they
+  get `unavailable` with that requirement, and Apple subjects are still served.
 - **Apple subjects** use #78's sealed samples, thinned after sealing and source precedence.
   Only rows are dropped; coverage keeps the helper's own definition.
+
+Thinning keeps the earliest sample in each slot from **any** source. A phone sample at :00:45
+therefore beats a watch sample at :01:30; source precedence only settles same-instant or
+overlapping records.
 
 Thinning matters for Apple. Natively, six samples in six consecutive minutes pass 0.10/6, but
 the validated rule needs them in six distinct slots. An Apple admission keeps the model's exact
