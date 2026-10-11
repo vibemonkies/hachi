@@ -303,7 +303,7 @@ Limit: A demonstrated immutable baseline receipt, not #20 final-selected artifac
 
 ## apple-transport
 
-Generated Apple HTTP transport preserved the original sparse abstention and dense exact-inference behavior: source measurement row `| 105,120 points, 12/hour | 8.742 s | 0.705 s | 0.645 s | `INSUFFICIENT_HISTORY` at original gates |`.
+Generated Apple HTTP transport preserved the original sparse abstention and dense exact-inference behavior: source measurement row ``| 105,120 points, 12/hour | 8.742 s | 0.705 s | 0.645 s | `INSUFFICIENT_HISTORY` at original gates |``.
 
 Limit: Generated inputs only; exact CPU receipt/unchanged admissions; DEVICE_SHIFT; no real Apple accuracy, cohort, case consent or full UI claim.
 

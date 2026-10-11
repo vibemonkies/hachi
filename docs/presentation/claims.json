@@ -906,7 +906,7 @@
     },
     {
       "id": "apple-transport",
-      "text": "Generated Apple HTTP transport preserved the original sparse abstention and dense exact-inference behavior: source measurement row `{quote}`.",
+      "text": "Generated Apple HTTP transport preserved the original sparse abstention and dense exact-inference behavior: source measurement row ``{quote}``.",
       "values": {
         "quote": {
           "source": "apple",

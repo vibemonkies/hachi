@@ -153,7 +153,7 @@ With the live API stopped, the saved real browser replay checked 24 points and 4
 
 The historical CPU replay artifact is `hourly-last-valid-v1-141306001b16e168`, SHA256 `e7666ef0f4665006822f9ee9c0988a6de0df1633175ff217a27666ce6f66fa3b`. [Evidence](CLAIMS.md#replay-identity).
 
-Generated Apple HTTP transport preserved the original sparse abstention and dense exact-inference behavior: source measurement row `| 105,120 points, 12/hour | 8.742 s | 0.705 s | 0.645 s | `INSUFFICIENT_HISTORY` at original gates |`. [Evidence](CLAIMS.md#apple-transport).
+Generated Apple HTTP transport preserved the original sparse abstention and dense exact-inference behavior: source measurement row ``| 105,120 points, 12/hour | 8.742 s | 0.705 s | 0.645 s | `INSUFFICIENT_HISTORY` at original gates |``. [Evidence](CLAIMS.md#apple-transport).
 
 Generated Apple transport retains `DEVICE_SHIFT`, explicit unvalidated-source
 rationale and the original admission gates. It proves transport/exact inference for

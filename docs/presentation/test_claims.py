@@ -26,6 +26,18 @@ class ClaimChecks(unittest.TestCase):
         for name, value in checker.render(self.manifest).items():
             self.assertEqual(value, (HERE / name).read_text())
 
+    def test_apple_anchor_with_internal_backticks_uses_double_delimiter(self):
+        claim = next(c for c in self.manifest["claims"] if c["id"] == "apple-transport")
+        anchor = claim["values"]["quote"]["expected"]
+        self.assertIn("`INSUFFICIENT_HISTORY`", anchor)
+        for name, output in checker.render(self.manifest).items():
+            with self.subTest(document=name):
+                self.assertTrue(
+                    f"source measurement row ``{anchor}``." in output,
+                    "anchor must have a double-backtick outer delimiter",
+                )
+                self.assertFalse(f"source measurement row `{anchor}`." in output)
+
     def test_altered_number_cannot_be_rounded_into_a_claim(self):
         manifest = self.changed()
         manifest["claims"][0]["values"]["people"]["expected"] += 1
