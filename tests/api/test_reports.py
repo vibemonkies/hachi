@@ -48,8 +48,10 @@ def test_forecast_matches_direct_inference_with_provenance(client, served):
     series = result.forecast.series[0]
     assert series.metric == "heart_rate" and series.unit == "bpm"
     assert series.points[0].interval_start_utc == datetime(2020, 3, 29, 12, tzinfo=UTC)
-    assert all(p.lower == p.median == p.upper for p in series.points)
-    assert {w.code for w in result.warnings} >= {"UNCALIBRATED_INTERVALS"}
+    # #9's baselines give medians only: a point-only series, with no band and no coverage claim.
+    assert series.interval_calibration == "none" and series.nominal_coverage is None
+    assert all(p.lower is None and p.upper is None for p in series.points)
+    assert "UNCALIBRATED_INTERVALS" not in {w.code for w in result.warnings}
 
     service = client.app.state.service
     artifact = service.catalog.artifacts[0]
@@ -59,6 +61,43 @@ def test_forecast_matches_direct_inference_with_provenance(client, served):
     tally.add(api_medians(job), expected_medians(result.as_of, direct))
     assert tally.agrees and tally.compared == len(series.points) > 0
     assert tally.max_difference == 0.0
+
+
+def test_declared_intervals_are_shown_as_uncalibrated(client):
+    import dataclasses
+
+    from hachi.evaluation import ForecastEstimate
+
+    service = client.app.state.service
+    served = service.catalog.artifacts[0]
+
+    class WithIntervals:
+        """The frozen baseline plus a fixed band, standing in for a quantile model."""
+
+        config, fit_as_of, model_id = served.model.config, served.model.fit_as_of, "banded"
+
+        def predict(self, request):
+            return tuple(
+                None
+                if e is None
+                else ForecastEstimate(median=e.median, lower=e.median - 5, upper=e.median + 5)
+                for e in served.model.predict(request)
+            )
+
+    serving = served.serving.model_copy(update={"interval_nominal_coverage": 0.8})
+    banded = dataclasses.replace(served, model=WithIntervals(), serving=serving)
+    service.catalog.artifacts = (banded,)
+    series = run(client, forecast()).result.root.forecast.series[0]
+    assert (series.interval_calibration, series.nominal_coverage) == ("uncalibrated", 0.8)
+    assert all(p.lower == p.median - 5 and p.upper == p.median + 5 for p in series.points)
+    warnings = run(client, forecast()).result.root.warnings
+    assert "UNCALIBRATED_INTERVALS" in {w.code for w in warnings}
+
+    undeclared = dataclasses.replace(banded, serving=served.serving)  # no declared coverage
+    service.catalog.artifacts = (undeclared,)
+    point_only = run(client, forecast(as_of="2020-03-29T14:00:00Z")).result.root.forecast
+    assert point_only.series[0].interval_calibration == "none"
+    assert point_only.series[0].points[0].lower is None
 
 
 def test_identical_requests_are_idempotent(client):

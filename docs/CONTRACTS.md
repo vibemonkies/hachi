@@ -64,6 +64,7 @@ The cutoff rule lives in `hachi.contracts.causality`: an observation may inform 
 | `POST /v1/reports` | `ReportRequest` → `ReportJob` | Validated report request; enqueue idempotent inference |
 | `GET /v1/reports/{id}` | → `ReportJob` | Job state and, once completed, the `ReportResult` |
 | `POST /v1/subjects/{id}/observations` | `SelfReportRequest` | Symptom onset/check-in/resolution, test results, alertness ratings, PVT results and confounders, each with separate event and entry times |
+| `GET /v1/subjects/{id}/observations` | → `SelfReportHistory` | Every stored entry in recording order, in one response; may be empty. The 1–200 bound applies only to a POST batch |
 | `POST /v1/scenarios` | `ScenarioRequest` → `ReportResult` | Bedtime/wake-time schedules, timezone and explicit assumptions; answered synchronously with an `alertness` result |
 | `DELETE /v1/subjects/{id}` | | Confirmed deletion of subject data and derived personal artifacts |
 | `GET /healthz` | → `HealthStatus` | Process readiness plus code/artifact versions, no participant data |
@@ -92,7 +93,9 @@ Every result carries `schema_version`, `report_id`, `subject_id`, `as_of`, `data
 
 Task payloads:
 
-- **Forecast:** per-metric series in the canonical unit; contiguous points starting at or after `as_of`; `lower ≤ median ≤ upper` within metric bounds; `nominal_coverage` and `interval_calibration` (`uncalibrated` until held-out coverage is measured); optional personal baseline ending by `as_of`. Day points name their `local_date`.
+- **Forecast:** per-metric series in the canonical unit; contiguous points starting at or after `as_of`; optional personal baseline ending by `as_of`. Day points name their `local_date`. A series either has intervals or is point-only:
+  - **Interval forecast:** every point has `lower ≤ median ≤ upper` within metric bounds, and the series states `nominal_coverage` and `interval_calibration` (`uncalibrated` until held-out coverage is measured).
+  - **Point-only forecast** (`interval_calibration: "none"`): the model gives no interval. Every `lower`/`upper` and `nominal_coverage` is null. Draw it as points, never as a band, and never label a coverage.
 - **Anomaly:** score definition, `alert_state` (`no_alert`, `alert` or `abstained`) consistent with score and threshold, a baseline window and a timeline ending by `as_of`, changed features, and observed alert burden once measured. There is no illness probability field.
 - **Illness:** onset probability for a 24/48/72-hour horizon, target definition, calibration cohort/version/method, and distribution status.
 - **Recovery:** a non-increasing survival curve from day 0, endpoint definition, and median, all limited to the supported follow-up.

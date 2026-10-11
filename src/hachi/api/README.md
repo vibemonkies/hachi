@@ -51,6 +51,7 @@ reason is logged, and that snapshot or artifact is not used.
 | `POST /v1/reports` | `ReportRequest` → `ReportJob` | A new job returns 202 `queued`. An identical request on the same data, artifact and code returns 200 and the same job. |
 | `GET /v1/reports/{id}` | → `ReportJob` | `queued` → `running` → `completed`. A failure is a completed job with an `error` result. |
 | `POST /v1/subjects/{id}/observations` | `SelfReportRequest` → the same | 201 when an entry was stored. Re-sending an entry exactly is a no-op. Re-sending a changed entry returns 409. |
+| `GET /v1/subjects/{id}/observations` | → `SelfReportHistory` | Every stored entry, in recording order. An empty list for a known subject with none; 404 for an unknown subject. |
 | `POST /v1/scenarios` | `ScenarioRequest` → `ReportResult` | `unavailable` until #15's frozen two-process artifact is served. |
 | `DELETE /v1/subjects/{id}?confirm={id}` | → 204 | Removes imports, private snapshots, reports and self-reports. Running jobs return 409. |
 | `GET /healthz` | → `HealthStatus` | Code identity and the served artifact refs. |
@@ -93,8 +94,11 @@ Failures become `error` results:
 - `GPU_UNAVAILABLE`: a GPU artifact this instance cannot reach
 - `DATA_READ_FAILED` and `INFERENCE_FAILED`
 
-#9's baselines give medians only. Their points have `lower = median = upper`, with an
-`UNCALIBRATED_INTERVALS` warning that no coverage is claimed.
+#9's baselines give medians only, so their forecasts are point-only: `interval_calibration`
+is `"none"`, and `nominal_coverage` and every point's `lower`/`upper` are null. A forecast
+shows an interval only when the model gives one for every hour and its `serving.json`
+declares `interval_nominal_coverage`. Such intervals stay `uncalibrated`, with an
+`UNCALIBRATED_INTERVALS` warning, until held-out coverage is validated (#20).
 
 ## Served artifacts
 
