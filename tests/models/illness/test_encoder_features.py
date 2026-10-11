@@ -5,21 +5,22 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 from hachi.evaluation.serialization import document_bytes, document_sha256
-from hachi.models.encoders.requests import main as encoder_main
-from hachi.models.encoders.requests import model_inputs, moment_patch_support, read_requests
 from hachi.models.illness.encoder_features import EncoderReturnPins, load_encoder_features
 from hachi.models.illness.pretrained_features import sha
 from hachi.models.illness.pretrained_protocol import load_pretrained_protocol
 
 COMPARISON = load_pretrained_protocol(Path("configs/experiments/illness/pretrained.json"))
+np = pytest.importorskip("numpy", reason="encoder transport requires the optional baselines extra")
 
 
 @pytest.fixture
 def returned(tmp_path, monkeypatch, capsys):
+    from hachi.models.encoders.requests import main as encoder_main
+    from hachi.models.encoders.requests import model_inputs, moment_patch_support, read_requests
+
     packet, output = tmp_path / "contexts", tmp_path / "return"
     packet.mkdir()
     output.mkdir()

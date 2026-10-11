@@ -8,12 +8,6 @@ from pydantic import model_validator
 
 from hachi.contracts.base import Contract, GitSha, Sha256
 from hachi.evaluation.serialization import document_sha256
-from hachi.models.encoders.requests import (
-    feature_table,
-    model_inputs,
-    moment_patch_support,
-    read_requests,
-)
 
 from .context_export import verify_packet
 from .pretrained_features import FrozenFeatures, context_joins, join_vectors, sha
@@ -50,6 +44,13 @@ def load_encoder_features(
 ) -> dict[Literal["meanpool_hr", "wbm_hr", "moment_hr"], FrozenFeatures]:
     import numpy as np
     import pyarrow.parquet as pq
+
+    from hachi.models.encoders.requests import (
+        feature_table,
+        model_inputs,
+        moment_patch_support,
+        read_requests,
+    )
 
     verified = verify_packet(snapshot, packet)
     if (

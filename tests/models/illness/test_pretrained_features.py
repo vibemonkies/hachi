@@ -148,6 +148,7 @@ def test_direct_loader_cannot_substitute_changed_spec_even_with_matching_receipt
 
 
 def test_actual_meanpool_consumer_binds_summary_width_and_private_encoder_joins(feature_packet):
+    pytest.importorskip("numpy", reason="MeanPool requires the optional baselines extra")
     from hachi.models.illness.pretrained_features import build_meanpool_features
 
     packet, _, cutoff = feature_packet
