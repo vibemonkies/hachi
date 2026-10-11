@@ -367,7 +367,7 @@ function CoveragePanel({
         <div className="task-support" aria-label="Available task support">
           {coverage.task_support.map((task) => (
             <p key={task.task}>
-              <strong>{task.task.replaceAll("_", " ")}</strong> · {task.supported ? "data requirements met" : unavailableReasons[task.reason_code ?? ""] ?? task.reason_code}
+              <strong>{task.task.replaceAll("_", " ")}</strong> · {task.supported ? task.task === "alertness" ? "simulation available · no subject data used" : "data requirements met" : unavailableReasons[task.reason_code ?? ""] ?? task.reason_code}
               {!task.supported && task.reason_code && <code>{task.reason_code}</code>}
             </p>
           ))}
