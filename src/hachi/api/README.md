@@ -53,7 +53,7 @@ reason is logged, and that snapshot or artifact is not used.
 | `POST /v1/subjects/{id}/observations` | `SelfReportRequest` → the same | 201 when an entry was stored. Re-sending an entry exactly is a no-op. Re-sending a changed entry returns 409. |
 | `GET /v1/subjects/{id}/observations` | → `SelfReportHistory` | Every stored entry, in recording order. An empty list for a known subject with none; 404 for an unknown subject. |
 | `POST /v1/scenarios` | `ScenarioRequest` → `ReportResult` | `unavailable` until #15's frozen two-process artifact is served. |
-| `DELETE /v1/subjects/{id}?confirm={id}` | → 204 | Removes imports, private snapshots, reports and self-reports. Running jobs return 409. |
+| `DELETE /v1/subjects/{id}?confirm={id}` | → 204 | Removes private files first, then the records: if a file can't be removed it answers 500 and keeps every record, so the deletion can be retried. Running jobs, or writes for a subject being deleted, return 409. |
 | `GET /healthz` | → `HealthStatus` | Code identity and the served artifact refs. |
 
 Every non-2xx response is an `ApiError`, with `X-Request-Id` set to its `request_id`:
