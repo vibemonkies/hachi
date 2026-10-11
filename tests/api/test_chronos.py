@@ -15,7 +15,7 @@ from hachi.models.chronos import ChronosConfig, ChronosModelPin
 from hachi.models.chronos.artifacts import ChronosArtifact, save_artifact
 from hachi.models.chronos.inference import PREDICTION_FORMAT, REQUEST_FORMAT, canonical_bytes
 
-from .conftest import FIT_AS_OF, GIT_SHA, HR_POLICY, make_packet, wait
+from .conftest import FIT_AS_OF, GIT_SHA, HR_POLICY, make_packet, upload, wait
 
 PIN = ChronosModelPin(
     model_id="amazon/chronos-2",
@@ -44,6 +44,7 @@ class FakeGx10:
         self.files: dict[str, bytes] = {}
         self.jobs: list[str] = []
         self.requests: list[dict] = []
+        self.terminated: list[str] = []
 
     def home(self) -> str:
         if self.mode == "unreachable":
@@ -56,6 +57,17 @@ class FakeGx10:
     def remove(self, path: str) -> None:
         self.files.pop(path, None)
 
+    def remove_tree(self, path: str) -> None:
+        if self.mode == "stuck_cleanup":
+            raise GpuUnavailable("remote step failed (exit 1)")
+        for name in [f for f in self.files if f.startswith(path + "/")]:
+            del self.files[name]
+
+    def terminate(self, marker: str) -> None:
+        self.terminated.append(marker)
+        if self.mode == "unkillable":
+            raise GpuUnavailable("remote step failed (exit 1)")
+
     def read(self, path: str) -> bytes:
         return self.files[path]
 
@@ -65,7 +77,10 @@ class FakeGx10:
         self.jobs.append(run_id)
         if self.mode == "busy":
             return 75
-        if self.mode == "timeout":
+        directory = f"/home/fake/hachi/runs/tester/{run_id}"
+        self.files[f"{directory}/job.json"] = b'{"state": "running"}'  # gpu-run's own record
+        self.files[f"{directory}/output.log"] = b"supervisor output"
+        if self.mode in ("timeout", "unkillable"):
             raise GpuTimeout("the GPU job did not finish in time")
         request_bytes = self.files[command[command.index("--requests") + 1]]
         row = json.loads(request_bytes)
@@ -93,7 +108,6 @@ class FakeGx10:
         }
         if self.mode == "tampered":
             predictions = predictions.replace(b"[", b"[ ", 1)
-        directory = f"/home/fake/hachi/runs/tester/{run_id}"
         self.files[f"{directory}/inference.json"] = json.dumps(evidence).encode()
         self.files[f"{directory}/predictions.jsonl"] = predictions
         return 0
@@ -156,8 +170,8 @@ def chronos_pin(tmp_path, data_root, snapshot_id):
             requires_gpu=True,
             protocol_sha256="a" * 64,
         ).model_copy(update=serving_changes)
-        root = tmp_path / "chronos-artifacts"
-        root.mkdir(exist_ok=True)
+        root = base / "artifacts"  # one root per staging: artifacts are immutable
+        root.mkdir()
         return root, stage_artifact(root, base / "model", packet_dir, serving)
 
     return build
@@ -165,13 +179,13 @@ def chronos_pin(tmp_path, data_root, snapshot_id):
 
 @pytest.fixture
 def chronos_client(open_client, make_settings, chronos_pin, monkeypatch):
-    def factory(mode: str = "ok", *, configured: bool = True):
+    def factory(mode: str = "ok", *, configured: bool = True, serving_changes=None):
         fake = FakeGx10(mode)
         target = Gx10Target(transport=fake, owner="tester", checkout="/remote/api-serving")
         monkeypatch.setattr(
             "hachi.api.catalog.gx10_target", lambda _s: target if configured else None
         )
-        root, pin = chronos_pin()
+        root, pin = chronos_pin(**(serving_changes or {}))
         client = open_client(make_settings(artifact_root=root, served_artifacts=(pin,)))
         return client, fake, pin
 
@@ -292,6 +306,12 @@ def test_ssh_jobs_carry_their_own_gx10_deadline(monkeypatch):
         def remove(self, path):
             pass
 
+        def remove_tree(self, path):
+            pass
+
+        def terminate(self, marker):
+            raise AssertionError("the remote deadline already ended this job")
+
         def run(self, command, cwd, timeout):
             return 124  # the GX10's own deadline fired, e.g. while queued on the GPU lock
 
@@ -300,3 +320,57 @@ def test_ssh_jobs_carry_their_own_gx10_deadline(monkeypatch):
         gpu.chronos_quantiles(
             target, PIN, {"request_id": "r", "context": [1.0], "prediction_length": 1}
         )
+
+
+def test_nothing_from_a_request_outlives_it_on_the_gx10(chronos_client):
+    client, fake, _ = chronos_client()
+    assert report(client).result.root.status == "ok"
+    assert fake.jobs and fake.files == {}  # request and the whole run directory removed
+    assert fake.terminated == []  # the job ended normally, nothing to stop
+
+
+def test_a_job_with_an_unknown_end_is_stopped_before_its_files_are_removed(chronos_client):
+    client, fake, _ = chronos_client("timeout")
+    result = report(client).result.root
+    assert (result.status, result.error_code) == ("error", "INFERENCE_TIMEOUT")
+    assert fake.terminated == fake.jobs and fake.files == {}
+    stuck_client, stuck, _ = chronos_client("unkillable")
+    assert stuck.terminated == []
+    stuck_result = report(stuck_client, FORECAST | {"as_of": "2020-03-29T13:00:00Z"}).result.root
+    assert (stuck_result.status, stuck_result.error_code) == ("error", "INFERENCE_FAILED")
+    assert "could not be removed" in stuck_result.message
+    assert stuck.terminated == stuck.jobs  # termination was attempted, and its failure surfaced
+
+
+def test_a_failed_gx10_cleanup_is_surfaced_and_the_forecast_withheld(chronos_client):
+    failing, stuck, _ = chronos_client("stuck_cleanup")
+    result = report(failing).result.root
+    assert result.status == "error" and result.error_code == "INFERENCE_FAILED"
+    assert "could not be removed" in result.message  # surfaced, never suppressed
+    assert any(path.endswith("predictions.jsonl") for path in stuck.files)
+
+
+def test_personal_imports_never_reach_the_shared_gpu(chronos_client, chronos_pin):
+    from hachi.api.artifacts import SourceAdmission
+
+    from .test_apple_serving import APPLE_POLICY, apple_hr_export
+
+    admission = SourceAdmission(
+        source="apple_health", feature_policy=APPLE_POLICY, rationale="transfer test"
+    )
+    client, fake, _ = chronos_client(serving_changes={"accepted_sources": [admission]})
+    upload(client, apple_hr_export(72), subject="person-001", data_mode="real")
+    wait(client)
+    personal = report(
+        client, FORECAST | {"subject_id": "person-001", "as_of": "2026-09-03T12:00:00Z"}
+    )
+    result = personal.result.root
+    assert (result.status, result.reason_code) == ("unavailable", "NO_ARTIFACT_FOR_TASK")
+    assert "retention design" in result.requirements[0]
+    assert fake.jobs == []  # nothing was sent to the GX10
+    upload(client, apple_hr_export(72), subject="synthetic-apple-gpu")  # generated data
+    wait(client)
+    generated = report(
+        client, FORECAST | {"subject_id": "synthetic-apple-gpu", "as_of": "2026-09-03T12:00:00Z"}
+    )
+    assert generated.result.root.status == "ok" and len(fake.jobs) == 1
