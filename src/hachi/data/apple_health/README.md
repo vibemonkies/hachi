@@ -70,3 +70,90 @@ The fresh subprocess memory measurement uses Python 3.12.13, Expat 2.6.3, SQLite
 Security and domain cases cover malformed/entity/external XML, depth/token limits, safe internal DTD, archive traversal/symlink/ambiguity/corruption/ratio/directory/entry limits, known/unknown units, exact/overlap deduplication, future availability, missing steps, distinct temperature/HRV semantics, cross-midnight and DST sleep, private provenance, CLI readback, timezone tie ordering, timestamp overflow, and overwrite refusal. The timezone-order and timestamp-overflow regressions failed before their fixes and passed afterward. Real Apple export reconciliation and live API integration are unverified and remain #21/#16 respectively.
 
 Primary semantics: [HealthKit percent units](https://developer.apple.com/documentation/healthkit/hkunit/percent()), [sleeping wrist temperature](https://developer.apple.com/documentation/healthkit/hkquantitytypeidentifier/applesleepingwristtemperature), [sleep state identifiers](https://developer.apple.com/documentation/healthkit/hkcategoryvaluesleepanalysis), and [Expat parsing/security controls](https://docs.python.org/3/library/pyexpat.html).
+
+## Native hourly inputs — #16/#22 compatibility subtask
+
+`hourly.py` bridges the immutable importer snapshot to the evaluator's structural
+`FeatureBin` interface. The importer/parser/normalization/selection policy is unchanged.
+The original API rejects Apple imports unconditionally for hourly-feature artifacts;
+this helper supplies the data seam. WindyTrout owns API wiring and source compatibility.
+
+```python
+from hachi.data.apple_health.hourly import AVAILABILITY_RULE, apple_hourly_features
+from hachi.evaluation.features import HourlyFeaturePolicy
+
+# The serving owner must explicitly admit this source protocol. Do not replace
+# a frozen PMData receipt or treat its evaluation as Apple validation.
+apple_policy = HourlyFeaturePolicy(
+    metric="heart_rate",
+    aggregation="mean",
+    min_coverage=0.5,
+    min_observed_count=30,
+    availability_rule=AVAILABILITY_RULE,
+)
+view = apple_hourly_features(database, apple_policy, cutoff, history_start)
+history = view.features  # canonical HourlyFeature, with source-specific readiness
+```
+
+`iter_hourly_bins(path, metric=..., aggregation=..., as_of=..., start=...)` also
+exposes unfiltered canonical aggregates and per-hour `HourAudit`: included record
+count, excluded selected cross-hour records, sampled HR minutes, recorded step
+interval seconds, and private source-ID/count pairs. `HourlyFeatureView.counts`
+reports the existing exclusive inclusion/missing/density/count gate outcomes.
+
+| Property | Apple source protocol |
+| --- | --- |
+| Readiness | `apple-hour-end-sealed-native-v1`: bin available at completed UTC hour end |
+| Native eligibility | Event end **and** observed Apple creation time at or before that hour end |
+| Precedence | Replay audited importer selection at each hour end, before aggregation |
+| HR value | Arithmetic mean, median, min or max of selected native HR records wholly inside the hour |
+| HR coverage | Distinct UTC minutes containing selected HR starts divided by 60; sampled-minute **density**, not continuously observed duration |
+| Step value | Sum selected whole recorded amounts; no cross-hour proration |
+| Step coverage | Union of explicitly recorded intervals divided by 3600 seconds, including intervals with measured zero totals; instantaneous totals have zero duration support |
+| Missingness | No record means null/unknown, never zero; vendor resting HR is excluded from native HR |
+| Model gates | Original metric/aggregation/minimum density/minimum count remain in force |
+
+These bins intentionally seal at hour end. A record created later stays queryable
+through `iter_observations` but never revises that hour's model input. A late watch
+record cannot suppress an earlier eligible phone record or move its readiness into
+the future. This differs from PMData's latest-input closure; passing a PMData
+availability rule to this helper raises an error. Both value and source lineage
+are deterministic under source-declared future/late additions, independent of XML
+order. This is source creation-time causality, not an independently observed online
+ingestion time; backdated source metadata is not proof of historical receipt.
+
+Only fully contained native records contribute. Interval HR contributes one level
+sample at its start, without claiming continuous duration. Cross-hour amounts are
+excluded whole, leaving their portions unknown. Bins cover completed UTC hours
+from the earliest eligible candidate, or the requested lower bound, to the cutoff;
+an unaligned lower bound excludes its partial first hour. Empty metric history
+returns an empty view. Timezone offsets are normalized by the importer; no source
+calendars or individuals are joined. Source IDs and per-source audit counts stay
+private with the imported snapshot.
+
+The source protocol is authored and repository-tested using generated hostile
+records. It is **not** scientific readiness or real Apple forecast validation.
+Serving must retain the original frozen artifact/protocol receipt and separately
+declare any accepted Apple input rule. Low-density history abstains at the existing
+0.5/30 HR gates; no friend export or held case was used to choose them. Generated
+Apple HTTP-to-artifact evidence, once wired, is synthetic transport proof; #21's
+actual consented export and source-transfer validation remain separate gates.
+
+The focused tests exercise density versus duration, unchanged gates, late higher
+priority updates, exact duplicates, native precedence, creation/end boundaries,
+UTC offsets, whole cross-hour exclusion, zero-step intervals, instant step totals,
+missing/vendor-only history and foreign policy refusal. On this Mac, a generated
+1,440-record/48-hour probe took 0.012 seconds for one native read versus 0.285
+seconds for sealed-hour replay (48 eligible bins), Python 3.12.13. Replay reuses a
+read-only SQLite connection and the existing selector, with private disk-backed
+temporary state. It scans prior candidates per hour; supply the model lookback
+`start` in serving, and measure larger exports before promising interactive latency.
+
+A separate generated 48-hour dense/sparse probe loaded the actual frozen PMData
+`hourly-last-valid-v1-141306001b16e168` artifact with receipt
+`e7666ef0f4665006822f9ee9c0988a6de0df1633175ff217a27666ce6f66fa3b`
+from the validation packet, checking its code/content hashes. Native import →
+Apple feature policy → direct model inference produced 24/24 expected synthetic
+points; the unchanged gates yielded 24/24 abstentions for sparse input. This proves
+the helper's structural input compatibility with that immutable artifact. It does
+not prove HTTP integration, Apple source transfer, calibration or population accuracy.
