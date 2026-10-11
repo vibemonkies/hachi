@@ -1,0 +1,101 @@
+{
+  "coordination_tests": 5,
+  "focused_tests": 34,
+  "full_python_tests": 233,
+  "python": "3.12.3",
+  "real_cohort_gate": "pending #5 PMData",
+  "runs": {
+    "paired": {
+      "code_commit": "588cfff144644dec7d1acbde493bfd964c140bd7",
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 8,
+        "both_abstained_points": 0,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 8,
+        "evaluation_participants": 2,
+        "expected_points": 8,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "paired_interval_points": 0,
+        "paired_participants": 2,
+        "paired_points": 8
+      },
+      "data_mode": "synthetic",
+      "git_dirty": false,
+      "packet_and_source_hashes_verified": true,
+      "packet_sha256": {
+        "baseline/config.json": "a4f939881c8feaeae9597d1e3807fa163a0695d59c6989c777b11f6dd5077aca",
+        "baseline/evaluation.json": "f6b1bdadea14d7be82490c3dce2e9b339bd9fbd0415cab8b3f753461b779f31a",
+        "baseline/origins.json": "6a8fdae202ccf13a4be6b72393b7ff7da3382b3dea7d604b3e8ac7a28474e4a6",
+        "baseline/run.json": "f9b3986de5db4b04edab4467138041782bc6f82f7a672bfb2913880a6ba7f038",
+        "baseline/sha256.json": "d0d291f359d1b2a4326fa12c0fd42c419556e629183d9883d343db019f654aa0",
+        "baseline/source-sha256.json": "cf6f994c22404ace25f3f0029437a2078291ed5d1680146ec564240a3bb208a8",
+        "baseline/split.json": "681ab256b341fb687991b589057ca66eae043278bf82ddce94336f46b41fbfcc",
+        "candidate/config.json": "a4f939881c8feaeae9597d1e3807fa163a0695d59c6989c777b11f6dd5077aca",
+        "candidate/evaluation.json": "05b45ac4335ee7ad66912f9296f873bb27f80aafc87e63ba63a6ddf02437a9fe",
+        "candidate/origins.json": "6a8fdae202ccf13a4be6b72393b7ff7da3382b3dea7d604b3e8ac7a28474e4a6",
+        "candidate/run.json": "34a45542a039151adfa0af9799f32bae99b1291e6febd3bac283def6e6585df7",
+        "candidate/sha256.json": "04d8954f3b121bbae628177c61e44768eb4dfb066b4c6547119485603cef4817",
+        "candidate/source-sha256.json": "cf6f994c22404ace25f3f0029437a2078291ed5d1680146ec564240a3bb208a8",
+        "candidate/split.json": "681ab256b341fb687991b589057ca66eae043278bf82ddce94336f46b41fbfcc",
+        "comparison.json": "999be26f9f4fbaa79cb5eadaf85dae78703bbffc314cb61b0ac4fa954f3fe6e1"
+      },
+      "private_modes_verified": true,
+      "source_sha256": {
+        "__init__.py": "5c755703270ec9062a8f012f29552b92b712e96d1a3ed8303535f488068065aa",
+        "artifacts.py": "41810001dc0891d7ffd41436913dda162884cac6012b4fb8f55d549c0a07afb4",
+        "comparison.py": "6d8d00008debfb2674d7886e3e5ba194e001ee2349b1db9f22a646b8418fdce5",
+        "demo.py": "d674c0b168b1ef57618b558da9e6afe904191272e951c65e97341b7cf9485f8a",
+        "forecast.py": "d6587bc0d6eab7cfa23505872d3f737cae025e578d84d0535f0a6d9af94f7f5a",
+        "metrics.py": "2865fe5d4939f31d0164d7651b8e7c0b2237c76bfb11e67a8c9fb4c93d089c53",
+        "serialization.py": "483680723b4dae29758a8a6bde4ebaeadcb00aeaf97b425f8d73817d65cd7052",
+        "splits.py": "f7bd42be7f9c0ce80059b2e49513e45287a2abb84c01794b0a26c0fc18656fe2"
+      }
+    },
+    "single": {
+      "code_commit": "588cfff144644dec7d1acbde493bfd964c140bd7",
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 6,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 2,
+        "excluded_origins_target_outside_window": 2,
+        "excluded_participants": 0,
+        "expected_points": 8,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 4,
+        "predicted_origins": 4,
+        "roster_participants": 6,
+        "scored_participants": 2,
+        "scored_points": 8,
+        "training_observations": 8
+      },
+      "data_mode": "synthetic",
+      "git_dirty": false,
+      "packet_and_source_hashes_verified": true,
+      "packet_sha256": {
+        "config.json": "a4f939881c8feaeae9597d1e3807fa163a0695d59c6989c777b11f6dd5077aca",
+        "evaluation.json": "9213a04177c0134772ac20fef5f4d62691d0ec15950513cf7f8f5fb6c6529a2e",
+        "origins.json": "6a8fdae202ccf13a4be6b72393b7ff7da3382b3dea7d604b3e8ac7a28474e4a6",
+        "run.json": "f6bd760f2ae598dddabfc46e7d3cb90bd8d0739abf83570363c5099ae7f552d8",
+        "source-sha256.json": "cf6f994c22404ace25f3f0029437a2078291ed5d1680146ec564240a3bb208a8",
+        "split.json": "346e8c4fbd466ae3142ebc7f26575f072cc55d21540de39012032f1617a50b8f"
+      },
+      "private_modes_verified": true,
+      "source_sha256": {
+        "__init__.py": "5c755703270ec9062a8f012f29552b92b712e96d1a3ed8303535f488068065aa",
+        "artifacts.py": "41810001dc0891d7ffd41436913dda162884cac6012b4fb8f55d549c0a07afb4",
+        "comparison.py": "6d8d00008debfb2674d7886e3e5ba194e001ee2349b1db9f22a646b8418fdce5",
+        "demo.py": "d674c0b168b1ef57618b558da9e6afe904191272e951c65e97341b7cf9485f8a",
+        "forecast.py": "d6587bc0d6eab7cfa23505872d3f737cae025e578d84d0535f0a6d9af94f7f5a",
+        "metrics.py": "2865fe5d4939f31d0164d7651b8e7c0b2237c76bfb11e67a8c9fb4c93d089c53",
+        "serialization.py": "483680723b4dae29758a8a6bde4ebaeadcb00aeaf97b425f8d73817d65cd7052",
+        "splits.py": "f7bd42be7f9c0ce80059b2e49513e45287a2abb84c01794b0a26c0fc18656fe2"
+      }
+    }
+  }
+}
