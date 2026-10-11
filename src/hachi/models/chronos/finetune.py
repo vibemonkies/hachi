@@ -32,6 +32,7 @@ from inference import (
     load_pipeline,
     pipeline_forecaster,
     read_requests,
+    single_latency,
     write_new,
     write_run,
 )
@@ -140,8 +141,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     levels = [float(q) for q in pipeline.quantiles]
     torch.cuda.reset_peak_memory_stats()
     forecaster = pipeline_forecaster(pipeline, args.inference_batch_size)
-    single_start = time.perf_counter()
-    forecaster([requests[0]], requests[0].prediction_length)
+    latency = single_latency(
+        lambda item: forecaster([item], item.prediction_length), requests, args.latency_samples
+    )
     infer_start = time.monotonic()
     rows, _, crossed = forecast_rows(
         requests, forecaster, batch_size=args.inference_batch_size, levels=levels
@@ -177,7 +179,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "log_history": history,
         "timing": {
             "fit_seconds": fit_seconds,
-            "first_forecast_seconds": infer_start - single_start,
+            **latency,
             "batched_inference_seconds": infer_seconds,
         },
         "memory": {
@@ -219,6 +221,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--min-past", type=int, default=24)
     parser.add_argument("--optim", default="adamw_torch_fused")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--latency-samples", type=int, default=16)
     evidence = run(parser.parse_args(argv))
     print(json.dumps({k: evidence.get(k) for k in ("requests", "timing", "memory")}, indent=2))
 

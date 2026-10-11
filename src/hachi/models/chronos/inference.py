@@ -215,6 +215,23 @@ def write_new(path: Path, lines: Iterable[bytes]) -> str:
     return digest.hexdigest()
 
 
+def single_latency(call: Callable[[Request], Any], items: Sequence[Request], samples: int) -> dict:
+    """Warm once, then time `samples` single-request calls (the serving path's latency)."""
+    if not items:
+        return {"single_request_samples": 0}
+    call(items[0])
+    seconds = []
+    for item in items[:samples]:
+        started = time.perf_counter()
+        call(item)
+        seconds.append(time.perf_counter() - started)
+    return {
+        "single_request_samples": len(seconds),
+        "single_request_seconds_p50": _percentile(seconds, 0.5) if seconds else None,
+        "single_request_seconds_p95": _percentile(seconds, 0.95) if seconds else None,
+    }
+
+
 def _percentile(values: Sequence[float], probability: float) -> float:
     ordered = sorted(values)
     position = (len(ordered) - 1) * probability
@@ -392,6 +409,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 for e, ls in zip(embeddings, loc_scale, strict=True)
             ]
 
+        latency = single_latency(lambda item: embedder([item]), requests, args.latency_samples)
+        torch.cuda.reset_peak_memory_stats()
         embed_start = time.monotonic()
         rows = embed_rows(requests, embedder, batch_size=args.batch_size)
         details = {
@@ -403,8 +422,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "timing": {
                 "model_load_seconds": load_seconds,
                 "embed_seconds": time.monotonic() - embed_start,
+                **latency,
             },
-            "memory": {"peak_cuda_allocated_bytes": torch.cuda.max_memory_allocated()},
+            "memory": {
+                "peak_cuda_allocated_bytes": torch.cuda.max_memory_allocated(),
+                "peak_process_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+            },
             "environment": environment(),
         }
         return write_run(output, args.requests, requests, rows, levels, 0, details, kind="embed")
