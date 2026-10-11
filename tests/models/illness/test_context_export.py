@@ -10,7 +10,7 @@ from hachi.evaluation.clinical_protocol import ClinicalProtocol
 from hachi.evaluation.folds import NestedFoldConfig, nested_participant_folds
 from hachi.evaluation.serialization import document_bytes, document_sha256
 from hachi.models.chronos.inference import read_requests
-from hachi.models.illness.context_export import export
+from hachi.models.illness.context_export import export, verify_packet
 from hachi.models.illness.hourly import NativePoint, NativeSeries, load_context_protocol
 
 
@@ -114,6 +114,9 @@ def test_export_actual_chronos_boundary_private_folds_and_sealed_reads(tmp_path,
         assert roles.count("validation") == 1 and roles.count("train") == 2
     assert output.stat().st_mode & 0o777 == 0o700
     assert all(p.stat().st_mode & 0o777 == 0o600 for p in output.iterdir())
+    verification = verify_packet(tmp_path, output)
+    assert verification["boundary_verification"]["private_fold_joins_checked"] == 6
+    assert verification["boundary_verification"]["encoder_content_hashes_checked"] == 1
     # Changing active outer would read the originally sealed people. Reject before any read.
     import pytest
 
@@ -127,3 +130,17 @@ def test_export_actual_chronos_boundary_private_folds_and_sealed_reads(tmp_path,
     with pytest.raises(ValueError, match="frozen outer0"):
         export(tmp_path, tmp_path / "native.zip", tmp_path / "rejected", tmp_path, clinical_path)
     assert not (tmp_path / "rejected").exists()
+
+
+def test_context_summary_rejects_private_payloads():
+    import pytest
+    from pydantic import ValidationError
+
+    from hachi.models.illness.context_export import ContextSummary
+
+    summary = json.loads(Path("reports/models/illness/clinical-contexts.json").read_bytes())
+    summary.pop("boundary_verification")
+    ContextSummary.model_validate_json(json.dumps(summary))
+    summary["git_sha"] = {"synthetic-private-rows": [60.0]}
+    with pytest.raises(ValidationError):
+        ContextSummary.model_validate_json(json.dumps(summary))

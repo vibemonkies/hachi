@@ -9,16 +9,215 @@ import subprocess
 import zipfile
 from collections import Counter, defaultdict
 from pathlib import Path
+from typing import Annotated, Literal
 
+from pydantic import Field
+
+from hachi.contracts.base import Contract, Sha256
 from hachi.data.clinical.snapshot import dataset_snapshot_ref, read_table
 from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
 from hachi.evaluation.serialization import document_bytes, document_sha256
-from hachi.models.chronos.inference import check_request, request_id
+from hachi.models.chronos.inference import check_request, read_requests, request_id
 
-from .hourly import causal_hours, load_context_protocol, read_native_context, verify_archive
+from .hourly import (
+    ContextProtocol,
+    causal_hours,
+    load_context_protocol,
+    read_native_context,
+    verify_archive,
+)
 from .run import write_private
 
 REPO = Path(__file__).resolve().parents[4]
+
+
+class ContextSummary(Contract):
+    """A private summary must not become an arbitrary public health-data payload."""
+
+    git_sha: Annotated[str, Field(pattern=r"^[0-9a-f]{40}$")]
+    protocol_sha256: Sha256
+    shared_protocol_sha256: Sha256
+    fold_plan_sha256: Sha256
+    archive_sha256: Sha256
+    clock: Literal["floating_local_shifted"]
+    counts: dict[str, Annotated[int, Field(ge=0)]]
+    unique_requests: Annotated[int, Field(ge=0)]
+    unique_encoder_requests: Annotated[int, Field(ge=0)]
+    request_file_sha256: Sha256
+    encoder_request_file_sha256: Sha256
+    development_subjects_with_eligible_cutoffs: Annotated[int, Field(ge=0)]
+    request_rows_have_identities_or_labels: Literal[False]
+    outer_test_status: Literal["sealed"]
+    inference_status: Literal["not_run"]
+    comparison_status: Literal["pending"]
+
+
+def verify_packet(snapshot: Path, output: Path) -> dict:
+    """Validate real request files and role joins; return only reproducible aggregate evidence."""
+    protocol = ContextProtocol.model_validate_json((output / "protocol.json").read_bytes())
+    clinical = ClinicalProtocol.model_validate_json(
+        (output / "clinical-protocol.json").read_bytes()
+    )
+    if (
+        clinical.active_outer_fold != protocol.active_outer_fold
+        or clinical.nested_plan_sha256 != protocol.nested_plan_sha256
+    ):
+        raise ValueError("context packet changed sealed participant plan")
+    plan = clinical_fold_plan(snapshot, clinical)
+    if dataset_snapshot_ref(snapshot).snapshot_sha256 != protocol.snapshot_sha256:
+        raise ValueError("context verification snapshot differs from frozen policy")
+    if document_sha256(plan) != document_sha256(
+        json.loads((output / "fold-plan.json").read_bytes())
+    ):
+        raise ValueError("saved context plan differs from verified roster")
+    summary = ContextSummary.model_validate_json((output / "summary.json").read_bytes()).model_dump(
+        mode="json"
+    )
+    if summary["protocol_sha256"] != document_sha256(protocol):
+        raise ValueError("context policy hash differs")
+    if summary["shared_protocol_sha256"] != document_sha256(clinical) or summary[
+        "fold_plan_sha256"
+    ] != document_sha256(plan):
+        raise ValueError("context summary differs from frozen participant protocol")
+    chronos = read_requests(output / "requests.jsonl") if summary["unique_requests"] else []
+    encoder_rows = [
+        json.loads(line) for line in (output / "encoder-requests.jsonl").read_text().splitlines()
+    ]
+    encoder_ids, contexts = set(), {}
+    for row in encoder_rows:
+        rid = row.pop("request_sha256")
+        if rid != document_sha256(row) or rid in encoder_ids:
+            raise ValueError("invalid/duplicate encoder request hash")
+        if (
+            set(row) != {"context_policy_sha256", "hours", "first_hour_local", "channels", "units"}
+            or row["context_policy_sha256"] != document_sha256(protocol)
+            or row["hours"] != protocol.context_hours
+            or row["first_hour_local"] != (-protocol.context_hours) % 24
+            or set(row["channels"]) != {"heart_rate"}
+            or row["units"] != {"heart_rate": "bpm"}
+        ):
+            raise ValueError("encoder metadata differs from frozen HR-only policy")
+        context = row["channels"]["heart_rate"]
+        # Share the actual #12 finite-float/null transport boundary.
+        check_request(
+            {
+                "request_id": request_id(context, protocol.prediction_hours),
+                "context": context,
+                "prediction_length": protocol.prediction_hours,
+            }
+        )
+        if (
+            len(context) != protocol.context_hours
+            or sum(v is not None for v in context) < protocol.min_observed_hr_hours
+        ):
+            raise ValueError("encoder context violates coverage policy")
+        encoder_ids.add(rid)
+        contexts[request_id(context, protocol.prediction_hours)] = rid
+    if {r.request_id for r in chronos} != set(contexts) or len(encoder_rows) != len(contexts):
+        raise ValueError("encoder and Chronos requests differ")
+    active = {f.inner_fold: f for f in plan.folds if f.outer_fold == protocol.active_outer_fold}
+    development = sorted({s for f in active.values() for s in f.validation_subjects})
+    eligible = {
+        (r["subject_id"], r["cutoff_utc"].isoformat())
+        for r in read_table(snapshot, "onset_windows", development).to_pylist()
+        if any(r[f"onset_{h}h"] in {"positive", "negative"} for h in (24, 48, 72))
+    }
+    joins = json.loads((output / "joins.json").read_bytes())
+    keys = set()
+    for join in joins:
+        fold = active[join["inner_fold"]]
+        subject, cutoff = join["subject_id"], join["cutoff_floating"]
+        key = (join["inner_fold"], subject, cutoff)
+        expected_role = (
+            "validation"
+            if subject in fold.validation_subjects
+            else "train"
+            if subject in fold.train_subjects
+            else None
+        )
+        if (
+            key in keys
+            or expected_role != join["role"]
+            or expected_role is None
+            or join["outer_fold"] != protocol.active_outer_fold
+            or join["as_of_floating"] != cutoff
+            or join["clock"] != protocol.clock
+        ):
+            raise ValueError("private context join differs from sealed role/availability")
+        keys.add(key)
+        rid = join["request_id"]
+        if (rid is None and join["encoder_request_sha256"] is not None) or (
+            rid is not None and contexts.get(rid) != join["encoder_request_sha256"]
+        ):
+            raise ValueError("private join differs from request content")
+    expected_keys = {(i, subject, cutoff) for i in active for subject, cutoff in eligible}
+    if keys != expected_keys or len(eligible) != summary["counts"]["eligible_cutoffs"]:
+        raise ValueError("private context joins are incomplete")
+    if output.stat().st_mode & 0o777 != 0o700 or any(
+        p.stat().st_mode & 0o777 != 0o600 for p in output.iterdir()
+    ):
+        raise ValueError("context packet permissions differ from private policy")
+    for name, field in [
+        ("requests.jsonl", "request_file_sha256"),
+        ("encoder-requests.jsonl", "encoder_request_file_sha256"),
+    ]:
+        if hashlib.sha256((output / name).read_bytes()).hexdigest() != summary[field]:
+            raise ValueError("context transport file hash differs")
+    if (
+        len(chronos) != summary["unique_requests"]
+        or len(encoder_rows) != summary["unique_encoder_requests"]
+    ):
+        raise ValueError("summary request counts differ from actual transport")
+    # Select explicit exporter fields; arbitrary additions to a private summary never publish.
+    public = summary
+    allowed_counts = {"eligible_cutoffs", "requested_cutoffs", "insufficient_hourly_context"} | {
+        f"{metric}:{counter}"
+        for metric in ("heart_rate", "steps")
+        for counter in (
+            "source_rows",
+            "quarantined_subject",
+            "quarantined_value_time",
+            "outside_requested_windows",
+            "bounded_points",
+        )
+    }
+    if not set(public["counts"]) <= allowed_counts or any(
+        type(v) is not int or v < 0 for v in public["counts"].values()
+    ):
+        raise ValueError("private summary has unsupported aggregate counters")
+    public["boundary_verification"] = {
+        "producing_commit": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=REPO, text=True
+        ).strip(),
+        "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "git_dirty": bool(
+            subprocess.check_output(
+                ["git", "diff", "HEAD", "--name-only", "--", "src/hachi"], cwd=REPO, text=True
+            )
+        ),
+        "chronos_requests_checked": len(chronos),
+        "encoder_content_hashes_checked": len(encoder_rows),
+        "request_context_hours": protocol.context_hours,
+        "private_fold_joins_checked": len(joins),
+        "outer_test_join_rows": 0,
+        "private_files_mode": "0600",
+        "private_directory_mode": "0700",
+        "inference_run": False,
+        "packet_files_sha256": {
+            name: hashlib.sha256((output / name).read_bytes()).hexdigest()
+            for name in (
+                "protocol.json",
+                "clinical-protocol.json",
+                "fold-plan.json",
+                "sources.json",
+                "joins.json",
+                "requests.jsonl",
+                "encoder-requests.jsonl",
+                "summary.json",
+            )
+        },
+    }
+    return public
 
 
 def export(
@@ -141,8 +340,10 @@ def export(
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--snapshot", required=True, type=Path)
-    p.add_argument("--archive", required=True, type=Path)
+    p.add_argument("--archive", type=Path)
     p.add_argument("--output", required=True, type=Path)
+    p.add_argument("--verify-only", action="store_true")
+    p.add_argument("--public-report", type=Path)
     p.add_argument(
         "--protocol", type=Path, default=REPO / "configs/experiments/illness/clinical-contexts.toml"
     )
@@ -153,14 +354,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = p.parse_args(argv)
     try:
-        print(
-            json.dumps(
-                export(
-                    args.snapshot, args.archive, args.output, args.protocol, args.clinical_protocol
-                ),
-                indent=2,
-            )
-        )
+        if not args.verify_only:
+            if args.archive is None:
+                raise ValueError("archive is required for extraction")
+            export(args.snapshot, args.archive, args.output, args.protocol, args.clinical_protocol)
+        result = verify_packet(args.snapshot, args.output)
+        if args.public_report:
+            if result["boundary_verification"]["git_dirty"]:
+                raise ValueError("commit context verification before publishing receipt")
+            args.public_report.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     except (ValueError, OSError, KeyError, zipfile.BadZipFile, csv.Error):
         print("Clinical context export failed validation or I/O; private rows withheld.")

@@ -108,3 +108,18 @@ outer test is never read. The exporter runs no model or scoring. Frozen encoders
 return features; downstream heads, imputation/scaling and any dimensionality
 reduction must fit inside the training participants. A complete model-comparison
 protocol must be frozen before these features produce scores.
+
+Recheck an existing private packet and regenerate its sanitized public receipt
+without repeating native extraction or running inference:
+
+~~~sh
+python -I -m hachi.models.illness.context_export \
+  --verify-only --snapshot "$HACHI_LABEL_SNAPSHOT" \
+  --output "$HACHI_RUN_ROOT/illness-clinical-contexts" \
+  --public-report reports/models/illness/clinical-contexts.json
+~~~
+
+Verification exercises the actual Chronos request reader, encoder content hashes,
+coverage policy, exact development eligibility/fold joins and private permissions.
+The public receipt binds both extraction and verification revisions and input
+file hashes; arbitrary private-summary fields cannot become public report data.
