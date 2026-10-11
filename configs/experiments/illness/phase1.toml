@@ -32,6 +32,8 @@ selection_requires_positive_ci_lower_bound = true
 # Daily negative cutoff exposure is selected survey-confirmed at-risk time;
 # it is not population healthy time. Unknown and excluded rows never score.
 # Alert episodes merge adjacent daily alerts; lead time retains onset day intervals.
+# False-alert burden merges NEGATIVE-ONLY daily alerts; a later positive never
+# erases an earlier false alert episode. Positive/unknown gaps break false episodes.
 # Selection promotes a candidate only on paired participant-bootstrap AUPRC
 # improvement with 95% lower bound > 0, and validation burden <= prespecified cap.
 # Otherwise retain prevalence, or report unavailable when calibration lacks classes.

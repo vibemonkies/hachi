@@ -1,0 +1,182 @@
+"""Exercise the actual private packet path on a synthetic cohort, with outer test sealed."""
+
+import json
+from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
+
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pytest
+
+from hachi.evaluation.folds import nested_participant_folds
+from hachi.evaluation.serialization import document_sha256
+from hachi.models.illness import data
+from hachi.models.illness.data import FeatureSet
+from hachi.models.illness.protocol import load_protocol
+from hachi.models.illness.run import run
+
+PROTOCOL = load_protocol(Path("configs/experiments/illness/phase1.toml")).model_copy(
+    update={"bootstrap_replicates": 100}
+)
+
+
+@pytest.fixture
+def snapshot(tmp_path):
+    path = tmp_path / "synthetic-snapshot"
+    path.mkdir()
+    subjects = [f"synthetic-{i}" for i in range(24)]
+    pq.write_table(
+        pa.Table.from_pylist([{"subject_id": s} for s in subjects]), path / "subjects.parquet"
+    )
+    manifest = {
+        "dataset_snapshot": {
+            "dataset_id": PROTOCOL.dataset_id,
+            "dataset_version": "2020-nbe",
+            "snapshot_sha256": PROTOCOL.snapshot_sha256,
+        },
+        "clock": PROTOCOL.clock,
+        "definitions": {"definitions_version": "outcomes-1"},
+    }
+    (path / "manifest.json").write_text(json.dumps(manifest))
+    episodes, surveys, rows = [], [], []
+    for sid in subjects:
+        for k in range(20):
+            day = date(2020, 1, 1) + timedelta(days=k)
+            positive = k % 4 == 0
+            eid = f"{sid}-event-{k}" if positive else None
+            if positive:
+                episodes.append(
+                    {
+                        "subject_id": sid,
+                        "episode_id": eid,
+                        "onset_first_day": day,
+                        "onset_last_day": day,
+                    }
+                )
+            surveys.append({"subject_id": sid, "local_date": day, "state": "symptom_free"})
+            row = {"subject_id": sid, "cutoff_utc": datetime.combine(day, datetime.min.time(), UTC)}
+            for h in [24, 48, 72]:
+                row[f"onset_{h}h"] = "positive" if positive else "negative"
+                row[f"onset_episode_{h}h"] = eid
+            rows.append(row)
+    for name, records in [("episodes", episodes), ("surveys", surveys), ("onset_windows", rows)]:
+        pq.write_table(pa.Table.from_pylist(records), path / f"{name}.parquet")
+    return path, subjects
+
+
+def clean_run(monkeypatch):
+    monkeypatch.setattr("hachi.models.illness.run.verify", lambda snapshot: {"ok": True})
+    monkeypatch.setattr(
+        "hachi.models.illness.run.subprocess.check_output",
+        lambda args, **kwargs: "" if "--porcelain" in args else "a" * 40,
+    )
+
+
+def test_actual_runner_private_packets_canonical_manifests_and_sealed_test(
+    snapshot, tmp_path, monkeypatch
+):
+    path, subjects = snapshot
+    plan = nested_participant_folds(subjects, PROTOCOL.folds)
+    outer_test = set(plan.folds[0].test_subjects)
+    original = data.read_table
+    seen = []
+
+    def guarded(snapshot, name, selected=None):
+        if name != "subjects":
+            assert selected is not None and not outer_test & set(selected)
+            seen.append(name)
+        return original(snapshot, name, selected)
+
+    monkeypatch.setattr(data, "read_table", guarded)
+    clean_run(monkeypatch)
+    summary = run(
+        path,
+        tmp_path / "packet",
+        PROTOCOL,
+        agreed_fold_sha256=document_sha256(plan),
+        split_created_at=datetime(2026, 10, 11, 11, 45, tzinfo=UTC),
+        shared_protocol_sha256="c" * 64,
+    )
+    assert len(summary["fold_evidence"]) == 27
+    assert summary["outer_test_status"] == "sealed"
+    assert set(seen) == {"episodes", "surveys", "onset_windows"}
+    for entry in summary["fold_evidence"]:
+        assert entry["status"] == "fitted"
+        assert entry["replay_max_probability_difference"] < 1e-12
+    for packet in (tmp_path / "packet").glob("inner-*"):
+        manifest = json.loads((packet / "run.json").read_text())
+        assert manifest["config_sha256"] == document_sha256(
+            json.loads((packet / "config.json").read_text())
+        )
+        assert manifest["split_manifest_sha256"] == document_sha256(
+            json.loads((packet / "split.json").read_text())
+        )
+        split = json.loads((packet / "split.json").read_text())
+        assert split["test_opened_at_utc"] is None
+        assert set(split["test_subjects"]) == outer_test
+        assert json.loads((packet / "serving.json").read_text())["status"] == "unavailable"
+        assert (packet / "predictions.json").stat().st_mode & 0o777 == 0o600
+
+
+def test_at_risk_unknown_controls_and_exclusions_never_become_negative(snapshot):
+    path, subjects = snapshot
+    table = pq.read_table(path / "onset_windows.parquet").to_pylist()
+    for row in table:
+        if row["subject_id"] == subjects[0]:
+            for h in [24, 48, 72]:
+                row[f"onset_{h}h"] = "unknown_no_survey"
+    pq.write_table(pa.Table.from_pylist(table), path / "onset_windows.parquet")
+    rows, counts = data.at_risk_windows(path, subjects[:2], PROTOCOL)
+    assert {r.subject_id for r in rows} == {subjects[1]}
+    assert counts["24h:unknown_no_survey"] == 20
+
+
+def test_external_fit_on_calibration_subject_is_rejected(snapshot, tmp_path, monkeypatch):
+    path, subjects = snapshot
+    plan = nested_participant_folds(subjects, PROTOCOL.folds)
+    from hachi.models.illness.training import calibration_partition
+
+    _, calibration = calibration_partition(plan.folds[0].train_subjects, PROTOCOL)
+    features = FeatureSet(
+        feature_names=("external",),
+        provenance_sha256="d" * 64,
+        fit_subjects=(calibration[0],),
+        clock="floating_local_shifted",
+        points=(),
+    )
+    clean_run(monkeypatch)
+    with pytest.raises(ValueError, match="external feature fitting"):
+        run(
+            path,
+            tmp_path / "rejected",
+            PROTOCOL,
+            agreed_fold_sha256=document_sha256(plan),
+            split_created_at=datetime.now(UTC),
+            shared_protocol_sha256="c" * 64,
+            external_by_inner={0: features, 1: features, 2: features},
+        )
+
+
+def test_partial_external_fold_candidates_do_not_pool_incompatible_features(
+    snapshot, tmp_path, monkeypatch
+):
+    path, subjects = snapshot
+    plan = nested_participant_folds(subjects, PROTOCOL.folds)
+    clean_run(monkeypatch)
+    features = FeatureSet(
+        feature_names=("external",),
+        provenance_sha256="d" * 64,
+        fit_subjects=(),
+        clock="floating_local_shifted",
+        points=(),
+    )
+    with pytest.raises(ValueError, match="every active inner fold"):
+        run(
+            path,
+            tmp_path / "rejected",
+            PROTOCOL,
+            agreed_fold_sha256=document_sha256(plan),
+            split_created_at=datetime.now(UTC),
+            shared_protocol_sha256="c" * 64,
+            external_by_inner={0: features},
+        )
