@@ -199,6 +199,13 @@ export type RecordIssueCode =
  */
 export type LabelSource = "study_survey" | "self_report" | "clinician" | "derived";
 /**
+ * Local wall-clock time, without an offset.
+ *
+ * This interface was referenced by `HachiContracts`'s JSON-Schema
+ * via the `definition` "LocalDateTime".
+ */
+export type LocalDateTime = string;
+/**
  * An outcome-table row: a symptom episode, a test result, or a period of unknown status.
  *
  * This interface was referenced by `HachiContracts`'s JSON-Schema
@@ -1308,14 +1315,8 @@ export interface ScenarioRequest {
  */
 export interface SleepSchedule {
   schedule_id: Identifier;
-  /**
-   * Local wall-clock time, without an offset.
-   */
-  bedtime_local: string;
-  /**
-   * Local wall-clock time, without an offset.
-   */
-  wake_time_local: string;
+  bedtime_local: LocalDateTime;
+  wake_time_local: LocalDateTime;
 }
 /**
  * Symptoms began somewhere in [onset_earliest_utc, onset_latest_utc].
