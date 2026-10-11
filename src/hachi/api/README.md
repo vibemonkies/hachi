@@ -37,6 +37,9 @@ never names a path.
 | `HACHI_SERVE_ARTIFACTS` | — | Comma-separated pins: `<artifact_id>@<artifact_sha256>` |
 | `HACHI_API_CORS_ORIGINS` | Vite on `localhost`/`127.0.0.1:5173` | Browser origins allowed to call the API |
 | `HACHI_GIT_SHA` | `git rev-parse HEAD` | The code identity reported in every result |
+| `HACHI_GX10_SSH` | — | SSH destination of the GX10 (e.g. `asus@5asb`) for GPU-backed models |
+| `HACHI_GX10_CHECKOUT` | — | GX10 clone of a merged main commit; its `inference.py` must hash like yours |
+| `HACHI_GX10_TIMEOUT` | `180` | Seconds one GPU job may take, queue wait included |
 
 `GET /healthz` reports `degraded` when a configured snapshot or artifact was refused. The
 reason is logged, and that snapshot or artifact is not used.
@@ -50,8 +53,9 @@ reason is logged, and that snapshot or artifact is not used.
 | `GET /v1/subjects/{id}/coverage[?as_of=]` | → `Coverage` | With `as_of`, only data available by then is counted. |
 | `POST /v1/reports` | `ReportRequest` → `ReportJob` | A new job returns 202 `queued`. An identical request on the same data, artifact and code returns 200 and the same job. |
 | `GET /v1/reports/{id}` | → `ReportJob` | `queued` → `running` → `completed`. A failure is a completed job with an `error` result. |
-| `POST /v1/subjects/{id}/observations` | `SelfReportRequest` → the same | 201 when an entry was stored. Re-sending an entry exactly is a no-op. Re-sending a changed entry returns 409. |
-| `GET /v1/subjects/{id}/observations` | → `SelfReportHistory` | Every stored entry, in recording order. An empty list for a known subject with none; 404 for an unknown subject. |
+| `POST /v1/subjects/{id}/observations` | `SelfReportRequest` → the same | 201 when an entry was stored. Re-sending an entry exactly is a no-op. Re-sending a changed entry returns 409. A correction is a new `entry_id` with `supersedes` naming the current version: same `kind`, entered no earlier. Forks, deleted ids and wrong episode references are refused. |
+| `GET /v1/subjects/{id}/observations[?as_of=&versions=all]` | → `SelfReportHistory` | Current version of each entry, in recording order. `as_of` shows what was known then; `versions=all` lists every version. An empty list for a known subject with none; 404 for an unknown subject. |
+| `DELETE /v1/subjects/{id}/observations/{entry_id}?confirm={entry_id}` | → 204 | Erases every version of the entry (SQLite secure delete plus a WAL scrub) and leaves a content-free tombstone, so the ids are never reused. Invalidates the subject's illness/recovery reports. Returns 409 for an onset a recorded resolution refers to. |
 | `POST /v1/scenarios` | `ScenarioRequest` → `ReportResult` | `unavailable` until #15's frozen two-process artifact is served. |
 | `DELETE /v1/subjects/{id}?confirm={id}` | → 204 | Removes private files first, then the records: if a file can't be removed it answers 500 and keeps every record, so the deletion can be retried. Running jobs, or writes for a subject being deleted, return 409. |
 | `GET /healthz` | → `HealthStatus` | Code identity and the served artifact refs. |
@@ -129,6 +133,39 @@ uv run --extra api python -I -m hachi.api stage-artifact \
   --protocol RUN/protocol.json --artifact-root "$HACHI_ARTIFACT_ROOT"
 ```
 
+## GPU models (Chronos-2)
+
+A Chronos-2 artifact from #10/#12 is staged like a baseline. `stage-artifact --protocol` sees the
+`chronos-2-artifact-1` model and writes a serving spec with `requires_gpu: true` and
+`interval_nominal_coverage: 0.8` (q0.1-q0.9). Only zero-shot, univariate artifacts whose context
+equals the protocol lookback are served for now.
+
+Each forecast is one GX10 job:
+
+1. `build_request` (the evaluator's adapter) turns the causal hourly history into one context
+   request. The request carries the context and horizon only: no subject id, cutoff or target.
+2. Over SSH the API writes the request into the owner workspace and runs
+   `scripts/gx10/gpu-run --owner <owner> --run-id api-chronos-<stamp>-<hex> -- <envs/<lock>/bin/python> -I src/hachi/models/chronos/inference.py …`
+   from `HACHI_GX10_CHECKOUT`.
+3. The API reads `inference.json` and `predictions.jsonl` back and refuses them unless:
+   - the weights equal the pin's `weights_sha256` and the model revision matches;
+   - the GX10's `inference.py` hashes like this checkout's;
+   - the request and prediction checksums match the bytes sent and received;
+   - exactly one prediction answers the request, with the requested horizon.
+4. `estimates` (the evaluator's adapter) maps the quantiles to median and q0.1-q0.9 bounds.
+
+Intervals are `uncalibrated` with an `UNCALIBRATED_INTERVALS` warning until #20 validates them.
+Failures are errors, never guesses:
+
+| Situation | Result |
+|---|---|
+| No GX10 configured | `GPU_UNAVAILABLE` |
+| Host unreachable, or `gpu-run` exit 75 (GPU busy) | `GPU_UNAVAILABLE` |
+| Job past `HACHI_GX10_TIMEOUT` | `INFERENCE_TIMEOUT` |
+| Output fails any check above | `INFERENCE_FAILED` |
+
+`GPU_UNAVAILABLE` and `INFERENCE_TIMEOUT` are transient, so an identical request runs again.
+
 ## Handoff check
 
 With the API running, `handoff` requests every origin in a real evaluation packet over HTTP. It
@@ -137,7 +174,9 @@ compares each forecast with two references:
 - the predictions the evaluator saved in the packet
 - a fresh direct inference through `evaluate_forecast`
 
-It prints counts, differences and identities only:
+It compares the median and, when given, both bounds. `--tolerance` sets the largest
+difference still counted as agreement (exact by default). `--no-direct` skips the second
+reference, which saves GPU jobs for GPU models. It prints counts, differences and identities only:
 
 ```sh
 uv run --extra api python -I -m hachi.api handoff \

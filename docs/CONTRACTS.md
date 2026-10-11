@@ -63,13 +63,20 @@ The cutoff rule lives in `hachi.contracts.causality`: an observation may inform 
 | `GET /v1/subjects/{id}/coverage` | → `Coverage` | Available metrics, time span, gaps, sources, and which tasks the data can support |
 | `POST /v1/reports` | `ReportRequest` → `ReportJob` | Validated report request; enqueue idempotent inference |
 | `GET /v1/reports/{id}` | → `ReportJob` | Job state and, once completed, the `ReportResult` |
-| `POST /v1/subjects/{id}/observations` | `SelfReportRequest` | Symptom onset/check-in/resolution, test results, alertness ratings, PVT results and confounders, each with separate event and entry times |
-| `GET /v1/subjects/{id}/observations` | → `SelfReportHistory` | Every stored entry in recording order, in one response; may be empty. The 1–200 bound applies only to a POST batch |
+| `POST /v1/subjects/{id}/observations` | `SelfReportRequest` | Symptom onset/check-in/resolution, test results, alertness ratings, PVT results and confounders, each with separate event and entry times. A correction is a new entry that `supersedes` the current version |
+| `GET /v1/subjects/{id}/observations[?as_of=&versions=]` | → `SelfReportHistory` | Current version of every entry in recording order, in one response; may be empty. `as_of` shows what was known then; `versions=all` lists every version. The 1–200 bound applies only to a POST batch |
+| `DELETE /v1/subjects/{id}/observations/{entry_id}?confirm={entry_id}` | | Erases every version of one entry, leaving a content-free tombstone; invalidates illness/recovery reports; an onset with a recorded resolution is kept until the resolution is deleted |
 | `POST /v1/scenarios` | `ScenarioRequest` → `ReportResult` | Bedtime/wake-time schedules, timezone and explicit assumptions; answered synchronously with an `alertness` result |
 | `DELETE /v1/subjects/{id}` | | Confirmed deletion of subject data and derived personal artifacts |
 | `GET /healthz` | → `HealthStatus` | Process readiness plus code/artifact versions, no participant data |
 
 Every non-2xx response is an `ApiError` with a stable `error_code` and a `request_id`. Validate and authorize ids server-side; never accept an arbitrary filesystem path from the browser. Input hashes plus model/version/task form an idempotency key so retries do not rerun expensive jobs.
+
+Self-reports are never edited in place. A correction is appended as a new entry whose
+`supersedes` names the current version it replaces: same `kind`, entered no earlier. So an
+earlier `as_of` still sees what was known then. An episode is identified by its original
+onset's `entry_id`, the root of its `supersedes` chain. `symptom_resolution.onset_entry_id`
+and `RecoveryRequest.episode_id` use that id.
 
 Transport conventions:
 

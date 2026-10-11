@@ -250,6 +250,18 @@
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
         },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
+        },
         "kind": {
           "const": "alertness_rating",
           "type": "string"
@@ -736,6 +748,18 @@
         "entered_at_utc": {
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
         },
         "kind": {
           "const": "confounder",
@@ -2127,6 +2151,18 @@
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
         },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
+        },
         "kind": {
           "const": "pvt_result",
           "type": "string"
@@ -3040,6 +3076,18 @@
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
         },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
+        },
         "kind": {
           "const": "symptom_checkin",
           "type": "string"
@@ -3194,6 +3242,18 @@
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
         },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
+        },
         "kind": {
           "const": "symptom_onset",
           "type": "string"
@@ -3236,6 +3296,18 @@
         "entered_at_utc": {
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
         },
         "kind": {
           "const": "symptom_resolution",
@@ -3393,6 +3465,18 @@
         "entered_at_utc": {
           "$ref": "#/$defs/UtcDatetime",
           "description": "When the person recorded this entry."
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id."
         },
         "kind": {
           "const": "test_result",

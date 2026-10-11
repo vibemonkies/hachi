@@ -422,6 +422,10 @@ export interface AlertnessRatingEntry {
    * UTC instant in ISO 8601. Naive and non-UTC timestamps are rejected.
    */
   entered_at_utc: string;
+  /**
+   * entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id.
+   */
+  supersedes?: Identifier | null;
   kind: "alertness_rating";
   rated_at_utc: UtcDatetime;
   /**
@@ -632,6 +636,10 @@ export interface ConfounderEntry {
    * UTC instant in ISO 8601. Naive and non-UTC timestamps are rejected.
    */
   entered_at_utc: string;
+  /**
+   * entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id.
+   */
+  supersedes?: Identifier | null;
   kind: "confounder";
   factor:
     | "alcohol"
@@ -1126,6 +1134,10 @@ export interface PvtResultEntry {
    * UTC instant in ISO 8601. Naive and non-UTC timestamps are rejected.
    */
   entered_at_utc: string;
+  /**
+   * entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id.
+   */
+  supersedes?: Identifier | null;
   kind: "pvt_result";
   started_at_utc: UtcDatetime;
   duration_seconds: number;
@@ -1317,6 +1329,10 @@ export interface SymptomOnsetEntry {
    * UTC instant in ISO 8601. Naive and non-UTC timestamps are rejected.
    */
   entered_at_utc: string;
+  /**
+   * entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id.
+   */
+  supersedes?: Identifier | null;
   kind: "symptom_onset";
   onset_earliest_utc: UtcDatetime;
   onset_latest_utc: UtcDatetime;
@@ -1338,6 +1354,10 @@ export interface SymptomCheckInEntry {
    * UTC instant in ISO 8601. Naive and non-UTC timestamps are rejected.
    */
   entered_at_utc: string;
+  /**
+   * entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id.
+   */
+  supersedes?: Identifier | null;
   kind: "symptom_checkin";
   period_start_utc: UtcDatetime;
   period_end_utc: UtcDatetime;
@@ -1355,6 +1375,10 @@ export interface SymptomResolutionEntry {
    * UTC instant in ISO 8601. Naive and non-UTC timestamps are rejected.
    */
   entered_at_utc: string;
+  /**
+   * entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id.
+   */
+  supersedes?: Identifier | null;
   kind: "symptom_resolution";
   onset_entry_id: Identifier;
   resolved_earliest_utc: UtcDatetime;
@@ -1370,6 +1394,10 @@ export interface TestResultEntry {
    * UTC instant in ISO 8601. Naive and non-UTC timestamps are rejected.
    */
   entered_at_utc: string;
+  /**
+   * entry_id of the version this entry corrects; null for an original entry. Corrections are appended, never edited in place, so an earlier as_of still sees what was known then. An episode is identified by its original onset's entry_id.
+   */
+  supersedes?: Identifier | null;
   kind: "test_result";
   pathogen: "sars_cov_2" | "influenza" | "rsv" | "other" | "unknown";
   method: "pcr" | "antigen" | "other" | "unknown";

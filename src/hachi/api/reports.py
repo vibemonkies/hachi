@@ -46,6 +46,7 @@ from hachi.storage import Metadata, Workspace
 
 from .artifacts import ServedArtifact
 from .catalog import Catalog
+from .gpu import GpuOutputRejected, GpuTimeout, GpuUnavailable
 from .sources import SubjectData
 
 log = logging.getLogger("hachi.api")
@@ -94,29 +95,57 @@ class Context:
 # Self-reports --------------------------------------------------------------------------
 
 
-def self_report_entries(metadata: Metadata, subject_id: str) -> list[SelfReportEntry]:
-    return [ENTRY.validate_json(row.entry_json) for row in metadata.self_reports(subject_id)]
+@dataclass(frozen=True)
+class Version:
+    """One stored version of a self-report entry and the id of its chain's original."""
+
+    entry: SelfReportEntry
+    root: str
 
 
-def ongoing_episodes(entries: Sequence[SelfReportEntry], as_of: datetime) -> set[str]:
-    """Onsets recorded by as_of with no resolution known to have happened by then."""
-    known = [e for e in entries if e.entered_at_utc <= as_of]
+def self_report_versions(metadata: Metadata, subject_id: str) -> list[Version]:
+    """Every stored version, in recording order."""
+    return [
+        Version(ENTRY.validate_json(row.entry_json), row.root)
+        for row in metadata.self_reports(subject_id)
+    ]
+
+
+def current_versions(versions: Sequence[Version], as_of: datetime | None = None) -> list[Version]:
+    """The latest version of each entry known by `as_of` (all time when None).
+
+    Corrections are entered after what they correct, so the versions known at a cutoff are a
+    prefix of each chain: an earlier as_of keeps seeing what was known then. Results follow
+    the recording order of each chain's original entry.
+    """
+    visible = [v for v in versions if as_of is None or v.entry.entered_at_utc <= as_of]
+    superseded = {v.entry.supersedes for v in visible if v.entry.supersedes}
+    latest = {v.root: v for v in visible if v.entry.entry_id not in superseded}
+    first: dict[str, int] = {}
+    for index, version in enumerate(versions):
+        first.setdefault(version.root, index)
+    return sorted(latest.values(), key=lambda v: first[v.root])
+
+
+def ongoing_episodes(versions: Sequence[Version], as_of: datetime) -> set[str]:
+    """Episodes (original onset entry ids) begun by as_of with no resolution known by then."""
+    current = current_versions(versions, as_of)
     onsets = {
-        e.entry_id
-        for e in known
-        if isinstance(e, SymptomOnsetEntry) and e.onset_earliest_utc <= as_of
+        v.root
+        for v in current
+        if isinstance(v.entry, SymptomOnsetEntry) and v.entry.onset_earliest_utc <= as_of
     }
     resolved = {
-        e.onset_entry_id
-        for e in known
-        if isinstance(e, SymptomResolutionEntry) and e.resolved_latest_utc <= as_of
+        v.entry.onset_entry_id
+        for v in current
+        if isinstance(v.entry, SymptomResolutionEntry) and v.entry.resolved_latest_utc <= as_of
     }
     return onsets - resolved
 
 
-def self_report_digest(entries: Sequence[SelfReportEntry], as_of: datetime) -> str:
-    known = sorted((e for e in entries if e.entered_at_utc <= as_of), key=lambda e: e.entry_id)
-    return document_sha256(known)
+def self_report_digest(versions: Sequence[Version], as_of: datetime) -> str:
+    current = sorted(current_versions(versions, as_of), key=lambda v: v.root)
+    return document_sha256([(v.root, v.entry) for v in current])
 
 
 # Artifact selection --------------------------------------------------------------------
@@ -258,15 +287,17 @@ def run_report(context: Context, report_id: str, request: ReportRequest) -> Repo
     subject = context.catalog.subject(body.subject_id, context.metadata, context.workspace)
     data_mode = subject.data_mode if subject else fallback_data_mode(body.subject_id)
     base = _Base(report_id, request, data_mode, context.git_sha)
-    if subject is None:
+    # Illness and recovery turn on self-reported episodes, which exist without wearable data.
+    if subject is None and body.task not in ("illness_onset", "recovery"):
         return base.unavailable(
             "INSUFFICIENT_HISTORY", "A completed import or dataset history for this subject"
         )
     partial = PartialProvenance(
-        dataset_snapshot=subject.snapshot, artifact=None, feature_coverage=[]
+        dataset_snapshot=subject.snapshot if subject else None, artifact=None, feature_coverage=[]
     )
     match body.task:
         case "physiology_forecast":
+            assert subject is not None
             return _forecast(context, base, subject, request, partial)
         case "anomaly":
             return base.unavailable(
@@ -275,13 +306,13 @@ def run_report(context: Context, report_id: str, request: ReportRequest) -> Repo
                 partial,
             )
         case "illness_onset":
-            entries = self_report_entries(context.metadata, body.subject_id)
-            if ongoing_episodes(entries, body.as_of):
+            versions = self_report_versions(context.metadata, body.subject_id)
+            if ongoing_episodes(versions, body.as_of):
                 return base.unavailable("ONGOING_EPISODE", provenance=partial)
             return base.unavailable("NO_VALIDATED_ILLNESS_ARTIFACT", provenance=partial)
         case "recovery":
-            entries = self_report_entries(context.metadata, body.subject_id)
-            if body.episode_id not in ongoing_episodes(entries, body.as_of):
+            versions = self_report_versions(context.metadata, body.subject_id)
+            if body.episode_id not in ongoing_episodes(versions, body.as_of):
                 return base.unavailable("NO_ONGOING_EPISODE", provenance=partial)
             return base.unavailable("NO_VALIDATED_RECOVERY_ARTIFACT", provenance=partial)
     raise AssertionError("validated report task")
@@ -341,13 +372,14 @@ def _forecast(
     partial = PartialProvenance(
         dataset_snapshot=subject.snapshot, artifact=artifact.ref, feature_coverage=[]
     )
-    if artifact.serving.requires_gpu:
+    if artifact.serving.requires_gpu and context.catalog.gx10 is None:
         return base.error(
             "GPU_UNAVAILABLE",
             "This model needs the GX10 GPU queue, which this API instance does not reach.",
         )
     model = artifact.model
-    if floor_hour(body.as_of) < model.fit_as_of:
+    fit_as_of = getattr(model, "fit_as_of", None)
+    if fit_as_of is not None and floor_hour(body.as_of) < fit_as_of:
         return base.error(
             "ARTIFACT_INCOMPATIBLE",
             "The served model was fitted on data later than this as_of; pick a later as_of.",
@@ -381,6 +413,17 @@ def _forecast(
         estimates = tuple(model.predict(model_input))
         if len(estimates) != len(targets):
             raise ValueError("one estimate or abstention per target")
+    except GpuUnavailable:
+        return base.error(
+            "GPU_UNAVAILABLE", "The GX10 GPU could not run this forecast now; try again later."
+        )
+    except GpuTimeout:
+        return base.error("INFERENCE_TIMEOUT", "The GPU forecast did not finish in time.")
+    except GpuOutputRejected as exc:
+        log.warning("report %s: %s", base.report_id, exc)
+        return base.error(
+            "INFERENCE_FAILED", "The GPU result failed its integrity checks and was not used."
+        )
     except (ValueError, ArithmeticError) as exc:
         log.warning("report %s: inference failed (%s)", base.report_id, type(exc).__name__)
         return base.error("INFERENCE_FAILED", "The model could not produce this forecast.")
