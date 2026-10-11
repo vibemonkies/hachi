@@ -1,0 +1,18 @@
+protocol_id = "phase1-clinical-context-export-v1"
+clock = "floating_local_shifted"
+dataset_id = "stanford-covid19-wearables"
+snapshot_sha256 = "168d54133c8bc1c566f0b1a023d4f7ca04f54cecbadd3257fa4840e0031e8a33"
+active_outer_fold = 0
+nested_plan_sha256 = "13dd73b4b3f2b6beabe105c5e577e86e935fa68edfdc117d8e9ebdc7c772fa5e"
+context_hours = 168
+prediction_hours = 72
+min_observed_hr_hours = 24
+min_recorded_hr_minutes_per_hour = 30
+hr_minute_statistic = "median"
+hr_hour_statistic = "mean-of-recorded-minute-medians"
+step_edge_policy = "both-complete-and-equal-hour-totals"
+primary_model_channels = ["heart_rate"]
+availability_rule = "floating-native-points-assumed-end-ready-hours-complete-v1"
+# A bounded exporter, not a completed pretrained comparison or selected model.
+# Exported requests contain only cutoff-safe physiology; identities and fold joins
+# are private, separate from the content-hashed Chronos request rows.

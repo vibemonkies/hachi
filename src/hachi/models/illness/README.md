@@ -84,3 +84,27 @@ report discloses threshold redaction and preserves original runner gates. Earlie
 run equality is reported only when their packets are supplied. Original scoring
 requires a completely clean checkout, including untracked files; use this isolated
 worker checkout without generated mail-helper files. Labels-1 must remain retained.
+
+The separately frozen clinical-context exporter streams only admitted standard
+Stanford HR/steps. HR hours use the mean of recorded-minute medians, require at
+least 30 recorded minutes, and become available only when complete. A native
+point is assumed ready at its recorded floating time (steps conservatively one
+minute later); actual arrival timestamps do not exist in this archive. Conflicting
+duplicates remain unknown. The two complete step-edge interpretations must have
+equal totals; steps are absent from the primary model requests.
+
+~~~sh
+python -I -m hachi.models.illness.context_export \
+  --snapshot "$HACHI_LABEL_SNAPSHOT" --archive "$HACHI_NATIVE_ARCHIVE" \
+  --output "$HACHI_RUN_ROOT/illness-clinical-contexts"
+~~~
+
+This emits private content-hashed Chronos requests and the agreed
+WBM/MOMENT/MeanPool encoder requests: 168 completed HR hours with at least 24
+observed hours. Requests contain physiology and units/policy only; identities,
+floating cutoffs and inner train/validation roles stay in a separate private join
+map. Only development participants with eligible at-risk labels are considered;
+outer test is never read. The exporter runs no model or scoring. Frozen encoders
+return features; downstream heads, imputation/scaling and any dimensionality
+reduction must fit inside the training participants. A complete model-comparison
+protocol must be frozen before these features produce scores.
