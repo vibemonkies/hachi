@@ -1,0 +1,174 @@
+{
+  "checks": {
+    "coordination_tests": 5,
+    "evaluation_model_tests": 92,
+    "four_model_generated_hr_packet_replays": "passed",
+    "full_python_tests": 300,
+    "make_check": "passed",
+    "packet_hash_readback": "passed",
+    "private_packet_modes": "0700/0600",
+    "saved_hr_step_sleep_tree_parity": "passed in parametrized model tests",
+    "wheel_source_modules": 38
+  },
+  "data_mode": "synthetic",
+  "environment_sha256": "5185dbaf65e14ee9013c6f115214e5fbc367123ab22d2d938eb97ba5dd8904a5",
+  "git_dirty": false,
+  "git_sha": "be22a6dcd565cba98449bca65f7a6cab0c17c5a3",
+  "models": {
+    "causal-hourly-tree-v1": {
+      "artifact": {
+        "artifact_id": "causal-hourly-tree-v1-924646ebacf3631d",
+        "artifact_sha256": "276509da5a478df78d86cc39c9a72fba07e89b5173584a306664a1ebef5efed4"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "excluded_target_quality_points": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "packet_sha256": {
+        "config.json": "5717e870b00f4300b25dd68e16b0860ef001e621c18778c1e2be870619409724",
+        "evaluation.json": "b9b68e5f83f8f073929216ad35cf23a1088e3b659d1f4ba0e71a71b6d3ce8629",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "8c3ee6d4d10290fc2fb5a5974aff110618a6a74748c2631a9bc87590add05c52",
+        "source-sha256.json": "c597ae2006e38a5c6c821ef19781854f1f264010ddaab2c5486c13ce48aeb5a9",
+        "split.json": "9ae2b07de19cb1234ac2acf512664e49923deda6f7205a85295facfbd648d191"
+      }
+    },
+    "hourly-last-valid-v1": {
+      "artifact": {
+        "artifact_id": "hourly-last-valid-v1-f91201636ea4d360",
+        "artifact_sha256": "c4a60162b358d1449ac31174b36ddc4c181bbcf83d785a8ddf77e29753644dc8"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "excluded_target_quality_points": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "packet_sha256": {
+        "config.json": "5717e870b00f4300b25dd68e16b0860ef001e621c18778c1e2be870619409724",
+        "evaluation.json": "33e88dfdf5f5588a878235d4a767f46259d831665af4958efecdc82faa5c8655",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "33b4b6b97f4334bbc9a747e6c0738dfaabb1d2a8a34cfccd3f4193268e59d2ee",
+        "source-sha256.json": "c597ae2006e38a5c6c821ef19781854f1f264010ddaab2c5486c13ce48aeb5a9",
+        "split.json": "9ae2b07de19cb1234ac2acf512664e49923deda6f7205a85295facfbd648d191"
+      }
+    },
+    "train-population-mean-v1": {
+      "artifact": {
+        "artifact_id": "train-population-mean-v1-19ee0e872e8959cf",
+        "artifact_sha256": "53c0f1bfd070d185e44952006e84ddc4316bdeda30039a4641523c88f331d7c7"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "excluded_target_quality_points": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "packet_sha256": {
+        "config.json": "5717e870b00f4300b25dd68e16b0860ef001e621c18778c1e2be870619409724",
+        "evaluation.json": "451532133c67875fde4df7f315d276f0c36e834261c589d499f77a05a04a0331",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "5dc52094df483affdea5c9d6cb344cb7437baa1b3d44d9117ff865eed855465c",
+        "source-sha256.json": "c597ae2006e38a5c6c821ef19781854f1f264010ddaab2c5486c13ce48aeb5a9",
+        "split.json": "9ae2b07de19cb1234ac2acf512664e49923deda6f7205a85295facfbd648d191"
+      }
+    },
+    "utc-seasonal-naive-v1": {
+      "artifact": {
+        "artifact_id": "utc-seasonal-naive-v1-499dc460e0da0190",
+        "artifact_sha256": "23fb745953779a63044103ee9ba15b0a61b1a57f790659fdea370c4d3c7dc83e"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "excluded_target_quality_points": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "packet_sha256": {
+        "config.json": "5717e870b00f4300b25dd68e16b0860ef001e621c18778c1e2be870619409724",
+        "evaluation.json": "a845cba4af86d8f6f30f2b83758baec22af78a344cccf61e4a013dd62a5a9192",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "ccbd7767f20d751be3660cfac4a15104cac2b9aaf04290c73d62d2299cac7186",
+        "source-sha256.json": "c597ae2006e38a5c6c821ef19781854f1f264010ddaab2c5486c13ce48aeb5a9",
+        "split.json": "9ae2b07de19cb1234ac2acf512664e49923deda6f7205a85295facfbd648d191"
+      }
+    }
+  },
+  "real_cohort_gate": "pending admitted PMData processing snapshot and frozen real scientific protocol",
+  "scope": "Canonical totals/target-quality software tests and generated HR four-model packet replay. No real-data accuracy claim.",
+  "source_sha256": {
+    "__init__.py": "89fe1f38cd6fe8110c6de3c3c5aaf0337ca96d38fae8b564b956fec8462de859",
+    "artifacts.py": "dd78536155fc43ab9b735334db17597e4f5da2ad42eeb1cb82b7b7509b58d92c",
+    "contracts/causality.py": "88d16cf15818cdbbb2d3ad7910f698fbe74d1b9da1f12916d628d2975d316093",
+    "demo.py": "fecd79deef72197606a47e153b9ea8be24fd194aa03e86b5785968611bb5f010",
+    "evaluation/features.py": "c7a966dca31b335a72a23caa17b36d37327891015d668329a58fafcbfbffd40b",
+    "evaluation/serialization.py": "483680723b4dae29758a8a6bde4ebaeadcb00aeaf97b425f8d73817d65cd7052",
+    "forecast.py": "50ebbb089115427f0784e721155ea8916ba633c3729a49901e3db976aaa11859",
+    "nightly.py": "938bc1484328d2178566fc2657fd0c0941c5a5c028a95c98408184efa00f9477",
+    "nightsignal_reproduction.py": "0949ab9433bd3e4f6d1d235aa4f1cca776d8d24aee6ad3cfbe53d65502bef001",
+    "robust.py": "cea96d1b5bb1b909682071f205e0ae912bee12cb6dd7048fd29e3341f1bfdfb1",
+    "tree.py": "5dc5d07e6a19ab932f023894a9aff98a5f46ffba3ded8bd338375d74ff3c7878"
+  }
+}

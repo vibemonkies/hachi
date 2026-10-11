@@ -85,7 +85,7 @@ def test_complete_bin_and_readiness_required() -> None:
     )
     with pytest.raises(ValidationError, match="hour-aligned"):
         feature(row)
-    with pytest.raises(ValidationError, match="observed level"):
+    with pytest.raises(ValidationError, match="observed value"):
         feature(target("synthetic-1", -1, None))
 
 

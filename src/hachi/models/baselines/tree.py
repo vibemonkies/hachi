@@ -11,7 +11,7 @@ from typing import Annotated, Literal, Self
 from pydantic import Field, model_validator
 
 from hachi.contracts.base import Contract, Sha256, UtcDatetime
-from hachi.contracts.metrics import METRICS, Aggregation, Metric
+from hachi.contracts.metrics import METRICS, Aggregation, Metric, check_metric_value
 from hachi.evaluation import (
     ForecastEstimate,
     ForecastInput,
@@ -53,11 +53,8 @@ class TreeConfig(Contract):
     def _policy(self) -> Self:
         if self.min_history_hours > self.lookback_hours:
             raise ValueError("minimum history must fit inside lookback")
-        if (
-            METRICS[self.metric].kind != "level"
-            or self.aggregation not in METRICS[self.metric].aggregations
-        ):
-            raise ValueError("tree requires a compatible level aggregation")
+        if self.aggregation not in METRICS[self.metric].aggregations:
+            raise ValueError("tree requires the registered metric aggregation")
         return self
 
 
@@ -145,11 +142,13 @@ class TreeArtifact(Contract):
                         raise ValueError("tree children must be unique forward references")
                     depths[child] = depths[index] + 1
             else:
-                spec = METRICS[self.config.metric]
-                if (spec.minimum is not None and node.value < spec.minimum) or (
-                    spec.maximum is not None and node.value > spec.maximum
-                ):
-                    raise ValueError("tree leaf violates the metric bounds")
+                check_metric_value(
+                    self.config.metric,
+                    METRICS[self.config.metric].unit,
+                    node.value,
+                    3600,
+                    "tree leaf",
+                )
         return self
 
     def predict(self, request: ForecastInput) -> tuple[ForecastEstimate | None, ...]:

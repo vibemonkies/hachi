@@ -1,9 +1,10 @@
-"""Simple hourly level comparators fitted only from the evaluator's training prefix."""
+"""Simple hourly physiology comparators fitted only from the evaluator's training prefix."""
 
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from itertools import pairwise
 from statistics import fmean, median
 from typing import Annotated, Literal, Self
 
@@ -11,7 +12,7 @@ from pydantic import Field, model_validator
 
 from hachi.contracts.base import Contract, Sha256, UtcDatetime
 from hachi.contracts.causality import available_by
-from hachi.contracts.metrics import METRICS, Aggregation, Metric
+from hachi.contracts.metrics import METRICS, Aggregation, Metric, check_metric_value
 from hachi.evaluation import (
     ForecastEstimate,
     ForecastInput,
@@ -35,10 +36,10 @@ class BaselineConfig(Contract):
     min_samples_per_hour: Annotated[int, Field(gt=0)] = 1
 
     @model_validator(mode="after")
-    def _level_metric(self) -> Self:
+    def _metric(self) -> Self:
         spec = METRICS[self.metric]
-        if spec.kind != "level" or self.aggregation not in spec.aggregations:
-            raise ValueError("hourly level baselines require a compatible level aggregation")
+        if self.aggregation not in spec.aggregations:
+            raise ValueError("hourly baselines require the registered metric aggregation")
         return self
 
 
@@ -94,8 +95,16 @@ def hourly_values(
                 value = min(values)
             case "max":
                 value = max(values)
+            case "sum":
+                ordered = sorted(rows, key=lambda r: (r.start_utc, r.end_utc))
+                if any(b.start_utc < a.end_utc for a, b in pairwise(ordered)):
+                    raise ValueError(
+                        "overlapping accumulated intervals; reconcile sources upstream"
+                    )
+                value = sum(values)
             case _:
-                raise AssertionError("validated level aggregation")
+                raise AssertionError("validated metric aggregation")
+        check_metric_value(config.metric, METRICS[config.metric].unit, value, 3600, "hourly input")
         output.append(HourlyValue(start, value, max(r.available_at_utc for r in rows), len(rows)))
     return tuple(output)
 
@@ -115,11 +124,13 @@ class BaselineArtifact(Contract):
         if fitted != (self.population_mean is not None):
             raise ValueError("only a nonempty train-mean fit may contain a population mean")
         if self.population_mean is not None:
-            spec = METRICS[self.config.metric]
-            if spec.minimum is not None and self.population_mean < spec.minimum:
-                raise ValueError("population mean is below the metric bound")
-            if spec.maximum is not None and self.population_mean > spec.maximum:
-                raise ValueError("population mean is above the metric bound")
+            check_metric_value(
+                self.config.metric,
+                METRICS[self.config.metric].unit,
+                self.population_mean,
+                3600,
+                "population mean",
+            )
         return self
 
     @property
