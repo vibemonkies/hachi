@@ -40,13 +40,27 @@ def read_file(root: Path, relative: str) -> bytes:
     return path.read_bytes()
 
 
-def verify_index(root: Path, expected: str) -> dict[str, str]:
+def verify_index(
+    root: Path,
+    expected: str,
+    *,
+    index_path: Path | None = None,
+    index_name: str = "sha256.json",
+) -> dict[str, str]:
     """Pin the index externally, then verify every byte and reject unindexed files."""
-    raw = read_file(root, "sha256.json")
+    # #12's original score index is a sibling of score/, not a file inside it.
+    # Read that exact index in place rather than manufacture a replacement bundle.
+    if index_path is not None and index_path.resolve().is_relative_to(root.resolve()):
+        raise EvidenceRefused("external inventory must be outside its immutable bundle")
+    raw = (
+        read_file(index_path.parent, index_path.name)
+        if index_path is not None
+        else read_file(root, index_name)
+    )
     if digest(raw) != expected:
         raise EvidenceRefused("bundle index does not match its expected checksum")
     index = INDEX.validate_json(raw)
-    if not index or "sha256.json" in index:
+    if not index or (index_path is None and index_name in index):
         raise EvidenceRefused("bundle index must be nonempty and cannot index itself")
     present = set()
     for directory, directories, files in os.walk(root, followlinks=False):
@@ -54,7 +68,7 @@ def verify_index(root: Path, expected: str) -> dict[str, str]:
         if any((base / name).is_symlink() for name in directories):
             raise EvidenceRefused("evidence cannot contain symlink directories")
         present.update((base / name).relative_to(root).as_posix() for name in files)
-    if present != {*index, "sha256.json"}:
+    if present != (set(index) if index_path is not None else {*index, index_name}):
         raise EvidenceRefused("bundle contains missing or unindexed files")
     for name, expected_digest in index.items():
         if digest(read_file(root, name)) != expected_digest:

@@ -73,6 +73,7 @@ def assemble_forecast_evidence(
     repo: Path,
     *,
     artifact_bundles: Sequence[tuple[Path, str]] = (),
+    index_path: Path | None = None,
 ) -> ForecastEvidence:
     """Pool saved disjoint validation reports using the canonical aggregation helper.
 
@@ -82,9 +83,13 @@ def assemble_forecast_evidence(
     latency, device analysis, access approval or fresh inference reproduction.
     """
     receipt = validate_development(
-        root, expected_index_sha256, repo, artifact_bundles=artifact_bundles
+        root,
+        expected_index_sha256,
+        repo,
+        artifact_bundles=artifact_bundles,
+        index_path=index_path,
     )
-    index = verify_index(root, expected_index_sha256)
+    index = verify_index(root, expected_index_sha256, index_path=index_path)
     exports = {}
     for source, source_index in [
         (root, index),
