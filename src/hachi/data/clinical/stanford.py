@@ -29,6 +29,8 @@ PATHOGENS = {"covid19": "sars_cov_2", "influenza_b": "influenza"}
 PHASE1_EPISODES = "SuppTable3_Fig2a_COVID-19"
 PHASE1_SURVEYS = "SuppTable5_Fig2a_DailySymptoms"
 PHASE2_POSITIVES = "SourceData_COVID19_Positives"
+# Mishra 2020 Supplementary Table 5: ten symptoms, each rated 1 (mild) to 5 (severe) when present.
+PHASE1_SCALE = "stanford-phase1-daily-survey-10-symptoms-severity-1-to-5"
 
 
 class LabelSourceError(ValueError):
@@ -44,6 +46,8 @@ class SourceLabels:
     subject_info: dict[str, dict[str, str]] = field(default_factory=dict)
     has_self_reported_recovery: bool = False
     counts: Counter = field(default_factory=Counter)
+    # (subject, day) -> symptom_scores row values, for answered survey days
+    scores: dict[tuple[str, date], dict] = field(default_factory=dict)
 
     def label_days(self, subject: str) -> list[date]:
         days = list(self.surveys.get(subject, {}))
@@ -173,6 +177,15 @@ def read_phase1(workbook: Path, settings: StanfordSettings) -> SourceLabels:
         )
         state: SurveyState = "symptomatic" if symptomatic else "symptom_free"
         per_day.setdefault((subject, day), []).append(state)
+        rated = [int(r) for r in ratings if r is not None]
+        day_scores = labels.scores.setdefault(
+            (subject, day), {"reports": 0, "symptom_count": 0, "max_severity": 0, "severity_sum": 0}
+        )
+        # Several reports in a day: keep each measure's worst value.
+        day_scores["reports"] += 1
+        day_scores["symptom_count"] = max(day_scores["symptom_count"], len(rated))
+        day_scores["max_severity"] = max(day_scores["max_severity"], max(rated, default=0))
+        day_scores["severity_sum"] = max(day_scores["severity_sum"], sum(rated))
     for (subject, day), states in sorted(per_day.items()):
         if len(states) > 1:
             counts["survey_days_with_several_reports"] += 1
@@ -330,4 +343,8 @@ def label_set(data_dir: Path, settings: StanfordSettings, admission: Admission, 
         unlabeled_note=UNLABELED_NOTE,
         clock=settings.clock,
         extra_audit=extra,
+        symptom_scores=[
+            {"subject_id": subject, "local_date": day, "scale": PHASE1_SCALE, **values}
+            for (subject, day), values in sorted(labels.scores.items())
+        ],
     )

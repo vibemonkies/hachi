@@ -42,6 +42,7 @@ recovery = read_table(snapshot, "recovery")
 | `onset_windows.parquet` | one per participant × cutoff at local midnight, with `onset_{24,48,72}h`, the episode behind a positive, and `test_{24,48,72}h` | #13's at-risk windows: train on `positive` vs `negative` only |
 | `recovery.parquet` | one per episode × endpoint: status, reason, resolution day range, follow-up, day indices from onset | #14's event/censoring labels |
 | `surveys.parquet` | completed survey day × state (`symptomatic`, `symptom_free`, `intermediate`) | Survey coverage, negatives |
+| `symptom_scores.parquet` | answered survey day × severity: Stanford phase 1 `symptom_count`, `max_severity` and `severity_sum` over ten symptoms rated 1-5 (several reports in a day keep each measure's worst); CMU `jackson_adjusted` and `cold_or_flu`; `scale` names the instrument; `available_at_utc` is the end of that day | Landmark predictors for #14 (never the retrospective label fields) |
 | `wearable_days.parquet` | participant-day record counts for heart rate, steps and sleep | Which cutoffs have wearable history |
 | `manifest.json`, `audit.json`, `SHA256SUMS` | | Identity, configs, sources, clock, availability rules, aggregate audit |
 

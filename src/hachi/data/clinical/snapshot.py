@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 from collections import Counter
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -75,6 +75,7 @@ class LabelSet:
     unlabeled_note: str | None
     clock: str
     extra_audit: dict[str, Any]
+    symptom_scores: list[dict] = field(default_factory=list)
 
 
 def sha256_file(path: Path) -> str:
@@ -195,6 +196,9 @@ def _build_into(
         "recovery.parquet": tables.table(recovery, tables.RECOVERY_SCHEMA),
         "onset_windows.parquet": tables.table(windows, tables.window_schema(horizons)),
         "surveys.parquet": tables.table(surveys, tables.SURVEY_SCHEMA),
+        "symptom_scores.parquet": tables.table(
+            tables.score_rows(dataset_id, label_set.symptom_scores), tables.SCORE_SCHEMA
+        ),
         "wearable_days.parquet": tables.table(label_set.wearable_rows, tables.WEARABLE_SCHEMA),
     }
     for name, t in written.items():

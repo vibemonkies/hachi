@@ -288,3 +288,21 @@ def test_reconcile_against_source_workbook(which, request):
     outcome = reconcile(built.snapshot, built.data_dir / settings.labels_workbook, settings)
     assert outcome["ok"], outcome["mismatches"]
     assert outcome["checks"]["tests_match_reported_dates"] >= 2
+
+
+def test_symptom_scores(phase1, phase2):
+    rows = {
+        (r["subject_id"], r["local_date"]): r
+        for r in read_table(phase1.snapshot, "symptom_scores").to_pylist()
+    }
+    ill = rows[("AAAAAA1", day(20))]
+    assert (ill["symptom_count"], ill["max_severity"], ill["severity_sum"]) == (1, 3, 3)
+    assert ill["available_at_utc"].date() == day(21)
+    assert ill["availability_rule"] == "survey-available-at-end-of-its-local-day"
+    double = rows[("AAAAAA1", day(26))]  # two reports that day; the worst of each measure
+    assert (double["reports"], double["symptom_count"], double["max_severity"]) == (2, 1, 1)
+    assert rows[("AAAAAA1", day(10))]["symptom_count"] == 0
+    assert ("AAAAAA1", day(25)) not in rows  # the row with no answer is not a survey
+    surveys = read_table(phase1.snapshot, "surveys").num_rows
+    assert len(rows) == surveys
+    assert read_table(phase2.snapshot, "symptom_scores").num_rows == 0
