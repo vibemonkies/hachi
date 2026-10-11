@@ -1,0 +1,799 @@
+{
+  "format": "issue12-finetune-curves-1",
+  "about": "Aggregate training logs of the six #12 Chronos-2 fine-tunes (3 inner folds x 2 learning rates). Losses are Chronos-2's quantile training loss averaged over each logging window (train) and over the holdout windows (eval). No inputs, participant ids, predictions or weights.",
+  "eval_loss_definition": "Chronos2Trainer loss on holdout series whose final 24 h lie in the last 168 h of the inner fold's training participants before 2020-01-01 (temporal holdout); load_best_model_at_end selects the checkpoint with the lowest eval_loss",
+  "logging": "train loss, learning rate and grad norm every 100 steps; eval every 100 steps",
+  "source": "finetune.json receipts in ~/hachi/runs/justin06lee/issue12-20261011T115932Z-ft-<fold>-<lr>/ on the GX10 (copies on Justin's T7)",
+  "validation_selection": {
+    "rule": "learning rate with the lowest pooled inner-validation MAE (predeclared)",
+    "pooled_mae_bpm": {
+      "1e-5": 8.380390034377283,
+      "1e-6": 8.079341774876108
+    },
+    "chosen": "1e-6",
+    "vs_zero_shot_same_context": {
+      "confidence_interval": [
+        -0.1438925511998738,
+        0.22805644197502714
+      ],
+      "participants": 12,
+      "value": 0.027241326962173778
+    }
+  },
+  "runs": [
+    {
+      "run_id": "issue12-20261011T115932Z-ft-0-1e-6",
+      "inner_fold": 0,
+      "hyperparameters": {
+        "batch_size": 64,
+        "context_length": 720,
+        "dtype": "float32",
+        "early_stopping": "load_best_model_at_end on holdout eval_loss",
+        "eval_every_steps": 100,
+        "finetune_mode": "full",
+        "learning_rate": 1e-06,
+        "lr_scheduler": "linear",
+        "max_steps": 1000,
+        "min_past": 24,
+        "optimizer": "adamw_torch_fused",
+        "prediction_length": 24,
+        "seed": 42,
+        "warmup": 0
+      },
+      "train_series": 8,
+      "holdout_series": 48,
+      "best": {
+        "step": 300,
+        "eval_loss": 4.229257106781006
+      },
+      "curve": [
+        {
+          "step": 100,
+          "train_loss": 3.7697,
+          "learning_rate": 9.01e-07,
+          "grad_norm": 15.009442329406738,
+          "eval_loss": 4.259734630584717
+        },
+        {
+          "step": 200,
+          "train_loss": 3.6711,
+          "learning_rate": 8.01e-07,
+          "grad_norm": 16.508438110351562,
+          "eval_loss": 4.256202220916748
+        },
+        {
+          "step": 300,
+          "train_loss": 3.6221,
+          "learning_rate": 7.009999999999999e-07,
+          "grad_norm": 10.46203899383545,
+          "eval_loss": 4.229257106781006
+        },
+        {
+          "step": 400,
+          "train_loss": 3.5582,
+          "learning_rate": 6.009999999999999e-07,
+          "grad_norm": 12.839315414428711,
+          "eval_loss": 4.238370418548584
+        },
+        {
+          "step": 500,
+          "train_loss": 3.5005,
+          "learning_rate": 5.009999999999999e-07,
+          "grad_norm": 18.066051483154297,
+          "eval_loss": 4.237175464630127
+        },
+        {
+          "step": 600,
+          "train_loss": 3.4952,
+          "learning_rate": 4.01e-07,
+          "grad_norm": 13.157379150390625,
+          "eval_loss": 4.236780166625977
+        },
+        {
+          "step": 700,
+          "train_loss": 3.4547,
+          "learning_rate": 3.0099999999999996e-07,
+          "grad_norm": 17.258983612060547,
+          "eval_loss": 4.268135070800781
+        },
+        {
+          "step": 800,
+          "train_loss": 3.4576,
+          "learning_rate": 2.01e-07,
+          "grad_norm": 13.809578895568848,
+          "eval_loss": 4.264623165130615
+        },
+        {
+          "step": 900,
+          "train_loss": 3.41,
+          "learning_rate": 1.01e-07,
+          "grad_norm": 11.645308494567871,
+          "eval_loss": 4.258539199829102
+        },
+        {
+          "step": 1000,
+          "train_loss": 3.3869,
+          "learning_rate": 1e-09,
+          "grad_norm": 16.434118270874023,
+          "eval_loss": 4.2616801261901855
+        }
+      ],
+      "mean_train_loss_over_run": 3.532592468261719,
+      "fit_seconds": 722.8346575090036,
+      "train_runtime_seconds": 715.6507,
+      "peak_cuda_allocated_bytes_training": 5568471040,
+      "peak_cuda_allocated_bytes_inference": 1022662656,
+      "peak_process_rss_bytes": 2405924864,
+      "single_request_seconds_p95": 0.0154182802507421,
+      "hashes": {
+        "base_weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+        "finetuned_weights_sha256": "b2b891a760645487036462be3c2dbaf7d64a9c707ecdc63cfa62f3f6c9b895c6",
+        "reloaded_weights_sha256": "b2b891a760645487036462be3c2dbaf7d64a9c707ecdc63cfa62f3f6c9b895c6",
+        "train_series_file_sha256": "89f36ffeb44bea926d2c29748e6c39fda741abdf661232474a4a8552a96c0cf5",
+        "holdout_series_file_sha256": "9157e9fdca75c17f493c09718ef3682d03b1fb9e71d031fbb8fb35207e89508a",
+        "finetune_script_sha256": "41c524d5d7fb3c5d7a6b6dd05431696692c06435c4f66ec9df3ad0c7fef4ec4e"
+      },
+      "environment": {
+        "gpu": "NVIDIA GB10",
+        "capability": [
+          12,
+          1
+        ],
+        "torch": "2.8.0+cu129",
+        "torch_cuda": "12.9",
+        "packages": {
+          "accelerate": "1.15.0",
+          "chronos-forecasting": "2.3.2",
+          "numpy": "2.5.4",
+          "transformers": "4.57.6"
+        },
+        "source_commit": "7b49924105cda187242252eaf1a9292aa8fcd1cd"
+      }
+    },
+    {
+      "run_id": "issue12-20261011T115932Z-ft-0-1e-5",
+      "inner_fold": 0,
+      "hyperparameters": {
+        "batch_size": 64,
+        "context_length": 720,
+        "dtype": "float32",
+        "early_stopping": "load_best_model_at_end on holdout eval_loss",
+        "eval_every_steps": 100,
+        "finetune_mode": "full",
+        "learning_rate": 1e-05,
+        "lr_scheduler": "linear",
+        "max_steps": 1000,
+        "min_past": 24,
+        "optimizer": "adamw_torch_fused",
+        "prediction_length": 24,
+        "seed": 42,
+        "warmup": 0
+      },
+      "train_series": 8,
+      "holdout_series": 48,
+      "best": {
+        "step": 100,
+        "eval_loss": 4.287458896636963
+      },
+      "curve": [
+        {
+          "step": 100,
+          "train_loss": 3.5066,
+          "learning_rate": 9.01e-06,
+          "grad_norm": 19.822059631347656,
+          "eval_loss": 4.287458896636963
+        },
+        {
+          "step": 200,
+          "train_loss": 3.0404,
+          "learning_rate": 8.010000000000001e-06,
+          "grad_norm": 18.645584106445312,
+          "eval_loss": 4.498696804046631
+        },
+        {
+          "step": 300,
+          "train_loss": 2.7498,
+          "learning_rate": 7.01e-06,
+          "grad_norm": 15.113964080810547,
+          "eval_loss": 4.65443229675293
+        },
+        {
+          "step": 400,
+          "train_loss": 2.5415,
+          "learning_rate": 6.01e-06,
+          "grad_norm": 14.678784370422363,
+          "eval_loss": 4.821019649505615
+        },
+        {
+          "step": 500,
+          "train_loss": 2.3947,
+          "learning_rate": 5.01e-06,
+          "grad_norm": 14.827710151672363,
+          "eval_loss": 4.8183722496032715
+        },
+        {
+          "step": 600,
+          "train_loss": 2.3077,
+          "learning_rate": 4.0100000000000006e-06,
+          "grad_norm": 14.183967590332031,
+          "eval_loss": 4.926955699920654
+        },
+        {
+          "step": 700,
+          "train_loss": 2.2166,
+          "learning_rate": 3.01e-06,
+          "grad_norm": 14.216015815734863,
+          "eval_loss": 4.914102554321289
+        },
+        {
+          "step": 800,
+          "train_loss": 2.1738,
+          "learning_rate": 2.0100000000000002e-06,
+          "grad_norm": 16.0501651763916,
+          "eval_loss": 4.999393463134766
+        },
+        {
+          "step": 900,
+          "train_loss": 2.1127,
+          "learning_rate": 1.01e-06,
+          "grad_norm": 13.843331336975098,
+          "eval_loss": 4.99839448928833
+        },
+        {
+          "step": 1000,
+          "train_loss": 2.1095,
+          "learning_rate": 1e-08,
+          "grad_norm": 16.046531677246094,
+          "eval_loss": 4.995538234710693
+        }
+      ],
+      "mean_train_loss_over_run": 2.5153245849609376,
+      "fit_seconds": 746.422989396,
+      "train_runtime_seconds": 738.9509,
+      "peak_cuda_allocated_bytes_training": 5568471040,
+      "peak_cuda_allocated_bytes_inference": 1022662656,
+      "peak_process_rss_bytes": 2459488256,
+      "single_request_seconds_p95": 0.019817278000118677,
+      "hashes": {
+        "base_weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+        "finetuned_weights_sha256": "d4cda5bc8e73db7be947406dd4cbdbe1de5149503efe6a2f8255cfc3f19b10f6",
+        "reloaded_weights_sha256": "d4cda5bc8e73db7be947406dd4cbdbe1de5149503efe6a2f8255cfc3f19b10f6",
+        "train_series_file_sha256": "89f36ffeb44bea926d2c29748e6c39fda741abdf661232474a4a8552a96c0cf5",
+        "holdout_series_file_sha256": "9157e9fdca75c17f493c09718ef3682d03b1fb9e71d031fbb8fb35207e89508a",
+        "finetune_script_sha256": "41c524d5d7fb3c5d7a6b6dd05431696692c06435c4f66ec9df3ad0c7fef4ec4e"
+      },
+      "environment": {
+        "gpu": "NVIDIA GB10",
+        "capability": [
+          12,
+          1
+        ],
+        "torch": "2.8.0+cu129",
+        "torch_cuda": "12.9",
+        "packages": {
+          "accelerate": "1.15.0",
+          "chronos-forecasting": "2.3.2",
+          "numpy": "2.5.4",
+          "transformers": "4.57.6"
+        },
+        "source_commit": "7b49924105cda187242252eaf1a9292aa8fcd1cd"
+      }
+    },
+    {
+      "run_id": "issue12-20261011T115932Z-ft-1-1e-6",
+      "inner_fold": 1,
+      "hyperparameters": {
+        "batch_size": 64,
+        "context_length": 720,
+        "dtype": "float32",
+        "early_stopping": "load_best_model_at_end on holdout eval_loss",
+        "eval_every_steps": 100,
+        "finetune_mode": "full",
+        "learning_rate": 1e-06,
+        "lr_scheduler": "linear",
+        "max_steps": 1000,
+        "min_past": 24,
+        "optimizer": "adamw_torch_fused",
+        "prediction_length": 24,
+        "seed": 42,
+        "warmup": 0
+      },
+      "train_series": 8,
+      "holdout_series": 48,
+      "best": {
+        "step": 100,
+        "eval_loss": 4.070167064666748
+      },
+      "curve": [
+        {
+          "step": 100,
+          "train_loss": 3.9372,
+          "learning_rate": 9.01e-07,
+          "grad_norm": 8.817731857299805,
+          "eval_loss": 4.070167064666748
+        },
+        {
+          "step": 200,
+          "train_loss": 3.8602,
+          "learning_rate": 8.01e-07,
+          "grad_norm": 8.484513282775879,
+          "eval_loss": 4.086326599121094
+        },
+        {
+          "step": 300,
+          "train_loss": 3.7989,
+          "learning_rate": 7.009999999999999e-07,
+          "grad_norm": 12.831367492675781,
+          "eval_loss": 4.071151256561279
+        },
+        {
+          "step": 400,
+          "train_loss": 3.7782,
+          "learning_rate": 6.009999999999999e-07,
+          "grad_norm": 9.901494979858398,
+          "eval_loss": 4.079935550689697
+        },
+        {
+          "step": 500,
+          "train_loss": 3.7226,
+          "learning_rate": 5.009999999999999e-07,
+          "grad_norm": 12.273689270019531,
+          "eval_loss": 4.119659900665283
+        },
+        {
+          "step": 600,
+          "train_loss": 3.6782,
+          "learning_rate": 4.01e-07,
+          "grad_norm": 9.884261131286621,
+          "eval_loss": 4.134542942047119
+        },
+        {
+          "step": 700,
+          "train_loss": 3.6777,
+          "learning_rate": 3.0099999999999996e-07,
+          "grad_norm": 10.58217716217041,
+          "eval_loss": 4.138645648956299
+        },
+        {
+          "step": 800,
+          "train_loss": 3.6597,
+          "learning_rate": 2.01e-07,
+          "grad_norm": 12.015945434570312,
+          "eval_loss": 4.152349472045898
+        },
+        {
+          "step": 900,
+          "train_loss": 3.6794,
+          "learning_rate": 1.01e-07,
+          "grad_norm": 10.901955604553223,
+          "eval_loss": 4.155275344848633
+        },
+        {
+          "step": 1000,
+          "train_loss": 3.637,
+          "learning_rate": 1e-09,
+          "grad_norm": 12.659442901611328,
+          "eval_loss": 4.1568121910095215
+        }
+      ],
+      "mean_train_loss_over_run": 3.742913879394531,
+      "fit_seconds": 740.9653571129966,
+      "train_runtime_seconds": 732.8244,
+      "peak_cuda_allocated_bytes_training": 5568471040,
+      "peak_cuda_allocated_bytes_inference": 1028329984,
+      "peak_process_rss_bytes": 2499485696,
+      "single_request_seconds_p95": 0.020095613248486188,
+      "hashes": {
+        "base_weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+        "finetuned_weights_sha256": "b444ac404c064059c613382627a7741dfc4b07353918d5ca6e28db9755fa2ed7",
+        "reloaded_weights_sha256": "b444ac404c064059c613382627a7741dfc4b07353918d5ca6e28db9755fa2ed7",
+        "train_series_file_sha256": "4c3a4e482c48d8a21d16802d4ae75e561af8523afec2918706832b638587e6cc",
+        "holdout_series_file_sha256": "f8b926fa26be1719b34cd86cab97e6e2f1efc402b852e0bac5b279c3e75267ea",
+        "finetune_script_sha256": "41c524d5d7fb3c5d7a6b6dd05431696692c06435c4f66ec9df3ad0c7fef4ec4e"
+      },
+      "environment": {
+        "gpu": "NVIDIA GB10",
+        "capability": [
+          12,
+          1
+        ],
+        "torch": "2.8.0+cu129",
+        "torch_cuda": "12.9",
+        "packages": {
+          "accelerate": "1.15.0",
+          "chronos-forecasting": "2.3.2",
+          "numpy": "2.5.4",
+          "transformers": "4.57.6"
+        },
+        "source_commit": "7b49924105cda187242252eaf1a9292aa8fcd1cd"
+      }
+    },
+    {
+      "run_id": "issue12-20261011T115932Z-ft-1-1e-5",
+      "inner_fold": 1,
+      "hyperparameters": {
+        "batch_size": 64,
+        "context_length": 720,
+        "dtype": "float32",
+        "early_stopping": "load_best_model_at_end on holdout eval_loss",
+        "eval_every_steps": 100,
+        "finetune_mode": "full",
+        "learning_rate": 1e-05,
+        "lr_scheduler": "linear",
+        "max_steps": 1000,
+        "min_past": 24,
+        "optimizer": "adamw_torch_fused",
+        "prediction_length": 24,
+        "seed": 42,
+        "warmup": 0
+      },
+      "train_series": 8,
+      "holdout_series": 48,
+      "best": {
+        "step": 100,
+        "eval_loss": 4.038845539093018
+      },
+      "curve": [
+        {
+          "step": 100,
+          "train_loss": 3.7345,
+          "learning_rate": 9.01e-06,
+          "grad_norm": 21.1019344329834,
+          "eval_loss": 4.038845539093018
+        },
+        {
+          "step": 200,
+          "train_loss": 3.3222,
+          "learning_rate": 8.010000000000001e-06,
+          "grad_norm": 17.710607528686523,
+          "eval_loss": 4.337836742401123
+        },
+        {
+          "step": 300,
+          "train_loss": 2.9686,
+          "learning_rate": 7.01e-06,
+          "grad_norm": 15.758586883544922,
+          "eval_loss": 4.618828296661377
+        },
+        {
+          "step": 400,
+          "train_loss": 2.7582,
+          "learning_rate": 6.01e-06,
+          "grad_norm": 15.423731803894043,
+          "eval_loss": 4.737514019012451
+        },
+        {
+          "step": 500,
+          "train_loss": 2.5988,
+          "learning_rate": 5.01e-06,
+          "grad_norm": 13.928199768066406,
+          "eval_loss": 4.888154983520508
+        },
+        {
+          "step": 600,
+          "train_loss": 2.479,
+          "learning_rate": 4.0100000000000006e-06,
+          "grad_norm": 15.345866203308105,
+          "eval_loss": 5.005029678344727
+        },
+        {
+          "step": 700,
+          "train_loss": 2.3958,
+          "learning_rate": 3.01e-06,
+          "grad_norm": 14.12151050567627,
+          "eval_loss": 4.928525447845459
+        },
+        {
+          "step": 800,
+          "train_loss": 2.3315,
+          "learning_rate": 2.0100000000000002e-06,
+          "grad_norm": 15.615004539489746,
+          "eval_loss": 5.123832702636719
+        },
+        {
+          "step": 900,
+          "train_loss": 2.2997,
+          "learning_rate": 1.01e-06,
+          "grad_norm": 15.008541107177734,
+          "eval_loss": 5.11187219619751
+        },
+        {
+          "step": 1000,
+          "train_loss": 2.264,
+          "learning_rate": 1e-08,
+          "grad_norm": 17.501556396484375,
+          "eval_loss": 5.0782084465026855
+        }
+      ],
+      "mean_train_loss_over_run": 2.7152260131835937,
+      "fit_seconds": 717.7970108549998,
+      "train_runtime_seconds": 714.85,
+      "peak_cuda_allocated_bytes_training": 5568471040,
+      "peak_cuda_allocated_bytes_inference": 1028329984,
+      "peak_process_rss_bytes": 2359943168,
+      "single_request_seconds_p95": 0.02000693000263709,
+      "hashes": {
+        "base_weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+        "finetuned_weights_sha256": "bc0083dbd7a51e6b10e8abc99af94a0980a4d50f179ad56edeb0837a16298a40",
+        "reloaded_weights_sha256": "bc0083dbd7a51e6b10e8abc99af94a0980a4d50f179ad56edeb0837a16298a40",
+        "train_series_file_sha256": "4c3a4e482c48d8a21d16802d4ae75e561af8523afec2918706832b638587e6cc",
+        "holdout_series_file_sha256": "f8b926fa26be1719b34cd86cab97e6e2f1efc402b852e0bac5b279c3e75267ea",
+        "finetune_script_sha256": "41c524d5d7fb3c5d7a6b6dd05431696692c06435c4f66ec9df3ad0c7fef4ec4e"
+      },
+      "environment": {
+        "gpu": "NVIDIA GB10",
+        "capability": [
+          12,
+          1
+        ],
+        "torch": "2.8.0+cu129",
+        "torch_cuda": "12.9",
+        "packages": {
+          "accelerate": "1.15.0",
+          "chronos-forecasting": "2.3.2",
+          "numpy": "2.5.4",
+          "transformers": "4.57.6"
+        },
+        "source_commit": "7b49924105cda187242252eaf1a9292aa8fcd1cd"
+      }
+    },
+    {
+      "run_id": "issue12-20261011T115932Z-ft-2-1e-6",
+      "inner_fold": 2,
+      "hyperparameters": {
+        "batch_size": 64,
+        "context_length": 720,
+        "dtype": "float32",
+        "early_stopping": "load_best_model_at_end on holdout eval_loss",
+        "eval_every_steps": 100,
+        "finetune_mode": "full",
+        "learning_rate": 1e-06,
+        "lr_scheduler": "linear",
+        "max_steps": 1000,
+        "min_past": 24,
+        "optimizer": "adamw_torch_fused",
+        "prediction_length": 24,
+        "seed": 42,
+        "warmup": 0
+      },
+      "train_series": 8,
+      "holdout_series": 52,
+      "best": {
+        "step": 500,
+        "eval_loss": 4.084980010986328
+      },
+      "curve": [
+        {
+          "step": 100,
+          "train_loss": 3.8639,
+          "learning_rate": 9.01e-07,
+          "grad_norm": 11.345291137695312,
+          "eval_loss": 4.156198978424072
+        },
+        {
+          "step": 200,
+          "train_loss": 3.7838,
+          "learning_rate": 8.01e-07,
+          "grad_norm": 12.481361389160156,
+          "eval_loss": 4.1121296882629395
+        },
+        {
+          "step": 300,
+          "train_loss": 3.6966,
+          "learning_rate": 7.009999999999999e-07,
+          "grad_norm": 12.087296485900879,
+          "eval_loss": 4.0959248542785645
+        },
+        {
+          "step": 400,
+          "train_loss": 3.6591,
+          "learning_rate": 6.009999999999999e-07,
+          "grad_norm": 14.652530670166016,
+          "eval_loss": 4.0927510261535645
+        },
+        {
+          "step": 500,
+          "train_loss": 3.599,
+          "learning_rate": 5.009999999999999e-07,
+          "grad_norm": 15.409578323364258,
+          "eval_loss": 4.084980010986328
+        },
+        {
+          "step": 600,
+          "train_loss": 3.5535,
+          "learning_rate": 4.01e-07,
+          "grad_norm": 13.515045166015625,
+          "eval_loss": 4.090358257293701
+        },
+        {
+          "step": 700,
+          "train_loss": 3.5173,
+          "learning_rate": 3.0099999999999996e-07,
+          "grad_norm": 14.770173072814941,
+          "eval_loss": 4.0979743003845215
+        },
+        {
+          "step": 800,
+          "train_loss": 3.4551,
+          "learning_rate": 2.01e-07,
+          "grad_norm": 14.499964714050293,
+          "eval_loss": 4.112647533416748
+        },
+        {
+          "step": 900,
+          "train_loss": 3.4723,
+          "learning_rate": 1.01e-07,
+          "grad_norm": 14.5940523147583,
+          "eval_loss": 4.118625640869141
+        },
+        {
+          "step": 1000,
+          "train_loss": 3.5279,
+          "learning_rate": 1e-09,
+          "grad_norm": 12.372925758361816,
+          "eval_loss": 4.116062641143799
+        }
+      ],
+      "mean_train_loss_over_run": 3.6128550720214845,
+      "fit_seconds": 735.101884550997,
+      "train_runtime_seconds": 727.8051,
+      "peak_cuda_allocated_bytes_training": 5568471040,
+      "peak_cuda_allocated_bytes_inference": 1022662656,
+      "peak_process_rss_bytes": 2407141376,
+      "single_request_seconds_p95": 0.019854340003803372,
+      "hashes": {
+        "base_weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+        "finetuned_weights_sha256": "8ff0a365e26f092c1c4a4c36d9437587b47c6fa03cd7a490593de0bc5b32bb91",
+        "reloaded_weights_sha256": "8ff0a365e26f092c1c4a4c36d9437587b47c6fa03cd7a490593de0bc5b32bb91",
+        "train_series_file_sha256": "21276c1d05f8471e21a56c6ba56863901cbd97009e2897d671cc1b2a92130d25",
+        "holdout_series_file_sha256": "caec8cac0918617896595dbce1cb6950548130d5c39673a52e6c361865aa7dc3",
+        "finetune_script_sha256": "41c524d5d7fb3c5d7a6b6dd05431696692c06435c4f66ec9df3ad0c7fef4ec4e"
+      },
+      "environment": {
+        "gpu": "NVIDIA GB10",
+        "capability": [
+          12,
+          1
+        ],
+        "torch": "2.8.0+cu129",
+        "torch_cuda": "12.9",
+        "packages": {
+          "accelerate": "1.15.0",
+          "chronos-forecasting": "2.3.2",
+          "numpy": "2.5.4",
+          "transformers": "4.57.6"
+        },
+        "source_commit": "7b49924105cda187242252eaf1a9292aa8fcd1cd"
+      }
+    },
+    {
+      "run_id": "issue12-20261011T115932Z-ft-2-1e-5",
+      "inner_fold": 2,
+      "hyperparameters": {
+        "batch_size": 64,
+        "context_length": 720,
+        "dtype": "float32",
+        "early_stopping": "load_best_model_at_end on holdout eval_loss",
+        "eval_every_steps": 100,
+        "finetune_mode": "full",
+        "learning_rate": 1e-05,
+        "lr_scheduler": "linear",
+        "max_steps": 1000,
+        "min_past": 24,
+        "optimizer": "adamw_torch_fused",
+        "prediction_length": 24,
+        "seed": 42,
+        "warmup": 0
+      },
+      "train_series": 8,
+      "holdout_series": 52,
+      "best": {
+        "step": 100,
+        "eval_loss": 4.171049118041992
+      },
+      "curve": [
+        {
+          "step": 100,
+          "train_loss": 3.6046,
+          "learning_rate": 9.01e-06,
+          "grad_norm": 12.2139253616333,
+          "eval_loss": 4.171049118041992
+        },
+        {
+          "step": 200,
+          "train_loss": 3.1655,
+          "learning_rate": 8.010000000000001e-06,
+          "grad_norm": 16.557010650634766,
+          "eval_loss": 4.2485270500183105
+        },
+        {
+          "step": 300,
+          "train_loss": 2.8547,
+          "learning_rate": 7.01e-06,
+          "grad_norm": 14.838767051696777,
+          "eval_loss": 4.463127136230469
+        },
+        {
+          "step": 400,
+          "train_loss": 2.6623,
+          "learning_rate": 6.01e-06,
+          "grad_norm": 14.34787654876709,
+          "eval_loss": 4.515859127044678
+        },
+        {
+          "step": 500,
+          "train_loss": 2.5292,
+          "learning_rate": 5.01e-06,
+          "grad_norm": 14.193955421447754,
+          "eval_loss": 4.5770392417907715
+        },
+        {
+          "step": 600,
+          "train_loss": 2.4028,
+          "learning_rate": 4.0100000000000006e-06,
+          "grad_norm": 16.01506805419922,
+          "eval_loss": 4.664336681365967
+        },
+        {
+          "step": 700,
+          "train_loss": 2.3257,
+          "learning_rate": 3.01e-06,
+          "grad_norm": 14.617839813232422,
+          "eval_loss": 4.700761318206787
+        },
+        {
+          "step": 800,
+          "train_loss": 2.243,
+          "learning_rate": 2.0100000000000002e-06,
+          "grad_norm": 14.22750186920166,
+          "eval_loss": 4.758647918701172
+        },
+        {
+          "step": 900,
+          "train_loss": 2.2304,
+          "learning_rate": 1.01e-06,
+          "grad_norm": 13.298040390014648,
+          "eval_loss": 4.758920192718506
+        },
+        {
+          "step": 1000,
+          "train_loss": 2.2348,
+          "learning_rate": 1e-08,
+          "grad_norm": 12.326170921325684,
+          "eval_loss": 4.742507457733154
+        }
+      ],
+      "mean_train_loss_over_run": 2.6253079376220705,
+      "fit_seconds": 735.8834494309995,
+      "train_runtime_seconds": 732.7213,
+      "peak_cuda_allocated_bytes_training": 5568471040,
+      "peak_cuda_allocated_bytes_inference": 1022662656,
+      "peak_process_rss_bytes": 2453098496,
+      "single_request_seconds_p95": 0.01969548699707957,
+      "hashes": {
+        "base_weights_sha256": "ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42",
+        "finetuned_weights_sha256": "cd126d44684b0a39a65ea2adb0bc5fa3f7dc82a85464451e3603545e69b574bc",
+        "reloaded_weights_sha256": "cd126d44684b0a39a65ea2adb0bc5fa3f7dc82a85464451e3603545e69b574bc",
+        "train_series_file_sha256": "21276c1d05f8471e21a56c6ba56863901cbd97009e2897d671cc1b2a92130d25",
+        "holdout_series_file_sha256": "caec8cac0918617896595dbce1cb6950548130d5c39673a52e6c361865aa7dc3",
+        "finetune_script_sha256": "41c524d5d7fb3c5d7a6b6dd05431696692c06435c4f66ec9df3ad0c7fef4ec4e"
+      },
+      "environment": {
+        "gpu": "NVIDIA GB10",
+        "capability": [
+          12,
+          1
+        ],
+        "torch": "2.8.0+cu129",
+        "torch_cuda": "12.9",
+        "packages": {
+          "accelerate": "1.15.0",
+          "chronos-forecasting": "2.3.2",
+          "numpy": "2.5.4",
+          "transformers": "4.57.6"
+        },
+        "source_commit": "7b49924105cda187242252eaf1a9292aa8fcd1cd"
+      }
+    }
+  ]
+}
