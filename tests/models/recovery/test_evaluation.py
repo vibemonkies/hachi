@@ -27,6 +27,11 @@ def test_support_counts_people_not_repeated_episodes():
     assert supported_horizon(rows, 14, 2) == 3
 
 
+def test_known_at_risk_support_does_not_treat_wide_event_interval_as_unresolved():
+    rows = [Observation("a", "e1", (), 2, 20), Observation("b", "e2", (), None, 20)]
+    assert supported_horizon(rows, 14, 2, known_at_risk=True) == 1
+
+
 def test_cluster_bootstrap_and_uninformative_interval_exclusion():
     rows = [
         Observation("a", "1", (), 1, 20),

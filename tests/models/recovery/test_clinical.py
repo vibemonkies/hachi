@@ -3,6 +3,7 @@ from datetime import UTC, date, datetime, timedelta
 import pytest
 
 from hachi.models.recovery.clinical import ENDPOINT, SCALE, build_landmarks
+from hachi.models.recovery.cohorts import CMU
 
 D = date(2020, 1, 1)
 
@@ -138,3 +139,13 @@ def test_only_landmark_then_free_tail_has_zero_known_remaining_followup():
     rows, audit = build_landmarks(*args)
     assert rows == []
     assert audit["excluded_no_future_follow_up"] == 1
+
+
+def test_cmu_uses_jackson_score_without_severity_scale_substitution():
+    args = inputs()
+    args[3][0].update(scale=CMU.scale, jackson_adjusted=3.5, cold_or_flu=None)
+    rows, _ = build_landmarks(*args, cohort=CMU)
+    assert rows[0].observation.covariates == (3.5,)
+    assert rows[0].source_scale == CMU.scale
+    with pytest.raises(ValueError, match="scale"):
+        build_landmarks(*args)
