@@ -1,2 +1,2 @@
-ssh asus@100.108.229.115 @args
+ssh asus@5asb @args
 exit $LASTEXITCODE
