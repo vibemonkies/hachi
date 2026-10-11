@@ -89,5 +89,12 @@ def test_cmu_labels_on_synthetic_rows(tmp_path):
     assert counts["infected_1"] == 2 and counts["infected_0"] == 1
     tests = result.report["audit"]["tests"]["by_pathogen_and_result"]
     assert tests == {"influenza:positive": 2, "other:negative": 1, "other:positive": 2}
+    scores = {
+        (r["subject_id"], r["local_date"]): r
+        for r in read_table(result.path, "symptom_scores").to_pylist()
+    }
+    third = scores[("pcs2-101", epoch + timedelta(days=3))]
+    assert (third["jackson_adjusted"], third["cold_or_flu"]) == (5.0, True)
+    assert third["scale"] == "cmu-modified-jackson-8-items-baseline-adjusted"
     windows = read_table(result.path, "onset_windows", subjects=["pmbc-103"]).to_pylist()
     assert {w["onset_24h"] for w in windows} == {"excluded_infection_without_onset"}

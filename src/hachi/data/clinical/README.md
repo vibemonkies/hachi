@@ -42,6 +42,7 @@ recovery = read_table(snapshot, "recovery")
 | `onset_windows.parquet` | one per participant × cutoff at local midnight, with `onset_{24,48,72}h`, the episode behind a positive, and `test_{24,48,72}h` | #13's at-risk windows: train on `positive` vs `negative` only |
 | `recovery.parquet` | one per episode × endpoint: status, reason, resolution day range, follow-up, day indices from onset | #14's event/censoring labels |
 | `surveys.parquet` | completed survey day × state (`symptomatic`, `symptom_free`, `intermediate`) | Survey coverage, negatives |
+| `symptom_scores.parquet` | answered survey day × severity: Stanford phase 1 `symptom_count`, `max_severity` and `severity_sum` over ten symptoms rated 1-5 (several reports in a day keep each measure's worst); CMU `jackson_adjusted` and `cold_or_flu`; `scale` names the instrument; `available_at_utc` is the end of that day | Landmark predictors for #14 (never the retrospective label fields) |
 | `wearable_days.parquet` | participant-day record counts for heart rate, steps and sleep | Which cutoffs have wearable history |
 | `manifest.json`, `audit.json`, `SHA256SUMS` | | Identity, configs, sources, clock, availability rules, aggregate audit |
 
@@ -100,4 +101,4 @@ Synthetic tests (`tests/data/clinical/`) cover:
 - the CMU adapter and its registration gate on a synthetic five-study file;
 - that reports contain no participant ids or dates.
 
-The first real snapshots are `clinical-labels-1-stanford-covid19-wearables-2020-nbe-168d54133c8b` (commit `f0ad975`) and `clinical-labels-1-stanford-covid19-wearables-phase2-2022-nm-1360e4624f99` (commit `d49ff43`). Both pass `verify --full` and `reconcile` with 0 mismatches, and a second phase 1 build was byte-identical. Both are on the GX10 read-only with `sha256sum -c` passing. Their sanitized audit is [`reports/data/clinical-labels-1.md`](../../../../reports/data/clinical-labels-1.md).
+The current snapshots are `clinical-labels-2-stanford-covid19-wearables-2020-nbe-6a864b03b2d3` and `clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm-bbbca036d9e5`, both built from commit `18ec9fc`. Both pass `verify --full` and `reconcile` with 0 mismatches, and a second phase 1 build was byte-identical. Both are on the GX10 read-only with `sha256sum -c` passing. They supersede the `clinical-labels-1` snapshots from PR #58, which have byte-identical tables and lack only `symptom_scores`. Their sanitized audit is [`reports/data/clinical-labels.md`](../../../../reports/data/clinical-labels.md).
