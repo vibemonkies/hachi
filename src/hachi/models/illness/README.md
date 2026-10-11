@@ -66,3 +66,21 @@ No population prevalence, transportable calibration, real-time availability,
 friend-case tuning or clinical deployment is established.
 
 See [the aggregate evidence](../../../../reports/models/illness/phase1.md).
+
+The committed evidence module rebuilds reports without fitting again:
+
+~~~sh
+python -I -m hachi.models.illness.evidence \
+  --snapshot "$HACHI_LABEL_SNAPSHOT" --packet-root "$HACHI_ILLNESS_PACKETS" \
+  --suffix 002 --previous-suffix 001 --base-python "$HACHI_BASE_PYTHON" \
+  --output reports/models/illness
+~~~
+
+It validates every saved prediction against the exact validation fold and snapshot
+labels/survey predictors, recomputes metrics and paired ablations, rechecks the full
+development label grid, and hashes all private packet inputs. A base-only worker
+replays artifacts against an archived copy of their exact producing source. The
+report discloses threshold redaction and preserves original runner gates. Earlier
+run equality is reported only when their packets are supplied. Original scoring
+requires a completely clean checkout, including untracked files; use this isolated
+worker checkout without generated mail-helper files. Labels-1 must remain retained.

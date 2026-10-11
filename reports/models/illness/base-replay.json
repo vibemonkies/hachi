@@ -1,8 +1,8 @@
 {
-  "numpy_absent": true,
-  "sklearn_absent": true,
   "artifacts_reloaded": 81,
-  "predictions_replayed": 4464,
+  "decision_mismatches": 0,
   "max_probability_difference": 6.661338147750939e-16,
-  "decision_mismatches": 0
+  "numpy_absent": true,
+  "predictions_replayed": 4464,
+  "sklearn_absent": true
 }
