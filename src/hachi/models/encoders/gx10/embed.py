@@ -25,9 +25,11 @@ from urllib.request import Request, urlopen
 
 import numpy as np
 import torch
-from _runtime import python_headers
+from _runtime import python_headers, triton_ptxas
 
-CPATH = python_headers()  # before any Triton kernel compiles
+# Both must be set before the first Triton kernel compiles.
+CPATH = python_headers()
+PTXAS = triton_ptxas()
 
 BATCH = 64
 MODEL_PACKAGES = {"wbm": ("mamba-ssm", "causal-conv1d"), "moment": ("momentfm", "transformers")}
@@ -178,6 +180,7 @@ def prove(model_name, model, device):
     # A parameter this input never reaches (e.g. a mask embedding when every step is observed)
     # has no gradient; that is reported by name, separately from non-finite gradients.
     no_grad = [n for n, p in named if p.grad is None]
+    zero_grad = [n for n, p in named if p.grad is not None and not bool(p.grad.any())]
     grads_finite = all(bool(torch.isfinite(p.grad).all()) for p in params if p.grad is not None)
     optimizer.step()
     torch.cuda.synchronize()
@@ -190,11 +193,12 @@ def prove(model_name, model, device):
         "trainable_tensors": len(params),
         "gradients_finite": grads_finite,
         "tensors_without_gradient": no_grad,
+        "tensors_with_zero_gradient": zero_grad,
         "tensors_changed_by_update": changed,
         "forward_backward_update_ms": round(seconds * 1000, 1),
         "passed": bool(torch.isfinite(loss))
         and grads_finite
-        and changed == len(params) - len(no_grad) > 0,
+        and changed == len(params) - len(no_grad) - len(zero_grad) > 0,
     }
 
 
@@ -238,6 +242,7 @@ def main():
         "host": {"machine": platform.machine(), "python": platform.python_version()},
         "load_seconds": round(load_seconds, 2),
         "triton_launcher_cpath": CPATH,
+        "triton_ptxas": PTXAS,
     }
     if args.prove:
         receipt["proof"] = prove(args.model, model, device)
