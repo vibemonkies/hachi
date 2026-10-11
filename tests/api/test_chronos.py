@@ -44,6 +44,7 @@ class FakeGx10:
         self.files: dict[str, bytes] = {}
         self.jobs: list[str] = []
         self.requests: list[dict] = []
+        self.terminated: list[str] = []
 
     def home(self) -> str:
         if self.mode == "unreachable":
@@ -54,9 +55,18 @@ class FakeGx10:
         self.files[path] = data
 
     def remove(self, path: str) -> None:
-        if self.mode == "stuck_cleanup" and "/runs/" in path:
-            raise GpuUnavailable("remote step failed (exit 1)")
         self.files.pop(path, None)
+
+    def remove_tree(self, path: str) -> None:
+        if self.mode == "stuck_cleanup":
+            raise GpuUnavailable("remote step failed (exit 1)")
+        for name in [f for f in self.files if f.startswith(path + "/")]:
+            del self.files[name]
+
+    def terminate(self, marker: str) -> None:
+        self.terminated.append(marker)
+        if self.mode == "unkillable":
+            raise GpuUnavailable("remote step failed (exit 1)")
 
     def read(self, path: str) -> bytes:
         return self.files[path]
@@ -67,7 +77,10 @@ class FakeGx10:
         self.jobs.append(run_id)
         if self.mode == "busy":
             return 75
-        if self.mode == "timeout":
+        directory = f"/home/fake/hachi/runs/tester/{run_id}"
+        self.files[f"{directory}/job.json"] = b'{"state": "running"}'  # gpu-run's own record
+        self.files[f"{directory}/output.log"] = b"supervisor output"
+        if self.mode in ("timeout", "unkillable"):
             raise GpuTimeout("the GPU job did not finish in time")
         request_bytes = self.files[command[command.index("--requests") + 1]]
         row = json.loads(request_bytes)
@@ -95,7 +108,6 @@ class FakeGx10:
         }
         if self.mode == "tampered":
             predictions = predictions.replace(b"[", b"[ ", 1)
-        directory = f"/home/fake/hachi/runs/tester/{run_id}"
         self.files[f"{directory}/inference.json"] = json.dumps(evidence).encode()
         self.files[f"{directory}/predictions.jsonl"] = predictions
         return 0
@@ -294,6 +306,12 @@ def test_ssh_jobs_carry_their_own_gx10_deadline(monkeypatch):
         def remove(self, path):
             pass
 
+        def remove_tree(self, path):
+            pass
+
+        def terminate(self, marker):
+            raise AssertionError("the remote deadline already ended this job")
+
         def run(self, command, cwd, timeout):
             return 124  # the GX10's own deadline fired, e.g. while queued on the GPU lock
 
@@ -307,7 +325,21 @@ def test_ssh_jobs_carry_their_own_gx10_deadline(monkeypatch):
 def test_nothing_from_a_request_outlives_it_on_the_gx10(chronos_client):
     client, fake, _ = chronos_client()
     assert report(client).result.root.status == "ok"
-    assert fake.jobs and fake.files == {}  # request, predictions and evidence all removed
+    assert fake.jobs and fake.files == {}  # request and the whole run directory removed
+    assert fake.terminated == []  # the job ended normally, nothing to stop
+
+
+def test_a_job_with_an_unknown_end_is_stopped_before_its_files_are_removed(chronos_client):
+    client, fake, _ = chronos_client("timeout")
+    result = report(client).result.root
+    assert (result.status, result.error_code) == ("error", "INFERENCE_TIMEOUT")
+    assert fake.terminated == fake.jobs and fake.files == {}
+    stuck_client, stuck, _ = chronos_client("unkillable")
+    assert stuck.terminated == []
+    stuck_result = report(stuck_client, FORECAST | {"as_of": "2020-03-29T13:00:00Z"}).result.root
+    assert (stuck_result.status, stuck_result.error_code) == ("error", "INFERENCE_FAILED")
+    assert "could not be removed" in stuck_result.message
+    assert stuck.terminated == stuck.jobs  # termination was attempted, and its failure surfaced
 
 
 def test_a_failed_gx10_cleanup_is_surfaced_and_the_forecast_withheld(chronos_client):

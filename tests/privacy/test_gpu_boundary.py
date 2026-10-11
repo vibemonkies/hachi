@@ -96,6 +96,15 @@ def test_remote_artifacts_are_outside_subject_erasure_inventory(cleanup_failure)
                 raise GpuUnavailable(SENTINEL)
             self.files.pop(path, None)
 
+        def remove_tree(self, path):
+            if cleanup_failure:
+                raise GpuUnavailable(SENTINEL)
+            for name in [f for f in self.files if f.startswith(path + "/")]:
+                del self.files[name]
+
+        def terminate(self, marker):
+            raise AssertionError("a job that ended normally is never terminated")
+
         def read(self, path):
             return self.files[path]
 
