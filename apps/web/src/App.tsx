@@ -44,7 +44,7 @@ export default function App() {
     }, 1000);
     return () => window.clearTimeout(timer);
   }, [workflow]);
-  const phase = {
+  const workflowPhase = {
     empty: "Ready to load a synthetic history.",
     importing: "Loading synthetic history.",
     "no-observations": "No observations found.",
@@ -55,6 +55,12 @@ export default function App() {
     "report-error": "Report failed.",
     report: "Synthetic report ready.",
   }[workflow.kind];
+  const phase =
+    section === "symptoms"
+      ? "Symptom entries are synthetic previews held locally and not saved or sent."
+      : section === "sleep"
+        ? "Schedule comparisons use static synthetic illustrations."
+        : workflowPhase;
   return (
     <>
       <a
