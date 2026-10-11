@@ -2,6 +2,7 @@
 
 from .config import Admission, PipelineConfig, load_config, registry_admission
 from .snapshot import (
+    AGGREGATE_AVAILABILITY_RULE,
     FeatureBin,
     build,
     dataset_snapshot_ref,
@@ -15,6 +16,7 @@ from .snapshot import (
 from .wellness import SCALES, WellnessDay
 
 __all__ = [
+    "AGGREGATE_AVAILABILITY_RULE",
     "SCALES",
     "Admission",
     "FeatureBin",

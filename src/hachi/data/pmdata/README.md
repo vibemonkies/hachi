@@ -74,7 +74,7 @@ Excluded members are still parsed so their row counts reconcile. Calories are to
 - An empty bin is `value: null`, `null_reason: no_observations`, `coverage: 0`, never zero.
 - Coverage is the fraction of the bin with usable data. For heart rate that is minutes with samples; for steps, distance and resting HR, the observations' own intervals; for sleep states, time inside any kept sleep log.
 - Heart-rate bins below 0.5 coverage are null with `insufficient_coverage`. Other metrics keep any covered value. Their `coverage` column carries the mask (`configs/features/pmdata.toml`).
-- `available_at_utc` is `max(bin end, availability of every observation and coverage span the bin depends on)`. For every cutoff at or after it, the stored row equals the bin recomputed from `iter_observations(as_of=cutoff)`; a synthetic property test checks this. Before it, recompute from observations, because the stored value may use later data. Never feed the whole table to a model without this filter.
+- `available_at_utc` is `max(bin end, availability of every observation and coverage span the bin depends on)` (rule id `pmdata-aggregate-final-at-latest-input`, exported as `AGGREGATE_AVAILABILITY_RULE`). For every cutoff at or after it, the stored row equals the bin recomputed from `iter_observations(as_of=cutoff)`; a synthetic property test checks this. Before it, recompute from observations, because the stored value may use later data. Never feed the whole table to a model without this filter.
 - Day bins split a night at local midnight. Use observations for per-night totals.
 
 ## Wellness
@@ -95,4 +95,4 @@ The labels come from the PMSys screenshots in the paper (Thambawita et al., MMSy
 
 Synthetic tests (`tests/data/pmdata/`) cover: a generated archive in PMData's layout, crossing the Oslo DST change; duplicate, conflicting and out-of-bounds records; DST-spanning, overlapping and duplicated sleep logs; short-wake overlays; the resting-HR sentinel; sparse steps; out-of-scale and same-day wellness; archive refusal; contract validity; byte-identical rebuilds; tamper detection; as-of recomputation; and raw-archive reconciliation.
 
-Real-archive evidence is in the sanitized report and the #5 PR.
+The first real snapshot is `pmdata-features-1-simula-2020-04-24-06606ac2708b`, built from commit `a7ed306`. A second build was byte-identical; `verify --full --archive` and `reconcile` (2,400 values, 0 mismatches) pass; and all 17 counted members match the paper's entry counts. Its sanitized cohort audit is [`reports/data/pmdata-features-1-simula-2020-04-24.md`](../../../../reports/data/pmdata-features-1-simula-2020-04-24.md).

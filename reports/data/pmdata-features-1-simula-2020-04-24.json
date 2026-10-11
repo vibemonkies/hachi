@@ -1,0 +1,812 @@
+{
+  "clock_alignment": {
+    "by_probe_shift": [
+      {
+        "heart_rate_minutes": 769807,
+        "mean_heart_rate_asleep": 61.64813803547502,
+        "probe_shift_minutes": -120,
+        "steps_minutes": 196939,
+        "steps_per_asleep_minute": 7.279061029049604
+      },
+      {
+        "heart_rate_minutes": 774944,
+        "mean_heart_rate_asleep": 60.71670950996184,
+        "probe_shift_minutes": -90,
+        "steps_minutes": 173304,
+        "steps_per_asleep_minute": 6.609991690901537
+      },
+      {
+        "heart_rate_minutes": 779743,
+        "mean_heart_rate_asleep": 59.88030121768547,
+        "probe_shift_minutes": -60,
+        "steps_minutes": 151470,
+        "steps_per_asleep_minute": 5.58927840496468
+      },
+      {
+        "heart_rate_minutes": 784116,
+        "mean_heart_rate_asleep": 59.02982975491141,
+        "probe_shift_minutes": -30,
+        "steps_minutes": 129133,
+        "steps_per_asleep_minute": 4.071112728737039
+      },
+      {
+        "heart_rate_minutes": 786999,
+        "mean_heart_rate_asleep": 58.12346412580575,
+        "probe_shift_minutes": 0,
+        "steps_minutes": 92183,
+        "steps_per_asleep_minute": 3.1134374016901165
+      },
+      {
+        "heart_rate_minutes": 782220,
+        "mean_heart_rate_asleep": 58.82006465077704,
+        "probe_shift_minutes": 30,
+        "steps_minutes": 133300,
+        "steps_per_asleep_minute": 4.687831957989498
+      },
+      {
+        "heart_rate_minutes": 776343,
+        "mean_heart_rate_asleep": 59.501688980998566,
+        "probe_shift_minutes": 60,
+        "steps_minutes": 157366,
+        "steps_per_asleep_minute": 7.60534677122123
+      },
+      {
+        "heart_rate_minutes": 770342,
+        "mean_heart_rate_asleep": 60.384330522400006,
+        "probe_shift_minutes": 90,
+        "steps_minutes": 183398,
+        "steps_per_asleep_minute": 10.805668546003773
+      },
+      {
+        "heart_rate_minutes": 764548,
+        "mean_heart_rate_asleep": 61.36163083387906,
+        "probe_shift_minutes": 120,
+        "steps_minutes": 211411,
+        "steps_per_asleep_minute": 12.798042675168274
+      }
+    ],
+    "lowest_heart_rate_shift_minutes": 0,
+    "method": "Asleep minutes of main sleeps, located with the assumed timezone, probed in the UTC-read intraday data at shifts around that mapping; 0 means the mapping holds.",
+    "participant_weeks": {
+      "insufficient_data": 4,
+      "lowest_heart_rate_at_shift_+0min": 287,
+      "lowest_heart_rate_at_shift_+120min": 9,
+      "lowest_heart_rate_at_shift_+30min": 3,
+      "lowest_heart_rate_at_shift_+90min": 4,
+      "lowest_heart_rate_at_shift_-120min": 5,
+      "lowest_heart_rate_at_shift_-30min": 1,
+      "lowest_heart_rate_at_shift_-60min": 2
+    }
+  },
+  "dataset": {
+    "archive": "pmdata.zip",
+    "archive_bytes": 1416129266,
+    "archive_sha256": "53a49d94a2e9713fb8a0fc57d4d9dec3e1e4d2ae866969cd1f7537a5bc125357",
+    "dataset_id": "pmdata",
+    "dataset_version": "simula-2020-04-24"
+  },
+  "dataset_snapshot": {
+    "dataset_id": "pmdata",
+    "dataset_version": "simula-2020-04-24",
+    "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+  },
+  "missingness": [
+    {
+      "aggregation": "max",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.9746983148730767,
+      "metric": "heart_rate",
+      "null_insufficient_coverage": 1266,
+      "null_no_observations": 7327,
+      "resolution": "hour",
+      "with_value": 46406
+    },
+    {
+      "aggregation": "mean",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.9746983148730767,
+      "metric": "heart_rate",
+      "null_insufficient_coverage": 1266,
+      "null_no_observations": 7327,
+      "resolution": "hour",
+      "with_value": 46406
+    },
+    {
+      "aggregation": "min",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.9746983148730767,
+      "metric": "heart_rate",
+      "null_insufficient_coverage": 1266,
+      "null_no_observations": 7327,
+      "resolution": "hour",
+      "with_value": 46406
+    },
+    {
+      "aggregation": "sum",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.9116609129267358,
+      "metric": "sleep_asleep_core",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 39357,
+      "resolution": "hour",
+      "with_value": 15642
+    },
+    {
+      "aggregation": "sum",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.9546299947423764,
+      "metric": "sleep_asleep_deep",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 47391,
+      "resolution": "hour",
+      "with_value": 7608
+    },
+    {
+      "aggregation": "sum",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.962617795310103,
+      "metric": "sleep_asleep_rem",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 45873,
+      "resolution": "hour",
+      "with_value": 9126
+    },
+    {
+      "aggregation": "sum",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.6909173976608187,
+      "metric": "sleep_asleep_unspecified",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 54543,
+      "resolution": "hour",
+      "with_value": 456
+    },
+    {
+      "aggregation": "sum",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.8881060129897339,
+      "metric": "sleep_awake",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 39089,
+      "resolution": "hour",
+      "with_value": 15910
+    },
+    {
+      "aggregation": "sum",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.8814525774428896,
+      "metric": "sleep_in_bed",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 38277,
+      "resolution": "hour",
+      "with_value": 16722
+    },
+    {
+      "aggregation": "sum",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.5487276343370606,
+      "metric": "steps",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 8406,
+      "resolution": "hour",
+      "with_value": 46593
+    },
+    {
+      "aggregation": "sum",
+      "bins": 54999,
+      "mean_coverage_of_valued_bins": 0.5487276343370606,
+      "metric": "walking_running_distance",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 8406,
+      "resolution": "hour",
+      "with_value": 46593
+    },
+    {
+      "aggregation": "max",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.9140468135533288,
+      "metric": "heart_rate",
+      "null_insufficient_coverage": 164,
+      "null_no_observations": 119,
+      "resolution": "day",
+      "with_value": 2022
+    },
+    {
+      "aggregation": "mean",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.9140468135533288,
+      "metric": "heart_rate",
+      "null_insufficient_coverage": 164,
+      "null_no_observations": 119,
+      "resolution": "day",
+      "with_value": 2022
+    },
+    {
+      "aggregation": "min",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.9140468135533288,
+      "metric": "heart_rate",
+      "null_insufficient_coverage": 164,
+      "null_no_observations": 119,
+      "resolution": "day",
+      "with_value": 2022
+    },
+    {
+      "aggregation": "mean",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 1.0,
+      "metric": "resting_heart_rate_vendor",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 647,
+      "resolution": "day",
+      "with_value": 1658
+    },
+    {
+      "aggregation": "sum",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.3209109708135225,
+      "metric": "sleep_asleep_core",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 406,
+      "resolution": "day",
+      "with_value": 1899
+    },
+    {
+      "aggregation": "sum",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.322491822998757,
+      "metric": "sleep_asleep_deep",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 420,
+      "resolution": "day",
+      "with_value": 1885
+    },
+    {
+      "aggregation": "sum",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.32712003612108315,
+      "metric": "sleep_asleep_rem",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 452,
+      "resolution": "day",
+      "with_value": 1853
+    },
+    {
+      "aggregation": "sum",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.3166596283783784,
+      "metric": "sleep_asleep_unspecified",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 2157,
+      "resolution": "day",
+      "with_value": 148
+    },
+    {
+      "aggregation": "sum",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.3198066372172299,
+      "metric": "sleep_awake",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 389,
+      "resolution": "day",
+      "with_value": 1916
+    },
+    {
+      "aggregation": "sum",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.3189020870643771,
+      "metric": "sleep_in_bed",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 379,
+      "resolution": "day",
+      "with_value": 1926
+    },
+    {
+      "aggregation": "sum",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.48764293768447586,
+      "metric": "steps",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 120,
+      "resolution": "day",
+      "with_value": 2185
+    },
+    {
+      "aggregation": "sum",
+      "bins": 2305,
+      "mean_coverage_of_valued_bins": 0.48764293768447586,
+      "metric": "walking_running_distance",
+      "null_insufficient_coverage": 0,
+      "null_no_observations": 120,
+      "resolution": "day",
+      "with_value": 2185
+    }
+  ],
+  "observations_by_metric": {
+    "heart_rate": 20985494,
+    "resting_heart_rate_vendor": 1658,
+    "sleep_asleep_core": 51454,
+    "sleep_asleep_deep": 7133,
+    "sleep_asleep_rem": 14708,
+    "sleep_asleep_unspecified": 572,
+    "sleep_awake": 51700,
+    "sleep_in_bed": 1993,
+    "steps": 1534012,
+    "walking_running_distance": 1534012
+  },
+  "participants": 16,
+  "per_participant_distributions": {
+    "days_with_heart_rate": {
+      "max": 151,
+      "median": 138.0,
+      "min": 62,
+      "n": 16
+    },
+    "days_with_resting_heart_rate": {
+      "max": 152,
+      "median": 119.5,
+      "min": 0,
+      "n": 16
+    },
+    "days_with_sleep_in_bed": {
+      "max": 151,
+      "median": 135.5,
+      "min": 9,
+      "n": 16
+    },
+    "days_with_steps": {
+      "max": 153,
+      "median": 144.5,
+      "min": 83,
+      "n": 16
+    },
+    "local_days_in_span": {
+      "max": 153,
+      "median": 147.0,
+      "min": 114,
+      "n": 16
+    },
+    "sleep_logs_kept": {
+      "max": 181,
+      "median": 137.5,
+      "min": 8,
+      "n": 16
+    },
+    "wellness_days_with_report": {
+      "max": 147,
+      "median": 102.5,
+      "min": 67,
+      "n": 16
+    }
+  },
+  "pipeline_version": "pmdata-features-1",
+  "snapshot_id": "pmdata-features-1-simula-2020-04-24-06606ac2708b",
+  "sources": [
+    {
+      "bytes": 182122019,
+      "excluded_reason": "Total energy expenditure including basal; not active_energy.",
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/calories.json",
+      "outcomes": {
+        "excluded_rows": 3377529
+      },
+      "paper_count": 3377529,
+      "rows_parsed": 3377529
+    },
+    {
+      "bytes": 79858570,
+      "dispositions_reconcile": true,
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/distance.json",
+      "outcomes": {
+        "accepted": 1534012,
+        "accepted_recorded_zero": 954072,
+        "duplicate_conflicting_dropped": 134,
+        "duplicate_identical_dropped": 559
+      },
+      "paper_count": 1534705,
+      "rows_parsed": 1534705
+    },
+    {
+      "bytes": 2544657,
+      "excluded_reason": "Vendor activity summaries; no canonical metric.",
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/exercise.json",
+      "outcomes": {
+        "excluded_rows": 2440
+      },
+      "paper_count": 2440,
+      "rows_parsed": 2440
+    },
+    {
+      "bytes": 1597518436,
+      "dispositions_reconcile": true,
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/heart_rate.json",
+      "outcomes": {
+        "accepted": 20985494,
+        "confidence_0": 257376,
+        "confidence_1": 5804591,
+        "confidence_2": 8300786,
+        "confidence_3": 6628639,
+        "duplicate_identical_dropped": 5898
+      },
+      "paper_count": 20991392,
+      "rows_parsed": 20991392
+    },
+    {
+      "bytes": 118233,
+      "excluded_reason": "Vendor activity-level minutes; no canonical metric.",
+      "files": 15,
+      "matches_paper": true,
+      "member": "fitbit/lightly_active_minutes.json",
+      "outcomes": {
+        "excluded_rows": 2244
+      },
+      "paper_count": 2244,
+      "rows_parsed": 2244
+    },
+    {
+      "bytes": 123689,
+      "excluded_reason": "Vendor activity-level minutes; no canonical metric.",
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/moderately_active_minutes.json",
+      "outcomes": {
+        "excluded_rows": 2396
+      },
+      "paper_count": 2396,
+      "rows_parsed": 2396
+    },
+    {
+      "bytes": 218908,
+      "dispositions_reconcile": true,
+      "files": 14,
+      "matches_paper": true,
+      "member": "fitbit/resting_heart_rate.json",
+      "outcomes": {
+        "accepted": 1658,
+        "duplicate_identical_dropped": 0,
+        "excluded_zero_means_no_estimate": 145,
+        "participants_missing_file": 2
+      },
+      "paper_count": 1803,
+      "rows_parsed": 1803
+    },
+    {
+      "bytes": 127547,
+      "excluded_reason": "Vendor activity-level minutes; no canonical metric.",
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/sedentary_minutes.json",
+      "outcomes": {
+        "excluded_rows": 2396
+      },
+      "paper_count": 2396,
+      "rows_parsed": 2396
+    },
+    {
+      "bytes": 8224726,
+      "dispositions_reconcile": true,
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/sleep.json",
+      "outcomes": {
+        "accepted": 1993,
+        "accepted_classic_main": 37,
+        "accepted_classic_other": 114,
+        "accepted_stages_main": 1836,
+        "accepted_stages_other": 6,
+        "duplicate_identical_dropped": 63,
+        "quarantined_dst_transition": 8,
+        "segments_excluded_classic_restless": 519,
+        "summary_mismatch": 91,
+        "summary_reconciled": 1902
+      },
+      "paper_count": 2064,
+      "rows_parsed": 2064
+    },
+    {
+      "bytes": 134653,
+      "excluded_reason": "Vendor sleep score; no canonical metric.",
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/sleep_score.csv",
+      "outcomes": {
+        "excluded_rows": 1836
+      },
+      "paper_count": 1836,
+      "rows_parsed": 1836
+    },
+    {
+      "bytes": 78809287,
+      "dispositions_reconcile": true,
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/steps.json",
+      "outcomes": {
+        "accepted": 1534012,
+        "accepted_recorded_zero": 953071,
+        "duplicate_conflicting_dropped": 134,
+        "duplicate_identical_dropped": 559
+      },
+      "paper_count": 1534705,
+      "rows_parsed": 1534705
+    },
+    {
+      "bytes": 409488,
+      "excluded_reason": "Vendor HR-zone minutes; no canonical metric.",
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/time_in_heart_rate_zones.json",
+      "outcomes": {
+        "excluded_rows": 2178
+      },
+      "paper_count": 2178,
+      "rows_parsed": 2178
+    },
+    {
+      "bytes": 124059,
+      "excluded_reason": "Vendor activity-level minutes; no canonical metric.",
+      "files": 16,
+      "matches_paper": true,
+      "member": "fitbit/very_active_minutes.json",
+      "outcomes": {
+        "excluded_rows": 2396
+      },
+      "paper_count": 2396,
+      "rows_parsed": 2396
+    },
+    {
+      "bytes": 1295618370,
+      "excluded_reason": "Meal photographs; never opened.",
+      "files": 643,
+      "member": "food-images",
+      "outcomes": {},
+      "paper_count": null,
+      "rows_parsed": null
+    },
+    {
+      "bytes": 107757,
+      "excluded_reason": "Food, fluid, weight and alcohol reports; not ingested.",
+      "files": 15,
+      "matches_paper": true,
+      "member": "googledocs/reporting.csv",
+      "outcomes": {
+        "excluded_rows": 1569
+      },
+      "paper_count": 1569,
+      "rows_parsed": 1569
+    },
+    {
+      "bytes": 10844,
+      "excluded_reason": "Demographics; never opened.",
+      "files": 1,
+      "member": "participant-overview.xlsx",
+      "outcomes": {},
+      "paper_count": null,
+      "rows_parsed": null
+    },
+    {
+      "bytes": 9405,
+      "excluded_reason": "Injury reports; not part of this snapshot.",
+      "files": 15,
+      "matches_paper": true,
+      "member": "pmsys/injury.csv",
+      "outcomes": {
+        "excluded_rows": 225
+      },
+      "paper_count": 225,
+      "rows_parsed": 225
+    },
+    {
+      "bytes": 48157,
+      "excluded_reason": "Training-load reports; not part of this snapshot.",
+      "files": 16,
+      "matches_paper": true,
+      "member": "pmsys/srpe.csv",
+      "outcomes": {
+        "excluded_rows": 783
+      },
+      "paper_count": 783,
+      "rows_parsed": 783
+    },
+    {
+      "bytes": 85701,
+      "files": 16,
+      "matches_paper": true,
+      "member": "pmsys/wellness.csv",
+      "outcomes": {
+        "days_with_report": 1724,
+        "days_without_report": 594,
+        "excluded_soreness_area": 1724,
+        "fatigue_observed": 1722,
+        "fatigue_out_of_scale": 2,
+        "mood_observed": 1721,
+        "mood_out_of_scale": 3,
+        "readiness_observed": 1724,
+        "sleep_duration_h_observed": 1724,
+        "sleep_quality_observed": 1722,
+        "sleep_quality_out_of_scale": 2,
+        "soreness_observed": 1722,
+        "soreness_out_of_scale": 2,
+        "stress_observed": 1721,
+        "stress_out_of_scale": 3,
+        "superseded_same_day_reports": 23
+      },
+      "paper_count": 1747,
+      "rows_parsed": 1747
+    }
+  ],
+  "table_rows": {
+    "aggregates_daily.parquet": 27660,
+    "aggregates_hourly.parquet": 604989,
+    "outcomes.parquet": 16,
+    "wellness_daily.parquet": 16226
+  },
+  "wellness_labels": [
+    {
+      "days": 594,
+      "item": "fatigue",
+      "status": "no_survey"
+    },
+    {
+      "days": 1722,
+      "item": "fatigue",
+      "status": "observed"
+    },
+    {
+      "days": 2,
+      "item": "fatigue",
+      "status": "out_of_scale"
+    },
+    {
+      "days": 594,
+      "item": "mood",
+      "status": "no_survey"
+    },
+    {
+      "days": 1721,
+      "item": "mood",
+      "status": "observed"
+    },
+    {
+      "days": 3,
+      "item": "mood",
+      "status": "out_of_scale"
+    },
+    {
+      "days": 594,
+      "item": "readiness",
+      "status": "no_survey"
+    },
+    {
+      "days": 1724,
+      "item": "readiness",
+      "status": "observed"
+    },
+    {
+      "days": 594,
+      "item": "sleep_duration_h",
+      "status": "no_survey"
+    },
+    {
+      "days": 1724,
+      "item": "sleep_duration_h",
+      "status": "observed"
+    },
+    {
+      "days": 594,
+      "item": "sleep_quality",
+      "status": "no_survey"
+    },
+    {
+      "days": 1722,
+      "item": "sleep_quality",
+      "status": "observed"
+    },
+    {
+      "days": 2,
+      "item": "sleep_quality",
+      "status": "out_of_scale"
+    },
+    {
+      "days": 594,
+      "item": "soreness",
+      "status": "no_survey"
+    },
+    {
+      "days": 1722,
+      "item": "soreness",
+      "status": "observed"
+    },
+    {
+      "days": 2,
+      "item": "soreness",
+      "status": "out_of_scale"
+    },
+    {
+      "days": 594,
+      "item": "stress",
+      "status": "no_survey"
+    },
+    {
+      "days": 1721,
+      "item": "stress",
+      "status": "observed"
+    },
+    {
+      "days": 3,
+      "item": "stress",
+      "status": "out_of_scale"
+    }
+  ],
+  "wellness_scales": {
+    "documented_directions": {
+      "fatigue": {
+        "evidence": "PMSys labels: 1 Very tired ... 3 Normal ... 5 Very fresh",
+        "higher_means": "less fatigued"
+      },
+      "mood": {
+        "evidence": "PMSys labels: 1 Very bad mood ... 5 Very good mood",
+        "higher_means": "better mood"
+      },
+      "readiness": {
+        "evidence": "PMSys labels: 0 Not Ready ... 10 Max Ready",
+        "higher_means": "more ready to train"
+      },
+      "sleep_duration_h": {
+        "evidence": "PMSys choices: 0 h to 12 h, in half hours to 8.5",
+        "higher_means": "longer reported sleep"
+      },
+      "sleep_quality": {
+        "evidence": "Paper: 3 is normal, 1-2 below and 4-5 above; labels unshown",
+        "higher_means": "undocumented"
+      },
+      "soreness": {
+        "evidence": "PMSys labels: 1 Very sore ... 5 Great",
+        "higher_means": "less sore"
+      },
+      "stress": {
+        "evidence": "PMSys labels: 1 Highly stressed ... 5 Very relaxed",
+        "higher_means": "less stressed"
+      }
+    },
+    "items": {
+      "fatigue": {
+        "correlation_with_readiness": 0.5132745052534008,
+        "days": 1722
+      },
+      "mood": {
+        "correlation_with_readiness": 0.2557518490229375,
+        "days": 1721
+      },
+      "sleep_duration_h": {
+        "correlation_with_readiness": 0.14167596760433457,
+        "days": 1724
+      },
+      "sleep_quality": {
+        "correlation_with_readiness": 0.25610057022001825,
+        "days": 1722
+      },
+      "soreness": {
+        "correlation_with_readiness": 0.2692876055122148,
+        "days": 1722
+      },
+      "stress": {
+        "correlation_with_readiness": 0.1515797856866774,
+        "days": 1721
+      }
+    },
+    "method": "Pearson correlation of participant-centred daily values with readiness."
+  },
+  "wellness_timing": {
+    "inside_sleep_if_local": 603,
+    "inside_sleep_if_utc": 69,
+    "reports": 1747
+  }
+}

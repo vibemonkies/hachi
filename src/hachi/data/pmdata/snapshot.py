@@ -556,8 +556,13 @@ def iter_observations(
             yield Observation.model_validate(row)
 
 
+# How a bin's available_at_utc is derived: the latest availability of any observation or
+# coverage span it depends on, never before the bin ends (see aggregates.py).
+AGGREGATE_AVAILABILITY_RULE = "pmdata-aggregate-final-at-latest-input"
+
+
 class FeatureBin(NamedTuple):
-    """A canonical Aggregate and the moment it became final (see aggregates.py)."""
+    """A canonical Aggregate and the moment it became final (AGGREGATE_AVAILABILITY_RULE)."""
 
     aggregate: Aggregate
     available_at_utc: datetime
@@ -662,10 +667,17 @@ def verify(
 
 def _validate_all(snapshot: Path, problems: list[str]) -> dict[str, int]:
     counts = {}
-    seen: dict[str, set[str]] = {}
+    # Rows are grouped by subject, so only the current subject's ids need holding.
+    finished: set[str] = set()
+    subject, ids = None, set()
     n = 0
     for observation in iter_observations(snapshot):
-        ids = seen.setdefault(observation.subject_id, set())
+        if observation.subject_id != subject:
+            if observation.subject_id in finished:
+                problems.append("observations are not grouped by subject")
+            if subject is not None:
+                finished.add(subject)
+            subject, ids = observation.subject_id, set()
         if observation.record_id in ids:
             problems.append(f"duplicate record_id {observation.record_id}")
         ids.add(observation.record_id)
