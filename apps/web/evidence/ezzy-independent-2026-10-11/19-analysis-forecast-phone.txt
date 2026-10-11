@@ -1,0 +1,106 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Forecast" [active] [level=1]
+  - status: Synthetic report ready.
+  - paragraph:
+    - text: Cutoff
+    - strong: 2026-10-10T07:00:00Z
+  - link "Change cutoff":
+    - /url: "#import"
+  - figure "Heart rate · hourly mean Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range.":
+    - heading "Heart rate · hourly mean" [level=3]
+    - paragraph: Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range.
+    - region "Heart rate · hourly mean chart, scroll horizontally on narrow screens":
+      - img "Heart rate · hourly mean. Synthetic illustration. Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range. Exact UTC timestamps and values follow in the table. Gaps mean missing observations.":
+        - generic: "55.0"
+        - generic: "69.0"
+        - generic: "83.0"
+        - generic: bpm
+        - generic: 10-10 07:00
+        - generic: 10-10 11:00
+        - generic: 10-10 15:00
+        - generic: 10-10 19:00
+        - generic: 10-10 23:00
+        - generic: 10-11 03:00
+    - paragraph: All times UTC. Gaps are missing observations, not zero.
+    - generic "View exact values and missing observations"
+    - region "Heart rate · hourly mean values":
+      - table "Heart rate · hourly mean · synthetic values in bpm":
+        - caption: Heart rate · hourly mean · synthetic values in bpm
+        - rowgroup:
+          - row "Timestamp UTC Value (bpm) Illustrative bounds (bpm)":
+            - columnheader "Timestamp UTC"
+            - columnheader "Value (bpm)"
+            - columnheader "Illustrative bounds (bpm)"
+        - rowgroup:
+          - row "2026-10-10T07:00:00Z 64 57 to 71":
+            - cell "2026-10-10T07:00:00Z"
+            - cell "64"
+            - cell "57 to 71"
+          - row "2026-10-10T11:00:00Z 67 60 to 74":
+            - cell "2026-10-10T11:00:00Z"
+            - cell "67"
+            - cell "60 to 74"
+          - row "2026-10-10T15:00:00Z 75 68 to 82":
+            - cell "2026-10-10T15:00:00Z"
+            - cell "75"
+            - cell "68 to 82"
+          - row "2026-10-10T19:00:00Z 73 66 to 80":
+            - cell "2026-10-10T19:00:00Z"
+            - cell "73"
+            - cell "66 to 80"
+          - row "2026-10-10T23:00:00Z 68 61 to 75":
+            - cell "2026-10-10T23:00:00Z"
+            - cell "68"
+            - cell "61 to 75"
+          - row "2026-10-11T03:00:00Z 63 56 to 70":
+            - cell "2026-10-11T03:00:00Z"
+            - cell "63"
+            - cell "56 to 70"
+  - complementary "Source and coverage":
+    - heading "Source & coverage" [level=2]
+    - term: Import period · UTC
+    - definition:
+      - text: 2026-09-25T07:00:00Z
+      - text: to 2026-10-10T07:00:00Z
+      - text: (end excluded)
+    - term: Heart rate · hourly mean
+    - definition:
+      - text: 342 / 360
+      - generic: "observations / expected · signal unit: bpm"
+    - term: Daily resting heart rate
+    - definition:
+      - text: 14 / 15
+      - generic: "observations / expected · signal unit: bpm"
+    - term: Completed nightly sleep
+    - definition:
+      - text: 13 / 15
+      - generic: "observations / expected · signal unit: hours"
+    - term: Baseline window · final illustrative point
+    - definition: 2026-09-25T07:00:00Z to 2026-10-10T07:00:00Z (cutoff excluded)
+    - paragraph: Import-wide counts. Reports are pre-authored examples for the selected cutoff; no observations are analyzed.
+- document

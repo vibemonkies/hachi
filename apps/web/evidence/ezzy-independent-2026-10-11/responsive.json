@@ -1,0 +1,53 @@
+[
+  {
+    "design": "task",
+    "before": {
+      "clientWidth": 351,
+      "scrollLeft": 0,
+      "scrollWidth": 600
+    },
+    "after": {
+      "clientWidth": 351,
+      "scrollLeft": 0,
+      "scrollWidth": 600
+    },
+    "layout": {
+      "scrollWidth": 390,
+      "width": 390
+    }
+  },
+  {
+    "design": "summary",
+    "before": {
+      "clientWidth": 351,
+      "scrollLeft": 0,
+      "scrollWidth": 600
+    },
+    "after": {
+      "clientWidth": 351,
+      "scrollLeft": 0,
+      "scrollWidth": 600
+    },
+    "layout": {
+      "scrollWidth": 390,
+      "width": 390
+    }
+  },
+  {
+    "design": "analysis",
+    "before": {
+      "clientWidth": 359,
+      "scrollLeft": 0,
+      "scrollWidth": 600
+    },
+    "after": {
+      "clientWidth": 359,
+      "scrollLeft": 0,
+      "scrollWidth": 600
+    },
+    "layout": {
+      "scrollWidth": 390,
+      "width": 390
+    }
+  }
+]

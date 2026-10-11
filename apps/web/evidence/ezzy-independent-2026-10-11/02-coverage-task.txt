@@ -1,0 +1,75 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Import & coverage" [active] [level=1]
+  - status: History loaded. Review coverage.
+  - heading "Synthetic history" [level=2]
+  - paragraph: No files are read or uploaded.
+  - generic: Demonstration scenario
+  - combobox "Demonstration scenario":
+    - option "Complete history" [selected]
+    - option "Empty observations"
+    - option "Sparse history"
+    - option "Access failure"
+    - option "Import failure"
+    - option "Models unavailable"
+    - option "Report failure"
+  - button "Load synthetic history"
+  - button "Reset workspace"
+  - heading "Coverage" [level=2]
+  - paragraph: Synthetic device fixture · 2026-09-25T07:00:00Z to 2026-10-10T07:00:00Z (end excluded).
+  - region "Coverage table":
+    - table "Import coverage. Expected counts use hourly bins or completed daily windows.":
+      - caption: Import coverage. Expected counts use hourly bins or completed daily windows.
+      - rowgroup:
+        - row "Signal Unit Observed / expected Missing Coverage":
+          - columnheader "Signal"
+          - columnheader "Unit"
+          - columnheader "Observed / expected"
+          - columnheader "Missing"
+          - columnheader "Coverage"
+      - rowgroup:
+        - row "Heart rate · hourly mean bpm 342 / 360 18 95%":
+          - rowheader "Heart rate · hourly mean"
+          - cell "bpm"
+          - cell "342 / 360"
+          - cell "18"
+          - cell "95%": 95%
+        - row "Daily resting heart rate bpm 14 / 15 1 93%":
+          - rowheader "Daily resting heart rate"
+          - cell "bpm"
+          - cell "14 / 15"
+          - cell "1"
+          - cell "93%": 93%
+        - row "Completed nightly sleep hours 13 / 15 2 87%":
+          - rowheader "Completed nightly sleep"
+          - cell "hours"
+          - cell "13 / 15"
+          - cell "2"
+          - cell "87%": 87%
+  - paragraph: Import-wide counts; they do not describe observations analyzed by the pre-authored report examples. Sleep duration and resting heart rate are distinct daily signals.
+  - button "I have reviewed the coverage"
+- document

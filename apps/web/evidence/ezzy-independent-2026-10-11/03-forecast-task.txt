@@ -1,0 +1,52 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Forecast" [active] [level=1]
+  - status: Synthetic report ready.
+  - paragraph:
+    - text: Cutoff
+    - strong: 2026-10-10T07:00:00Z
+  - link "Change cutoff":
+    - /url: "#import"
+  - figure "Heart rate · hourly mean Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range.":
+    - heading "Heart rate · hourly mean" [level=3]
+    - paragraph: Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range.
+    - region "Heart rate · hourly mean chart, scroll horizontally on narrow screens":
+      - img "Heart rate · hourly mean. Synthetic illustration. Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range. Exact UTC timestamps and values follow in the table. Gaps mean missing observations.":
+        - generic: "55.0"
+        - generic: "69.0"
+        - generic: "83.0"
+        - generic: bpm
+        - generic: 10-10 07:00
+        - generic: 10-10 11:00
+        - generic: 10-10 15:00
+        - generic: 10-10 19:00
+        - generic: 10-10 23:00
+        - generic: 10-11 03:00
+    - paragraph: All times UTC. Gaps are missing observations, not zero.
+    - generic "View exact values and missing observations"
+  - paragraph: Import-wide count · 342/360 hourly bins. Reports are pre-authored examples for the selected cutoff; no observations are analyzed.
+- document

@@ -1,0 +1,7 @@
+{
+  "back": "?design=analysis#symptoms",
+  "forward": "?design=analysis#sleep",
+  "skipFocus": "MAIN#main",
+  "skipPreservedHash": "#sleep",
+  "phoneWidth": 390
+}

@@ -1,0 +1,295 @@
+{
+  "app_commit": "86d6d9f4eb406b60819861656501509153cda7e0",
+  "files": [
+    {
+      "file": "01-empty-task.jpg",
+      "bytes": 43774,
+      "sha256": "5a3996d54192f0a75866836aa6cd0e7f8af734f7c26653c5297508d8a7159a57"
+    },
+    {
+      "file": "01-empty-task.txt",
+      "bytes": 1163,
+      "sha256": "d77683d72e23324ec3dbc5d3ad2f626ed0a329d87853550eed780b4e8363b3ce"
+    },
+    {
+      "file": "02-coverage-task.jpg",
+      "bytes": 84175,
+      "sha256": "ec272f3d09c28e422c5d7b81edc936e620ee46e5e402d4bfa2151632bdc60b5f"
+    },
+    {
+      "file": "02-coverage-task.txt",
+      "bytes": 2701,
+      "sha256": "f898dce9d901cdaa2680c4957747144b3e011cedeabcaf887ac4113de9dff09a"
+    },
+    {
+      "file": "03-forecast-task.jpg",
+      "bytes": 76995,
+      "sha256": "3569a46d4a171936b231d4049ecc64c25c074f947f2423e3ced7742432f1e4d1"
+    },
+    {
+      "file": "03-forecast-task.txt",
+      "bytes": 2070,
+      "sha256": "63481cc32de0ca05c29166bb09cd7e4d882593fcc2ea4d1694a51f498359d2e6"
+    },
+    {
+      "file": "04-overview-task.jpg",
+      "bytes": 62588,
+      "sha256": "2bf5fcaea908973c5baeb7cf7e7425077e11d4123a5895a38b1b1fb4ceb63a32"
+    },
+    {
+      "file": "04-overview-task.txt",
+      "bytes": 1698,
+      "sha256": "e4d29f11e3cfefa4011816b35d1a62bf8d5857435fcb346a817b6280b02e499e"
+    },
+    {
+      "file": "05-earlier-forecast-task.jpg",
+      "bytes": 112429,
+      "sha256": "90bd268d1b8b9750098df3bb9d9515178afa4b0e49fa1f72e2d14e29867ba00f"
+    },
+    {
+      "file": "05-earlier-forecast-task.txt",
+      "bytes": 3399,
+      "sha256": "3b6d10066e14dbd339432f4559cb58e863dbbb0f27958526bd6895cfe5da0b44"
+    },
+    {
+      "file": "06-canceled-task.jpg",
+      "bytes": 43774,
+      "sha256": "5a3996d54192f0a75866836aa6cd0e7f8af734f7c26653c5297508d8a7159a57"
+    },
+    {
+      "file": "06-canceled-task.txt",
+      "bytes": 1172,
+      "sha256": "742df61a054fe321139b90619c6e7f8bb37d219691cbe93e58e693ae4853d943"
+    },
+    {
+      "file": "07-access-failure-task.jpg",
+      "bytes": 54803,
+      "sha256": "c32da6a4b63139ab42c993a3d82051b881d8d755b8ac6257d107aaa31958fae1"
+    },
+    {
+      "file": "07-access-failure-task.txt",
+      "bytes": 1364,
+      "sha256": "ac033c493fb4af1dbd5ce912de591437e06fdc2ac0d2daf7026fe6fb2bc6a875"
+    },
+    {
+      "file": "08-import-failure-task.jpg",
+      "bytes": 55015,
+      "sha256": "6f3ca6424f82de33e1d1e3c32999f839e3e600f4afbe5994a2c7da0e2f89745a"
+    },
+    {
+      "file": "08-import-failure-task.txt",
+      "bytes": 1367,
+      "sha256": "4d6225608998e3b748c39528e8ec4e4038de5325600b83c8617389179b3f8d2b"
+    },
+    {
+      "file": "09-empty-observations-task.jpg",
+      "bytes": 57643,
+      "sha256": "9da749d2c85f92c5570b618fad2a9a18dd82a5b01e0ef28401024edfb55f5b7b"
+    },
+    {
+      "file": "09-empty-observations-task.txt",
+      "bytes": 1399,
+      "sha256": "1ca58e4203db76a98212e2ac51372b3efde66f2e01b1627ce121a1e19bf97a1c"
+    },
+    {
+      "file": "10-sparse-forecast-task.jpg",
+      "bytes": 50925,
+      "sha256": "cc9dad3700b2ae35fe76bf52be30263ae8843a8cd0c22c89bda595b8f8bf6884"
+    },
+    {
+      "file": "10-sparse-forecast-task.txt",
+      "bytes": 1168,
+      "sha256": "e43f5495ebfbea6a49d548691646a50f5f9451b532d932c87d8c25bed60d94cd"
+    },
+    {
+      "file": "11-sparse-deviation-task.jpg",
+      "bytes": 111934,
+      "sha256": "129dc0ef9814c6cb0a97b3932145507ab7099bd18dd830a82c304cf2c6394c74"
+    },
+    {
+      "file": "11-sparse-deviation-task.txt",
+      "bytes": 3795,
+      "sha256": "5e01ceecd85183682eb0b62caa8167e6cbd7ba410b5485aeef1359f0645d0419"
+    },
+    {
+      "file": "12-models-unavailable-task.jpg",
+      "bytes": 49609,
+      "sha256": "c02afbbb2605a585c69679ca0dcb9e411ba0be2e622d0f188a21ffd17b540153"
+    },
+    {
+      "file": "12-models-unavailable-task.txt",
+      "bytes": 1142,
+      "sha256": "c10809720b43c22e813c94f4cf8bb56537b7227226d5c0c73a3f58d1e6d40f15"
+    },
+    {
+      "file": "13-report-failure-task.jpg",
+      "bytes": 103789,
+      "sha256": "e81a1db25dcea873c78b131537bed1dd34b009baeb551c812faab83d1a1833c5"
+    },
+    {
+      "file": "13-report-failure-task.txt",
+      "bytes": 3106,
+      "sha256": "40819d75240ac5f4cc582b90e28b404bee3e89eab9777e6e42d912ea942b351d"
+    },
+    {
+      "file": "14-symptom-task.jpg",
+      "bytes": 68348,
+      "sha256": "a20504380cfa3dbba2ac9ed8ee31e35eef45d1e0737245307bef4f3615b9c461"
+    },
+    {
+      "file": "14-symptom-task.txt",
+      "bytes": 1540,
+      "sha256": "1fa6d40b9af968039d85ebe016d9d2194687b0041bc1bce50d76376b42a83c5f"
+    },
+    {
+      "file": "15-sleep-steady-task.jpg",
+      "bytes": 139396,
+      "sha256": "2c7f6af2179eeb2264846d94c609f10f9858342e7e4aa5c05beca362ed432401"
+    },
+    {
+      "file": "15-sleep-steady-task.txt",
+      "bytes": 4190,
+      "sha256": "925ff906bbc669f484d25e1e9d0aef315c35f4ce9046e18df37254c77015363a"
+    },
+    {
+      "file": "16-sleep-later-task.jpg",
+      "bytes": 138250,
+      "sha256": "6db131945420411214584d211f4f06bbf57d1638554962d0e26bc4487a518bcb"
+    },
+    {
+      "file": "16-sleep-later-task.txt",
+      "bytes": 4169,
+      "sha256": "f1ecd9159cfc981de2f58d4ab269700ccd3225b0c33334b1a16e47fe5ca56769"
+    },
+    {
+      "file": "17-sleep-unavailable-task.jpg",
+      "bytes": 57150,
+      "sha256": "3e8e2e7d4018c8d20199c5f3b4a3a7e8f9a231690313d46bd9d4d19d454b39dd"
+    },
+    {
+      "file": "17-sleep-unavailable-task.txt",
+      "bytes": 1285,
+      "sha256": "71ba7c66949f4144f5ca6c22f4d28ce5aeb2cdc074c9b560afae65e9328ec33d"
+    },
+    {
+      "file": "18-analysis-forecast-desktop.jpg",
+      "bytes": 117535,
+      "sha256": "a507d5ab085513aa62252424dcfdf9eac3e209f6acd8322934316b78acb5d645"
+    },
+    {
+      "file": "18-analysis-forecast-desktop.txt",
+      "bytes": 4178,
+      "sha256": "0ffa7b7ff5dfe4406c5e6b9e0c6f92747b07994bbb7e336dbfd7553581f04ed4"
+    },
+    {
+      "file": "18-summary-forecast-desktop.jpg",
+      "bytes": 99832,
+      "sha256": "01d7b282c1fe235639da1ce75d4f030c4f4f38a9fc20c4a763c10dee65e8ebf4"
+    },
+    {
+      "file": "18-summary-forecast-desktop.txt",
+      "bytes": 3399,
+      "sha256": "70f77465b6dff8c8ea8c5672826e2aa52aa74d6669eebce398c220b3d0440c1a"
+    },
+    {
+      "file": "18-task-forecast-desktop.jpg",
+      "bytes": 112203,
+      "sha256": "888d3e404ae11568b169f1f288a591fc40ca576eb9fdcf07c16a3991f1d779b7"
+    },
+    {
+      "file": "18-task-forecast-desktop.txt",
+      "bytes": 3399,
+      "sha256": "70f77465b6dff8c8ea8c5672826e2aa52aa74d6669eebce398c220b3d0440c1a"
+    },
+    {
+      "file": "19-analysis-forecast-phone.jpg",
+      "bytes": 85399,
+      "sha256": "9668322d741ee1e391b354babbc1602c7c2c19b817d160de79bf5ed07adb06db"
+    },
+    {
+      "file": "19-analysis-forecast-phone.txt",
+      "bytes": 4178,
+      "sha256": "0ffa7b7ff5dfe4406c5e6b9e0c6f92747b07994bbb7e336dbfd7553581f04ed4"
+    },
+    {
+      "file": "19-summary-forecast-phone.jpg",
+      "bytes": 58095,
+      "sha256": "74650aabe5cd7fe2fcc4d5da6ebbd5fd74c3e113511dd1e9f9e2f9a875910ed2"
+    },
+    {
+      "file": "19-summary-forecast-phone.txt",
+      "bytes": 3399,
+      "sha256": "70f77465b6dff8c8ea8c5672826e2aa52aa74d6669eebce398c220b3d0440c1a"
+    },
+    {
+      "file": "19-task-forecast-phone.jpg",
+      "bytes": 63128,
+      "sha256": "be4276604d443ae02a55ebef2a29c19c905236165a5ce59f4286a2dc57551240"
+    },
+    {
+      "file": "19-task-forecast-phone.txt",
+      "bytes": 3399,
+      "sha256": "70f77465b6dff8c8ea8c5672826e2aa52aa74d6669eebce398c220b3d0440c1a"
+    },
+    {
+      "file": "20-symptoms-phone-analysis.jpg",
+      "bytes": 33685,
+      "sha256": "3fd3382b9a9b6508be8d4f0ca49e687aa9528164210c0d965908b3f2fbc4708c"
+    },
+    {
+      "file": "20-symptoms-phone-analysis.txt",
+      "bytes": 1261,
+      "sha256": "e364ebf57ba44cda31321863417bbbc430799cd17134e1921921ef3ca63fc2e4"
+    },
+    {
+      "file": "21-sleep-phone-analysis.jpg",
+      "bytes": 53929,
+      "sha256": "2caeccc8a0d02285016d539f78d1ec3bb894daa50fbe147e40e7ab54485a1851"
+    },
+    {
+      "file": "21-sleep-phone-analysis.txt",
+      "bytes": 2562,
+      "sha256": "af855166c164b5cabd7ce9ef865d3d66a38d1aab43f1efadceea52bee0b628ed"
+    },
+    {
+      "file": "22-coverage-phone-analysis.jpg",
+      "bytes": 71442,
+      "sha256": "9ad4903fcd629f90a8d674e4378af4b07d2d86906bd2e8e6ef2da05e8a888675"
+    },
+    {
+      "file": "22-coverage-phone-analysis.txt",
+      "bytes": 3207,
+      "sha256": "db5d170d08a79450ed1b12ae70bf87997dde850d8e97fed981e4e12eaff45be7"
+    },
+    {
+      "file": "23-final-forecast-analysis.jpg",
+      "bytes": 117535,
+      "sha256": "a507d5ab085513aa62252424dcfdf9eac3e209f6acd8322934316b78acb5d645"
+    },
+    {
+      "file": "23-final-forecast-analysis.txt",
+      "bytes": 4178,
+      "sha256": "0ffa7b7ff5dfe4406c5e6b9e0c6f92747b07994bbb7e336dbfd7553581f04ed4"
+    },
+    {
+      "file": "README.md",
+      "bytes": 6427,
+      "sha256": "db3642889a6beee6f693393511dbaefda831f7f31ad861ca00e85ca2df7b7382"
+    },
+    {
+      "file": "keyboard-navigation.json",
+      "bytes": 163,
+      "sha256": "057869de11792408ac3681a337e62ba60b2c491a03f440eda1d7effdcf4f76b6"
+    },
+    {
+      "file": "keyboard-scroll-settled.json",
+      "bytes": 67,
+      "sha256": "738cc98eed6c1078cf333f083f3b2463b7438a25da019f744c90e076a7927dee"
+    },
+    {
+      "file": "responsive.json",
+      "bytes": 883,
+      "sha256": "a8f21badf260a0663160c76d46a8ef523dfddda3595581e34a2ae878169ef5f9"
+    }
+  ]
+}
