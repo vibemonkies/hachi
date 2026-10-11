@@ -12,6 +12,7 @@ from hachi.contracts.base import ArtifactRef
 from hachi.contracts.manifests import RunManifest, SplitManifest
 from hachi.evaluation.finalization.development import validate_development
 from hachi.evaluation.finalization.integrity import EvidenceRefused, digest
+from hachi.evaluation.finalization.owner12 import owner_experiment
 from hachi.evaluation.pmdata_run import PMDataProtocol
 from hachi.evaluation.serialization import document_bytes, document_sha256
 from hachi.models.chronos import ChronosConfig, ChronosModelPin
@@ -22,7 +23,7 @@ from .test_development import generated_bundle as generated_bundle
 from .test_development import reindex
 
 
-@pytest.fixture(params=["chronos", "encoder"])
+@pytest.fixture(params=["chronos", "chronos_extended", "encoder"])
 def generated_export(generated_bundle, request):
     root, _, repo, packet, result = generated_bundle
     import hachi.models.chronos.artifacts as implementation
@@ -60,6 +61,46 @@ def generated_export(generated_bundle, request):
     original = repo / "configs/generated-protocol.json"
     original.parent.mkdir()
     original.write_text(json.dumps(json.loads(document_bytes(protocol)), indent=2) + "\n")
+    pin = ChronosModelPin(
+        model_id="amazon/chronos-2",
+        revision="a" * 40,
+        weights_sha256="b" * 64,
+        license="Apache-2.0",
+        runtime_lock_sha256="c" * 64,
+    )
+    settings = ChronosConfig(
+        model=pin,
+        metric="heart_rate",
+        aggregation="mean",
+        context_hours=split.lookback_hours,
+    )
+    if request.param == "chronos_extended":
+        from hachi.models.ensemble.selection import SelectionRule
+
+        rule = SelectionRule.model_validate_json(
+            (actual_repo / "configs/experiments/pmdata-hourly-selection.json").read_bytes()
+        ).model_copy(update={"protocol_sha256": document_sha256(protocol)})
+        adaptation = json.loads(
+            (actual_repo / "configs/experiments/pmdata-hourly-adaptation.json").read_bytes()
+        )
+        adaptation.update(
+            protocol_sha256=document_sha256(protocol), selection_rule_sha256=document_sha256(rule)
+        )
+        docs = {
+            "configs/evaluation/pmdata-hourly-validation.json": protocol,
+            "configs/experiments/pmdata-hourly-selection.json": rule,
+            "configs/experiments/pmdata-hourly-adaptation.json": adaptation,
+            "configs/models/chronos/pmdata-hourly-hr.json": {
+                "protocol_sha256": document_sha256(protocol),
+                "chronos": settings,
+                "pretrained_cohort_overlap": "unknown",
+                "overlap_note": "Generated checkpoint overlap is unknown",
+            },
+        }
+        for name, doc in docs.items():
+            path = repo / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(document_bytes(doc))
     subprocess.run(["git", "add", "src", "configs"], cwd=repo, check=True, capture_output=True)
     subprocess.run(
         [
@@ -79,24 +120,14 @@ def generated_export(generated_bundle, request):
     sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
     model_root = root / "fold/models/generated-export"
     run = RunManifest.model_validate_json((packet / "run.json").read_bytes())
-    if request.param == "chronos":
-        pin = ChronosModelPin(
-            model_id="amazon/chronos-2",
-            revision="a" * 40,
-            weights_sha256="b" * 64,
-            license="Apache-2.0",
-            runtime_lock_sha256="c" * 64,
-        )
+    if request.param.startswith("chronos"):
+        extended = request.param == "chronos_extended"
         model = ChronosArtifact(
-            model_id="chronos-2-zero-shot",
+            model_id="chronos-2-zero-shot-ctx720" if extended else "chronos-2-zero-shot",
             protocol_sha256=document_sha256(protocol),
             harness_lookback_hours=split.lookback_hours,
-            chronos=ChronosConfig(
-                model=pin,
-                metric="heart_rate",
-                aggregation="mean",
-                context_hours=split.lookback_hours,
-            ),
+            chronos=settings.model_copy(update={"context_hours": 720}) if extended else settings,
+            context_policy=owner_experiment(repo, sha).context if extended else None,
         )
         ref = save_artifact(model_root, model, artifact_id=model_root.name)
         descriptor = run.model.model_copy(
@@ -211,9 +242,9 @@ def test_export_bindings_cannot_be_changed_even_after_rehash(generated_export, m
         doc = json.loads(path.read_bytes())
         del doc["evaluation/features.py"]
     elif mutation == "runtime_or_table":
-        path = packet / "run.json" if kind == "chronos" else root / "tables.json"
+        path = packet / "run.json" if kind.startswith("chronos") else root / "tables.json"
         doc = json.loads(path.read_bytes())
-        if kind == "chronos":
+        if kind.startswith("chronos"):
             doc["environment_sha256"] = "0" * 64
         else:
             doc["meanpool"]["sha256"] = "0" * 64
@@ -230,7 +261,7 @@ def test_export_bindings_cannot_be_changed_even_after_rehash(generated_export, m
     else:
         path = model_root / "model.json"
         doc = json.loads(path.read_bytes())
-        if kind == "chronos":
+        if kind.startswith("chronos"):
             doc["protocol_sha256"] = "0" * 64
         else:
             doc["config"]["ridge_alpha"] += 1.0
