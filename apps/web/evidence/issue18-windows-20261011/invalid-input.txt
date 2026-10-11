@@ -1,0 +1,58 @@
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+    - link "Offline replay":
+      - /url: "#replay"
+- banner:
+  - generic: Wearable research prototype
+  - generic: No data loaded
+- generic: Reports use the selected subject and UTC cutoff. Check source mode and provenance before interpreting results.
+- main:
+  - heading "Sleep comparison" [level=1]
+  - status
+  - paragraph: Compare two schedules using the API’s sleep-pressure and circadian model when available. Simulation is distinct from measured personal alertness prediction.
+  - group "Schedules and explicit assumptions":
+    - generic: Schedules and explicit assumptions
+    - generic: IANA timezone for both schedules
+    - textbox "IANA timezone for both schedules":
+      - /placeholder: America/Los_Angeles
+      - text: America/Los_Angeles
+    - paragraph: Enter local wall-clock dates and times in this timezone. The API checks daylight-saving gaps and sleep duration. Ambiguous fall-back clocks use the first occurrence.
+    - group "Schedule A":
+      - generic: Schedule A
+      - generic: Bedtime · local date and time
+      - textbox "Bedtime · local date and time": 2026-10-10T23:00
+      - generic: Wake time · local date and time
+      - textbox "Wake time · local date and time": 2026-10-10T07:00
+    - group "Schedule B":
+      - generic: Schedule B
+      - generic: Bedtime · local date and time
+      - textbox "Bedtime · local date and time": 2026-10-11T01:00
+      - generic: Wake time · local date and time
+      - textbox "Wake time · local date and time": 2026-10-11T07:00
+    - generic: Sleep in the 24 hours before the first bedtime · hours
+    - spinbutton "Sleep in the 24 hours before the first bedtime · hours": "8"
+    - generic: Caffeine assumption
+    - combobox "Caffeine assumption":
+      - option "No caffeine" [selected]
+      - option "Caffeine effects not modeled"
+    - paragraph: Light exposure effects are not modeled. This schema does not support light intensity, caffeine dose, naps or medication inputs.
+    - button "Compare schedules" [active]
+  - alert: Wake time must follow bedtime; include the next day's date.

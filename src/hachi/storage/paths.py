@@ -7,6 +7,7 @@ supplied. Every lookup stays directly under its approved root and refuses symlin
 import os
 import re
 import stat
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -42,14 +43,91 @@ def child(root: Path, name: str) -> Path:
 
 
 def private_directory(path: Path) -> Path:
-    """Create (mode 0700) or accept an existing private directory that is not a symlink."""
-    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    """Create or accept a real directory private to the current OS user."""
+    created = False
+    try:
+        path.mkdir(mode=0o700, parents=True)
+        created = True
+    except FileExistsError:
+        pass
     info = path.lstat()
-    if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+    if (
+        stat.S_ISLNK(info.st_mode)
+        or not stat.S_ISDIR(info.st_mode)
+        or (getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+    ):
         raise PathRefused(f"{path.name} must be a real directory")
-    if info.st_mode & 0o077:
+    if os.name == "nt":
+        _private_windows_directory(path, created)
+    elif info.st_mode & 0o077:
         raise PathRefused(f"{path.name} must be private (mode 0700)")
     return path
+
+
+def _private_windows_directory(path: Path, created: bool) -> None:
+    """Set new directory ACLs and validate existing ACLs without widening access."""
+    script = r"""
+$ErrorActionPreference = 'Stop'
+try {
+    $path = $env:HACHI_PRIVATE_DIRECTORY
+    $item = Get-Item -LiteralPath $path -Force
+    if (!$item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+        throw 'Directory is not a real directory'
+    }
+    $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+    $allowed = @($sid.Value, 'S-1-5-18', 'S-1-5-32-544')
+    if ($env:HACHI_PRIVATE_DIRECTORY_CREATED -eq '1') {
+        $acl = New-Object Security.AccessControl.DirectorySecurity
+        $acl.SetAccessRuleProtection($true, $false)
+        $acl.SetOwner($sid)
+        foreach ($value in $allowed) {
+            $principal = New-Object Security.Principal.SecurityIdentifier($value)
+            $rule = New-Object Security.AccessControl.FileSystemAccessRule(
+                $principal, 'FullControl', 'ContainerInherit, ObjectInherit', 'None', 'Allow')
+            $acl.AddAccessRule($rule)
+        }
+        [IO.Directory]::SetAccessControl($path, $acl)
+    }
+    $acl = [IO.Directory]::GetAccessControl($path)
+    if ($acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $sid.Value) {
+        throw 'Directory owner is not the current user'
+    }
+    if (!$acl.AreAccessRulesProtected) {
+        throw 'Directory permissions must not inherit access'
+    }
+    $ownerAllowed = $false
+    foreach ($rule in $acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
+        if ($rule.AccessControlType -eq 'Allow' -and
+            $rule.IdentityReference.Value -notin ($allowed + @('S-1-3-4'))) {
+            throw 'Directory permits access by another principal'
+        }
+        if ($rule.AccessControlType -eq 'Allow' -and
+            $rule.IdentityReference.Value -in @($sid.Value, 'S-1-3-4')) {
+            $ownerAllowed = $true
+        }
+    }
+    if (!$ownerAllowed) { throw 'Directory must explicitly permit its owner access' }
+} catch {
+    [Console]::Error.WriteLine($_.Exception.Message)
+    exit 1
+}
+"""
+    environment = os.environ.copy()
+    environment["HACHI_PRIVATE_DIRECTORY"] = str(path.absolute())
+    environment["HACHI_PRIVATE_DIRECTORY_CREATED"] = "1" if created else "0"
+    powershell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    try:
+        result = subprocess.run(
+            [str(powershell), "-NoProfile", "-NonInteractive", "-Command", script],
+            env=environment,
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise PathRefused(f"{path.name} privacy could not be verified") from error
+    if result.returncode:
+        raise PathRefused(f"{path.name} must be private to the current Windows user")
 
 
 def remove_tree(path: Path) -> None:

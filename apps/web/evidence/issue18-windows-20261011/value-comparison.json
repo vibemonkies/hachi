@@ -1,0 +1,15 @@
+{
+  "git_sha": "7777928176a3843bc134cd68c20c41c1d6db688e",
+  "comparisons": [
+    {
+      "schedule_id": "a",
+      "points": 33,
+      "all_rendered_values_match": true
+    },
+    {
+      "schedule_id": "b",
+      "points": 37,
+      "all_rendered_values_match": true
+    }
+  ]
+}
