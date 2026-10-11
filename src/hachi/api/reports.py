@@ -47,7 +47,7 @@ from hachi.storage import Metadata, Workspace
 
 from .artifacts import ServedArtifact
 from .catalog import Catalog
-from .gpu import GpuOutputRejected, GpuTimeout, GpuUnavailable
+from .gpu import GpuCleanupFailed, GpuOutputRejected, GpuTimeout, GpuUnavailable
 from .sources import SubjectData
 
 log = logging.getLogger("hachi.api")
@@ -172,13 +172,22 @@ def hourly_forecasters(catalog: Catalog) -> list[ServedArtifact]:
     ]
 
 
+def personal(subject: SubjectData | None) -> bool:
+    """A real person's own import, as opposed to admitted research data or generated data."""
+    return subject is not None and subject.kind == "apple_import" and subject.data_mode == "real"
+
+
 def forecast_artifacts(catalog: Catalog, subject: SubjectData | None) -> list[ServedArtifact]:
-    """Served hourly forecasters whose declared input this subject's data can supply."""
+    """Served hourly forecasters whose declared input this subject's data can supply.
+
+    GPU-backed models run on the shared GX10 login, so they serve only research snapshots
+    and generated data until a transfer and retention design for personal data is approved.
+    """
     return [
         a
         for a in hourly_forecasters(catalog)
-        if a.serving.input == "observations"
-        or (subject is not None and input_policy(a, subject) is not None)
+        if (a.serving.input == "observations" or (subject and input_policy(a, subject)))
+        and not (a.serving.requires_gpu and personal(subject))
     ]
 
 
@@ -382,6 +391,14 @@ def _forecast(
         )
         if forecast_artifacts(context.catalog, subject):
             requirement = "A served hourly forecast artifact for the requested metrics"
+        elif personal(subject) and any(
+            a.serving.requires_gpu and input_policy(a, subject)
+            for a in hourly_forecasters(context.catalog)
+        ):
+            requirement = (
+                "An approved transfer and retention design before personal data goes to the "
+                "shared GPU; until then GPU models serve research and generated data only"
+            )
         elif subject.source == "apple_health" and evaluated:
             requirement = (
                 "A forecast artifact whose serving profile admits Apple Health input; the "
@@ -444,6 +461,12 @@ def _forecast(
         )
     except GpuTimeout:
         return base.error("INFERENCE_TIMEOUT", "The GPU forecast did not finish in time.")
+    except GpuCleanupFailed as exc:
+        log.error("report %s: %s", base.report_id, exc)
+        return base.error(
+            "INFERENCE_FAILED",
+            "The GPU job's files could not be removed from the GX10, so its forecast was not used.",
+        )
     except GpuOutputRejected as exc:
         log.warning("report %s: %s", base.report_id, exc)
         return base.error(
