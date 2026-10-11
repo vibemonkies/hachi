@@ -8,7 +8,7 @@ The committed evidence command rebuilds original request features; validates the
 
 The initial private MeanPool packets remain intact. After report receipt validation and optional dependency fixes, this run's complete metrics and descriptive selection state match the initial run exactly. These are engineering verification repeats under one frozen policy, not additional selection experiments.
 
-High ranking values in this selected illness-survey cohort do **not** establish added physiological information or population calibration. Survey participation already distinguishes many positive and negative windows. Actual whole-window and common-runtime-supported-context paired comparisons with survey/rest/anomaly and all frozen representations remain pending. No candidate is promoted or served. Issue13 stays open for accepted comparison evidence, adequate independent negative calibration and final held-out/serving gates.
+High ranking values in this selected illness-survey cohort do **not** establish added physiological information or population calibration. Survey participation already distinguishes many positive and negative windows. Actual whole-window and common-runtime-supported-context paired comparisons with survey/rest/anomaly and all frozen representations are now published in [comparison.json](comparison.json), with unavailable folds explicit and independent acceptance still pending. No candidate is promoted or served. Issue13 stays open for accepted comparison evidence, adequate independent negative calibration and final held-out/serving gates.
 
 ## Reproduce
 
