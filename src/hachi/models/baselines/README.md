@@ -23,7 +23,7 @@ result = evaluate_forecast(
 )
 ```
 
-Three simple comparators support canonical level metrics and their registered
+Three simple comparators support canonical physiology metrics and their registered
 mean/median/min/max aggregation. Completed UTC hourly bins contain only records
 available at cutoff. Intervals spanning hours are omitted; sample counts never
 claim continuous coverage. Ingestion owns source/unit compatibility and duplicate
@@ -177,3 +177,17 @@ summary. Store results privately with the source snapshot/run manifest.
 its cold-start/missingness abstention and recorded-confounder policy. Neither
 this input nor its deviation score creates healthy labels, measured false-alert
 burden, illness probabilities or real-cohort validation evidence.
+
+### Accumulated amounts and durations
+
+The hourly and tree comparators accept registered sums for steps, active energy,
+distance and sleep durations as well as level summaries. Recorded zeros are
+retained; missing bins are never generated as zeros. Raw overlapping accumulated
+intervals are refused, and duration values in hourly inputs and saved mean/tree
+artifacts must respect the shared hourly integrity bound. Derived bins preserve
+their already-computed sums and native coverage/count provenance.
+
+Partially observed raw sums are observed subtotals. Full-hour total forecasting
+requires complete feature/target coverage in the frozen real protocol. The
+evaluator's explicit target coverage/count thresholds also govern paired scoring,
+so models cannot be compared under different target inclusion rules.

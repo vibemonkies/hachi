@@ -77,7 +77,7 @@ checks dataset IDs and roster membership, not upstream archive checksums.
   `causal_prefix` explicitly permits that subject's available prefix. Both retain
   the prespecified minimum-history inclusion policy. Cohort-overlap status and
   its evidence/limitation note are required in the experiment config.
-- Forecast targets are hourly aggregates for one level metric/aggregation.
+- Forecast targets are hourly aggregates for one canonical metric/aggregation.
   Bare aggregates lack availability timestamps and remain **labels only**.
   `HourlyFeature` wraps an observed canonical hourly aggregate with readiness
   and its documented source availability rule. Raw and derived inputs for the
@@ -95,7 +95,7 @@ checks dataset IDs and roster membership, not upstream archive checksums.
 
 The internal `HourlyFeature` preserves the complete canonical `Aggregate`,
 including coverage, native observed count, source IDs, pipeline version and timezone.
-It requires a non-missing level value on a UTC whole-hour grid and UTC readiness
+It requires a non-missing canonical value on a UTC whole-hour grid and UTC readiness
 at or after bin end. It is not a canonical source `Observation` or a new wire DTO.
 Its derived record ID hashes only that bin and its readiness/rule, never the whole
 snapshot: withheld future rows must not alter earlier input identities.
@@ -302,7 +302,7 @@ or speculative PMData-specific parser is needed before that interface is agreed.
    canonical `Aggregate` has no availability timestamp. If #5 exposes only
    aggregates, use the agreed `FeatureBin` view and the explicit inclusion policy
    above. Never invent availability from the final aggregate alone.
-4. Canonical hourly `Aggregate` labels for one agreed level metric/aggregation,
+4. Canonical hourly `Aggregate` labels for one agreed canonical metric/aggregation,
    with explicit missing bins, source exclusions and the pipeline version.
    Duplicate-source precedence and quarantined source contributions must already
    be resolved upstream. If the first usable task is daily-only, the current
@@ -363,3 +363,27 @@ replay and all packet hashes/private modes under ignored
 [`evidence/hourly-feature-adapter.json`](evidence/hourly-feature-adapter.json).
 It distinguishes the raw generated demo from derived-input tests and establishes
 no real-cohort accuracy or integration claim.
+
+### Accumulated targets and target quality
+
+The hourly evaluator, simple baselines and tree now support all registered
+metrics/aggregations: level mean/median/min/max and amount/duration sums. Recorded
+zero steps or zero duration are valid values; an absent bin remains missing.
+Raw intervals crossing hourly boundaries are omitted; overlapping accumulated
+intervals are refused for upstream source reconciliation. Duration values in
+hourly inputs, estimates and saved mean/tree states use the shared hourly
+integrity bound. Derived bins retain their registered aggregate and coverage.
+
+`EvaluationConfig.min_target_coverage` and `min_target_observed_count` are explicit
+scoring inclusion parameters (backward-compatible defaults 0.0 and 1). Freeze
+these alongside the feature inclusion policy. Target-quality exclusions are
+counted in `missing_labels`, with `excluded_target_quality_points` as an identified
+subset; they never remove prediction origins or pass future missingness to models.
+Paired comparisons require identical target thresholds and exclude the same bins.
+
+A sum over partially observed minutes is an **observed subtotal**, not the true
+full-hour amount. For a full-hour amount/duration experiment, require complete
+feature and target coverage; otherwise label the experiment as predicting
+observed subtotals with its exact coverage policy. Do not treat absent step
+minutes or daytime sleep gaps as observed zeros. Real PMData coverage and these
+scientific inclusion choices still need audit/freeze before acceptance.

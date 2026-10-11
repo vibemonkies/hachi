@@ -31,12 +31,14 @@ class EvaluationConfig(Contract):
     overlap_note: Text
     bootstrap_samples: Annotated[int, Field(ge=2)]
     confidence: Annotated[float, Field(gt=0, lt=1)]
+    min_target_coverage: Annotated[float, Field(ge=0, le=1)] = 0.0
+    min_target_observed_count: Annotated[int, Field(ge=1)] = 1
 
     @model_validator(mode="after")
     def _metric(self) -> Self:
         spec = METRICS[self.metric]
-        if self.aggregation not in spec.aggregations or spec.kind != "level":
-            raise ValueError("this initial hourly evaluator supports level metrics only")
+        if self.aggregation not in spec.aggregations:
+            raise ValueError("hourly evaluator requires the registered metric aggregation")
         return self
 
 
@@ -186,6 +188,7 @@ def evaluate_forecast(
             "expected_points": sum(len(o.targets) for o in plan.origins),
             "scored_points": 0,
             "missing_labels": 0,
+            "excluded_target_quality_points": 0,
             "abstained_points": 0,
             "insufficient_history_points": 0,
         }
@@ -241,6 +244,9 @@ def evaluate_forecast(
             label = labels.get((origin.subject_id, target.start_utc, target.end_utc))
             if label is None or label.value is None:
                 counts["missing_labels"] += 1
+            elif not target_quality_eligible(label, config):
+                counts["missing_labels"] += 1
+                counts["excluded_target_quality_points"] += 1
             elif estimate is None:
                 counts["abstained_points"] += 1
             else:
@@ -273,4 +279,12 @@ def evaluate_forecast(
         tuple(predictions),
         dict(sorted(counts.items())),
         metrics,
+    )
+
+
+def target_quality_eligible(label: Aggregate, config: EvaluationConfig) -> bool:
+    """Quality is a prespecified scoring rule, never a model input at an earlier cutoff."""
+    return (
+        label.coverage >= config.min_target_coverage
+        and label.observed_count >= config.min_target_observed_count
     )

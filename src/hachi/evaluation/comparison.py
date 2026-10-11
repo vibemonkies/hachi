@@ -14,6 +14,7 @@ from .forecast import (
     EvaluationResult,
     PredictorFactory,
     evaluate_forecast,
+    target_quality_eligible,
 )
 from .metrics import (
     Estimate,
@@ -132,6 +133,8 @@ def compare_forecasts(
         "history_policy",
         "bootstrap_samples",
         "confidence",
+        "min_target_coverage",
+        "min_target_observed_count",
     )
     for field in shared_fields:
         if getattr(baseline_config, field) != getattr(candidate_config, field):
@@ -164,6 +167,7 @@ def compare_forecasts(
         if t.metric == baseline_config.metric
         and t.resolution == "hour"
         and t.aggregation == baseline_config.aggregation
+        and target_quality_eligible(t, baseline_config)
     }
     paired_baseline: list[ScoredPoint] = []
     paired_candidate: list[ScoredPoint] = []
