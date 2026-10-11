@@ -364,6 +364,16 @@ class Service:
                 issues=[FieldIssue(path="body.as_of", message="must not be in the future")],
             )
         self._require_known(body.subject_id)
+        # Snapshot, key, reuse and publication share one guard with deletion, so a job is
+        # never keyed on self-reports a concurrent deletion has already erased.
+        with self._writing(body.subject_id):
+            job, created = self._publish_report(request)
+        if created:
+            self.runner.submit("report", job.report_id)
+        return job, created
+
+    def _publish_report(self, request: ReportRequest) -> tuple[ReportJob, bool]:
+        body = request.root
         subject = self.catalog.subject(body.subject_id, self.metadata, self.workspace)
         artifact = reports.select_artifact(request, self.catalog, subject)
         digest = None
@@ -384,9 +394,7 @@ class Service:
             request=request,
             result=None,
         )
-        with self._writing(body.subject_id):
-            self.metadata.insert_report(key, job)
-        self.runner.submit("report", job.report_id)
+        self.metadata.insert_report(key, job)
         return job, True
 
     def get_report(self, report_id: str) -> ReportJob:
@@ -429,8 +437,16 @@ class Service:
 
         An identical resubmission is a no-op and a changed one a conflict. A correction names
         the current version it `supersedes`, keeps its kind, and is entered after it; the
-        chain keeps its original entry's id, which is the episode id for onsets.
+        chain keeps its original entry's id, which is the episode id for onsets. Reading,
+        validating and writing share one guard with deletion: no correction can resurrect a
+        chain, and no reference can dangle, because of a concurrent delete.
         """
+        with self._writing(subject_id):
+            return self._append_self_reports(subject_id, request)
+
+    def _append_self_reports(
+        self, subject_id: str, request: SelfReportRequest
+    ) -> tuple[SelfReportRequest, bool]:
         stored = {row.entry_id: row for row in self.metadata.self_reports(subject_id)}
         deleted = self.metadata.self_report_tombstones(subject_id)
         superseded = {r.supersedes for r in stored.values() if r.supersedes}
@@ -508,8 +524,7 @@ class Service:
                 issues=conflicts,
             )
         if rows:
-            with self._writing(subject_id):
-                self.metadata.insert_self_reports(subject_id, rows)
+            self.metadata.insert_self_reports(subject_id, rows)
         return request, bool(rows)
 
     def self_report_history(self, subject_id: str, params: HistoryParams) -> SelfReportHistory:
@@ -543,6 +558,10 @@ class Service:
                 issues=[FieldIssue(path="confirm", message="must equal the entry id")],
             )
         self._require_known(subject_id)
+        with self._writing(subject_id):  # read, guard and erase as one step
+            self._delete_chain(subject_id, entry_id)
+
+    def _delete_chain(self, subject_id: str, entry_id: str) -> None:
         rows = self.metadata.self_reports(subject_id)
         row = next((r for r in rows if r.entry_id == entry_id), None)
         if row is None:
@@ -555,18 +574,15 @@ class Service:
                         "CONFLICT",
                         "A recorded resolution refers to this onset; delete the resolution first.",
                     )
-        with self._writing(subject_id):
-            jobs = self.metadata.subject_reports(subject_id)
-            if any(j.state != "completed" for j in jobs):
-                raise ApiProblem(
-                    "CONFLICT", "Reports for this subject are still running; retry after."
-                )
-            dependent = [
-                j.report_id for j in jobs if j.request.root.task in ("illness_onset", "recovery")
-            ]
-            self.metadata.delete_self_report_chain(
-                subject_id, row.root, now_utc().isoformat(), dependent
-            )
+        jobs = self.metadata.subject_reports(subject_id)
+        if any(j.state != "completed" for j in jobs):
+            raise ApiProblem("CONFLICT", "Reports for this subject are still running; retry after.")
+        dependent = [
+            j.report_id for j in jobs if j.request.root.task in ("illness_onset", "recovery")
+        ]
+        self.metadata.delete_self_report_chain(
+            subject_id, row.root, now_utc().isoformat(), dependent
+        )
 
     # Scenarios --------------------------------------------------------------------------
 
