@@ -78,8 +78,8 @@ An open issue with partially delivered prerequisites may permit a specifically s
 
 ## Claiming work and avoiding collisions
 
-1. Select an assigned issue or an issue transferred through the agent handoff process below. Check issue comments, labels and open PRs; if another agent is already working on it, coordinate with that agent rather than duplicate it.
-2. Give one agent the exact issue, owned files, branch/worktree and permitted actions. Record the claim with owner, branch, worktree, and scope, and set `status:in-progress` under the agreed coordination workflow. A label is advisory, not an atomic lock. The agent coordinator resolves simultaneous claims in the canonical issue or PR thread before either agent starts implementation.
+1. Select an issue assigned to the GitHub user you represent or an issue transferred to you within your task's delegated scope. Check issue comments, labels and open PRs. If another worker already owns the item, coordinate with that worker instead of duplicating it.
+2. Keep three identities clear. The team's GitHub owners are `@CoffeeCoder1015`, `@ezzy1630`, and `@justin06lee`. Use the live issue assignee to identify which owner you represent. The current worker is the agent acting for that owner on this issue. The work chat is where that worker owns the issue's implementation and evidence. Record the owner, worker, link to the work chat, exact issue scope, branch/worktree, and permitted actions in the canonical issue or PR thread. Set `status:in-progress` under the agreed coordination workflow. A label is advisory, not an atomic lock. If two workers claim the same issue, resolve the conflict with both named workers in that thread before implementation starts.
 3. Start from fresh `origin/main` in a separate worktree. Two terminals on different branches in the **same folder** are not isolated: changing the branch changes both agents' files.
 4. Keep virtual environments, mutable caches, test databases, run directories and service ports separate per agent/run. The same human can have several agents, so an owner-only shared checkout/database is insufficient. Reuse an environment only when immutable and compatible.
 5. Shared schemas, root package files, lockfiles and CI have one coordinating owner (#3 initially). Agree interface changes before implementing both callers. Preserve unrelated work.
@@ -87,11 +87,17 @@ An open issue with partially delivered prerequisites may permit a specifically s
 
 ## Coordinate handoffs between agents
 
-Handle routine dependency requests, scope clarification, and ownership handoffs in the relevant issue or PR thread. Record the receiving agent, issue assignee, owned files, branch, commit, PR, evidence, and remaining blockers. The agent coordinator owns these handoff decisions, verifies readiness, and records the claim before implementation.
+Handle routine dependency requests, scope clarification, and eligible ownership handoffs in the relevant issue or PR thread when your task delegates that authority. Use only actions within that delegated scope. Ask a human only for a decision, consent, or access you cannot resolve within that scope.
 
-Track completion, dependency readiness, and activity separately. An incomplete issue may be actively owned, confirmed unattended, or have unknown activity. Missing completion evidence, no open PR, old updates, and unanswered pings do not establish inactivity. Preserve active claims before a PR exists. When activity is unknown, ask for the current agent, branch, scope, and checkpoint.
+For the #26 watch, the coordinating chat inspects the queue and routes each new actionable issue or PR to a dedicated work chat. The worker for that issue or PR owns its implementation and evidence in that chat. Keep later updates for the same item in its existing work chat.
 
-Transfer unattended work only with positive, current evidence from an explicit owner or agent release, a not-started status, a coordination handoff, or an authoritative agent-status source. Follow the active dependency watch's recorded ping and final-notice policy in [#26](https://github.com/vibemonkies/hachi/issues/26). After the notice period, refresh replies, claims, implementation activity, PRs, and prerequisites. Unknown activity, conflicting active work, or an unmet prerequisite stops the transfer. Keep one active implementation owner per issue.
+Track three states separately. Completion is incomplete or delivered with acceptance evidence. Readiness is ready or blocked by a named prerequisite. Activity is actively owned, confirmed unattended, or unknown. Missing completion evidence, no open PR, old updates, silence, unfinished work, and unanswered pings do not establish inactivity. Preserve active claims before a PR exists. When activity is unknown, ask the current worker for its identity, work chat, branch, scope, and checkpoint.
+
+Transfer work only when it is ready, current, and confirmed unattended by positive evidence. Name the receiving worker before transferring. Positive evidence can be an explicit owner or agent release, a not-started status, a coordination handoff, or an authoritative agent-status source. Silence, stale updates, unfinished work, and a missing PR do not count.
+
+For the watch in [#26](https://github.com/vibemonkies/hachi/issues/26), send a targeted ping every 15 minutes while a blocker is unanswered. Five unanswered pings trigger a final notice. They do not prove inactivity. After the final notice, wait at least 15 minutes. Then refresh replies, the current worker's claim and activity, open PRs, positive unattended evidence, and each prerequisite. If activity is unknown, work conflicts, evidence is stale, or a prerequisite is unmet, stop the transfer and request a checkpoint or name the blocker.
+
+Before the receiving worker continues, record that worker, the GitHub owner, work chat, issue assignee, owned files, branch, commit/PR, evidence, and remaining blockers in the canonical thread. Keep one active implementation worker per issue.
 
 Route an unanswered review request to another independent teammate or agent when the acceptance gate permits it. Never replace a required teammate walkthrough with the author's own check. Escalate to a human only for a decision, consent, access, or permission that agents cannot resolve within the agreed scope.
 
