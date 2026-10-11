@@ -12,7 +12,10 @@ this package does not invent one or turn a boolean into permission to score.
 
 Use the existing `ReportResult`, `ArtifactRef`, and Apple `HourlyFeature` shapes.
 The new types describe local receipt metadata only; no prediction interface,
-model fitting, API, GPU, or importer implementation is added.
+model fitting, API, GPU, or importer implementation is added. The real-mode
+refusal is procedural: `data_mode` and consent records are self-declared
+metadata, not a detector of real records disguised as synthetic. Only the
+built-in generated fixture producer is authorized for this preparation.
 
 The caller is `python -m hachi.evaluation.case_study` (also available through
 `scripts/case_study/receipt.py`). It performs these operations:
@@ -20,26 +23,61 @@ The caller is `python -m hachi.evaluation.case_study` (also available through
 1. `preregister`: validate a private `Prespecification`, verify pinned documents
    and the source snapshot, create an exclusive private bundle, and return its
    receipt checksum to the external holder.
-2. `seal`: accept existing canonical results for **every** declared task at
+2. `seal`: accept existing canonical results for **every** full canonical request at
    every 72/48/24-hour cutoff and healthy comparison end. Missing, error and
    unavailable outcomes must be retained. Save their bytes and a receipt before
    the holder opens the tail; return the receipt checksum externally.
 3. `reveal`: require both externally retained checksums, unchanged documents,
    unchanged original source/model, and increasing saved receipt times. Record
-   the sealed timeline's hash in a reveal receipt. This records the handoff;
-   it does not expose raw labels or compute clinical results.
+   the committed timeline's hash in a reveal receipt. This records the sequence
+   of a later holder-tail handoff; the timeline was already readable at
+   preregistration and sealing. It proves onset/timeline precommitment before
+   predictions, not blinded outcome discovery or that a tail was actually held
+   back. It does not expose raw labels or compute clinical results.
 4. `verify`: read back all three stages against externally retained checksums;
    emit only source-bound aggregate counts and honest unavailable status.
 
 `Prespecification` contains separate processing/presentation consent status,
 private document references and recorded consent times; Justin's data-holder
-role; a private UTC onset uncertainty interval and sealed timeline reference;
+role; a private UTC onset uncertainty interval and committed timeline reference;
 exact UTC cutoffs computed from the **lower** onset bound minus 72, 48 and 24
 hours; ordered prechosen healthy periods finishing before the earliest case
-cutoff; and required tasks. Comparison predictions use each period's end.
+cutoff; and full canonical `ReportRequest` documents for each task/time, including
+horizon, resolution, subject and selected metrics. `BoundResult` adds only a
+request checksum to a canonical `ReportResult` for receipt storage. Comparison
+predictions use each period's end.
 All cutoffs are retained; onset uncertainty remains an interval rather than a
 selected best-looking date. Timeline metadata is an outcome, never an earlier
-predictor.
+predictor. Onset bounds are plain text in this private document, and the exact
+cutoffs encode the lower bound. The operator is not blind to that bound.
+
+The version-2 format also pins the original export XML, exact canonical
+`ImportConfig`, and immutable imported SQLite bytes as a canonical
+`DatasetSnapshotRef`. The snapshot metadata must bind the same XML checksum and
+config, dataset and subject. Each ok result must name that exact input snapshot;
+available partial provenance must agree too. Request hashes retain unavailable
+and error results for the exact requested horizon even when no task payload
+exists. Supported physiology payloads must match resolution, metrics and every
+requested hourly/daily window. Clinical ok outputs remain refused.
+
+The local preparation `OutcomeRule` fixes a half-open forecast window
+`[cutoff, cutoff + H)` and a closed onset uncertainty interval `[lower, upper]`.
+Containment requires `cutoff <= lower <= upper < cutoff + H`; equality at the
+window end is outside, and a straddling interval is partial overlap. These are
+descriptive relations, **not positive/negative clinical labels**. The generated
+protocol prechooses H=72 for all illness requests, and 24 hourly physiology
+points at each time. At the exact minus72 cutoff, the H=72 window ends at lower:
+it cannot contain the onset or establish a positive illness detection. The
+minus48/minus24 windows contain the fictional six-hour interval; no actual
+clinical outcome or alert is inferred from this geometry. Every cutoff remains
+in the receipts, including the nonpositive boundary.
+
+Healthy periods must satisfy the prespecified minimum gap from lower (at least
+168 hours in this preparation; the fixture chooses exactly seven days). The
+committed timeline must explicitly cover each period with a canonical
+symptom-free `SymptomCheckInEntry`. A gap or historical assertion alone does not
+establish a negative clinical label for a later forecast window; that would
+require separately observed follow-up and the agreed clinical protocol.
 
 The original system pins name the canonical artifact identity plus separate
 source, model, configuration, feature-source, compatibility and freeze document
@@ -47,7 +85,9 @@ checksums. Artifact bundle checksums and model-document checksums are distinct
 identities. The source snapshot hashes every `src/hachi/**/*.py`, the local CLI
 scripts, `pyproject.toml` and `uv.lock`, plus the exact producing Git commit.
 Any subsequent source or commit change requires an independently reconciled
-handoff; it cannot silently reuse a receipt from an earlier system.
+handoff; it cannot silently reuse a receipt from an earlier system. Version-1
+preparation receipts cannot be upgraded or resealed: generate fresh version-2
+fixtures and retain the earlier proof as historical evidence only.
 
 ## Reproduce the generated lifecycle
 
@@ -78,7 +118,9 @@ comparison). No clinical probabilities are invented. It proves refusal of
 reveal before sealing, real-mode use of the false freeze, posthoc cutoff omission,
 resealing, repeat reveal and sealing after reveal. Tests additionally challenge
 model/config/feature/timeline/consent/source/commit changes, altered external pins,
-clock regression, timestamps, result identity and storage permissions.
+clock regression, timestamps, result identity and storage permissions. The review
+regressions additionally refuse a changed export, foreign input snapshot, changed
+canonical request hash, wrong forecast horizon/resolution/window and subject.
 
 The raw-parser seam generates six XML records with known values: five accepted
 records and one duplicate; two records visible at the cutoff; one source; native
@@ -100,6 +142,9 @@ procedure on #21. #20's owner/parent must deliver scientific acceptance, the
 exact selected artifact/config/source/source-profile and reproduced inference;
 the current blocked false freeze cannot satisfy that gate. Real integration
 requires a later scoped implementation after this handoff, not an input flag.
+Ezzy explicitly reconfirmed that the actual export and illness timeline are not
+available yet, and analysis/demo-display consent remains unconfirmed. Preparation
+metadata and the native verifier's earlier synthetic proof cannot satisfy them.
 
 Before any actual case, reconcile parser record buckets, sources, units, coverage
 and representative aggregates privately. Apply event-end **and** creation-time

@@ -3,18 +3,27 @@
 import json
 import os
 import subprocess
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-from hachi.contracts.base import ArtifactRef
-from hachi.contracts.results import PartialProvenance
+from hachi.contracts.base import ArtifactRef, DatasetSnapshotRef
+from hachi.contracts.results import (
+    ForecastPayload,
+    ForecastPoint,
+    ForecastSeries,
+    PartialProvenance,
+    PhysiologyForecastResult,
+    Provenance,
+    ReportResult,
+)
 from hachi.evaluation.case_study import lifecycle as flow
 from hachi.evaluation.case_study.__main__ import main
 from hachi.evaluation.case_study.specification import Consent, Prespecification, ResultBatch
 from hachi.evaluation.case_study.synthetic import fixture, parser_seam, unavailable_batch
+from hachi.evaluation.serialization import document_sha256
 
 
 @pytest.fixture
@@ -82,6 +91,183 @@ def test_real_mode_refuses_current_false_freeze_even_with_processing_metadata(pr
     assert not (root.parent / "real").exists()
 
 
+def test_foreign_input_snapshot_cannot_be_sealed(prepared):
+    repo, inputs, spec, root, pin, batch = prepared
+    values = batch.model_dump(mode="json")
+    values["results"][0]["result"]["provenance"] = PartialProvenance(
+        dataset_snapshot=DatasetSnapshotRef(
+            dataset_id="foreign-tail", dataset_version="synthetic-1", snapshot_sha256="f" * 64
+        ),
+        artifact=spec.system.artifact,
+        feature_coverage=[],
+    ).model_dump(mode="json")
+    changed = ResultBatch.model_validate_json(json.dumps(values))
+    with pytest.raises(flow.CaseRefused, match="snapshot"):
+        flow.seal(root, pin, changed, inputs, repo)
+
+
+def test_input_export_mutation_cannot_be_sealed(prepared):
+    repo, inputs, _, root, pin, batch = prepared
+    (inputs / "export.xml").write_bytes(b"changed generated export\n")
+    with pytest.raises(flow.CaseRefused, match="input document"):
+        flow.seal(root, pin, batch, inputs, repo)
+
+
+@pytest.mark.parametrize("document", ["import-config.json", "import.sqlite3"])
+def test_pinned_import_input_mutation_cannot_be_sealed(prepared, document):
+    repo, inputs, _, root, pin, batch = prepared
+    (inputs / document).write_bytes(b"changed generated import input\n")
+    with pytest.raises(flow.CaseRefused, match="input document"):
+        flow.seal(root, pin, batch, inputs, repo)
+
+
+def test_import_config_must_match_snapshot_metadata_even_with_a_new_config_pin(prepared):
+    repo, inputs, spec, root, _, _ = prepared
+    raw = flow.document_bytes(
+        json.loads((inputs / "import-config.json").read_bytes())
+        | {"source_priority": ["changed-generated-priority"]}
+    )
+    (inputs / "import-config.json").write_bytes(raw)
+    values = spec.model_dump(mode="json")
+    values["inputs"]["import_config"]["sha256"] = flow.digest(raw)
+    changed = Prespecification.model_validate_json(json.dumps(values))
+    with pytest.raises(flow.CaseRefused, match="export and config"):
+        flow.preregister(changed, inputs, repo, root.parent / "changed-config")
+
+
+def forecast_batch(spec, batch, *, hours=24, shift=0, resolution="hour", snapshot=None):
+    """Constant generated physiology values only, never illness probabilities."""
+    original = batch.results[0]
+    base = original.result.root.model_dump(exclude={"reason_code", "requirements", "provenance"})
+    start = original.result.root.as_of + timedelta(hours=shift)
+    if resolution == "hour":
+        points = [
+            ForecastPoint(
+                interval_start_utc=start + timedelta(hours=i),
+                interval_end_utc=start + timedelta(hours=i + 1),
+                local_date=None,
+                median=65.0,
+                lower=None,
+                upper=None,
+            )
+            for i in range(hours)
+        ]
+    else:
+        start = datetime(2026, 1, 8, tzinfo=UTC)
+        points = [
+            ForecastPoint(
+                interval_start_utc=start,
+                interval_end_utc=start + timedelta(days=1),
+                local_date=start.date(),
+                median=65.0,
+                lower=None,
+                upper=None,
+            )
+        ]
+    result = PhysiologyForecastResult(
+        **{**base, "status": "ok"},
+        provenance=Provenance(
+            dataset_snapshot=snapshot or spec.inputs.dataset_snapshot,
+            artifact=spec.system.artifact,
+            feature_coverage=[],
+        ),
+        forecast=ForecastPayload(
+            resolution=resolution,
+            tz_name="UTC" if resolution == "day" else None,
+            series=[
+                ForecastSeries(
+                    metric="heart_rate",
+                    unit="bpm",
+                    nominal_coverage=None,
+                    interval_calibration="none",
+                    baseline=None,
+                    points=points,
+                )
+            ],
+            unavailable_metrics=[],
+        ),
+    )
+    changed = original.model_copy(update={"result": ReportResult(result)})
+    return ResultBatch(results=[changed, *batch.results[1:]])
+
+
+def test_canonical_forecast_request_and_dataset_success(prepared):
+    repo, inputs, spec, root, pin, batch = prepared
+    matched = forecast_batch(spec, batch)
+    sealed = flow.seal(root, pin, matched, inputs, repo)
+    opened = flow.reveal(root, pin, sealed, inputs, repo)
+    assert flow.verify(root, pin, sealed, opened, inputs, repo)["unavailable_results"] == 7
+
+
+@pytest.mark.parametrize(
+    "change", ["horizon", "resolution", "window", "snapshot", "request_hash", "subject"]
+)
+def test_canonical_result_cannot_change_pinned_request_or_input(prepared, change):
+    repo, inputs, spec, root, pin, batch = prepared
+    if change == "horizon":
+        changed = forecast_batch(spec, batch, hours=23)
+    elif change == "resolution":
+        changed = forecast_batch(spec, batch, resolution="day")
+    elif change == "window":
+        changed = forecast_batch(spec, batch, shift=1)
+    elif change == "snapshot":
+        changed = forecast_batch(
+            spec,
+            batch,
+            snapshot=DatasetSnapshotRef(
+                dataset_id="foreign-tail", dataset_version="synthetic-1", snapshot_sha256="f" * 64
+            ),
+        )
+    else:
+        values = batch.model_dump(mode="json")
+        if change == "subject":
+            values["results"][0]["result"]["subject_id"] = "foreign-subject"
+        else:
+            request = spec.requests[0].model_dump(mode="json")
+            request["horizon_hours"] = 1
+            values["results"][0]["request_sha256"] = document_sha256(request)
+        changed = ResultBatch.model_validate_json(json.dumps(values))
+    with pytest.raises(flow.CaseRefused):
+        flow.seal(root, pin, changed, inputs, repo)
+    assert not (root / "predictions_sealed").exists()
+
+
+def test_half_open_outcome_boundary_is_descriptive_and_not_a_negative_label(prepared):
+    _, _, spec, _, _, _ = prepared
+    assert spec.outcome_rule.interpretation == "descriptive_containment_not_clinical_labels"
+    assert [flow.onset_window_relation(spec, c.as_of_utc, 72) for c in spec.cutoffs] == [
+        "interval_outside",
+        "interval_inside",
+        "interval_inside",
+    ]
+    lower = spec.onset.lower_utc
+    exact = spec.model_copy(update={"onset": spec.onset.model_copy(update={"upper_utc": lower})})
+    assert flow.onset_window_relation(exact, lower, 24) == "interval_inside"
+    assert flow.onset_window_relation(exact, lower - timedelta(hours=24), 24) == "interval_outside"
+    crossing = spec.model_copy(
+        update={"onset": spec.onset.model_copy(update={"upper_utc": lower + timedelta(hours=24)})}
+    )
+    assert flow.onset_window_relation(crossing, lower, 24) == "partial_overlap"
+
+
+def test_healthy_gap_and_explicit_absence_commitment(prepared):
+    repo, inputs, spec, root, _, _ = prepared
+    values = spec.model_dump(mode="json")
+    values["outcome_rule"]["minimum_healthy_gap_hours"] = 169
+    with pytest.raises(ValidationError, match="minimum gap"):
+        Prespecification.model_validate_json(json.dumps(values))
+    timeline_path = inputs / "timeline.json"
+    timeline = json.loads(timeline_path.read_bytes())
+    timeline["healthy_assertions"][0]["period_end_utc"] = "2026-01-03T11:00:00Z"
+    raw = flow.document_bytes(timeline)
+    timeline_path.write_bytes(raw)
+    values = spec.model_dump(mode="json")
+    values["onset"]["sealed_timeline"]["sha256"] = flow.digest(raw)
+    changed = Prespecification.model_validate_json(json.dumps(values))
+    with pytest.raises(flow.CaseRefused, match="healthy comparisons"):
+        flow.preregister(changed, inputs, repo, root.parent / "bad-healthy")
+
+
 @pytest.mark.parametrize(
     "change", ["missing", "duplicate", "cutoff", "source", "artifact", "time", "mode"]
 )
@@ -95,15 +281,15 @@ def test_prediction_selection_and_identity_refusals(prepared, change):
         case "duplicate":
             rows[-1] = rows[0]
         case "cutoff":
-            rows[0]["as_of"] = "2026-01-07T12:00:01Z"
+            rows[0]["result"]["as_of"] = "2026-01-07T12:00:01Z"
         case "source":
-            rows[0]["git_sha"] = "f" * 40
+            rows[0]["result"]["git_sha"] = "f" * 40
         case "time":
-            rows[0]["generated_at_utc"] = "2026-01-01T00:00:00Z"
+            rows[0]["result"]["generated_at_utc"] = "2026-01-01T00:00:00Z"
         case "mode":
-            rows[0]["data_mode"] = "real"
+            rows[0]["result"]["data_mode"] = "real"
         case "artifact":
-            rows[0]["provenance"] = PartialProvenance(
+            rows[0]["result"]["provenance"] = PartialProvenance(
                 dataset_snapshot=None,
                 artifact=ArtifactRef(artifact_id="changed", artifact_sha256="f" * 64),
                 feature_coverage=[],

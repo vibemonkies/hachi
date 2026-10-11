@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sqlite3
 import subprocess
 from pathlib import Path
 
@@ -66,7 +67,7 @@ def main() -> int:
                 args.inputs,
                 args.repo,
             )
-    except (CaseRefused, OSError, ValidationError, subprocess.CalledProcessError):
+    except (CaseRefused, OSError, ValidationError, subprocess.CalledProcessError, sqlite3.Error):
         # Validation errors include offending data; never print their details.
         print(json.dumps({"status": "refused", "clinical_case_status": "unavailable"}))
         return 2

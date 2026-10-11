@@ -9,13 +9,14 @@ from hachi.contracts.base import (
     ArtifactRef,
     Contract,
     DataMode,
+    DatasetSnapshotRef,
     GitSha,
     Identifier,
     RelativePath,
     Sha256,
-    TaskName,
     UtcDatetime,
 )
+from hachi.contracts.requests import ReportRequest, SymptomCheckInEntry
 from hachi.contracts.results import ReportResult
 
 
@@ -72,13 +73,46 @@ class SystemPins(Contract):
     freeze_receipt: DocumentPin
 
 
+class InputPins(Contract):
+    export_xml: DocumentPin
+    import_snapshot: DocumentPin
+    import_config: DocumentPin
+    dataset_snapshot: DatasetSnapshotRef
+
+    @model_validator(mode="after")
+    def _snapshot(self) -> Self:
+        if self.dataset_snapshot.snapshot_sha256 != self.import_snapshot.sha256:
+            raise ValueError("input snapshot identity must bind the imported SQLite bytes")
+        return self
+
+
+class OutcomeRule(Contract):
+    forecast_window: Literal["start_inclusive_end_exclusive"]
+    onset_uncertainty: Literal["closed_interval"]
+    interpretation: Literal["descriptive_containment_not_clinical_labels"]
+    minimum_healthy_gap_hours: Annotated[int, Field(ge=168)]
+
+
+class CommittedTimeline(Contract):
+    data_mode: DataMode
+    onset_lower_utc: UtcDatetime
+    onset_upper_utc: UtcDatetime
+    healthy_assertions: Annotated[list[SymptomCheckInEntry], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def _healthy(self) -> Self:
+        if any(e.symptoms_present for e in self.healthy_assertions):
+            raise ValueError("healthy comparison assertions must explicitly record symptom absence")
+        return self
+
+
 class SourceSnapshot(Contract):
     git_sha: GitSha
     files: dict[RelativePath, Sha256]
 
 
 class Prespecification(Contract):
-    format_version: Literal["hachi-case-prespec-1"] = "hachi-case-prespec-1"
+    format_version: Literal["hachi-case-prespec-2"] = "hachi-case-prespec-2"
     data_mode: DataMode
     processing_consent: Consent
     presentation_consent: Consent
@@ -86,7 +120,9 @@ class Prespecification(Contract):
     onset: OnsetInterval
     cutoffs: Annotated[list[Cutoff], Field(min_length=3, max_length=3)]
     healthy_periods: Annotated[list[HealthyPeriod], Field(min_length=1)]
-    tasks: Annotated[list[TaskName], Field(min_length=1)]
+    requests: Annotated[list[ReportRequest], Field(min_length=1)]
+    outcome_rule: OutcomeRule
+    inputs: InputPins
     system: SystemPins
 
     @model_validator(mode="after")
@@ -98,14 +134,27 @@ class Prespecification(Contract):
             for c in self.cutoffs
         ):
             raise ValueError("exact UTC cutoffs must derive from the sealed lower onset bound")
-        if len(set(self.tasks)) != len(self.tasks):
-            raise ValueError("tasks must be unique")
+        keys = [(r.root.as_of, r.root.task) for r in self.requests]
+        tasks = {r.root.task for r in self.requests}
+        expected = {(t, task) for t in self.scoring_times() for task in tasks}
+        if len(keys) != len(expected) or set(keys) != expected:
+            raise ValueError("pin exactly one canonical request per task at every scoring time")
+        if not tasks <= {"physiology_forecast", "illness_onset"}:
+            raise ValueError(
+                "preparation requests support physiology forecast and unavailable onset"
+            )
+        if len({r.root.subject_id for r in self.requests}) != 1:
+            raise ValueError("requests must refer to one private subject")
         if len({p.period_id for p in self.healthy_periods}) != len(self.healthy_periods):
             raise ValueError("healthy periods must have unique identifiers")
         previous_end = None
         for p in self.healthy_periods:
             if not p.start_utc < p.end_utc < self.cutoffs[0].as_of_utc:
                 raise ValueError("healthy periods must finish before the earliest case cutoff")
+            if self.onset.lower_utc - p.end_utc < timedelta(
+                hours=self.outcome_rule.minimum_healthy_gap_hours
+            ):
+                raise ValueError("healthy period does not meet the prespecified minimum gap")
             if previous_end is not None and p.start_utc < previous_end:
                 raise ValueError("healthy periods must be ordered and non-overlapping")
             previous_end = p.end_utc
@@ -121,6 +170,9 @@ class Prespecification(Contract):
             system.source_compatibility,
             system.freeze_receipt,
             self.onset.sealed_timeline,
+            self.inputs.export_xml,
+            self.inputs.import_snapshot,
+            self.inputs.import_config,
         ]
         pins.extend(
             c.evidence
@@ -133,12 +185,19 @@ class Prespecification(Contract):
         return [c.as_of_utc for c in self.cutoffs] + [p.end_utc for p in self.healthy_periods]
 
 
+class BoundResult(Contract):
+    """Receipt metadata binds an existing canonical result to its full canonical request."""
+
+    request_sha256: Sha256
+    result: ReportResult
+
+
 class ResultBatch(Contract):
-    results: Annotated[list[ReportResult], Field(min_length=1)]
+    results: Annotated[list[BoundResult], Field(min_length=1)]
 
 
 class Receipt(Contract):
-    format_version: Literal["hachi-case-receipt-1"] = "hachi-case-receipt-1"
+    format_version: Literal["hachi-case-receipt-2"] = "hachi-case-receipt-2"
     stage: Literal["prespecified", "predictions_sealed", "revealed"]
     data_mode: Literal["synthetic"] = "synthetic"
     observed_at_utc: UtcDatetime

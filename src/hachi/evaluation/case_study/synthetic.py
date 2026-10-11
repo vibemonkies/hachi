@@ -4,12 +4,18 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from xml.sax.saxutils import quoteattr
 
-from hachi.contracts.base import ArtifactRef
-from hachi.contracts.results import ReportResult, UnavailableResult
+from hachi.contracts.base import ArtifactRef, DatasetSnapshotRef
+from hachi.contracts.requests import (
+    IllnessOnsetRequest,
+    PhysiologyForecastHourlyRequest,
+    ReportRequest,
+    SymptomCheckInEntry,
+)
+from hachi.contracts.results import PartialProvenance, ReportResult, UnavailableResult
 from hachi.data.apple_health import ImportConfig, import_export, iter_observations
 from hachi.data.apple_health.hourly import AVAILABILITY_RULE, apple_hourly_features
 from hachi.evaluation.features import HourlyFeaturePolicy
-from hachi.evaluation.serialization import document_bytes
+from hachi.evaluation.serialization import document_bytes, document_sha256
 
 from .lifecycle import (
     CaseRefused,
@@ -22,11 +28,15 @@ from .lifecycle import (
     verify,
 )
 from .specification import (
+    BoundResult,
+    CommittedTimeline,
     Consent,
     Cutoff,
     DocumentPin,
     HealthyPeriod,
+    InputPins,
     OnsetInterval,
+    OutcomeRule,
     Prespecification,
     ResultBatch,
     SourceSnapshot,
@@ -37,6 +47,31 @@ from .specification import (
 def fixture(inputs: Path, repo: Path) -> Prespecification:
     """Fictional dates and consent evidence are never claims about a real person."""
     source = source_snapshot(repo)
+    onset = datetime(2026, 1, 10, 12, tzinfo=UTC)
+    healthy = HealthyPeriod(
+        period_id="synthetic-healthy",
+        start_utc=onset - timedelta(days=8),
+        end_utc=onset - timedelta(days=7),
+    )
+    timeline = CommittedTimeline(
+        data_mode="synthetic",
+        onset_lower_utc=onset,
+        onset_upper_utc=onset + timedelta(hours=6),
+        healthy_assertions=[
+            SymptomCheckInEntry(
+                kind="symptom_checkin",
+                entry_id="synthetic-absence",
+                entered_at_utc=healthy.end_utc,
+                period_start_utc=healthy.start_utc,
+                period_end_utc=healthy.end_utc,
+                symptoms_present=False,
+                symptoms=[],
+                severity=None,
+            )
+        ],
+    )
+    inputs.mkdir(mode=0o700, exist_ok=False)
+    _, database, config = _generated_import(inputs)
     values = {
         "source.json": document_bytes(source),
         "model.json": document_bytes({"synthetic_fixture": True, "inference": "unavailable"}),
@@ -44,17 +79,43 @@ def fixture(inputs: Path, repo: Path) -> Prespecification:
         "feature-source.json": document_bytes({"availability_rule": AVAILABILITY_RULE}),
         "compatibility.json": document_bytes({"synthetic_only": True, "real_transfer": False}),
         "freeze.json": document_bytes({"final_test_authorized": False}),
-        "timeline.json": document_bytes({"synthetic_fixture": True, "no_real_person": True}),
+        "timeline.json": document_bytes(timeline),
+        "import-config.json": document_bytes(config),
         "processing.json": document_bytes({"synthetic_fixture": True, "processing": "granted"}),
     }
-    inputs.mkdir(mode=0o700, exist_ok=False)
     for name, raw in values.items():
         exclusive_write(inputs / name, raw)
 
     def pin(name: str) -> DocumentPin:
         return DocumentPin(path=name, sha256=digest(values[name]))
 
-    onset = datetime(2026, 1, 10, 12, tzinfo=UTC)
+    times = [onset - timedelta(hours=h) for h in (72, 48, 24)] + [healthy.end_utc]
+    requests = [
+        request
+        for t in times
+        for request in (
+            ReportRequest(
+                PhysiologyForecastHourlyRequest(
+                    schema_version="0.1",
+                    subject_id=config.subject_id,
+                    as_of=t,
+                    task="physiology_forecast",
+                    resolution="hour",
+                    horizon_hours=24,
+                    metrics=["heart_rate"],
+                )
+            ),
+            ReportRequest(
+                IllnessOnsetRequest(
+                    schema_version="0.1",
+                    subject_id=config.subject_id,
+                    as_of=t,
+                    task="illness_onset",
+                    horizon_hours=72,
+                )
+            ),
+        )
+    ]
     return Prespecification(
         data_mode="synthetic",
         processing_consent=Consent(
@@ -73,14 +134,28 @@ def fixture(inputs: Path, repo: Path) -> Prespecification:
             Cutoff(hours_before_lower_onset=h, as_of_utc=onset - timedelta(hours=h))
             for h in (72, 48, 24)
         ],
-        healthy_periods=[
-            HealthyPeriod(
-                period_id="synthetic-healthy",
-                start_utc=onset - timedelta(days=8),
-                end_utc=onset - timedelta(days=7),
-            )
-        ],
-        tasks=["physiology_forecast", "illness_onset"],
+        healthy_periods=[healthy],
+        requests=requests,
+        outcome_rule=OutcomeRule(
+            forecast_window="start_inclusive_end_exclusive",
+            onset_uncertainty="closed_interval",
+            interpretation="descriptive_containment_not_clinical_labels",
+            minimum_healthy_gap_hours=168,
+        ),
+        inputs=InputPins(
+            export_xml=DocumentPin(
+                path="export.xml", sha256=digest((inputs / "export.xml").read_bytes())
+            ),
+            import_snapshot=DocumentPin(
+                path="import.sqlite3", sha256=digest(database.read_bytes())
+            ),
+            import_config=pin("import-config.json"),
+            dataset_snapshot=DatasetSnapshotRef(
+                dataset_id=config.dataset_id,
+                dataset_version="apple-generated-fixture-1",
+                snapshot_sha256=digest(database.read_bytes()),
+            ),
+        ),
         system=SystemPins(
             artifact=ArtifactRef(
                 artifact_id="synthetic-unavailable", artifact_sha256=pin("model.json").sha256
@@ -97,10 +172,14 @@ def fixture(inputs: Path, repo: Path) -> Prespecification:
 
 def unavailable_batch(spec: Prespecification, source: SourceSnapshot) -> ResultBatch:
     results = []
-    for cutoff in spec.scoring_times():
-        for task in spec.tasks:
-            results.append(
-                ReportResult(
+    for request in spec.requests:
+        r = request.root
+        task = r.task
+        cutoff = r.as_of
+        results.append(
+            BoundResult(
+                request_sha256=document_sha256(request),
+                result=ReportResult(
                     UnavailableResult(
                         schema_version="0.1",
                         report_id=f"synthetic-{len(results)}",
@@ -119,16 +198,20 @@ def unavailable_batch(spec: Prespecification, source: SourceSnapshot) -> ResultB
                         requirements=[
                             "Accepted frozen system and permitted real inputs are absent."
                         ],
-                        provenance=None,
+                        provenance=PartialProvenance(
+                            dataset_snapshot=spec.inputs.dataset_snapshot,
+                            artifact=spec.system.artifact,
+                            feature_coverage=[],
+                        ),
                     )
-                )
+                ),
             )
+        )
     return ResultBatch(results=results)
 
 
-def parser_seam(root: Path) -> dict[str, object]:
-    """Independent known generated values/counts compared to the actual Apple boundary."""
-    root.mkdir(mode=0o700, exist_ok=False)
+def _generated_import(root: Path):
+    """The only built-in input producer generates these six fictional records."""
     cutoff = datetime(2026, 1, 7, 12, tzinfo=UTC)
     hour = cutoff - timedelta(hours=1)
 
@@ -176,18 +259,28 @@ def parser_seam(root: Path) -> dict[str, object]:
         ),
     ]
     xml = ("<HealthData>" + "".join(rows) + "</HealthData>").encode()
-    exclusive_write(root / "generated.xml", xml)
-    database = root / "generated.sqlite3"
+    exclusive_write(root / "export.xml", xml)
+    database = root / "import.sqlite3"
+    config = ImportConfig(
+        dataset_id="synthetic-apple",
+        subject_id="synthetic-only",
+        declared_tz_name="UTC",
+        data_mode="synthetic",
+    )
     audit = import_export(
-        root / "generated.xml",
-        ImportConfig(
-            dataset_id="synthetic-apple",
-            subject_id="synthetic-only",
-            declared_tz_name="UTC",
-            data_mode="synthetic",
-        ),
+        root / "export.xml",
+        config,
         database,
     )
+    return audit, database, config
+
+
+def parser_seam(root: Path) -> dict[str, object]:
+    """Independent known generated values/counts compared to the actual Apple boundary."""
+    root.mkdir(mode=0o700, exist_ok=False)
+    audit, database, _ = _generated_import(root)
+    cutoff = datetime(2026, 1, 7, 12, tzinfo=UTC)
+    hour = cutoff - timedelta(hours=1)
     visible = list(iter_observations(database, as_of=cutoff))
     expected = {("heart_rate", "bpm", 65.0), ("steps", "count", 120.0)}
     if (

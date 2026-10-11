@@ -2,17 +2,26 @@
 
 import hashlib
 import os
+import sqlite3
 import stat
 import subprocess
-from datetime import UTC, datetime
+from contextlib import closing
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from hachi.contracts.base import Sha256
-from hachi.evaluation.serialization import document_bytes
+from hachi.contracts.base import Sha256, local_day_bounds
+from hachi.contracts.requests import (
+    PhysiologyForecastDailyRequest,
+    PhysiologyForecastHourlyRequest,
+)
+from hachi.contracts.results import ForecastPayload
+from hachi.data.apple_health import ImportConfig
+from hachi.evaluation.serialization import document_bytes, document_sha256
 
-from .specification import Prespecification, Receipt, ResultBatch, SourceSnapshot
+from .specification import CommittedTimeline, Prespecification, Receipt, ResultBatch, SourceSnapshot
 
 MAX_BYTES = 16 * 1024 * 1024
 
@@ -100,14 +109,55 @@ def source_snapshot(repo: Path) -> SourceSnapshot:
     )
 
 
-def _verify_inputs(spec: Prespecification, inputs: Path, repo: Path) -> SourceSnapshot:
+@dataclass(frozen=True)
+class VerifiedInputs:
+    source: SourceSnapshot
+    config: ImportConfig
+
+
+def _verify_inputs(spec: Prespecification, inputs: Path, repo: Path) -> VerifiedInputs:
     for pin in spec.document_pins():
         if digest(private_read(inputs, pin.path)) != pin.sha256:
             raise CaseRefused("a preregistered input document has changed")
     source = SourceSnapshot.model_validate_json(private_read(inputs, spec.system.source.path))
     if source != source_snapshot(repo):
         raise CaseRefused("original source or producing commit has changed")
-    return source
+    config = ImportConfig.model_validate_json(private_read(inputs, spec.inputs.import_config.path))
+    if (
+        config.data_mode != spec.data_mode
+        or config.dataset_id != spec.inputs.dataset_snapshot.dataset_id
+        or any(r.root.subject_id != config.subject_id for r in spec.requests)
+    ):
+        raise CaseRefused("pinned import config differs from the case data identity")
+    database = inputs / spec.inputs.import_snapshot.path
+    with closing(
+        sqlite3.connect(database.resolve().as_uri() + "?mode=ro&immutable=1", uri=True)
+    ) as c:
+        metadata = dict(c.execute("SELECT key, value FROM metadata"))
+    if (
+        metadata.get("completed") != "true"
+        or metadata.get("xml_sha256") != spec.inputs.export_xml.sha256
+        or ImportConfig.model_validate_json(metadata.get("config", "null")) != config
+    ):
+        raise CaseRefused("import snapshot does not bind the pinned export and config")
+    timeline = CommittedTimeline.model_validate_json(
+        private_read(inputs, spec.onset.sealed_timeline.path)
+    )
+    if (
+        timeline.data_mode != spec.data_mode
+        or timeline.onset_lower_utc != spec.onset.lower_utc
+        or timeline.onset_upper_utc != spec.onset.upper_utc
+        or any(e.entered_at_utc > _now() for e in timeline.healthy_assertions)
+        or any(
+            not any(
+                e.period_start_utc <= p.start_utc and e.period_end_utc >= p.end_utc
+                for e in timeline.healthy_assertions
+            )
+            for p in spec.healthy_periods
+        )
+    ):
+        raise CaseRefused("committed timeline does not confirm the onset and healthy comparisons")
+    return VerifiedInputs(source, config)
 
 
 def _preparation_only(spec: Prespecification) -> None:
@@ -194,19 +244,20 @@ def _prespec(root: Path, pin: str, inputs: Path, repo: Path) -> tuple[Receipt, P
 
 
 def _batch(
-    spec: Prespecification, batch: ResultBatch, source: SourceSnapshot, before: Receipt
+    spec: Prespecification, batch: ResultBatch, inputs: VerifiedInputs, before: Receipt
 ) -> None:
-    expected = {(t, task) for t in spec.scoring_times() for task in spec.tasks}
-    actual = [(r.root.as_of, r.root.task) for r in batch.results]
-    if len(actual) != len(expected) or set(actual) != expected:
-        raise CaseRefused("retain exactly every prespecified cutoff/comparison and task")
-    if len({r.root.subject_id for r in batch.results}) != 1 or len(
-        {r.root.report_id for r in batch.results}
-    ) != len(batch.results):
+    expected = {document_sha256(r): r.root for r in spec.requests}
+    actual = [r.request_sha256 for r in batch.results]
+    if len(actual) != len(expected) or set(actual) != set(expected):
+        raise CaseRefused("retain exactly every prespecified full request and cutoff/comparison")
+    if len({r.result.root.report_id for r in batch.results}) != len(batch.results):
         raise CaseRefused("batch requires one synthetic subject and unique report identities")
     for wrapped in batch.results:
-        r = wrapped.root
-        if r.data_mode != "synthetic" or r.git_sha != source.git_sha:
+        r = wrapped.result.root
+        request = expected[wrapped.request_sha256]
+        if (r.as_of, r.task, r.subject_id) != (request.as_of, request.task, request.subject_id):
+            raise CaseRefused("result does not answer the pinned canonical request")
+        if r.data_mode != "synthetic" or r.git_sha != inputs.source.git_sha:
             raise CaseRefused("result source or synthetic mode differs from preregistration")
         if r.generated_at_utc < before.observed_at_utc or r.generated_at_utc >= _now():
             raise CaseRefused("result generation must follow preregistration and precede sealing")
@@ -216,13 +267,65 @@ def _batch(
             # This preparation has no accepted clinical artifact or output handoff.
             if r.task in ("illness_onset", "recovery"):
                 raise CaseRefused("clinical case outputs remain unavailable in preparation")
+            if r.provenance.dataset_snapshot != spec.inputs.dataset_snapshot:
+                raise CaseRefused("result dataset snapshot differs from the pinned case input")
+            if r.task == "physiology_forecast" and request.task == "physiology_forecast":
+                _forecast_request(r.forecast, request, inputs.config.declared_tz_name)
             artifact = r.provenance.artifact
         elif r.status == "unavailable" and r.provenance is not None:
+            if r.provenance.dataset_snapshot is not None and (
+                r.provenance.dataset_snapshot != spec.inputs.dataset_snapshot
+            ):
+                raise CaseRefused("result dataset snapshot differs from the pinned case input")
             artifact = r.provenance.artifact
         else:
             artifact = None
         if artifact is not None and artifact != spec.system.artifact:
             raise CaseRefused("result original model differs from preregistered artifact")
+
+
+def _forecast_request(
+    payload: ForecastPayload,
+    request: PhysiologyForecastHourlyRequest | PhysiologyForecastDailyRequest,
+    tz_name: str,
+) -> None:
+    if payload.resolution != request.resolution:
+        raise CaseRefused("forecast resolution differs from its pinned request")
+    if request.metrics is not None and {s.metric for s in payload.series} | {
+        s.metric for s in payload.unavailable_metrics
+    } != set(request.metrics):
+        raise CaseRefused("forecast metrics differ from its pinned request")
+    if isinstance(request, PhysiologyForecastHourlyRequest):
+        windows = [
+            (request.as_of + timedelta(hours=i), request.as_of + timedelta(hours=i + 1))
+            for i in range(request.horizon_hours)
+        ]
+    else:
+        from zoneinfo import ZoneInfo
+
+        day = request.as_of.astimezone(ZoneInfo(tz_name)).date()
+        start, end = local_day_bounds(day, tz_name)
+        if start < request.as_of:
+            start, end = local_day_bounds(day + timedelta(days=1), tz_name)
+        windows = [(start, end)]
+        if payload.tz_name != tz_name:
+            raise CaseRefused("daily forecast timezone differs from the pinned import config")
+    if any(
+        [(p.interval_start_utc, p.interval_end_utc) for p in s.points] != windows
+        for s in payload.series
+    ):
+        raise CaseRefused("forecast horizon or windows differ from its pinned request")
+
+
+def onset_window_relation(spec: Prespecification, cutoff: datetime, horizon_hours: int) -> str:
+    """Descriptive geometry only: no negative/positive clinical label or alert is inferred."""
+    end = cutoff + timedelta(hours=horizon_hours)
+    lo, hi = spec.onset.lower_utc, spec.onset.upper_utc
+    if cutoff <= lo <= hi < end:
+        return "interval_inside"
+    if hi < cutoff or lo >= end:
+        return "interval_outside"
+    return "partial_overlap"
 
 
 def seal(root: Path, prespec_pin: str, batch: ResultBatch, inputs: Path, repo: Path) -> str:
@@ -233,7 +336,9 @@ def seal(root: Path, prespec_pin: str, batch: ResultBatch, inputs: Path, repo: P
     _batch(spec, batch, source, before)
     raw = document_bytes(batch)
     now = _now()
-    if now <= before.observed_at_utc or any(r.root.generated_at_utc >= now for r in batch.results):
+    if now <= before.observed_at_utc or any(
+        r.result.root.generated_at_utc >= now for r in batch.results
+    ):
         raise CaseRefused("observed system clock regressed during sealing")
     return _stage(
         root,
@@ -260,9 +365,10 @@ def reveal(root: Path, prespec_pin: str, sealed_pin: str, inputs: Path, repo: Pa
         raise CaseRefused("sealed receipt does not follow the original prespecification")
     batch = ResultBatch.model_validate_json(raw)
     _batch(spec, batch, _verify_inputs(spec, inputs, repo), before)
-    if any(r.root.generated_at_utc >= sealed.observed_at_utc for r in batch.results):
+    if any(r.result.root.generated_at_utc >= sealed.observed_at_utc for r in batch.results):
         raise CaseRefused("saved results postdate their sealing receipt")
-    # Receipt of permission to open the holder's timeline; no labels become predictors.
+    # The timeline was readable before sealing. This records the later holder-tail
+    # handoff sequence only; it cannot attest that outcomes were hidden from the operator.
     payload = document_bytes({"sealed_timeline_sha256": spec.onset.sealed_timeline.sha256})
     now = _now()
     if now <= sealed.observed_at_utc:
@@ -297,19 +403,21 @@ def verify(
         or opened.previous_receipt_sha256 != sealed_pin
         or sealed.prespecification_sha256 != before.prespecification_sha256
         or opened.prespecification_sha256 != before.prespecification_sha256
-        or any(r.root.generated_at_utc >= sealed.observed_at_utc for r in batch.results)
+        or any(r.result.root.generated_at_utc >= sealed.observed_at_utc for r in batch.results)
         or payload != document_bytes({"sealed_timeline_sha256": spec.onset.sealed_timeline.sha256})
     ):
         raise CaseRefused("receipt sequence or revealed timeline linkage differs")
     return {
         "data_mode": "synthetic",
         "clinical_case_status": "unavailable",
-        "source_git_sha": source.git_sha,
+        "source_git_sha": source.source.git_sha,
         "source_document_sha256": spec.system.source.sha256,
         "prespecified_cutoffs": len(spec.cutoffs),
         "healthy_periods": len(spec.healthy_periods),
         "results": len(batch.results),
-        "unavailable_results": sum(r.root.status == "unavailable" for r in batch.results),
+        "unavailable_results": sum(r.result.root.status == "unavailable" for r in batch.results),
+        "input_snapshot_verified": True,
+        "canonical_requests_verified": len(spec.requests),
         "receipt_order_verified": True,
         "presentation_consent": spec.presentation_consent.status,
         "timestamp_basis": "observed_system_utc_not_trusted_attestation",
