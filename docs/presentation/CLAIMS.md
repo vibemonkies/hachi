@@ -695,9 +695,9 @@ Scope: Generated native/HTTP transport performance on exact CPU receipt; unchang
 
 ### final
 
-[reports/evaluation/final/README.md](https://github.com/vibemonkies/hachi/blob/7db3baafcf0f8a0c3f615c69443a102b58dc4eee/reports/evaluation/final/README.md)
+[reports/evaluation/final/README.md](https://github.com/vibemonkies/hachi/blob/66a39842ffed015fe4764f6b5012a751118aeb51/reports/evaluation/final/README.md)
 
-File SHA256: `12ee07a88d6cde35a6d93a7ebff8056db022e7d21e6dc405e436aa7695e7b784`.
+File SHA256: `95e13fd222cd74088637385bec7eb126783023ee632c4cefd1a7220cdfd30621`.
 
 Scope: Development tooling only; no selected model, test authority or accepted superseded recovery packet.
 
