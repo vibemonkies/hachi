@@ -50,3 +50,35 @@ per-entry deletion await WindyTrout's coordinated contract/API changes. #17 must
 wire the feature exports into the actual selected-subject app. #15 must publish
 and be served before computed comparison curves can be inspected. Those missing
 paths are not replaced by fixture evidence; #18 remains open.
+
+## Stored correction/deletion follow-up
+
+PR #79 is merged and integrated. `correction-deletion-receipt.json` binds API
+`f2870c3` and UI `977d312` (the later UI commit only changes deletion focus/error
+placement). All work remains in the same isolated synthetic runtime.
+
+The rendered correction form changed the onset severity from 2 to 3, saved a new
+version with its own entry time, and preserved the event window. Actual GET
+history returned 8 current entries and 9 versions; an inclusive cutoff at the
+original entry time returned severity2. Resolution still named the original onset.
+
+The browser attempted confirmed onset deletion and observed the API's 409:
+"delete the resolution first." The error initially appeared above the mobile
+viewport; the UI fix put it beside the confirmation at y368 in a667px viewport.
+Opening deletion focuses its confirmation field; cancelling restores the source
+button's focus. After deleting resolution and then onset through the forms,
+current/all history contained6 remaining entries. Neither onset version nor the
+resolution survived in a prior-cutoff read. The other6 entries remained, and page
+reload rendered the same6 rows without horizontal overflow.
+
+`retry-receipt.json` separately records a real stopped-API failure and retry at
+source9501011: the draft stayed intact, one error was announced near the form, and
+retry after API restart saved one entry. A failed intermediate count check during
+hot reload was not accepted as evidence; the frozen-source rerun passed.
+
+The maintained Ajv2020/Ajv-formats parser replaces the temporary structural reader.
+8 Node checks cover generated documents, no coercion/default mutation, malformed
+nested entries/dates, unknown schema keywords, form/domain boundaries and episode
+roots.24 API/correction/privacy checks passed after #79 integration. The remaining
+#18 gates are #17 app-route integration and #15 computed scenario publication/API
+wiring and rendered curves, plus the supported output/evaluation limitations.

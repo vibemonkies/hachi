@@ -68,7 +68,5 @@ correction event-field round trips and episode-chain safety. Browser acceptance
 must additionally exercise save/read-back/reload, correction/deletion, invalid
 inputs, keyboard/mobile use and the actual report/scenario endpoints.
 
-This feature checkpoint does not close #18. App-route integration belongs to the
-active #17 worker, stored correction/deletion depends on the coordinated #16 API,
-and computed comparison curves depend on #15 publication/wiring. Supported
+Stored correction/deletion is verified against the coordinated #16 API from PR #79; see `reports/verification/checkins/correction-deletion-receipt.json`. This feature checkpoint does not close #18. App-route integration belongs to the active #17 worker, and computed comparison curves depend on #15 publication/wiring. Supported
 illness/recovery/alertness claims retain their own real-label/evaluation gates.
