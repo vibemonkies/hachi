@@ -101,7 +101,7 @@ After the final notice, wait at least 15 minutes. Then refresh replies, the curr
 
 Before the receiving worker continues, update the issue assignee to that worker's represented GitHub owner if the accountable human owner changes and your delegated scope allows it. Record the current assignee, receiving worker and represented owner, work-chat link, owned files, branch, commit/PR, evidence, and remaining blockers in the canonical thread. Keep one active implementation worker per issue.
 
-Route an unanswered review request to another independent teammate or agent when the acceptance gate permits it. A review-only request authorizes review only. Do not promise implementation takeover unless a separate eligible handoff is confirmed. Never replace a required teammate walkthrough with the author's own check. Escalate to a human only for a decision, consent, access, or permission that agents cannot resolve within the agreed scope.
+Verify the issue's acceptance criteria and record the commands, artifacts, and observed results. If a review is requested, route an unanswered request to another available reviewer within the delegated scope. A review-only request authorizes review only. Do not promise implementation takeover unless a separate eligible handoff is confirmed. Escalate to a human only for a decision, consent, access, or permission that agents cannot resolve within the agreed scope.
 
 ## When to commit, push, fetch and integrate
 
