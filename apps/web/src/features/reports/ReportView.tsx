@@ -99,7 +99,7 @@ export function TaskResultPanel({
     return (
       <div className="notice">
         <h2>{title} unavailable</h2>
-        {result.reason_code === "INSUFFICIENT_HISTORY" && <p>The available history does not meet this task's requirements.</p>}
+        <p>{result.requirements[0]}</p>
         <p>Reason · <code>{result.reason_code}</code></p>
         <div className="result-identity">
           <span className={`mode-badge mode-${result.data_mode}`}>{result.data_mode} data</span>
@@ -111,7 +111,7 @@ export function TaskResultPanel({
           <span>Code · {result.git_sha}</span>
         </div>
         {result.warnings.map((warning) => <p key={warning.code} className="warning-line"><strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}</p>)}
-        <ul>{result.requirements.map((requirement) => <li key={requirement}>{requirement}</li>)}</ul>
+        {result.requirements.length > 1 && <ul>{result.requirements.slice(1).map((requirement) => <li key={requirement}>{requirement}</li>)}</ul>}
       </div>
     );
   }
@@ -197,6 +197,7 @@ function ForecastChart({ series, expanded, asOf }: { series: ForecastSeries; exp
   const start = Date.parse(asOf);
   const end = start + 24 * 60 * 60 * 1000;
   const x = (timestamp: string) => 58 + (Date.parse(timestamp) - start) * 560 / (end - start);
+  const ticks = Array.from({ length: 5 }, (_, index) => start + (end - start) * index / 4);
   const y = (value: number) => 220 - (value - low) / (high - low) * 170;
   const path = series.points.map((point, index) => `${index ? "L" : "M"}${x(point.interval_start_utc)},${y(point.median)}`).join(" ");
   const metricName = labels[series.metric] ?? series.metric.replaceAll("_", " ");
@@ -219,9 +220,13 @@ function ForecastChart({ series, expanded, asOf }: { series: ForecastSeries; exp
         <svg viewBox="0 0 680 270" role="img" aria-label={`${metricName} median forecast${pointOnly ? " points without intervals" : " with interval bounds"}`}>
           {[low, (low + high) / 2, high].map((value) => <g key={value}><line x1="58" x2="640" y1={y(value)} y2={y(value)} className="grid-line" /><text x="8" y={y(value) + 4}>{value.toFixed(1)}</text></g>)}
           <text x="8" y="18">{series.unit}</text>
+          {ticks.map((timestamp) => {
+            const iso = new Date(timestamp).toISOString();
+            const position = x(iso);
+            return <g key={timestamp}><line x1={position} x2={position} y1="42" y2="220" className="grid-line" /><text x={position} y="254" textAnchor={timestamp === ticks[0] ? "start" : timestamp === ticks.at(-1) ? "end" : "middle"}>{iso.slice(5, 16).replace("T", " ")}</text></g>;
+          })}
           {series.points.map((point) => <g key={point.interval_start_utc}>
             {showBounds && point.lower !== null && point.upper !== null && <line x1={x(point.interval_start_utc)} x2={x(point.interval_start_utc)} y1={y(point.lower)} y2={y(point.upper)} className="interval" />}
-            <text x={x(point.interval_start_utc)} y="254" textAnchor="middle">{point.interval_start_utc.slice(5, 10)} {point.interval_start_utc.slice(11, 16)}</text>
           </g>)}
           <path d={path} className="series" />
           {series.points.map((point) => <circle key={point.interval_start_utc} cx={x(point.interval_start_utc)} cy={y(point.median)} r="4" className="dot" />)}
