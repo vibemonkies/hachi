@@ -46,7 +46,7 @@ Keep synthetic status, unavailable reasons, missing values, the six-bin horizon 
 - [x] Verify on the matching surface. See [observations and gallery](VERIFICATION.md).
 - [x] Keep small, ordered commits on the exact verification-PR base. Stack the design follow-up.
 - [x] Use an explicit skeptical design-review pass before shipping. It caught and corrected the unsupported claim that reports analyze imported observations.
-- [ ] Run Opening a PR.
+- [x] Run Opening a PR. [Design PR #32](https://github.com/vibemonkies/hachi/pull/32) is ready and stacked on verification PR #31, with all three screenshot comparisons embedded.
 
 Throughput checkpoint follows.
 
@@ -68,3 +68,15 @@ The synthesis adopts B's literal copy and its analytical overview, plus A's sour
 The code keeps Workflow, Panel, and fixtures unchanged. A small Design union selects presentation at the URL boundary. App owns the selection and shell; SectionView owns task composition; Plot retains numerical rendering and exact-value equivalents. Visual variants cannot generate new data or change report eligibility. The next maintainer inherits one behavior implementation and three inspectable compositions.
 
 The judge's scores describe sketches, not measured usability. The main shared risk is that visual polish makes hand-authored outputs look authoritative. Essential labels remain adjacent to results. The alternative risk is an analytical version too dense for a short demo; all versions must be inspected on desktop and phone before publication.
+
+## Principles applied
+
+| Bean Mode principle | Concrete choice |
+| --- | --- |
+| Redesign from first principles | Start from import, coverage, cutoff, and a readable result rather than inherit the decorative dashboard. |
+| Subtract before you add | Remove slogans, repeated introductions, numbered navigation, and duplicate provenance. |
+| Experience first | Compare real working compositions through the complete demonstration path on desktop and phone. |
+| Model the domain | Preserve Workflow and Panel; presentation cannot create model results or change eligibility. |
+| Prove it works | Drive public controls, inspect exact values, and commit actual screenshots and limitations. |
+| Sequence verifiable units | Order implementation, copy correction, and research/evidence commits on the verification PR's exact base. |
+| Separate before serializing shared state | Isolate the checkout, preview port, browser tab, and implementation ownership. |
