@@ -1,0 +1,331 @@
+{
+  "schema_version": "0.1",
+  "report_id": "scn-2d6ff014be3f8493c3b5879d",
+  "subject_id": "synthetic-scenario-18",
+  "as_of": "2026-10-11T06:00:00Z",
+  "data_mode": "synthetic",
+  "generated_at_utc": "2026-10-11T19:38:36Z",
+  "git_sha": "7777928176a3843bc134cd68c20c41c1d6db688e",
+  "warnings": [],
+  "replay": null,
+  "status": "ok",
+  "provenance": {
+    "dataset_snapshot": null,
+    "artifact": {
+      "artifact_id": "two-process-v1",
+      "artifact_sha256": "b47cf37fb470ee1ebe72a9dc89b508a08e80afe06a564e9b523b79ea474fca84"
+    },
+    "feature_coverage": []
+  },
+  "task": "alertness",
+  "alertness": {
+    "mode": "simulation",
+    "model_description": "Original conditional two-process-inspired implementation two-process-v1. UTC hours: waking S'=1-(1-S)*exp(-d/18.2); sleeping S'=S*exp(-d/4.2). Timing constants: Daan, Beersma & Borbely (1984), https://doi.org/10.1152/ajpregu.1984.246.2.R161; two-process background: https://doi.org/10.1111/jsr.12371. No population parameter fit is claimed. B is earliest resolved bedtime; S=0.6 at B-24h. All stated prior sleep is one synthetic block starting at B-24h, then awake to B. Each alternative stays awake from B to its own bedtime, sleeps to its wake, then stays awake through its bedtime+24 elapsed hours. Alternatives are independent. C=cos(2*pi*(t-anchor)/24h); anchor=2026-10-10T22:00:00+00:00, resolved once from 15:00 local on B's local date. A=(1-S+a*(C+1))/(1+2*a), a=0.2. Phase, initial state, prehistory and weight are assumptions, not fitted parameters. Caffeine/light have no modeled effects; phase does not shift. A is a dimensionless illustrative index, higher=more simulated alertness; not probability, KSS, PVT, measured or causal benefit. A sleep-regulation mechanism does not validate a KSS/PVT mapping. No participant data or validation. Equation concepts are literature-derived; implementation is original, with no software code license asserted or borrowed.",
+    "scale": {
+      "name": "Illustrative relative alertness",
+      "unit": "dimensionless",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "higher_is_more_alert": true
+    },
+    "tz_name": "America/Los_Angeles",
+    "assumptions": {
+      "prior_sleep_hours": 8.0,
+      "caffeine": "none",
+      "light_exposure": "not_modeled"
+    },
+    "curves": [
+      {
+        "schedule_id": "a",
+        "points": [
+          {
+            "time_utc": "2026-10-11T14:00:00Z",
+            "value": 0.7195860887492166
+          },
+          {
+            "time_utc": "2026-10-11T14:30:00Z",
+            "value": 0.718781443754174
+          },
+          {
+            "time_utc": "2026-10-11T15:00:00Z",
+            "value": 0.719388165384495
+          },
+          {
+            "time_utc": "2026-10-11T15:30:00Z",
+            "value": 0.7210905908335947
+          },
+          {
+            "time_utc": "2026-10-11T16:00:00Z",
+            "value": 0.7235625822004474
+          },
+          {
+            "time_utc": "2026-10-11T16:30:00Z",
+            "value": 0.7264728826209464
+          },
+          {
+            "time_utc": "2026-10-11T17:00:00Z",
+            "value": 0.7294905660610649
+          },
+          {
+            "time_utc": "2026-10-11T17:30:00Z",
+            "value": 0.7322904873597206
+          },
+          {
+            "time_utc": "2026-10-11T18:00:00Z",
+            "value": 0.7345586391094455
+          },
+          {
+            "time_utc": "2026-10-11T18:30:00Z",
+            "value": 0.7359973235613176
+          },
+          {
+            "time_utc": "2026-10-11T19:00:00Z",
+            "value": 0.7363300509098389
+          },
+          {
+            "time_utc": "2026-10-11T19:30:00Z",
+            "value": 0.7353060799992482
+          },
+          {
+            "time_utc": "2026-10-11T20:00:00Z",
+            "value": 0.7327045236150398
+          },
+          {
+            "time_utc": "2026-10-11T20:30:00Z",
+            "value": 0.728337947978399
+          },
+          {
+            "time_utc": "2026-10-11T21:00:00Z",
+            "value": 0.7220554047193917
+          },
+          {
+            "time_utc": "2026-10-11T21:30:00Z",
+            "value": 0.7137448433188623
+          },
+          {
+            "time_utc": "2026-10-11T22:00:00Z",
+            "value": 0.7033348626129285
+          },
+          {
+            "time_utc": "2026-10-11T22:30:00Z",
+            "value": 0.6907957712662712
+          },
+          {
+            "time_utc": "2026-10-11T23:00:00Z",
+            "value": 0.6761399389475401
+          },
+          {
+            "time_utc": "2026-10-11T23:30:00Z",
+            "value": 0.6594214320797751
+          },
+          {
+            "time_utc": "2026-10-12T00:00:00Z",
+            "value": 0.6407349402830755
+          },
+          {
+            "time_utc": "2026-10-12T00:30:00Z",
+            "value": 0.6202140117663199
+          },
+          {
+            "time_utc": "2026-10-12T01:00:00Z",
+            "value": 0.5980286277518484
+          },
+          {
+            "time_utc": "2026-10-12T01:30:00Z",
+            "value": 0.5743821573293083
+          },
+          {
+            "time_utc": "2026-10-12T02:00:00Z",
+            "value": 0.5495077447387583
+          },
+          {
+            "time_utc": "2026-10-12T02:30:00Z",
+            "value": 0.5236641907972254
+          },
+          {
+            "time_utc": "2026-10-12T03:00:00Z",
+            "value": 0.4971313988409662
+          },
+          {
+            "time_utc": "2026-10-12T03:30:00Z",
+            "value": 0.4702054630095977
+          },
+          {
+            "time_utc": "2026-10-12T04:00:00Z",
+            "value": 0.4431934828204549
+          },
+          {
+            "time_utc": "2026-10-12T04:30:00Z",
+            "value": 0.4164081926673033
+          },
+          {
+            "time_utc": "2026-10-12T05:00:00Z",
+            "value": 0.3901624980466537
+          },
+          {
+            "time_utc": "2026-10-12T05:30:00Z",
+            "value": 0.36476401191322505
+          },
+          {
+            "time_utc": "2026-10-12T06:00:00Z",
+            "value": 0.3405096845661911
+          }
+        ]
+      },
+      {
+        "schedule_id": "b",
+        "points": [
+          {
+            "time_utc": "2026-10-11T14:00:00Z",
+            "value": 0.6725175513702008
+          },
+          {
+            "time_utc": "2026-10-11T14:30:00Z",
+            "value": 0.6729883973598643
+          },
+          {
+            "time_utc": "2026-10-11T15:00:00Z",
+            "value": 0.6748360459679631
+          },
+          {
+            "time_utc": "2026-10-11T15:30:00Z",
+            "value": 0.6777457710237564
+          },
+          {
+            "time_utc": "2026-10-11T16:00:00Z",
+            "value": 0.6813923458805521
+          },
+          {
+            "time_utc": "2026-10-11T16:30:00Z",
+            "value": 0.6854454002348698
+          },
+          {
+            "time_utc": "2026-10-11T17:00:00Z",
+            "value": 0.6895748705887653
+          },
+          {
+            "time_utc": "2026-10-11T17:30:00Z",
+            "value": 0.6934564509437293
+          },
+          {
+            "time_utc": "2026-10-11T18:00:00Z",
+            "value": 0.6967769503147428
+          },
+          {
+            "time_utc": "2026-10-11T18:30:00Z",
+            "value": 0.6992394652514367
+          },
+          {
+            "time_utc": "2026-10-11T19:00:00Z",
+            "value": 0.7005682787224952
+          },
+          {
+            "time_utc": "2026-10-11T19:30:00Z",
+            "value": 0.7005134014052484
+          },
+          {
+            "time_utc": "2026-10-11T20:00:00Z",
+            "value": 0.6988546775446656
+          },
+          {
+            "time_utc": "2026-10-11T20:30:00Z",
+            "value": 0.6954053849998868
+          },
+          {
+            "time_utc": "2026-10-11T21:00:00Z",
+            "value": 0.6900152677545479
+          },
+          {
+            "time_utc": "2026-10-11T21:30:00Z",
+            "value": 0.6825729488812576
+          },
+          {
+            "time_utc": "2026-10-11T22:00:00Z",
+            "value": 0.6730076825545112
+          },
+          {
+            "time_utc": "2026-10-11T22:30:00Z",
+            "value": 0.6612904150186213
+          },
+          {
+            "time_utc": "2026-10-11T23:00:00Z",
+            "value": 0.6474341362443603
+          },
+          {
+            "time_utc": "2026-10-11T23:30:00Z",
+            "value": 0.6314935161475783
+          },
+          {
+            "time_utc": "2026-10-12T00:00:00Z",
+            "value": 0.6135638314873806
+          },
+          {
+            "time_utc": "2026-10-12T00:30:00Z",
+            "value": 0.5937792017010126
+          },
+          {
+            "time_utc": "2026-10-12T01:00:00Z",
+            "value": 0.5723101637596987
+          },
+          {
+            "time_utc": "2026-10-12T01:30:00Z",
+            "value": 0.5493606274419581
+          },
+          {
+            "time_utc": "2026-10-12T02:00:00Z",
+            "value": 0.5251642630248171
+          },
+          {
+            "time_utc": "2026-10-12T02:30:00Z",
+            "value": 0.49998038310740905
+          },
+          {
+            "time_utc": "2026-10-12T03:00:00Z",
+            "value": 0.47408938893952435
+          },
+          {
+            "time_utc": "2026-10-12T03:30:00Z",
+            "value": 0.44778785908155877
+          },
+          {
+            "time_utc": "2026-10-12T04:00:00Z",
+            "value": 0.4213833643445064
+          },
+          {
+            "time_utc": "2026-10-12T04:30:00Z",
+            "value": 0.3951890976443979
+          },
+          {
+            "time_utc": "2026-10-12T05:00:00Z",
+            "value": 0.36951841057470325
+          },
+          {
+            "time_utc": "2026-10-12T05:30:00Z",
+            "value": 0.34467935009850137
+          },
+          {
+            "time_utc": "2026-10-12T06:00:00Z",
+            "value": 0.3209692887623117
+          },
+          {
+            "time_utc": "2026-10-12T06:30:00Z",
+            "value": 0.29866974023537807
+          },
+          {
+            "time_utc": "2026-10-12T07:00:00Z",
+            "value": 0.2780414488092579
+          },
+          {
+            "time_utc": "2026-10-12T07:30:00Z",
+            "value": 0.2593198368069935
+          },
+          {
+            "time_utc": "2026-10-12T08:00:00Z",
+            "value": 0.24271088772913552
+          }
+        ]
+      }
+    ],
+    "validation": null
+  }
+}

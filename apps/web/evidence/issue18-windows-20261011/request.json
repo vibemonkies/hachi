@@ -1,0 +1,22 @@
+{
+  "schema_version": "0.1",
+  "subject_id": "synthetic-scenario-18",
+  "tz_name": "America/Los_Angeles",
+  "schedules": [
+    {
+      "schedule_id": "a",
+      "bedtime_local": "2026-10-10T23:00:00",
+      "wake_time_local": "2026-10-11T07:00:00"
+    },
+    {
+      "schedule_id": "b",
+      "bedtime_local": "2026-10-11T01:00:00",
+      "wake_time_local": "2026-10-11T07:00:00"
+    }
+  ],
+  "assumptions": {
+    "prior_sleep_hours": 8,
+    "caffeine": "none",
+    "light_exposure": "not_modeled"
+  }
+}

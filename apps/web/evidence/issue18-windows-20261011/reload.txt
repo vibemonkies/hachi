@@ -1,0 +1,33 @@
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+    - link "Offline replay":
+      - /url: "#replay"
+- banner:
+  - generic: Wearable research prototype
+  - generic: No data loaded
+- generic: Reports use the selected subject and UTC cutoff. Check source mode and provenance before interpreting results.
+- main:
+  - heading "Sleep comparison" [level=1]
+  - status
+  - heading "Choose a subject first" [level=2]
+  - paragraph: Import an Apple Health export or open an existing API subject before viewing saved check-ins or comparing schedules.
+  - link "Choose subject":
+    - /url: "#import"
