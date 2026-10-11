@@ -44,11 +44,12 @@ It does not invalidate the original PMData app observations.
 The full-density path retains its original inference behavior. The newer thinning and Chronos context paths are separate.
 In [`SubjectData.hourly_features`](../../src/hachi/api/sources.py), `thinning is None` still uses the original PMData aggregates and hourly feature function.
 The non-Chronos path in [`predictor`](../../src/hachi/api/reports.py) still returns the CPU model's `predict` method.
-The forecast and anomaly view files have no changes between `5a422dd` and PR116's tip.
+The report presentation files `ReportView.tsx` and `ReplayReportView.tsx` have no changes between `5a422dd` and PR116's tip.
 The report client's UTC identity correction and import-page replay navigation correction have their separate PR111 observations.
 These source checks and owner staging reports complement the historical real app receipt.
 They establish the required handoff without claiming a fresh current-head private execution or present readability of JadeOx's old runtime directory.
 The mandatory repeated CPU receipt request is retired for issue 17.
+This reconciliation supersedes PR116's historical pending-readability sentence.
 
 CoffeeCoder1015 owns issue 17 acceptance. Its existing implementation chat owns PR116.
 The same issue 17 worker owns any necessary dependency follow-through under the human-directed handoff.
