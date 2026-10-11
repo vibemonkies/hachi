@@ -6,7 +6,9 @@ export function Plot({
   unit,
   description,
   domain,
+  expanded = false,
 }: {
+  expanded?: boolean;
   panel: Panel;
   title: string;
   unit: string;
@@ -110,10 +112,9 @@ export function Plot({
         </svg>
       </div>
       <p className="caption">
-        Synthetic hand-authored fixture. No trained artifact or measured
-        accuracy. All times UTC.
+        All times UTC. Gaps are missing observations, not zero.
       </p>
-      <details>
+      <details open={expanded}>
         <summary>View exact values and missing observations</summary>
         <div
           className="table-scroll"
