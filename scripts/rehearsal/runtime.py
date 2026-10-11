@@ -133,7 +133,7 @@ def prepare(args) -> dict:
     published = json.loads(args.packet_index.read_bytes())
     require(digest(args.protocol) == published["protocol_sha256"], "Protocol is not frozen")
     root = private_directory(args.runtime_root.resolve())
-    spec = serving_from_protocol(args.protocol)
+    spec = serving_from_protocol(args.protocol, args.model)
     pin = stage_artifact(private_directory(root / "artifacts"), args.model, args.packet, spec)
     require(pin == run.artifact, "Staged pin differs from frozen packet")
     operator = Operator(
