@@ -3,6 +3,7 @@
     python -I -m hachi.data.clinical build DATASET_ID [--data-dir DIR] [--output-root DIR]
                                                      [--report-dir DIR] [--workers N]
     python -I -m hachi.data.clinical verify SNAPSHOT [--full]
+    python -I -m hachi.data.clinical reconcile SNAPSHOT [--data-dir DIR]
 
 DATASET_ID is stanford-covid19-wearables, stanford-covid19-wearables-phase2 or
 cmu-common-cold-project. Source files default to $HACHI_DATA_ROOT/<dataset_id>/ and snapshots go
@@ -18,8 +19,9 @@ from pathlib import Path
 
 from . import cmu, stanford
 from .config import load_definitions, load_stanford, registry_admission
+from .reconcile import reconcile
 from .report import write_report
-from .snapshot import build, git_state, verify
+from .snapshot import build, git_state, load_manifest, verify
 
 REPO = Path(__file__).resolve().parents[4]
 DATASETS = (*stanford.READERS, cmu.DATASET_ID)
@@ -43,7 +45,18 @@ def main(argv: list[str] | None = None) -> int:
     v = sub.add_parser("verify", help="check a snapshot's checksums, identity and rows")
     v.add_argument("snapshot", type=Path)
     v.add_argument("--full", action="store_true", help="re-validate every outcome row")
+    r = sub.add_parser("reconcile", help="check a Stanford snapshot against its source workbook")
+    r.add_argument("snapshot", type=Path)
+    r.add_argument("--data-dir", type=Path, help="defaults to $HACHI_DATA_ROOT/<dataset_id>")
     args = parser.parse_args(argv)
+
+    if args.command == "reconcile":
+        dataset_id = load_manifest(args.snapshot)["dataset_snapshot"]["dataset_id"]
+        settings = load_stanford(dataset_id).value
+        data_dir = args.data_dir or _data_root() / dataset_id
+        outcome = reconcile(args.snapshot, data_dir / settings.labels_workbook, settings)
+        print(json.dumps(outcome, indent=2))
+        return 0 if outcome["ok"] else 1
 
     if args.command == "verify":
         outcome = verify(args.snapshot, full=args.full)

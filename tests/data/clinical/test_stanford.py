@@ -13,6 +13,7 @@ import pytest
 from hachi.contracts.tables import StatusUnknown, SymptomEpisode, TestResult
 from hachi.data.clinical import stanford
 from hachi.data.clinical.config import load_definitions, load_stanford
+from hachi.data.clinical.reconcile import reconcile
 from hachi.data.clinical.report import render_markdown, write_report
 from hachi.data.clinical.snapshot import (
     GitState,
@@ -225,6 +226,8 @@ def test_phase2_positives_and_archive_quirks(phase2, tmp_path):
     archive = audit["wearable_archive"]
     assert archive["members_by_state"] == {"empty": 2, "export_error": 2, "read": 4}
     assert archive["members_ignored"] == {"macos_metadata_or_directory": 3}
+    assert archive["unparseable_timestamps"] == 2  # the repeated header rows
+    assert archive["clock_check_steps_share_by_hour"] == {"09": 100.0}
     assert audit["participants"]["labeled_without_wearable_records"] == 1  # P000002
     assert audit["source_counts"]["asymptomatic_or_no_onset"] == 1
     episodes = read_table(phase2.snapshot, "episodes").to_pylist()
@@ -275,3 +278,13 @@ def test_follow_up_tables(phase1):
         "survey-available-at-end-of-its-local-day",
         "labels-known-at-end-of-participant-follow-up",
     }
+
+
+@pytest.mark.parametrize("which", ["phase1", "phase2"])
+def test_reconcile_against_source_workbook(which, request):
+    built = request.getfixturevalue(which)
+    dataset_id = P1 if which == "phase1" else P2
+    settings = load_stanford(dataset_id).value
+    outcome = reconcile(built.snapshot, built.data_dir / settings.labels_workbook, settings)
+    assert outcome["ok"], outcome["mismatches"]
+    assert outcome["checks"]["tests_match_reported_dates"] >= 2

@@ -129,6 +129,7 @@ def list_members(archive: Path, layout: str) -> tuple[list[Member], Counter]:
     return sorted(members, key=lambda m: m.name), ignored
 
 
+NUMBER = r"^-?\d+(\.\d+)?$"
 # Some phase 2 members hold the text of a failed BigQuery export instead of a CSV.
 EXPORT_ERRORS = ("BigQuery error in query operation", "Error in query string")
 
@@ -164,7 +165,9 @@ def _scan(args: tuple[Path, Member]) -> tuple[Member, dict[str, int], dict]:
                 read_options=pacsv.ReadOptions(block_size=BLOCK_BYTES),
                 convert_options=pacsv.ConvertOptions(
                     include_columns=columns,
-                    column_types={member.timestamp_column: pa.string(), "steps": pa.float64()},
+                    # Text, not numbers: some members repeat their header mid-file, and
+                    # those rows must count as unparseable rather than abort the read.
+                    column_types={member.timestamp_column: pa.string(), "steps": pa.string()},
                 ),
             )
             for batch in reader:
@@ -176,8 +179,12 @@ def _scan(args: tuple[Path, Member]) -> tuple[Member, dict[str, int], dict]:
                 for item in pc.value_counts(pc.filter(days, valid)).to_pylist():
                     counts[item["values"]] += item["counts"]
                 if member.stream == "steps":
-                    hours = pc.utf8_slice_codeunits(pc.filter(column, valid), 11, 13)
-                    table = pa.table({"h": hours, "s": pc.filter(batch.column("steps"), valid)})
+                    steps = batch.column("steps")
+                    numeric = pc.fill_null(pc.match_substring_regex(steps, NUMBER), False)
+                    keep = pc.and_(valid, numeric)
+                    hours = pc.utf8_slice_codeunits(pc.filter(column, keep), 11, 13)
+                    values = pc.cast(pc.filter(steps, keep), pa.float64())
+                    table = pa.table({"h": hours, "s": values})
                     for item in table.group_by("h").aggregate([("s", "sum")]).to_pylist():
                         by_hour[item["h"]] += item["s_sum"] or 0
             handle.read()  # reach EOF so zipfile verifies the CRC
