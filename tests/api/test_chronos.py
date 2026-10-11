@@ -263,3 +263,40 @@ def test_staged_chronos_artifact_loads_with_its_pin(chronos_pin):
     assert served.model.model_id == "chronos-2-zero-shot" and served.metric == "heart_rate"
     assert served.serving.requires_gpu and served.model.target is None  # no GX10 given here
     assert served.model.fit_as_of is None  # zero-shot: no cohort fit cutoff
+
+
+def test_ssh_jobs_carry_their_own_gx10_deadline(monkeypatch):
+    import subprocess
+
+    from hachi.api import gpu
+
+    seen = []
+
+    def fake_run(argv, **kwargs):
+        seen.append(argv)
+        return subprocess.CompletedProcess(argv, 124, b"", b"")
+
+    monkeypatch.setattr(gpu.subprocess, "run", fake_run)
+    code = gpu.SshTransport("asus@gx10").run(["scripts/gx10/gpu-run", "--x"], "/remote", 120)
+    remote = seen[0][-1]
+    assert code == 124 and remote.startswith("cd /remote && timeout --kill-after=10 105 ")
+    assert seen[0][:3] == ["ssh", "-o", "BatchMode=yes"]
+
+    class Remote:
+        def home(self):
+            return "/home/fake"
+
+        def write(self, path, data):
+            pass
+
+        def remove(self, path):
+            pass
+
+        def run(self, command, cwd, timeout):
+            return 124  # the GX10's own deadline fired, e.g. while queued on the GPU lock
+
+    target = gpu.Gx10Target(transport=Remote(), owner="tester", checkout="/remote")
+    with pytest.raises(GpuTimeout):
+        gpu.chronos_quantiles(
+            target, PIN, {"request_id": "r", "context": [1.0], "prediction_length": 1}
+        )

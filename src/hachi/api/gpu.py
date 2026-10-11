@@ -33,6 +33,10 @@ INFERENCE_SCRIPT = "src/hachi/models/chronos/inference.py"
 LOCAL_INFERENCE = Path(__file__).resolve().parents[1] / "models" / "chronos" / "inference.py"
 GPU_BUSY = 75  # scripts/gx10/supervise.py: another compute process holds the GPU
 SSH_FAILURE = 255
+REMOTE_TIMEOUT = {124, 137}  # coreutils `timeout`: deadline reached, or killed after grace
+# The GX10 enforces its own deadline this much before the local one, so a job still queued
+# on the GPU lock ends there too instead of outliving the API's request.
+REMOTE_MARGIN_SECONDS = 15
 
 
 class GpuUnavailable(RuntimeError):
@@ -97,7 +101,10 @@ class SshTransport:
         )
 
     def run(self, command: list[str], cwd: str, timeout: float) -> int:
-        remote = f"cd {shlex.quote(cwd)} && " + " ".join(shlex.quote(a) for a in command)
+        deadline = max(1, int(timeout) - REMOTE_MARGIN_SECONDS)
+        remote = f"cd {shlex.quote(cwd)} && timeout --kill-after=10 {deadline} " + " ".join(
+            shlex.quote(a) for a in command
+        )
         argv = ["ssh", "-o", "BatchMode=yes", "-o", f"ConnectTimeout={self.connect_timeout}"]
         try:
             done = subprocess.run([*argv, self.host, remote], capture_output=True, timeout=timeout)
@@ -172,6 +179,8 @@ def chronos_quantiles(target: Gx10Target, pin: ChronosModelPin, row: dict) -> Qu
             raise GpuUnavailable("the GX10 GPU is busy with another job")
         if code == SSH_FAILURE:
             raise GpuUnavailable("the GX10 could not be reached")
+        if code in REMOTE_TIMEOUT:
+            raise GpuTimeout("the GPU job did not finish in time (queue wait included)")
         if code != 0:
             raise GpuUnavailable(f"the GX10 job failed (exit {code})")
         evidence_bytes = target.transport.read(f"{run_dir}/inference.json")
