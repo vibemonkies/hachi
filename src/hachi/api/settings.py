@@ -9,6 +9,7 @@ Environment (all optional except the owner):
     HACHI_DATASET_SNAPSHOTS   comma-separated snapshot ids to serve, e.g. a PMData snapshot
     HACHI_ARTIFACT_ROOT       default ~/hachi/artifacts; artifacts live in <root>/<artifact_id>/
     HACHI_SERVE_ARTIFACTS     comma-separated <artifact_id>@<artifact_sha256> pins
+    HACHI_SCENARIO_MODEL      two-process-v1@<sha256>: require exactly this #15 scenario bundle
     HACHI_API_PORT            default by owner (DEFAULT_PORTS)
     HACHI_API_CORS_ORIGINS    comma-separated browser origins (default: Vite on 5173)
     HACHI_GIT_SHA             default `git rev-parse HEAD` of this checkout
@@ -48,6 +49,8 @@ class Settings:
     dataset_snapshots: tuple[str, ...] = ()
     artifact_root: Path = field(default_factory=lambda: DEFAULT_ARTIFACTS.expanduser())
     served_artifacts: tuple[ArtifactRef, ...] = ()
+    # Unset: serve this checkout's scenario bundle, whose hash every result names.
+    scenario_model: ArtifactRef | None = None
     cors_origins: tuple[str, ...] = DEFAULT_CORS_ORIGINS
     import_limits: ImportLimits = field(default_factory=ImportLimits)
     # Development and tests only: serve snapshots whose archive the registry did not admit,
@@ -90,6 +93,9 @@ class Settings:
             served_artifacts=tuple(
                 parse_pin(p) for p in _split(env.get("HACHI_SERVE_ARTIFACTS", ""))
             ),
+            scenario_model=parse_pin(env["HACHI_SCENARIO_MODEL"])
+            if env.get("HACHI_SCENARIO_MODEL")
+            else None,
             cors_origins=_split(env["HACHI_API_CORS_ORIGINS"])
             if "HACHI_API_CORS_ORIGINS" in env
             else DEFAULT_CORS_ORIGINS,

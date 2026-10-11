@@ -246,7 +246,8 @@ def task_support(
         entry("anomaly", "NO_ARTIFACT_FOR_TASK"),
         entry("illness_onset", "NO_VALIDATED_ILLNESS_ARTIFACT"),
         entry("recovery", "NO_VALIDATED_RECOVERY_ARTIFACT"),
-        entry("alertness", "NO_ARTIFACT_FOR_TASK"),  # until #15's artifact is served
+        # POST /v1/scenarios: #15's simulation needs no data, only its served model.
+        entry("alertness", None if catalog.scenario_model else "NO_ARTIFACT_FOR_TASK"),
     ]
 
 
