@@ -7,9 +7,10 @@ stable code. Only a served artifact's own prediction becomes an `ok` result.
 
 import importlib.util
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from functools import partial
 
 from pydantic import TypeAdapter
 
@@ -48,6 +49,7 @@ from hachi.storage import Metadata, Workspace
 
 from .artifacts import ServedArtifact
 from .catalog import Catalog
+from .chronos import ChronosServed
 from .gpu import GpuCleanupFailed, GpuOutputRejected, GpuTimeout, GpuUnavailable
 from .sources import SubjectData
 
@@ -379,6 +381,15 @@ def model_inputs(
     return cutoff, tuple(rows)
 
 
+def predictor(model: object, subject: SubjectData, cutoff: datetime) -> Callable:
+    """The model's predict, given the subject's longer context when its artifact has one."""
+    if isinstance(model, ChronosServed) and model.artifact.context_policy is not None:
+        return partial(
+            model.predict, context=subject.context_index(model.artifact.context_policy, cutoff)
+        )
+    return model.predict  # type: ignore[attr-defined]
+
+
 def forecast_targets(as_of: datetime, horizon_hours: int) -> tuple[TimeWindow, ...]:
     first = ceil_hour(as_of)
     return tuple(
@@ -468,6 +479,11 @@ def _forecast(
             partial,
         )
     targets = forecast_targets(body.as_of, body.horizon_hours)
+    try:
+        predict = predictor(model, subject, cutoff)
+    except (OSError, ValueError) as exc:
+        log.warning("report %s: context read failed (%s)", base.report_id, type(exc).__name__)
+        return base.error("DATA_READ_FAILED", "The subject's history could not be read.")
     model_input = ForecastInput(
         body.subject_id,
         cutoff,
@@ -475,7 +491,7 @@ def _forecast(
         history if artifact.evaluation.history_policy == "causal_prefix" else (),
     )
     try:
-        estimates = tuple(model.predict(model_input))
+        estimates = tuple(predict(model_input))
         if len(estimates) != len(targets):
             raise ValueError("one estimate or abstention per target")
     except GpuUnavailable:
