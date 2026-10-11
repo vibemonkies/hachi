@@ -12,6 +12,30 @@ ssh asus@100.108.229.115
 
 Never put the password, tokens, or personal exports in this repo, issues, shell examples, or recordings. Do not change credentials or system services as part of an experiment.
 
+### GX10 shortcut
+
+From the repository root, use the platform shortcut to open an interactive SSH session:
+
+```powershell
+.\gx10.ps1
+```
+
+```sh
+sh ./gx10.sh
+```
+
+Pass a remote command after the shortcut name to run it on the GX10. For example, to print the remote hostname:
+
+```powershell
+.\gx10.ps1 hostname
+```
+
+```sh
+sh ./gx10.sh hostname
+```
+
+Both shortcuts use your existing OpenSSH authentication.
+
 ## Separate checkouts
 
 Each person uses their own local clone and their own remote checkout, virtual environment, cache, and metadata database path. The provisioner creates this layout:
