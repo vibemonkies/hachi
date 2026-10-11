@@ -26,7 +26,15 @@ profile admission or the forecast's synthetic label. Nothing reads or transfers 
 human's export. Fixtures stop their own socket service and erase only their generated
 roots, including unsealing self-created artifact directories for teardown.
 
-The current complete contract run has 44 independent checks. It uses fake transports
+[remote-cleanup-receipt.json](remote-cleanup-receipt.json) binds the clean tested source
+`5a1d0b7` to 71 focused checks (44 independent remote, ten TCP correction, seventeen
+owner Chronos), production CLI37 and private-roster scan680/zero findings. Parent
+SnowyFortress separately executed the exact source SSH removal commands on newly
+generated GX10 files: seven of seven absent, whole owned run absent, sibling preserved
+and then cleaned. No GPU or existing worker state was touched; authenticated PTY
+execution does not prove BatchMode authentication or inference.
+
+The complete contract run has 44 independent checks. It uses fake transports
 and actual local files/HTTP; the runtime owner's separate generated SSH removal smoke
 binds remote execution. No GPU parity/scientific accuracy, participant authentication,
 physical-media erasure, real personal transfer or display consent is implied. See the
