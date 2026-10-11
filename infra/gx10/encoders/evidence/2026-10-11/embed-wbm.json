@@ -1,0 +1,112 @@
+{
+  "model": "openmhc-wbm-dp",
+  "checkpoint": {
+    "repository": "MyHeartCounts/openmhc-wbm-dp",
+    "revision": "5db7e4598e1d1da3cdaeb04dce5e9b1ccaf21334",
+    "files": {
+      "model.ckpt": "0c00e6d928b1def326ca86700324a9a55efce5675c379f93f858ec3e85ad580d",
+      "normalization_stats.json": "5fb0b6138fbe96e067aedfb0e4b6eef31de4b2dfbd869cbf875bd26fcc54a9ca",
+      "openmhc_manifest.json": "7d713d5807a2312d3bc62dfd751b50976018b375b1330bc59d39e562c785c0b3",
+      "README.md": "af5129f2be84e56f94d7cd67881f2885d6b0e2b234f27ae55245c0e16b920aee"
+    },
+    "pickle_globals": [
+      "collections.OrderedDict",
+      "torch.FloatStorage",
+      "torch._utils._rebuild_tensor_v2"
+    ],
+    "load": "torch.load(weights_only=True); keys prefixed model./encoder. are stripped as in OpenMHC _load_wbm_encoder; a missing key is an error",
+    "architecture_commit": "a2d67834d3cda721eac1cf02e583b3804d37621d",
+    "proj_head_type": "linear",
+    "unexpected_keys": [],
+    "parameters": 6405120
+  },
+  "config_sha256": "181456040df262fe352749026635adecc396cd1f91143a2fa4a460c37554efe6",
+  "device": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "versions": {
+    "torch": "2.8.0+cu129",
+    "triton": "3.4.0",
+    "numpy": "2.5.4",
+    "huggingface-hub": "0.36.2",
+    "mamba-ssm": "2.2.4",
+    "causal-conv1d": "1.5.0.post8"
+  },
+  "host": {
+    "machine": "aarch64",
+    "python": "3.12.3"
+  },
+  "load_seconds": 1.21,
+  "triton_launcher_cpath": "/home/asus/hachi/workspaces/justin06lee/toolchains/python-headers-3.12.3-1ubuntu0.17/usr/include/python3.12:/home/asus/hachi/workspaces/justin06lee/toolchains/python-headers-3.12.3-1ubuntu0.17/usr/include",
+  "triton_ptxas": "/home/asus/hachi/workspaces/justin06lee/toolchains/cuda-12.9.1-linux-sbsa/bin/ptxas",
+  "inputs_sha256": "63cb2622d8d40038bef1f0cf9d0799dbdc0767aee287f73cbc9001fdb256056e",
+  "determinism_max_abs_diff": 0.0,
+  "embed_seconds": 35.3,
+  "outputs_sha256": "9225279da8ecf6cb5137678eea8dfb306157da334dfc105ead78a90c5c133ccc",
+  "outputs": [
+    {
+      "name": "wbm_full",
+      "shape": [
+        2143,
+        256
+      ],
+      "dtype": "float32",
+      "finite": true,
+      "row_norm_min": 12.88779067993164,
+      "row_norm_mean": 13.835978507995605,
+      "row_norm_max": 15.753555297851562
+    },
+    {
+      "name": "wbm_hr_only",
+      "shape": [
+        2143,
+        256
+      ],
+      "dtype": "float32",
+      "finite": true,
+      "row_norm_min": 14.878378868103027,
+      "row_norm_mean": 15.534080505371094,
+      "row_norm_max": 15.878714561462402
+    },
+    {
+      "name": "wbm_no_sleep",
+      "shape": [
+        2143,
+        256
+      ],
+      "dtype": "float32",
+      "finite": true,
+      "row_norm_min": 13.652127265930176,
+      "row_norm_mean": 14.462921142578125,
+      "row_norm_max": 15.801788330078125
+    },
+    {
+      "name": "wbm_sleep_records_only",
+      "shape": [
+        2143,
+        256
+      ],
+      "dtype": "float32",
+      "finite": true,
+      "row_norm_min": 12.81823444366455,
+      "row_norm_mean": 13.789403915405273,
+      "row_norm_max": 15.801788330078125
+    },
+    {
+      "name": "wbm_workouts_zero",
+      "shape": [
+        2143,
+        256
+      ],
+      "dtype": "float32",
+      "finite": true,
+      "row_norm_min": 12.167518615722656,
+      "row_norm_mean": 13.324572563171387,
+      "row_norm_max": 15.2787446975708
+    }
+  ],
+  "peak_cuda_allocated_mib": 455.6,
+  "peak_cuda_reserved_mib": 682.0
+}
