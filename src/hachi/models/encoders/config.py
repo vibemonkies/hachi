@@ -40,7 +40,7 @@ class EncoderExperiment(Contract):
     tables: Annotated[tuple[Identifier, ...], Field(min_length=1)]
     baseline: Identifier
     candidates: Annotated[tuple[Candidate, ...], Field(min_length=2)]
-    overlap_notes: dict[Literal["none", "unknown", "not_applicable"], str]
+    overlap_notes: dict[Literal["none", "unknown"], str]
 
     @model_validator(mode="after")
     def _names(self) -> Self:
@@ -54,7 +54,8 @@ class EncoderExperiment(Contract):
             unknown = set(candidate.blocks) - set(self.tables) - {HANDCRAFTED}
             if unknown:
                 raise ValueError(f"{candidate.name} uses undeclared tables {sorted(unknown)}")
-            if candidate.pretrained_cohort_overlap not in self.overlap_notes:
+            overlap = candidate.pretrained_cohort_overlap
+            if overlap != "not_applicable" and overlap not in self.overlap_notes:
                 raise ValueError(f"{candidate.name} needs an overlap note")
         return self
 

@@ -68,6 +68,10 @@ class EmbeddingTable:
         if any(len({a for a, _ in v}) != len(v) for v in index.values()):
             raise ValueError("duplicate subject/as-of embedding rows")
         object.__setattr__(self, "_index", index)
+        keys = hashlib.sha256()
+        for subject, as_of in zip(self.subject_ids, self.as_of_utc, strict=True):
+            keys.update(f"{subject}\x00{as_of.isoformat()}\n".encode())
+        object.__setattr__(self, "keys_sha256", keys.hexdigest())
 
     @classmethod
     def from_arrays(
@@ -289,13 +293,16 @@ def fit_ridge_head(
 ) -> RidgeHeadArtifact:
     pairs = pairs if pairs is not None else training_pairs(training, config.tree)
     subjects = set(training.subjects)
-    found = {
-        name: [
-            tables[name].lookup(s, o, config.max_staleness_hours)
-            for s, o in zip(pairs.subjects, pairs.origins, strict=True)
-        ]
-        for name in support
-    }
+    # Tables over the same windows share one lookup per pair.
+    by_keys: dict[str, list[int | None]] = {}
+    for name in support:
+        digest = tables[name].keys_sha256  # type: ignore[attr-defined]
+        if digest not in by_keys:
+            by_keys[digest] = [
+                tables[name].lookup(s, o, config.max_staleness_hours)
+                for s, o in zip(pairs.subjects, pairs.origins, strict=True)
+            ]
+    found = {name: by_keys[tables[name].keys_sha256] for name in support}  # type: ignore[attr-defined]
     keep = [i for i in range(len(pairs.labels)) if all(found[n][i] is not None for n in support)]
     if not keep:
         raise ValueError("no training pairs inside the shared embedding support")
@@ -311,8 +318,9 @@ def fit_ridge_head(
         else:
             center = np.asarray(projections[block].mean)
             components = np.asarray(projections[block].components)
-            vectors = tables[block].vectors[[found[block][i] for i in keep]].astype(np.float64)
-            parts.append((vectors - center) @ components.T)
+            # Project each window once, then gather: never a pairs x embedding-width array.
+            projected = (tables[block].vectors.astype(np.float64) - center) @ components.T
+            parts.append(projected[[found[block][i] for i in keep]])
     raw = np.concatenate(parts, axis=1)
     y = pairs.labels[keep]
     kept_subjects = [pairs.subjects[i] for i in keep]

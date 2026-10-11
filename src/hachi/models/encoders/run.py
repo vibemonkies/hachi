@@ -26,10 +26,13 @@ from pathlib import Path
 from time import perf_counter
 
 import numpy as np
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from hachi.contracts.base import ArtifactRef
 from hachi.contracts.manifests import ModelRef, RunManifest
 from hachi.evaluation import compare_forecasts, evaluate_forecast, write_comparison_packet
+from hachi.evaluation.forecast import target_quality_eligible
 from hachi.evaluation.metrics import bootstrap_participant_mean, combine_metric_reports
 from hachi.evaluation.pmdata_run import PMDataProtocol, fold_split, load_inputs
 from hachi.evaluation.serialization import document_bytes, document_sha256
@@ -217,6 +220,7 @@ def run(
     differences: dict[str, list] = defaultdict(list)
     counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     artifacts: dict[str, list] = defaultdict(list)
+    oof: list[dict[str, object]] = []
     try:
         for fold in selected:
             split = fold_split(protocol, fold)
@@ -236,9 +240,11 @@ def run(
                 )
 
             def config(candidate: Candidate | None):
-                overlap = (
-                    "not_applicable" if candidate is None else candidate.pretrained_cohort_overlap
-                )
+                # Non-pretrained models keep the protocol's config byte for byte, so the tree
+                # packets can be checked against the published #9 packet index.
+                if candidate is None or candidate.pretrained_cohort_overlap == "not_applicable":
+                    return protocol.evaluation
+                overlap = candidate.pretrained_cohort_overlap
                 return protocol.evaluation.model_copy(
                     update={
                         "pretrained_cohort_overlap": overlap,
@@ -311,11 +317,16 @@ def run(
                     fold_root / f"{name}-vs-{baseline.name}", split, runs[0], runs[1], result
                 )
                 reports[name].append(result.candidate.metrics)
+                oof += oof_rows(fold, name, result.candidate, labels, protocol.evaluation)
                 if candidate is contenders[0]:
                     reports[baseline.name].append(result.baseline.metrics)
+                    oof += oof_rows(
+                        fold, baseline.name, result.baseline, labels, protocol.evaluation
+                    )
                 differences[name] += list(result.summary.difference.subjects)
                 for key, value in result.summary.counts.items():
                     counts[name][key] += value
+        write_oof(output / "oof-predictions.parquet", oof)
         summary = summarize(
             experiment, protocol, plan, selected, reports, differences, counts, artifacts
         )
@@ -350,6 +361,45 @@ def run(
             output / "failure.json", document_bytes({"traceback": traceback.format_exc()})
         )
         raise
+
+
+def oof_rows(fold, model, evaluation, labels, config) -> list[dict[str, object]]:
+    """Every prediction the evaluator made, keyed for joining with #12/#13 harness outputs."""
+    by_bin = {
+        (t.subject_id, t.interval_start_utc): t
+        for t in labels
+        if t.metric == config.metric
+        and t.resolution == "hour"
+        and t.aggregation == config.aggregation
+    }
+    rows = []
+    for prediction in evaluation.predictions:
+        origin = prediction.origin
+        for window, estimate in zip(origin.targets, prediction.estimates, strict=True):
+            label = by_bin.get((origin.subject_id, window.start_utc))
+            rows.append(
+                {
+                    "outer_fold": fold.outer_fold,
+                    "inner_fold": fold.inner_fold,
+                    "subject_id": origin.subject_id,
+                    "cutoff_utc": origin.cutoff,
+                    "target_start_utc": window.start_utc,
+                    "model": model,
+                    "median": None if estimate is None else estimate.median,
+                    "label": None if label is None else label.value,
+                    "label_eligible": label is not None
+                    and label.value is not None
+                    and target_quality_eligible(label, config),
+                }
+            )
+    return rows
+
+
+def write_oof(path: Path, rows: list[dict[str, object]]) -> None:
+    table = pa.Table.from_pylist(rows)
+    sink = pa.BufferOutputStream()
+    pq.write_table(table, sink)
+    _write_private(path, sink.getvalue().to_pybytes())
 
 
 def summarize(

@@ -158,7 +158,6 @@
     }
   ],
   "overlap_notes": {
-    "not_applicable": "No pretrained component: the shared ridge head on #9 handcrafted inputs, or on OpenMHC's MeanPool summary of the same week.",
     "none": "Frozen OpenMHC WBM, pretrained on the My Heart Counts training split (iPhone/Apple Watch); PMData (Fitbit Versa 2, Norway) is not part of it. PMData clock mapping and availability are documented assumptions.",
     "unknown": "Frozen MOMENT-1-large, pretrained on the Time-series Pile, whose full provenance was not audited for PMData. PMData clock mapping and availability are documented assumptions."
   }
