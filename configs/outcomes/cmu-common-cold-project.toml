@@ -7,7 +7,7 @@
 # until [analysis_registration] records the submitted Data Analysis Form. Participant rows never
 # enter a hosted model's context: the adapter prints aggregate counts only.
 schema_version = "0.1"
-pipeline_version = "clinical-labels-1"
+pipeline_version = "clinical-labels-2"
 dataset_id = "cmu-common-cold-project"
 data_file_archive = "Aggregated Cold Study (Studies 1-5) .zip"
 data_file_member = "FIVE_STUDY_DATA.dat"

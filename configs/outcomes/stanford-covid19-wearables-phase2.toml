@@ -2,7 +2,7 @@
 # The admitted files (archive and the paper's source data) come from the dataset registry,
 # configs/datasets/stanford-covid19-wearables-phase2.toml.
 schema_version = "0.1"
-pipeline_version = "clinical-labels-1"
+pipeline_version = "clinical-labels-2"
 dataset_id = "stanford-covid19-wearables-phase2"
 archive = "COVID-19-Phase2-Wearables.zip"
 labels_workbook = "41591_2021_1593_MOESM3_ESM.xlsx"

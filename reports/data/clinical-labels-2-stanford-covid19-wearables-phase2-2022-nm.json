@@ -1,0 +1,285 @@
+{
+  "audit": {
+    "clock": "floating_local_shifted",
+    "control_follow_up": {
+      "completed_survey_days": 0,
+      "participants": 2038,
+      "wearable_days": 252787,
+      "wearable_days_per_participant": {
+        "max": 439,
+        "median": 120.0,
+        "min": 1,
+        "n": 2038,
+        "p25": 89.0,
+        "p75": 168.0
+      }
+    },
+    "dataset_id": "stanford-covid19-wearables-phase2",
+    "episodes": {
+      "by_category": {
+        "covid19": 61,
+        "unspecified_illness": 5
+      },
+      "by_category_and_confidence": {
+        "covid19:confirmed": 61,
+        "unspecified_illness:probable": 5
+      },
+      "by_confidence": {
+        "confirmed": 61,
+        "probable": 5
+      },
+      "onset_interval_days": {
+        "1": 66
+      },
+      "pre_onset_wearable_coverage_28d": {
+        "covid19:any_wearable_day": 61,
+        "covid19:episodes": 61,
+        "covid19:hr_days_ge_14": 60,
+        "unspecified_illness:any_wearable_day": 5,
+        "unspecified_illness:episodes": 5,
+        "unspecified_illness:hr_days_ge_14": 5
+      },
+      "total": 66,
+      "with_merged_relapse_onsets": 0
+    },
+    "label_issues": {
+      "episode_unlinked_from_its_illness_test": 5,
+      "illness_without_onset": 18,
+      "positive_test_unlinked": 23
+    },
+    "onset_windows": {
+      "24h": {
+        "at_risk_denominator": 66,
+        "episodes_with_a_positive_window": 66,
+        "onset_labels": {
+          "excluded_infection_without_onset": 811,
+          "excluded_washout": 1561,
+          "positive": 66,
+          "unknown_no_survey": 362939
+        },
+        "onset_labels_with_wearable_day_before": {
+          "excluded_infection_without_onset": 748,
+          "excluded_washout": 1305,
+          "positive": 66,
+          "unknown_no_survey": 262108
+        },
+        "participants_with_a_positive_window": 66,
+        "test_labels": {
+          "excluded_recent_positive": 4839,
+          "no_reported_positive_test": 360454,
+          "positive_test": 84
+        }
+      },
+      "48h": {
+        "at_risk_denominator": 132,
+        "episodes_with_a_positive_window": 66,
+        "onset_labels": {
+          "excluded_infection_without_onset": 811,
+          "excluded_washout": 1561,
+          "positive": 132,
+          "unknown_follow_up_ended": 2085,
+          "unknown_no_survey": 360788
+        },
+        "onset_labels_with_wearable_day_before": {
+          "excluded_infection_without_onset": 748,
+          "excluded_washout": 1305,
+          "positive": 129,
+          "unknown_follow_up_ended": 1904,
+          "unknown_no_survey": 260141
+        },
+        "participants_with_a_positive_window": 66,
+        "test_labels": {
+          "excluded_recent_positive": 4839,
+          "no_reported_positive_test": 360370,
+          "positive_test": 168
+        }
+      },
+      "72h": {
+        "at_risk_denominator": 198,
+        "episodes_with_a_positive_window": 66,
+        "onset_labels": {
+          "excluded_infection_without_onset": 811,
+          "excluded_washout": 1561,
+          "positive": 198,
+          "unknown_follow_up_ended": 4169,
+          "unknown_no_survey": 358638
+        },
+        "onset_labels_with_wearable_day_before": {
+          "excluded_infection_without_onset": 748,
+          "excluded_washout": 1305,
+          "positive": 193,
+          "unknown_follow_up_ended": 3775,
+          "unknown_no_survey": 258206
+        },
+        "participants_with_a_positive_window": 66,
+        "test_labels": {
+          "excluded_recent_positive": 4839,
+          "no_reported_positive_test": 360286,
+          "positive_test": 252
+        }
+      },
+      "cutoffs": 365377,
+      "cutoffs_with_wearable_records_day_before": 264227
+    },
+    "participants": {
+      "labeled_with_wearable_records": 84,
+      "labeled_without_wearable_records": 0,
+      "total": 2122,
+      "with_completed_surveys": 0,
+      "with_outcome_labels": 84,
+      "with_wearable_records": 2122,
+      "without_outcome_labels": 2038
+    },
+    "recovery": {
+      "outcomes-1-sustained-symptom-free-2d": {
+        "by_reason": {
+          "no_follow_up": 66
+        },
+        "days_followed_censored": {
+          "max": 0,
+          "median": 0.0,
+          "min": 0,
+          "n": 66,
+          "p25": 0.0,
+          "p75": 0.0
+        },
+        "days_to_resolution_max": null,
+        "days_to_resolution_min": null,
+        "episodes": 66
+      }
+    },
+    "source_counts": {
+      "asymptomatic_or_no_onset": 18,
+      "device_AppleWatch": 35,
+      "device_Fitbit": 49,
+      "participants_covid19": 84,
+      "recruitment_prospective": 34,
+      "recruitment_retrospective": 50,
+      "with_symptom_onset": 66
+    },
+    "status_unknown": {
+      "days": 367433,
+      "rows": 2187
+    },
+    "surveys": {
+      "completed_days_by_state": {},
+      "participants": 0
+    },
+    "tests": {
+      "by_pathogen_and_result": {
+        "sars_cov_2:positive": 84
+      },
+      "linked_to_episode": 61,
+      "test_day_minus_nearest_onset_day_unlinked": {
+        "max": 53,
+        "median": 35.0,
+        "min": 15,
+        "n": 5,
+        "p25": 21.0,
+        "p75": 38.0
+      },
+      "test_day_minus_onset_day_linked": {
+        "max": 8,
+        "median": 2.0,
+        "min": -5,
+        "n": 61,
+        "p25": 1.0,
+        "p75": 3.0
+      },
+      "total": 84,
+      "unlinked": 23,
+      "unlinked_in_participants_with_an_episode": 5
+    },
+    "wearable_archive": {
+      "clock_check_steps_share_by_hour": {
+        "00": 0.53,
+        "01": 0.39,
+        "02": 0.49,
+        "03": 0.88,
+        "04": 1.38,
+        "05": 2.11,
+        "06": 3.27,
+        "07": 4.94,
+        "08": 6.04,
+        "09": 6.44,
+        "10": 6.84,
+        "11": 7.19,
+        "12": 7.39,
+        "13": 7.28,
+        "14": 7.33,
+        "15": 7.49,
+        "16": 6.88,
+        "17": 6.26,
+        "18": 5.09,
+        "19": 4.08,
+        "20": 3.09,
+        "21": 2.2,
+        "22": 1.5,
+        "23": 0.91
+      },
+      "labeled_participants_absent_from_archive": 0,
+      "members_by_state": {
+        "empty": 16,
+        "export_error": 30,
+        "read": 4200
+      },
+      "members_by_stream_and_source": {
+        "heart_rate:Fitbit": 1027,
+        "heart_rate:NonFitbit": 1096,
+        "steps:Fitbit": 1027,
+        "steps:NonFitbit": 1096
+      },
+      "members_ignored": {
+        "macos_metadata_or_directory": 4251
+      },
+      "members_read": 4246,
+      "participants": 2122,
+      "records_by_stream": {
+        "heart_rate": 1473500172,
+        "steps": 49887356
+      },
+      "unparseable_timestamps": 14
+    }
+  },
+  "built_with": {
+    "git_dirty": false,
+    "git_sha": "18ec9fc746ee0e5d3deb250965e8527f68982174",
+    "pyarrow": "26.0.0",
+    "pydantic": "2.14.0",
+    "python": "3.12.13"
+  },
+  "canonical_recovery_endpoint": "outcomes-1-sustained-symptom-free-2d",
+  "dataset_snapshot": {
+    "dataset_id": "stanford-covid19-wearables-phase2",
+    "dataset_version": "2022-nm",
+    "snapshot_sha256": "bbbca036d9e5500351ddfab1b43e2c9622626389c1f6f881244035cfc300cd70"
+  },
+  "definitions_sha256": "6c98ee559f56ebc69a9d7a2a471d786cba9b3fa08b9ad1d3a29685184bfa2bb6",
+  "definitions_version": "outcomes-1",
+  "pipeline_version": "clinical-labels-2",
+  "settings_sha256": "01e0f3495a6e3844cda8aeb20a5f6779e772f0d220e98d4561fd157eebb5055a",
+  "snapshot_id": "clinical-labels-2-stanford-covid19-wearables-phase2-2022-nm-bbbca036d9e5",
+  "sources": {
+    "41591_2021_1593_MOESM3_ESM.xlsx": {
+      "bytes": 25369,
+      "name": "41591_2021_1593_MOESM3_ESM.xlsx",
+      "sha256": "166f8465e9e0259fc6e185a07630f1048b369f9e0c34872dc978f656cd08e3b3"
+    },
+    "COVID-19-Phase2-Wearables.zip": {
+      "bytes": 5537624129,
+      "name": "COVID-19-Phase2-Wearables.zip",
+      "sha256": "c90b13146d3996b4d2159c4af31115b9ba2cb3c3fc2e15565b34c016ced9c994"
+    }
+  },
+  "tables": {
+    "episodes.parquet": 66,
+    "onset_windows.parquet": 365377,
+    "outcomes.parquet": 2337,
+    "recovery.parquet": 66,
+    "status_intervals.parquet": 2122,
+    "subjects.parquet": 2122,
+    "surveys.parquet": 0,
+    "symptom_scores.parquet": 0,
+    "wearable_days.parquet": 266348
+  }
+}
