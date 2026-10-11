@@ -311,7 +311,7 @@ def verify(base: str, root: Path, git_sha: str) -> dict:
     }
 
 
-def main() -> int:
+def main(*, verifier=verify, fault_probe=FAULT_PROBE) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8719)
     args = parser.parse_args()
@@ -342,7 +342,7 @@ def main() -> int:
                     sys.executable,
                     "-I",
                     "-c",
-                    FAULT_PROBE,
+                    fault_probe,
                     "serve",
                     "--host",
                     "127.0.0.1",
@@ -366,7 +366,7 @@ def main() -> int:
                         if process.poll() is not None:
                             raise RuntimeError("own service failed to start") from None
                         time.sleep(0.05)
-                result = verify(f"http://127.0.0.1:{args.port}", root, sha)
+                result = verifier(f"http://127.0.0.1:{args.port}", root, sha)
             except Exception as exc:
                 # Exception class only: even HTTP exceptions can contain private URLs.
                 result = {"ok": False, "git_sha": sha, "error_type": type(exc).__name__}
