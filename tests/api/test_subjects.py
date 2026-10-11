@@ -1,11 +1,7 @@
 """Coverage, self-reports, scenarios, deletion, health and the request boundary."""
 
-import json
-import sys
-import types
-
 from hachi.contracts.api import ApiError, Coverage, HealthStatus
-from hachi.contracts.results import AlertnessPayload, ReportResult
+from hachi.contracts.results import ReportResult
 
 from .conftest import hourly_export, private_files, upload, wait
 
@@ -121,7 +117,7 @@ def test_self_reports_are_persisted_idempotently(client, open_client, make_setti
     assert len(reopened.app.state.service.metadata.self_reports("synthetic-001")) == 2
 
 
-def test_scenarios_are_unavailable_until_the_simulator_exists(client, monkeypatch):
+def test_scenarios_are_unavailable_until_the_simulator_is_served(client):
     response = client.post("/v1/scenarios", json=SCENARIO)
     assert response.status_code == 200
     result = ReportResult.model_validate_json(response.content).root
@@ -130,49 +126,13 @@ def test_scenarios_are_unavailable_until_the_simulator_exists(client, monkeypatc
         "alertness",
         "NO_ARTIFACT_FOR_TASK",
     )
-    assert result.data_mode == "synthetic"
-    bad = SCENARIO | {
-        "schedules": [SCENARIO["schedules"][0] | {"wake_time_local": "2026-10-10T21:00:00"}]
-    }
-    assert client.post("/v1/scenarios", json=bad).status_code == 422
-
-    def simulate(request):
-        curve = {
-            "schedule_id": "early",
-            "points": [
-                {"time_utc": "2026-10-11T14:00:00Z", "value": 0.8},
-                {"time_utc": "2026-10-11T15:00:00Z", "value": 0.7},
-            ],
-        }
-        return AlertnessPayload.model_validate_json(
-            json.dumps(
-                {
-                    "mode": "simulation",
-                    "model_description": "Synthetic placeholder for the API test.",
-                    "scale": {
-                        "name": "synthetic",
-                        "unit": "a.u.",
-                        "minimum": 0.0,
-                        "maximum": 1.0,
-                        "higher_is_more_alert": True,
-                    },
-                    "tz_name": request.tz_name,
-                    "assumptions": request.assumptions.model_dump(),
-                    "curves": [curve],
-                    "validation": None,
-                }
-            )
-        )
-
-    fake = types.ModuleType("hachi.scenarios")
-    fake.__file__ = __file__
-    fake.simulate = simulate
-    monkeypatch.setitem(sys.modules, "hachi.scenarios", fake)
-    simulated = ReportResult.model_validate_json(
-        client.post("/v1/scenarios", json=SCENARIO).content
-    )
-    assert simulated.root.status == "ok" and simulated.root.alertness.validation is None
-    assert simulated.root.provenance.dataset_snapshot is None
+    assert result.data_mode == "synthetic" and result.provenance is None
+    # #15's rule: as_of is the earliest bedtime, resolved in the request's timezone (PDT).
+    assert result.as_of.isoformat() == "2026-10-11T05:00:00+00:00"
+    wake = SCENARIO["schedules"][0] | {"wake_time_local": "2026-10-10T21:00:00"}
+    assert client.post("/v1/scenarios", json=SCENARIO | {"schedules": [wake]}).status_code == 422
+    gap = SCENARIO["schedules"][0] | {"bedtime_local": "2026-03-08T02:30:00"}
+    assert client.post("/v1/scenarios", json=SCENARIO | {"schedules": [gap]}).status_code == 422
 
 
 def test_deletion_requires_confirmation_and_removes_private_data(client, make_settings):

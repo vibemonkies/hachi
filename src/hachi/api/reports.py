@@ -171,7 +171,6 @@ def task_support(
     subject: SubjectData | None,
     observed: set[Metric],
     sufficient: bool,
-    alertness_available: bool,
 ) -> list[TaskSupport]:
     def entry(task: TaskName, reason: UnavailableReason | None) -> TaskSupport:
         return TaskSupport(task=task, supported=reason is None, reason_code=reason)
@@ -190,7 +189,7 @@ def task_support(
         entry("anomaly", "NO_ARTIFACT_FOR_TASK"),
         entry("illness_onset", "NO_VALIDATED_ILLNESS_ARTIFACT"),
         entry("recovery", "NO_VALIDATED_RECOVERY_ARTIFACT"),
-        entry("alertness", None if alertness_available else "NO_ARTIFACT_FOR_TASK"),
+        entry("alertness", "NO_ARTIFACT_FOR_TASK"),  # until #15's artifact is served
     ]
 
 

@@ -36,7 +36,7 @@ def run(client, body) -> ReportJob:
 
 
 def test_forecast_matches_direct_inference_with_provenance(client, served):
-    from hachi.api.handoff import compare, direct_inference
+    from hachi.api.handoff import Tally, api_medians, direct_inference, expected_medians
 
     job = run(client, forecast())
     result = job.result.root
@@ -55,9 +55,10 @@ def test_forecast_matches_direct_inference_with_provenance(client, served):
     artifact = service.catalog.artifacts[0]
     subject = service.catalog.subject("p01", service.metadata, service.workspace)
     direct = direct_inference(artifact, subject, result.as_of, 24)
-    comparison = compare(job, artifact, subject, direct)
-    assert comparison.agrees and comparison.points_compared == len(series.points) > 0
-    assert comparison.max_abs_difference == 0.0
+    tally = Tally()
+    tally.add(api_medians(job), expected_medians(result.as_of, direct))
+    assert tally.agrees and tally.compared == len(series.points) > 0
+    assert tally.max_difference == 0.0
 
 
 def test_identical_requests_are_idempotent(client):

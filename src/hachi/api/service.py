@@ -49,7 +49,7 @@ from .coverage import build_coverage
 from .errors import ApiProblem
 from .jobs import JobRunner
 from .reports import Context, now_utc, run_report
-from .scenarios import scenario_result, simulator
+from .scenarios import scenario_result
 from .settings import Settings
 
 log = logging.getLogger("hachi.api")
@@ -289,10 +289,9 @@ class Service:
     def coverage(self, subject_id: str, params: CoverageParams) -> Coverage:
         self._require_known(subject_id)
         subject = self.catalog.subject(subject_id, self.metadata, self.workspace)
-        alertness = simulator() is not None
 
         def support(observed, sufficient):
-            return reports.task_support(self.catalog, subject, observed, sufficient, alertness)
+            return reports.task_support(self.catalog, subject, observed, sufficient)
 
         if subject is None:  # only failed, pending or no imports: an empty history
             records = self.metadata.subject_imports(subject_id)

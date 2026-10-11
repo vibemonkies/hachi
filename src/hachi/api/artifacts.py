@@ -25,7 +25,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import Field, ValidationError, model_validator
 
-from hachi.contracts.base import ArtifactRef, Contract
+from hachi.contracts.base import ArtifactRef, Contract, Sha256
 from hachi.contracts.manifests import RunManifest, SplitManifest
 from hachi.contracts.metrics import Aggregation, Metric
 from hachi.evaluation import EvaluationConfig
@@ -63,6 +63,9 @@ class ServingSpec(Contract):
         default=None, description="Declared coverage of the model's intervals, if it has any."
     )
     requires_gpu: bool = False
+    protocol_sha256: Sha256 | None = Field(
+        default=None, description="Evaluation protocol the feature policy was taken from."
+    )
 
     @model_validator(mode="after")
     def _policy(self) -> Self:

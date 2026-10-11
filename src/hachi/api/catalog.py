@@ -58,21 +58,26 @@ class Catalog:
     def dataset_for(self, subject_id: str) -> DatasetSnapshot | None:
         return next((d for d in self.datasets if subject_id in d.subjects), None)
 
+    def dataset_subject(self, subject_id: str) -> SubjectData | None:
+        dataset = self.dataset_for(subject_id)
+        if dataset is None:
+            return None
+        return SubjectData(
+            subject_id=subject_id,
+            kind="dataset_snapshot",
+            data_mode=dataset.data_mode,
+            snapshot=dataset.ref,
+            tz_name=dataset.tz_name,
+            path=dataset.path,
+            dataset_source_kind=dataset.source_kind,
+        )
+
     def subject(
         self, subject_id: str, metadata: Metadata, workspace: Workspace
     ) -> SubjectData | None:
         """A dataset subject, else the subject's latest succeeded import, else None."""
-        dataset = self.dataset_for(subject_id)
-        if dataset is not None:
-            return SubjectData(
-                subject_id=subject_id,
-                kind="dataset_snapshot",
-                data_mode=dataset.data_mode,
-                snapshot=dataset.ref,
-                tz_name=dataset.tz_name,
-                path=dataset.path,
-                dataset_source_kind=dataset.source_kind,
-            )
+        if (dataset := self.dataset_subject(subject_id)) is not None:
+            return dataset
         record = metadata.latest_succeeded_import(subject_id)
         if record is None or record.snapshot is None:
             return None
