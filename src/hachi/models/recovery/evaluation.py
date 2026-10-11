@@ -6,13 +6,22 @@ from collections import defaultdict
 from .survival import Observation, SurvivalModel, log_probability, truncate
 
 
-def supported_horizon(rows: list[Observation], maximum: int, minimum_subjects: int) -> int:
+def supported_horizon(
+    rows: list[Observation], maximum: int, minimum_subjects: int, *, known_at_risk: bool = False
+) -> int:
     """Training-only contiguous follow-up support, independent of held-out performance."""
     return max(
         (
             d
             for d in range(1, maximum + 1)
-            if len({r.subject for r in rows if r.upper >= d}) >= minimum_subjects
+            if len(
+                {
+                    r.subject
+                    for r in rows
+                    if (r.upper >= d if not known_at_risk or r.lower is None else r.lower > d)
+                }
+            )
+            >= minimum_subjects
         ),
         default=0,
     )
@@ -98,9 +107,9 @@ def compare(
     """
     paired = []
     for row in rows:
-        if row.lower == 1 and row.upper > horizon:
-            continue
         limited = truncate(row, horizon)
+        if limited is None:
+            continue
         paired.append(
             {
                 "subject": row.subject,
