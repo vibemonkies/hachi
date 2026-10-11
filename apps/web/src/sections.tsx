@@ -32,7 +32,6 @@ export function SectionView({
   return (
     <>
       <div className="report-meta">
-        <span>HAND-AUTHORED FIXTURE</span>
         <p>
           Cutoff <strong>{report.cutoff}</strong>
         </p>
@@ -65,7 +64,7 @@ export function SectionView({
                         title="Heart rate · hourly mean"
                         unit="bpm"
                         expanded
-                        description="Six selected hourly bins within 24 hours, not a full forecast. Bounds are illustrative and uncalibrated; no forecast model ran."
+                        description="Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range."
                       />
                       <Plot
                         panel={report.anomaly}
@@ -83,23 +82,21 @@ export function SectionView({
             </>
           ) : section === "forecast" ? (
             <>
-              <p className="lead">
-                Hourly heart-rate examples after the cutoff. Six selected hourly
-                bins illustrate a 24-hour horizon, not a complete modeled forecast.
-              </p>
               <Plot
                 panel={report.forecast}
                 title="Heart rate · hourly mean"
                 unit="bpm"
                 expanded={design === "analysis"}
-                description={`Hand-authored medians; no forecast model ran. Bounds are illustrative and uncalibrated, not a likely range. Horizon starts ${report.cutoff} and ends 24 hours later.`}
+                description="Six selected hourly bins within 24 hours. Bounds are illustrative and uncalibrated, not a likely range."
               />
-              <p className="method">
-                Coverage at import · {history.coverage[0].observed}/
-                {history.coverage[0].expected} hourly bins across the synthetic
-                import period. Report examples contain no input from after the
-                cutoff. Source · hand-authored fixture, no model artifact.
-              </p>
+              {design !== "analysis" && (
+                <p className="method">
+                  Import-wide count · {history.coverage[0].observed}/
+                  {history.coverage[0].expected} hourly bins. Reports are
+                  pre-authored examples for the selected cutoff; no observations
+                  are analyzed.
+                </p>
+              )}
             </>
           ) : (
             <>
@@ -120,13 +117,9 @@ export function SectionView({
                 </p>
                 <p>
                   Changed features · hourly heart-rate mean and resting heart rate.
-                  No infection inference is made. Coverage ·{" "}
+                  Coverage ·{" "}
                   {history.coverage[1].observed}/{history.coverage[1].expected}{" "}
                   daily resting-HR values. Missing points are gaps, never zero.
-                </p>
-                <p>
-                  Provenance · hand-authored synthetic baseline and scores. No
-                  trained model, calibrated alert rule, or confounder adjustment.
                 </p>
               </details>
             </>
@@ -148,7 +141,6 @@ function EvidenceRegister({
   return (
     <aside className="evidence-register" aria-label="Source and coverage">
       <h2>Source & coverage</h2>
-      <p>Hand-authored synthetic history. No model artifact.</p>
       <dl>
         <dt>Import period · UTC</dt>
         <dd>{history.start}<br />to {history.end}<br />(end excluded)</dd>
@@ -165,8 +157,8 @@ function EvidenceRegister({
         <dd>{report.baseline}</dd>
       </dl>
       <p>
-        Import-wide counts. Reports use the eligible prefix at the selected
-        cutoff. Missing values are gaps, never zero.
+        Import-wide counts. Reports are pre-authored examples for the selected
+        cutoff; no observations are analyzed.
       </p>
     </aside>
   );
@@ -311,10 +303,9 @@ function ImportSection({
             </table>
           </div>
           <p className="caption">
-            These are import-wide counts, not evidence available at every
-            cutoff. Static report bundles use only the selected cutoff’s
-            eligible prefix. Sleep duration and resting heart rate are distinct
-            daily signals.
+            Import-wide counts; they do not describe observations analyzed by
+            the pre-authored report examples. Sleep duration and resting heart
+            rate are distinct daily signals.
           </p>
           {workflow.kind === "coverage" && (
             <button onClick={() => dispatch({ type: "acknowledge" })}>
@@ -384,14 +375,12 @@ function UnavailableTasks() {
       <h2>Unavailable outputs</h2>
       <h3>Illness onset · unavailable</h3>
       <p>
-        Requires validated onset labels, participant holdout, and a calibrated
-        artifact. Wearable deviations do not establish infection.
+        Needs symptom-onset labels and evaluation on people excluded from
+        training.
       </p>
       <h3>Recovery · unavailable</h3>
       <p>
-        Requires an ongoing episode, a prespecified resolution endpoint, and
-        censoring-aware follow-up evaluation. No time-to-recovery estimate is
-        generated.
+        Needs a defined recovery endpoint and follow-up data.
       </p>
     </section>
   );
@@ -416,8 +405,7 @@ function Symptoms() {
   return (
     <>
       <form className="entry-form" onSubmit={submit}>
-        <h2>Symptom entry</h2>
-        <p>Synthetic examples only. Nothing is saved or sent. Leaving this section or reloading clears the draft and preview.</p>
+        <p>Nothing is saved or sent. Leaving this section or reloading clears the draft and preview.</p>
         <label htmlFor="event-time">Synthetic event time · UTC</label>
         <input
           id="event-time"
@@ -450,16 +438,11 @@ function Symptoms() {
           </h2>
           <p>Event time · {preview.event}</p>
           <p>Entry time · {preview.entry} (actual preview creation time)</p>
-          <p>
-            Local memory only. Reload clears this preview. Leaving this section
-            also clears the draft.
-          </p>
           <button className="secondary" onClick={() => setPreview(undefined)}>
             Clear preview
           </button>
         </section>
       )}
-      <UnavailableTasks />
     </>
   );
 }
@@ -473,12 +456,7 @@ function Sleep() {
         : undefined;
   return (
     <>
-      <p className="lead">
-        Compare two named schedules through static illustrations. These are not
-        personal alertness predictions or equation-based simulations.
-      </p>
       <section className="entry-form">
-        <h2>Schedule illustration</h2>
         <label htmlFor="sleep-preset">Named fixture preset</label>
         <select
           id="sleep-preset"
@@ -527,10 +505,7 @@ function Sleep() {
               chronotype effects are represented.
             </p>
             <p>
-              Provenance · manually drawn synthetic examples. A supported
-              scientific simulation would require documented equations and
-              validated personal prediction would require measured alertness
-              labels and held-out evaluation.
+              Manually drawn examples; no equations or measured alertness data.
             </p>
           </details>
         </>

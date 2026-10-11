@@ -112,7 +112,7 @@ export function Plot({
         </svg>
       </div>
       <p className="caption">
-        Hand-authored synthetic values. No model or measured accuracy. Gaps mean missing observations, never zero. All times UTC.
+        All times UTC. Gaps are missing observations, not zero.
       </p>
       <details open={expanded}>
         <summary>View exact values and missing observations</summary>

@@ -105,7 +105,7 @@ export default function App() {
             <span className="badge">SYNTHETIC DATA ONLY</span>
           </header>
           <div className="synthetic-banner">
-            Hand-authored synthetic demo. No model runs, personal data, or validated predictions.
+            No model runs or personal data.
           </div>
           <main id="main" tabIndex={-1}>
             <h1 ref={heading} tabIndex={-1}>
