@@ -2,7 +2,7 @@
 
 **All three teammates can work at once. Multiple agents for one person are also useful when their issues are independent. Issue numbers belong to the whole team; they are not steps each person repeats.**
 
-If Ezzy already has #1 running, do not personally launch #2, #3 and #4 as the next steps: #2/#3 belong to Justin and #4 belongs to CoffeeCoder. Those four issues can run simultaneously across the team, with one active owner/agent per issue. Reassigning ownership requires agreement with the teammate first.
+If Ezzy already has #1 running, do not personally launch #2, #3 and #4 as the next steps: #2/#3 belong to Justin and #4 belongs to CoffeeCoder. Those four issues can run simultaneously across the team, with one active owner/agent per issue. Reassigning ownership normally requires agreement with the teammate first. A human may explicitly authorize a bounded takeover policy for unattended work. Follow its notice and waiting requirements, then recheck live ownership, activity, and dependencies before reassignment. Preserve active agents and implementation PRs. Repeated pings alone grant no authority.
 
 There is no blanket batch of #1–#4 followed by #5–#7. For example, #7 needs the output of #5, so those two cannot be completed independently in the same batch.
 
@@ -78,7 +78,7 @@ An open issue with partially delivered prerequisites may permit a specifically s
 
 ## Claiming work and avoiding collisions
 
-1. The human identifies an unclaimed issue assigned to them (or agrees on a reassignment). Check issue comments, labels and open PRs; if another agent is already working on it, continue that work rather than duplicate it.
+1. The human identifies an unclaimed issue assigned to them or authorizes a reassignment. For a bounded takeover policy, meet the requirements above first. Check issue comments, labels and open PRs; if another agent is already working on it, continue that work rather than duplicate it.
 2. Give one agent the exact issue, owned files, branch/worktree and permitted actions. When GitHub status updates are authorized, record the claim with owner, branch and worktree and set `status:in-progress`. A label is advisory, not an atomic lock; the human coordinates simultaneous starts.
 3. Start from fresh `origin/main` in a separate worktree. Two terminals on different branches in the **same folder** are not isolated: changing the branch changes both agents' files.
 4. Keep virtual environments, mutable caches, test databases, run directories and service ports separate per agent/run. The same human can have several agents, so an owner-only shared checkout/database is insufficient. Reuse an environment only when immutable and compatible.
