@@ -90,10 +90,24 @@ def require_registered_analysis(settings: CmuSettings) -> None:
         )
 
 
-def _number(text: str | None) -> float | None:
+def _number(row: dict[str, str], column: str) -> float | None:
+    """A cell as a number, blank as None. Errors name the column, never the value."""
+    text = row[column]
     if text is None or not text.strip():
         return None
-    return float(text)
+    try:
+        return float(text)
+    except ValueError:
+        raise CmuError(f"non-numeric value in column {column}") from None
+
+
+def _binary(row: dict[str, str], column: str, counts: Counter) -> float | None:
+    """A 0/1 code; anything else is counted and treated as missing."""
+    value = _number(row, column)
+    if value is not None and value not in (0, 1):
+        counts[f"non_binary_{column.split('.', 1)[-1]}"] += 1
+        return None
+    return value
 
 
 def _rows(archive: Path, member: str, columns: set[str]) -> tuple[list[dict], list[str]]:
@@ -167,7 +181,7 @@ def label_set(data_dir: Path, settings: CmuSettings, admission: Admission):
             raise CmuError("duplicate participant")
         seen.add(subject)
         counts[f"participants_{study}"] += 1
-        viruses = [v for v in settings.viruses if _number(row[v]) == 1]
+        viruses = [v for v in settings.viruses if _number(row, v) == 1]
         if len(viruses) != 1:
             counts["excluded_virus_not_exactly_one"] += 1
             continue
@@ -175,7 +189,7 @@ def label_set(data_dir: Path, settings: CmuSettings, admission: Admission):
         states: dict[date, SurveyState] = {}
         day_scores: list[dict] = []
         for d in days:
-            value, said_cold = _number(row[score[d]]), _number(row[cold[d]])
+            value, said_cold = _number(row, score[d]), _binary(row, cold[d], counts)
             state = _state(value, said_cold, s)
             if state is not None:
                 states[epoch + timedelta(days=d)] = state
@@ -197,16 +211,17 @@ def label_set(data_dir: Path, settings: CmuSettings, admission: Admission):
         gaps = (observed[-1] - observed[0]).days + 1 - len(observed)
         if gaps:
             counts["participants_with_missing_quarantine_days"] += 1
-        infected = _number(row[s.infected_column])
+        infected = _binary(row, s.infected_column, counts)
+        shedding = {d: _binary(row, shed[d], counts) for d in shed_days}
         tests = [
             TestDay(
                 epoch + timedelta(days=d),
                 virus.pathogen,
                 "other",
-                "positive" if _number(row[shed[d]]) == 1 else "negative",
+                "positive" if value == 1 else "negative",
             )
-            for d in shed_days
-            if _number(row[shed[d]]) is not None
+            for d, value in shedding.items()
+            if value is not None
         ]
         first_symptomatic = next((d for d in observed if states[d] == "symptomatic"), None)
         onsets = []
