@@ -132,6 +132,7 @@ h1:focus-visible {
   min-height: 100vh;
 }
 .sidebar {
+  min-width: 0;
   border-right: 1px solid #dcded4;
   padding: 42px 24px;
   display: flex;
@@ -509,7 +510,7 @@ footer span {
 }
 @media (max-width: 850px) {
   .workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .sidebar {
     padding: 20px 5%;

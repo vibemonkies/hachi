@@ -100,9 +100,10 @@ export function SectionView({
           <div className="method">
             <h3>How to read this example</h3>
             <p>
-              Baseline window · {report.baseline}. Each point represents the
-              completed daily window ending at its timestamp, using earlier
-              observations only.
+              Baseline window · {report.baseline} labels the final illustrative
+              point. Earlier points use windows ending at their own timestamps.
+              Scores and windows are static fixture metadata; no baseline
+              calculation runs.
             </p>
             <p>
               Changed features · hourly heart-rate mean and resting heart rate.
