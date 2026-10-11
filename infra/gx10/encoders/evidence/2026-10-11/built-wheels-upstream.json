@@ -1,0 +1,57 @@
+{
+  "built_at_utc": "20261011T111852Z",
+  "variant": "upstream",
+  "nvcc_append_flags": "",
+  "python_headers": {
+    "package": "libpython3.12-dev",
+    "version": "3.12.3-1ubuntu0.17",
+    "sha256": "945ad3f651f683c11e72d19d804b1cff097308dcffa01057635cba038f875164",
+    "interpreter_package": "3.12.3-1ubuntu0.13"
+  },
+  "toolchain": {
+    "release": "12.9.1",
+    "components_sha256": "6ab879dfc010f196c291c6450df751d4a163be2621969c04390e38917fbc0005",
+    "nvcc_version": "Build cuda_12.9.r12.9/compiler.36037853_0",
+    "gpu_arches": [
+      "compute_50",
+      "compute_52",
+      "compute_53",
+      "compute_60",
+      "compute_61",
+      "compute_62",
+      "compute_70",
+      "compute_72",
+      "compute_75",
+      "compute_80",
+      "compute_86",
+      "compute_87",
+      "compute_89",
+      "compute_90",
+      "compute_100",
+      "compute_101",
+      "compute_103",
+      "compute_120",
+      "compute_121"
+    ]
+  },
+  "runtime_lock_sha256": "1fd83f4b102ce31aac2381514953298c1159074c5abc48bda04dd170cef39ee5",
+  "build_lock_sha256": "eec67407f503cd1ea77411bb581d708651d55a5af9ad2f9c3e2d890814b40871",
+  "host": {
+    "machine": "aarch64",
+    "release": "6.17.0-1014-nvidia",
+    "python": "3.12.3"
+  },
+  "wheels": [
+    {
+      "name": "causal-conv1d",
+      "version": "1.5.0.post8",
+      "filename": "causal_conv1d-1.5.0.post8-cp312-cp312-linux_aarch64.whl",
+      "sha256": "14b5e4c5f36a0e343397c3294c7fe796882ae4cf2d9ba0507c14b4bc208e5de9",
+      "source": {
+        "repository": "https://github.com/Dao-AILab/causal-conv1d.git",
+        "commit": "82867a9d2e6907cc0f637ac6aff318f696838548"
+      },
+      "build_seconds": 375.9
+    }
+  ]
+}

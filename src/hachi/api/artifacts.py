@@ -4,7 +4,8 @@ A served artifact is an immutable directory under the approved artifact root, pi
 operator as `<artifact_id>@<artifact_sha256>`:
 
     <artifact_root>/<artifact_id>/
-        model/          artifact.json, model.json, source-sha256.json (baselines.save_artifact)
+        model/          artifact.json, model.json, source-sha256.json (save_artifact of
+                        hachi.models.baselines or hachi.models.chronos.artifacts)
         run.json        RunManifest from the evaluation packet; names this artifact
         split.json      SplitManifest from the packet; its sha256 is run.split_manifest_sha256
         config.json     EvaluationConfig from the packet; its sha256 is run.config_sha256
@@ -34,7 +35,12 @@ from hachi.evaluation.serialization import document_bytes, document_sha256
 from hachi.models.baselines import BaselineArtifact, TreeArtifact, load_artifact
 from hachi.models.baselines.artifacts import Receipt
 from hachi.models.baselines.tree import FEATURES
+from hachi.models.chronos.artifacts import load_artifact as load_chronos_artifact
 from hachi.storage import child
+
+from .chronos import ENTRY_POINT as CHRONOS_ENTRY_POINT
+from .chronos import ChronosServed
+from .gpu import Gx10Target
 
 MODEL_FILES = ("artifact.json", "model.json", "source-sha256.json")
 PACKET_FILES = ("run.json", "split.json", "config.json")
@@ -56,7 +62,9 @@ class ServingSpec(Contract):
     format_version: Literal["hachi-serving-1"]
     task: Literal["physiology_forecast"]
     resolution: Literal["hour"]
-    entry_point: Literal["hachi.models.baselines.load_artifact"]
+    entry_point: Literal[
+        "hachi.models.baselines.load_artifact", "hachi.models.chronos.artifacts.load_artifact"
+    ]
     input: Literal["hourly_features", "observations"]
     feature_policy: HourlyFeaturePolicy | None
     interval_nominal_coverage: Annotated[float, Field(gt=0, lt=1)] | None = Field(
@@ -74,7 +82,7 @@ class ServingSpec(Contract):
         return self
 
 
-type ForecastModel = BaselineArtifact | TreeArtifact
+type ForecastModel = BaselineArtifact | TreeArtifact | ChronosServed
 
 
 @dataclass(frozen=True)
@@ -117,12 +125,19 @@ def _entries(directory: Path) -> set[str]:
     return {entry.name for entry in os.scandir(directory)}
 
 
-def load_served_artifact(root: Path, pin: ArtifactRef) -> ServedArtifact:
-    """Refuse incomplete, altered or incompatible artifacts; return the frozen model otherwise."""
-    return _load_directory(child(root, pin.artifact_id), pin)
+def load_served_artifact(
+    root: Path, pin: ArtifactRef, gx10: Gx10Target | None = None
+) -> ServedArtifact:
+    """Refuse incomplete, altered or incompatible artifacts; return the frozen model otherwise.
+
+    `gx10` is where GPU-backed models (Chronos-2) run; without it they answer unavailable.
+    """
+    return _load_directory(child(root, pin.artifact_id), pin, gx10)
 
 
-def _load_directory(directory: Path, pin: ArtifactRef) -> ServedArtifact:
+def _load_directory(
+    directory: Path, pin: ArtifactRef, gx10: Gx10Target | None = None
+) -> ServedArtifact:
     model_dir = directory / "model"
     if not directory.is_dir() or not model_dir.is_dir() or model_dir.is_symlink():
         raise ArtifactRefused("ARTIFACT_INTEGRITY_FAILED", "artifact directory is incomplete")
@@ -169,12 +184,18 @@ def _load_directory(directory: Path, pin: ArtifactRef) -> ServedArtifact:
         raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "artifact was not trained for this task")
 
     # Code: the identified implementation must be the one running here.
+    model: ForecastModel
     try:
-        model = load_artifact(model_dir, pin)
+        if serving.entry_point == CHRONOS_ENTRY_POINT:
+            model = ChronosServed(load_chronos_artifact(model_dir, pin), gx10)
+        else:
+            model = load_artifact(model_dir, pin)
     except (ValueError, OSError) as exc:
         raise ArtifactRefused(
             "ARTIFACT_INCOMPATIBLE", "artifact needs a different model implementation"
         ) from exc
+    if isinstance(model, ChronosServed):
+        _check_chronos(model, split, serving)
 
     # Features: one metric and aggregation end to end, in the order the model was trained on.
     config = model.config
@@ -191,6 +212,23 @@ def _load_directory(directory: Path, pin: ArtifactRef) -> ServedArtifact:
     if run.model.model_id != model.model_id:
         raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "run manifest names another model")
     return ServedArtifact(pin, directory, run, split, evaluation, serving, model)
+
+
+def _check_chronos(model: ChronosServed, split: SplitManifest, serving: ServingSpec) -> None:
+    """Serve only what the API path reproduces exactly: zero-shot, one series, 48 h context."""
+    artifact, config = model.artifact, model.config
+    if artifact.context_policy or artifact.past_covariates or artifact.finetuned_weights_sha256:
+        raise ArtifactRefused(
+            "ARTIFACT_INCOMPATIBLE", "only zero-shot univariate Chronos artifacts are served yet"
+        )
+    if not serving.requires_gpu or serving.input != "hourly_features":
+        raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "Chronos serves hourly features on a GPU")
+    if serving.interval_nominal_coverage != config.nominal_coverage:
+        raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "declared coverage differs from the model's")
+    if not artifact.harness_lookback_hours == config.context_hours == split.lookback_hours:
+        raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "context window differs from the protocol")
+    if serving.protocol_sha256 not in (None, artifact.protocol_sha256):
+        raise ArtifactRefused("ARTIFACT_INCOMPATIBLE", "serving and model name other protocols")
 
 
 def stage_artifact(
