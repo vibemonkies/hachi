@@ -123,7 +123,8 @@ def verify_packet(snapshot: Path, output: Path) -> dict:
         if any(r[f"onset_{h}h"] in {"positive", "negative"} for h in (24, 48, 72))
     }
     joins = json.loads((output / "joins.json").read_bytes())
-    keys = set()
+    keys, joined_contexts = set(), {}
+    observed_by_request = {r.request_id: sum(v is not None for v in r.context) for r in chronos}
     for join in joins:
         fold = active[join["inner_fold"]]
         subject, cutoff = join["subject_id"], join["cutoff_floating"]
@@ -147,12 +148,31 @@ def verify_packet(snapshot: Path, output: Path) -> dict:
         keys.add(key)
         rid = join["request_id"]
         if (rid is None and join["encoder_request_sha256"] is not None) or (
-            rid is not None and contexts.get(rid) != join["encoder_request_sha256"]
+            rid is not None
+            and (rid not in contexts or contexts[rid] != join["encoder_request_sha256"])
         ):
             raise ValueError("private join differs from request content")
+        observed = join["observed_hr_hours"]
+        if (
+            type(observed) is not int
+            or not 0 <= observed <= protocol.context_hours
+            or (rid is None and observed >= protocol.min_observed_hr_hours)
+            or (rid is not None and observed != observed_by_request[rid])
+        ):
+            raise ValueError("join coverage differs from actual request")
+        signature = (rid, join["encoder_request_sha256"], observed)
+        if joined_contexts.setdefault((subject, cutoff), signature) != signature:
+            raise ValueError("context differs across participant folds")
     expected_keys = {(i, subject, cutoff) for i in active for subject, cutoff in eligible}
     if keys != expected_keys or len(eligible) != summary["counts"]["eligible_cutoffs"]:
         raise ValueError("private context joins are incomplete")
+    requested = sum(j["role"] == "validation" and j["request_id"] is not None for j in joins)
+    if (
+        requested != summary["counts"].get("requested_cutoffs", 0)
+        or len(eligible) - requested != summary["counts"].get("insufficient_hourly_context", 0)
+        or len({s for s, _ in eligible}) != summary["development_subjects_with_eligible_cutoffs"]
+    ):
+        raise ValueError("summary context coverage differs from verified joins")
     if output.stat().st_mode & 0o777 != 0o700 or any(
         p.stat().st_mode & 0o777 != 0o600 for p in output.iterdir()
     ):
