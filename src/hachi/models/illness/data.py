@@ -95,12 +95,12 @@ SURVEY_FEATURE_NAMES = (
 
 
 def external_at(
-    points: Sequence[FeaturePoint], cutoff: datetime, max_age_days: int
+    points: Sequence[FeaturePoint], cutoff: datetime, max_age_hours: int
 ) -> tuple[float | None, ...] | None:
     eligible = [
         p
         for p in points
-        if cutoff - timedelta(days=max_age_days) <= p.at <= cutoff and p.available_at <= cutoff
+        if cutoff - timedelta(hours=max_age_hours) <= p.at <= cutoff and p.available_at <= cutoff
     ]
     return max(eligible, key=lambda p: p.at).values if eligible else None
 
@@ -138,7 +138,7 @@ def at_risk_windows(
         cutoff, sid = r["cutoff_utc"], r["subject_id"]
         features = survey_features(surveys.get(sid, {}), cutoff, protocol.feature_lookback_days)
         if external:
-            values = external_at(points.get(sid, []), cutoff, protocol.feature_lookback_days)
+            values = external_at(points.get(sid, []), cutoff, protocol.external_max_age_hours)
             features += values or (None,) * len(external.feature_names)
         for h in protocol.horizons_hours:
             label = r[f"onset_{h}h"]

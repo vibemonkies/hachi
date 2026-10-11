@@ -13,7 +13,7 @@ import sklearn
 
 from hachi.contracts.manifests import ModelRef, RunManifest, SplitManifest
 from hachi.data.clinical.snapshot import dataset_snapshot_ref, verify
-from hachi.evaluation.folds import nested_participant_folds
+from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
 from hachi.evaluation.serialization import document_bytes, document_sha256
 
 from .artifacts import export, load, save
@@ -40,16 +40,17 @@ def run(
     output: Path,
     protocol: Protocol,
     *,
-    agreed_fold_sha256: str,
-    split_created_at: datetime,
-    shared_protocol_sha256: str,
+    clinical: ClinicalProtocol,
     external_by_inner: dict[int, FeatureSet] | None = None,
+    feature_family: str = "survey-history-control",
 ) -> dict:
     """Only outer0 inner-validation data score. No switch exists to open outer test."""
     started = perf_counter()
     if not verify(snapshot)["ok"]:
         raise ValueError("snapshot integrity verification failed")
-    plan = nested_participant_folds(roster(snapshot), protocol.folds)
+    plan = clinical_fold_plan(snapshot, clinical)
+    if clinical.folds != protocol.folds or clinical.active_outer_fold != protocol.active_outer_fold:
+        raise ValueError("task folds differ from shared clinical protocol")
     active = [f for f in plan.folds if f.outer_fold == protocol.active_outer_fold]
     if external_by_inner is not None:
         if set(external_by_inner) != {f.inner_fold for f in active}:
@@ -57,8 +58,6 @@ def run(
         schemas = {f.feature_names for f in external_by_inner.values()}
         if len(schemas) != 1:
             raise ValueError("external feature order must match across all inner folds")
-    if document_sha256(plan) != agreed_fold_sha256:
-        raise ValueError("fold plan differs from agreed clinical protocol")
     repo = Path(__file__).resolve().parents[4]
     git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
     dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=repo, text=True))
@@ -67,6 +66,7 @@ def run(
     output.mkdir(parents=True, exist_ok=False, mode=0o700)
     write_private(output / "protocol.json", protocol)
     write_private(output / "fold-plan.json", plan)
+    write_private(output / "clinical-protocol.json", clinical)
     scores: dict[tuple[int, str], list[Score]] = defaultdict(list)
     statuses: dict[tuple[int, str], list[str]] = defaultdict(list)
     evidence = []
@@ -97,7 +97,7 @@ def run(
             split = SplitManifest(
                 schema_version="0.1",
                 manifest_id=f"illness-outer0-inner{fold.inner_fold}-{h}h",
-                created_at_utc=split_created_at,
+                created_at_utc=clinical.split_created_at_utc,
                 dataset_snapshot=dataset_snapshot_ref(snapshot),
                 task="illness_onset",
                 fold=0,
@@ -210,6 +210,12 @@ def run(
                     "scored_validation_windows": len(predicted),
                     "fit_participants": len(fitted.fit_subjects),
                     "calibration_participants": len(fitted.calibration_subjects),
+                    "labeled_fit_participants": len(
+                        {r.subject_id for r in train if r.subject_id in fitted.fit_subjects}
+                    ),
+                    "labeled_calibration_participants": len(
+                        {r.subject_id for r in train if r.subject_id in fitted.calibration_subjects}
+                    ),
                     "threshold": fitted.threshold,
                     "artifact": ref.model_dump(mode="json"),
                     "replay_max_probability_difference": difference,
@@ -258,7 +264,7 @@ def run(
     summary = {
         "protocol_id": protocol.protocol_id,
         "protocol_sha256": protocol.sha256,
-        "shared_protocol_sha256": shared_protocol_sha256,
+        "shared_protocol_sha256": document_sha256(clinical),
         "git_sha": git_sha,
         "git_dirty": False,
         "data_mode": "real",
@@ -267,9 +273,7 @@ def run(
         "roster_participants": len(roster(snapshot)),
         "outer_test_status": "sealed",
         "active_outer_fold": 0,
-        "feature_candidate": "survey-history-control"
-        if not external_by_inner
-        else "external-features",
+        "feature_candidate": feature_family,
         "environment": {"python": platform.python_version(), "sklearn": sklearn.__version__},
         "eligible_validation": {
             str(h): {

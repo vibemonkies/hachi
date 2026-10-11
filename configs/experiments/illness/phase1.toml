@@ -13,6 +13,8 @@ min_train_subjects = 4
 seed = 42
 calibration_fraction = 0.25
 feature_lookback_days = 7
+feature_families = ["survey-history-control", "nightly-rest", "anomaly-derived"]
+external_max_age_hours = 24
 candidate_order = ["prevalence", "logistic", "tree"]
 logistic_c = 1.0
 tree_max_depth = 2
@@ -37,3 +39,17 @@ selection_requires_positive_ci_lower_bound = true
 # Selection promotes a candidate only on paired participant-bootstrap AUPRC
 # improvement with 95% lower bound > 0, and validation burden <= prespecified cap.
 # Otherwise retain prevalence, or report unavailable when calibration lacks classes.
+
+[rest]
+clock = "floating_local_shifted"
+step_timestamp = "both"
+min_hr_samples_per_minute = 1
+min_rest_minutes = 30
+
+[robust]
+baseline_days = 28
+min_nights = 7
+min_zero_step_minutes = 30.0
+scale_floor_bpm = 1.0
+alert_threshold = 3.0
+direction = "two_sided"

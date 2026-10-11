@@ -8,6 +8,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from hachi.evaluation.clinical_protocol import ClinicalProtocol
 from hachi.evaluation.folds import nested_participant_folds
 from hachi.evaluation.serialization import document_sha256
 from hachi.models.illness import data
@@ -64,8 +65,27 @@ def snapshot(tmp_path):
     return path, subjects
 
 
+def clinical(plan):
+    return ClinicalProtocol(
+        compatible_snapshots=[
+            {
+                "dataset_id": PROTOCOL.dataset_id,
+                "dataset_version": "2020-nbe",
+                "snapshot_sha256": PROTOCOL.snapshot_sha256,
+            }
+        ],
+        clock=PROTOCOL.clock,
+        roster="all_subjects_before_task_eligibility",
+        folds=PROTOCOL.folds,
+        active_outer_fold=0,
+        nested_plan_sha256=document_sha256(plan),
+        split_created_at_utc=datetime(2026, 10, 11, 11, 45, tzinfo=UTC),
+    )
+
+
 def clean_run(monkeypatch):
     monkeypatch.setattr("hachi.models.illness.run.verify", lambda snapshot: {"ok": True})
+    monkeypatch.setattr("hachi.evaluation.clinical_protocol.verify", lambda snapshot: {"ok": True})
     monkeypatch.setattr(
         "hachi.models.illness.run.subprocess.check_output",
         lambda args, **kwargs: "" if "--porcelain" in args else "a" * 40,
@@ -93,9 +113,7 @@ def test_actual_runner_private_packets_canonical_manifests_and_sealed_test(
         path,
         tmp_path / "packet",
         PROTOCOL,
-        agreed_fold_sha256=document_sha256(plan),
-        split_created_at=datetime(2026, 10, 11, 11, 45, tzinfo=UTC),
-        shared_protocol_sha256="c" * 64,
+        clinical=clinical(plan),
     )
     assert len(summary["fold_evidence"]) == 27
     assert summary["outer_test_status"] == "sealed"
@@ -150,9 +168,7 @@ def test_external_fit_on_calibration_subject_is_rejected(snapshot, tmp_path, mon
             path,
             tmp_path / "rejected",
             PROTOCOL,
-            agreed_fold_sha256=document_sha256(plan),
-            split_created_at=datetime.now(UTC),
-            shared_protocol_sha256="c" * 64,
+            clinical=clinical(plan),
             external_by_inner={0: features, 1: features, 2: features},
         )
 
@@ -175,8 +191,6 @@ def test_partial_external_fold_candidates_do_not_pool_incompatible_features(
             path,
             tmp_path / "rejected",
             PROTOCOL,
-            agreed_fold_sha256=document_sha256(plan),
-            split_created_at=datetime.now(UTC),
-            shared_protocol_sha256="c" * 64,
+            clinical=clinical(plan),
             external_by_inner={0: features},
         )

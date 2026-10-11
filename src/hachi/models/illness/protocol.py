@@ -9,6 +9,8 @@ from pydantic import Field, model_validator
 from hachi.contracts.base import Contract, Sha256
 from hachi.evaluation.folds import NestedFoldConfig
 from hachi.evaluation.serialization import document_sha256
+from hachi.models.baselines.robust import RobustConfig
+from hachi.models.baselines.stanford.rest import StanfordRestPolicy
 
 type Candidate = Literal["prevalence", "logistic", "tree"]
 
@@ -29,6 +31,10 @@ class Protocol(Contract):
     seed: int
     calibration_fraction: Annotated[float, Field(gt=0, lt=1)]
     feature_lookback_days: Annotated[int, Field(gt=0)]
+    feature_families: list[Literal["survey-history-control", "nightly-rest", "anomaly-derived"]]
+    external_max_age_hours: Literal[24]
+    rest: StanfordRestPolicy
+    robust: RobustConfig
     candidate_order: list[Candidate]
     logistic_c: Annotated[float, Field(gt=0)]
     tree_max_depth: Annotated[int, Field(gt=0)]
@@ -46,6 +52,10 @@ class Protocol(Contract):
     def _choices(self):
         if self.horizons_hours != [24, 48, 72]:
             raise ValueError("primary horizons must be 24/48/72")
+        if self.feature_families != ["survey-history-control", "nightly-rest", "anomaly-derived"]:
+            raise ValueError("feature-family comparison order must be frozen")
+        if self.rest.step_timestamp != "both" or self.rest.min_rest_minutes != 30:
+            raise ValueError("primary rest policy must support both edges and 30 quiet minutes")
         if self.candidate_order != ["prevalence", "logistic", "tree"]:
             raise ValueError("primary candidate complexity order must be frozen")
         return self

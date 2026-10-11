@@ -87,6 +87,8 @@ def fit(
     fit_subjects, calibration_subjects = calibration_partition(train_subjects, protocol)
     fit_rows = [r for r in rows if r.subject_id in fit_subjects]
     calibration_rows = [r for r in rows if r.subject_id in calibration_subjects]
+    if len({r.subject_id for r in fit_rows}) < protocol.min_train_subjects:
+        return None, "insufficient_labeled_fit_participants"
     if {r.positive for r in fit_rows} != {False, True}:
         return None, "fit_cohort_lacks_both_outcome_classes"
     if {r.positive for r in calibration_rows} != {False, True}:

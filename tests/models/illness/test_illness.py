@@ -61,8 +61,8 @@ def test_external_backdated_late_and_stale_values_are_withheld():
             values=(999.0,),
         ),
     ]
-    assert external_at(points, CUTOFF, 7) == (2.0,)
-    assert external_at(points, CUTOFF + timedelta(days=10), 7) is None
+    assert external_at(points, CUTOFF, 24) == (2.0,)
+    assert external_at(points, CUTOFF + timedelta(days=10), 24) is None
     with pytest.raises(ValueError, match="duplicate feature points"):
         FeatureSet(
             feature_names=("x",),
