@@ -19,7 +19,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ValidationError
 from starlette.exceptions import HTTPException
 
-from hachi.contracts.api import ApiError, Coverage, HealthStatus, ImportStatus, ReportJob
+from hachi.contracts.api import (
+    ApiError,
+    Coverage,
+    HealthStatus,
+    ImportStatus,
+    ReportJob,
+    SelfReportHistory,
+)
 from hachi.contracts.requests import ReportRequest, ScenarioRequest, SelfReportRequest
 from hachi.contracts.results import ReportResult
 from hachi.storage import Metadata, is_name, private_directory
@@ -237,6 +244,11 @@ def create_app(
         body = parse_body(SelfReportRequest, await _json_body(request))
         stored, created = service(request).add_self_reports(subject, body)
         return _json(stored, 201 if created else 200)
+
+    @app.get("/v1/subjects/{subject_id}/observations", responses=documented(SelfReportHistory))
+    def get_observations(subject_id: str, request: Request) -> Response:
+        subject = path_id(subject_id, "subject_id", subject=True)
+        return _json(service(request).self_report_history(subject))
 
     @app.post("/v1/scenarios", responses=documented(ReportResult))
     async def run_scenario(request: Request) -> Response:

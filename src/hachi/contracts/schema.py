@@ -12,7 +12,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from pydantic.json_schema import GenerateJsonSchema, models_json_schema
 
-from .api import ApiError, Coverage, HealthStatus, ImportStatus, ReportJob
+from .api import ApiError, Coverage, HealthStatus, ImportStatus, ReportJob, SelfReportHistory
 from .base import SCHEMA_VERSION
 from .manifests import RunManifest, SplitManifest
 from .requests import ReportRequest, ScenarioRequest, SelfReportRequest
@@ -28,6 +28,7 @@ DOCUMENTS: tuple[type[BaseModel], ...] = (
     ReportRequest,
     ScenarioRequest,
     SelfReportRequest,
+    SelfReportHistory,
     ReportJob,
     ReportResult,
     ImportStatus,
