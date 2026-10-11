@@ -1,0 +1,58 @@
+{
+  "git_sha": "a7dcb49a23c996209d29332a4bd427811895443a",
+  "data_mode": "synthetic",
+  "api_calls": 0,
+  "served_index_matches_build": true,
+  "dist_index_sha256": "d54cf6cca20c1e2b559387a60af192d4644bc0c2701f49ab230c05d4901dfb08",
+  "js_asset": "index-BU39ero7.js",
+  "css_asset": "index-Bl-FwoHF.css",
+  "node": "26.3.1",
+  "npm": "11.16.0",
+  "web_port": 5180,
+  "process_pid": 10997,
+  "api_process_pid": 8721,
+  "api_exec_session": 73157,
+  "web_exec_session": 13106,
+  "t3_tab": "tab_2_59316b9b-7649-4515-a3ca-58df7593fb55",
+  "recorded_at_utc": "2026-10-11T12:02:18.386867+00:00",
+  "screenshots": {
+    "synthetic-phone.png": "8595550f9d567b0abb6652e6b1e08997eff6056a59940981628ff02fd8cddfb9",
+    "synthetic-desktop.png": "684f95475a1e0cae7a7f4d7466589cc5a3988f005dce97d947d20c4e2a4e2919"
+  },
+  "actions": [
+    "Load synthetic history",
+    "I have reviewed the coverage",
+    "Select latest fixture UTC cutoff",
+    "Request synthetic report",
+    "Open forecast",
+    "Open exact-value table",
+    "Inspect 1280x1200 screenshot",
+    "Inspect 390x844 screenshot"
+  ],
+  "chart_table_check": {
+    "points": 6,
+    "table_rows": 6,
+    "mismatches": 0,
+    "illustrative_interval_lines": 6,
+    "unit": "bpm"
+  },
+  "mobile": {
+    "viewport_width": 390,
+    "body_scroll_width": 390,
+    "chart_client_width": 351,
+    "chart_scroll_width": 600,
+    "table_client_width": 351,
+    "table_scroll_width": 424
+  },
+  "limits": [
+    "Fixture workflow only; no actual UI/API inference",
+    "No claim of real-chart point-only band verification",
+    "No offline replay",
+    "Keyboard/errors/checkins/sleep UI not exercised in this narrow fixture run"
+  ],
+  "cleanup": {
+    "tab_closed": true,
+    "viewport_reset": true,
+    "owned_services_stopped": true
+  }
+}
