@@ -4,8 +4,14 @@ from datetime import UTC, datetime, timedelta
 import pyarrow as pa
 import pytest
 
+pytest.importorskip("numpy", reason="thinning requires the optional baselines extra")
+
 from hachi.models.density.config import REPO, load_variant
-from hachi.models.density.thinning import ThinningRule, hourly_from_samples, thin_samples
+from hachi.models.density.thinning import (
+    ThinningRule,
+    hourly_from_samples,
+    thin_samples,
+)
 
 RULE = ThinningRule(slot_seconds=300, pipeline_suffix="thin300s")
 T0 = datetime(2020, 1, 1, tzinfo=UTC)
