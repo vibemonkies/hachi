@@ -9,6 +9,7 @@ import pytest
 pytest.importorskip("fastapi")
 from hachi.api.gpu import (
     LOCAL_INFERENCE,
+    GpuCleanupFailed,
     GpuOutputRejected,
     GpuUnavailable,
     SshTransport,
@@ -77,7 +78,7 @@ def test_gpu_identity_mismatch_refuses_output_without_echo(mutation):
 
 @pytest.mark.parametrize("cleanup_failure", [False, True])
 def test_remote_artifacts_are_outside_subject_erasure_inventory(cleanup_failure):
-    """Bind the documented personal-GPU gate to observed transport retention behavior."""
+    """Remote request and output files never outlive a request; failed removal is surfaced."""
     from hachi.api.gpu import Gx10Target, chronos_quantiles
 
     class Remote:
@@ -124,10 +125,15 @@ def test_remote_artifacts_are_outside_subject_erasure_inventory(cleanup_failure)
 
     remote = Remote()
     target = Gx10Target(transport=remote, owner="privacy-test", checkout="/generated")
-    result = chronos_quantiles(
-        target, PIN, {"request_id": "generated", "context": [70], "prediction_length": 1}
-    )
-    assert result.rows == ((65, 70, 75),)
-    assert any("api-requests" in path for path in remote.files) == cleanup_failure
+    row = {"request_id": "generated", "context": [70], "prediction_length": 1}
+    if not cleanup_failure:
+        result = chronos_quantiles(target, PIN, row)
+        assert result.rows == ((65, 70, 75),)
+        assert remote.files == {}  # request, predictions and evidence are all removed
+        return
+    # A failed removal is surfaced and the forecast withheld; the remote error is not echoed.
+    with pytest.raises(GpuCleanupFailed) as error:
+        chronos_quantiles(target, PIN, row)
+    assert SENTINEL not in str(error.value)
     outputs = {path.rsplit("/", 1)[-1] for path in remote.files if "/runs/" in path}
-    assert outputs == {"predictions.jsonl", "inference.json"}
+    assert outputs == {"predictions.jsonl", "inference.json"}  # still there, and reported

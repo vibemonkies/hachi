@@ -13,9 +13,13 @@ back `inference.json` and `predictions.jsonl`, and verifies before anything is u
 A busy GPU (gpu-run exit 75), an unreachable host or a failed job is `GpuUnavailable`; a
 job past its deadline is `GpuTimeout`; output that fails verification is
 `GpuOutputRejected`. Nothing is ever guessed in their place.
+
+Nothing derived from the request outlives it on the GX10: the request file and the run's
+`predictions.jsonl` and `inference.json` are removed after every job, successful or not.
+If any removal fails the forecast is not used (`GpuCleanupFailed`); failures are never
+suppressed. The supervisor's own `job.json` and `output.log` hold no request content.
 """
 
-import contextlib
 import hashlib
 import json
 import secrets
@@ -49,6 +53,10 @@ class GpuTimeout(RuntimeError):
 
 class GpuOutputRejected(RuntimeError):
     """The job's output failed identity or integrity checks."""
+
+
+class GpuCleanupFailed(GpuOutputRejected):
+    """Request or prediction files could not be removed from the GX10."""
 
 
 class Transport(Protocol):
@@ -172,7 +180,9 @@ def chronos_quantiles(target: Gx10Target, pin: ChronosModelPin, row: dict) -> Qu
         "--latency-samples",
         "0",
     ]
+    outputs = (f"{run_dir}/predictions.jsonl", f"{run_dir}/inference.json")
     target.transport.write(request_path, request_bytes)
+    failure: Exception | None = None
     try:
         code = target.transport.run(command, target.checkout, target.timeout_seconds)
         if code == GPU_BUSY:
@@ -183,12 +193,21 @@ def chronos_quantiles(target: Gx10Target, pin: ChronosModelPin, row: dict) -> Qu
             raise GpuTimeout("the GPU job did not finish in time (queue wait included)")
         if code != 0:
             raise GpuUnavailable(f"the GX10 job failed (exit {code})")
-        evidence_bytes = target.transport.read(f"{run_dir}/inference.json")
-        predictions = target.transport.read(f"{run_dir}/predictions.jsonl")
-    finally:
-        # The request file is private to the owner workspace even if this cleanup fails.
-        with contextlib.suppress(GpuUnavailable, GpuTimeout):
-            target.transport.remove(request_path)
+        predictions = target.transport.read(outputs[0])
+        evidence_bytes = target.transport.read(outputs[1])
+    except (GpuUnavailable, GpuTimeout) as exc:
+        failure = exc
+    # Remove everything this request put on the GX10, whatever happened above.
+    stuck = []
+    for path in (request_path, *outputs):
+        try:
+            target.transport.remove(path)
+        except (GpuUnavailable, GpuTimeout):
+            stuck.append(path.rsplit("/", 1)[-1])
+    if stuck:
+        raise GpuCleanupFailed(f"could not remove {', '.join(stuck)} from the GX10") from failure
+    if failure is not None:
+        raise failure
     return _verified(evidence_bytes, predictions, request_bytes, row, pin, run_id)
 
 
