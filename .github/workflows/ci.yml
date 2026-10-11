@@ -26,4 +26,5 @@ jobs:
       - run: uv run --locked --extra baselines pytest tests/models
       - run: uv run --locked --extra api pytest tests/api tests/privacy
       - run: uv run --locked --extra api python scripts/privacy/verify_http.py
+      - run: uv run --locked --extra api python scripts/privacy/verify_corrections.py
       - run: uv run --locked python scripts/privacy/scan.py --assets infra/demo

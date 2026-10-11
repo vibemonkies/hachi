@@ -133,6 +133,47 @@ uv run --extra api python -I -m hachi.api stage-artifact \
   --protocol RUN/protocol.json --artifact-root "$HACHI_ARTIFACT_ROOT"
 ```
 
+## Apple Health imports
+
+An Apple import has no PMData aggregates. A served hourly-feature artifact reaches it only when
+its serving profile **explicitly admits** the source:
+
+```json
+"accepted_sources": [
+  {
+    "source": "apple_health",
+    "feature_policy": {
+      "metric": "heart_rate",
+      "aggregation": "mean",
+      "min_coverage": 0.5,
+      "min_observed_count": 30,
+      "availability_rule": "apple-hour-end-sealed-native-v1"
+    },
+    "rationale": "why this transfer is accepted"
+  }
+]
+```
+
+`stage-artifact --protocol … --admit-apple "<rationale>"` writes it, copying the model's own
+metric, aggregation and gates. The admission must use #78's sealed Apple readiness rule; a
+PMData rule is never stamped onto Apple bins.
+
+An admitted Apple subject is fed by `hachi.data.apple_health.hourly.apple_hourly_features`
+over the model's lookback, and then forecast as usual. Results carry a `DEVICE_SHIFT` warning
+naming the evaluated dataset and the admission's rationale. **Admission is a transfer
+decision, not validation.**
+
+Without an admission, an Apple subject gets `unavailable` / `NO_ARTIFACT_FOR_TASK`, with a
+requirement naming the dataset the served models were evaluated on.
+
+Typical 5-minute Apple Watch HR fills about 12 minutes an hour, so it abstains at a 0.5
+minute-density / 30-sample gate (`INSUFFICIENT_HISTORY`). Lowering those gates changes the
+model's input semantics and belongs to the model owner.
+
+The sealed-hour replay re-reads the import once per lookback hour, so its cost grows with
+history length times lookback (see the #78 README). It runs inside the report job, never in
+the request.
+
 ## GPU models (Chronos-2)
 
 A Chronos-2 artifact from #10/#12 is staged like a baseline. `stage-artifact --protocol` sees the
