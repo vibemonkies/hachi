@@ -122,9 +122,7 @@ def main():
         "definition": "candidate minus baseline, equal participant paired differences",
         "comparisons": {},
         "private_packet_refs": refs,
-        "promotion": (
-            "none; paired error is conditional on joint coverage; inner validation only"
-        ),
+        "promotion": ("none; paired error is conditional on joint coverage; inner validation only"),
     }
     for name, rows in sorted(differences.items()):
         if len({r.subject_id for r in rows}) != len(rows):
