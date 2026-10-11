@@ -12,17 +12,17 @@ from pathlib import Path
 from time import perf_counter
 from typing import Annotated, Literal
 
-from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
 from pydantic import Field
 
 from hachi.contracts.base import SCHEMA_VERSION, Contract, Sha256
 from hachi.contracts.manifests import ModelRef, RunManifest, SplitManifest
 from hachi.data.clinical import dataset_snapshot_ref
+from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
 from hachi.evaluation.serialization import document_sha256
 
 from .artifacts import RecoveryArtifact, load_artifact, save_artifact, source_hashes, write_private
 from .clinical import ENDPOINT, FEATURES, landmarks
-from .evaluation import calibration, compare, supported_horizon
+from .evaluation import calibration, compare, summarize_scores, supported_horizon
 from .survival import fit_survival
 
 
@@ -107,7 +107,12 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
         "production_prediction": "unavailable",
         "folds": [],
     }
+    pooled_scores: list[dict] = []
+    validation_people: set[str] = set()
     for fold in active:
+        if validation_people.intersection(fold.validation_subjects):
+            raise ValueError("inner validation participants are duplicated")
+        validation_people.update(fold.validation_subjects)
         train_landmarks, train_audit = landmarks(snapshot, fold.train_subjects)
         validation_landmarks, validation_audit = landmarks(snapshot, fold.validation_subjects)
         train = [r.observation for r in train_landmarks]
@@ -155,6 +160,7 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
             seed=folds_config.seed,
         )
         fold_report["comparison"] = metrics
+        pooled_scores.extend(paired)
         fold_report["calibration"] = {
             name: [
                 calibration(
@@ -253,6 +259,10 @@ def run(snapshot: Path, config: Path, output: Path, repo: Path) -> dict:
         fold_report["artifact"] = artifact_ref.model_dump(mode="json")
         fold_report["run_sha256"] = document_sha256(run_manifest)
         fold_report["split_sha256"] = document_sha256(split)
+    receipt["pooled_comparison"] = summarize_scores(
+        pooled_scores, bootstrap=protocol.bootstrap_replicates, seed=folds_config.seed
+    )
+    receipt["pooled_comparison"]["horizon_days"] = protocol.primary_horizon_days
     receipt["elapsed_seconds"] = round(perf_counter() - started, 3)
     receipt["limitations"] = [
         "Small evaluation-sized cohort; inadequate training/clinical follow-up remains a gate.",
@@ -283,7 +293,26 @@ def main() -> None:
         parser.exit(
             1, "Recovery run failed; inspect protocol/snapshot/source prerequisites privately.\n"
         )
-    print(json.dumps(receipt, indent=2, allow_nan=False))
+    print(
+        json.dumps(
+            {
+                k: receipt[k]
+                for k in (
+                    "git_sha",
+                    "git_dirty",
+                    "snapshot_sha256",
+                    "config_sha256",
+                    "fold_plan_sha256",
+                    "readiness",
+                    "outer_test_opened",
+                    "pooled_comparison",
+                    "elapsed_seconds",
+                )
+            },
+            indent=2,
+            allow_nan=False,
+        )
+    )
 
 
 if __name__ == "__main__":

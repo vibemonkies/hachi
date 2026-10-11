@@ -109,6 +109,14 @@ def compare(
                 "conditional_nll": -log_probability(conditional, limited),
             }
         )
+    result = summarize_scores(paired, bootstrap=bootstrap, seed=seed)
+    result["excluded_no_information_at_horizon"] = len(rows) - len(paired)
+    result["horizon_days"] = horizon
+    return result, paired
+
+
+def summarize_scores(paired: list[dict], *, bootstrap: int, seed: int) -> dict:
+    """Pool disjoint inner validation people, preserving episode clusters."""
     by_subject: dict[str, list[dict]] = defaultdict(list)
     for row in paired:
         by_subject[row["subject"]].append(row)
@@ -121,8 +129,6 @@ def compare(
     result = {
         "episodes": len(paired),
         "subjects": len(subjects),
-        "excluded_no_information_at_horizon": len(rows) - len(paired),
-        "horizon_days": horizon,
         "bootstrap_replicates": bootstrap,
         "uncertainty": "participant cluster percentile; fitted models/split fixed",
         "baseline_mean_nll": sum(r["baseline_nll"] for r in paired) / len(paired)
@@ -133,4 +139,9 @@ def compare(
         else None,
         "conditional_minus_baseline_nll_ci95": _interval(samples),
     }
-    return result, paired
+    result["conditional_minus_baseline_mean_nll"] = (
+        sum(r["conditional_nll"] - r["baseline_nll"] for r in paired) / len(paired)
+        if paired
+        else None
+    )
+    return result
