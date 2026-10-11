@@ -3,6 +3,7 @@ import json
 import pytest
 
 from hachi.models.recovery.artifacts import RecoveryArtifact, load_artifact, save_artifact
+from hachi.models.recovery.cohorts import CMU
 from hachi.models.recovery.survival import SurvivalModel
 
 
@@ -25,3 +26,15 @@ def test_private_artifact_parity_abstention_and_tamper(tmp_path):
     p.write_text(json.dumps(document))
     with pytest.raises(ValueError, match="checksum"):
         load_artifact(root, ref)
+
+
+def test_cmu_artifact_keeps_native_schema_and_short_support(tmp_path):
+    model = SurvivalModel((-2.0, 0.0, 0.1), (3.0,), (1.0,), True, 3, True, 1)
+    artifact = RecoveryArtifact(model, CMU)
+    root = tmp_path / "cmu"
+    loaded = load_artifact(root, save_artifact(root, artifact, "synthetic-cmu"))
+    assert loaded.cohort == CMU
+    assert loaded.feature_order == ("jackson_adjusted",)
+    assert loaded.research_payload("synthetic-episode", (4.0,)).supported_follow_up_days == 3
+    with pytest.raises(ValueError, match="native"):
+        loaded.research_payload("synthetic-episode", (1.0, 2.0, 3.0))

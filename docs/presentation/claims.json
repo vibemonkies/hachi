@@ -66,14 +66,14 @@
     },
     "illness": {
       "path": "reports/models/illness/phase1.json",
-      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
-      "sha256": "8f12966fd2fc1d7e69253dafcf1b6bdc5757f3edbb70f71616cd03e72fe33788",
+      "commit": "65091ea619d367cef74a77504b744fca9d7875ef",
+      "sha256": "6e3ab0b2c25629845be5890e947eaab4f7f8f6fb8eed46061fbca50c96fe5519",
       "scope": "Selected retrospective cohort development, survey-observation selection; no validated product probabilities."
     },
     "illness-report": {
       "path": "reports/models/illness/phase1.md",
-      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
-      "sha256": "04eeea9371f4f35ec449e422e42a7569aa434a36b725b86041ef2feb77f0a848",
+      "commit": "65091ea619d367cef74a77504b744fca9d7875ef",
+      "sha256": "fd3aef86555534e6b55f9c279bd4ee35d6d146ec476163cb705ab0549de959e3",
       "scope": "Research-only ablation and remaining calibration/negative-cohort/feature/final-selection gates."
     },
     "illness-replay": {
@@ -102,14 +102,14 @@
     },
     "rehearsal-report": {
       "path": "reports/verification/app-rehearsal/README.md",
-      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
-      "sha256": "7e1f80990a8c018189e63a29f13fb4dd40c985eb41ca3e3549f32b247ac99421",
+      "commit": "155b1aae6e9960cb2e017865f1f3195360e29af7",
+      "sha256": "12ebd8fcb51460030d792a826f82070f741c9ed836720259ac0df5b4daeea5db",
       "scope": "Current versus historical replay receipts; missing #17/#20/#21/full #22 gates."
     },
     "runbook": {
       "path": "scripts/rehearsal/README.md",
-      "commit": "7db3baafcf0f8a0c3f615c69443a102b58dc4eee",
-      "sha256": "a2fc3af5ff637cf1f8661d310e8a95fb97f044ad673a4c8cf19731b170fda607",
+      "commit": "155b1aae6e9960cb2e017865f1f3195360e29af7",
+      "sha256": "65ff8c00936d9436a0bcb7d4d30151e249bcca170b7107de3733024fbc8b4f10",
       "scope": "Source runbook; commands are future rehearsal instructions, not execution proof."
     },
     "privacy-report": {

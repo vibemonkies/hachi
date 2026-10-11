@@ -1,0 +1,135 @@
+{
+  "amendment": {
+    "amends_path": "configs/evaluation/pmdata-hourly-validation-apple-density.json",
+    "amends_sha256": "a5bd17c20c1956d7e98f0b2758f1e0323c18969e74d08609232ccdfdd083aa43",
+    "reason": "BoldHorizon (hachi-issue-16): the original variant expressed coverage as the share of 5-minute slots holding a sample (12/12 = 1.0 at full 5-minute cadence), while served Apple features report distinct sampled minutes / 60 (12/60 = 0.2), so its coverage gate was not transferable. Declared after the original variant had been scored; it changes the coverage denominator only. Under thinning, minute coverage >= 0.10 holds exactly when the slot rule did, so the admitted hours are identical and no gate is chosen from scores. Evidence about cadence only: not a real Apple device, wear or physiology validation."
+  },
+  "base_protocol": {
+    "path": "configs/evaluation/pmdata-hourly-validation.json",
+    "sha256": "d7bca15083b6496ce4d913ad8cdcf67b2875e284e68a6b578a55e1188ddd6b6a"
+  },
+  "thinning": {
+    "metric": "heart_rate",
+    "slot_seconds": 300,
+    "keep": "earliest_start_per_utc_slot",
+    "pipeline_suffix": "thin300s-applemin",
+    "coverage": "distinct_sampled_minutes_per_60"
+  },
+  "density_gate": {
+    "min_observed_count": 6,
+    "min_coverage": 0.1,
+    "justification": "Coverage is computed exactly as the Apple serving helper does (hachi.data.apple_health.hourly, rule apple-hour-end-sealed-native-v1): distinct sampled start minutes / 60, with a bin null only when empty. At 5-minute cadence an hour holds at most 12 samples, so coverage is at most 0.2 and every typical Apple hour reports 0.2. The frozen protocol admits an hour with >= 30 covered minutes; under 5-minute thinning those span >= 6 slots, i.e. >= 6 distinct sampled minutes: coverage >= 0.10 with >= 6 samples is the frozen rule at this cadence in the Apple helper's own denominator. The audit confirms it: all 46,406 frozen-admitted hours keep coverage >= 0.10 (min 0.10, p01 0.133, median 0.20); coverage >= 0.15 would drop 1.1% of them with no structural basis."
+  },
+  "density_audit": {
+    "coverage_definition": "distinct sampled start minutes / 60 (Apple helper)",
+    "computed_before_amended_scoring": true,
+    "samples": 20985494,
+    "kept_samples": 556943,
+    "hourly_bins": 54999,
+    "frozen_admitted_hours": 46406,
+    "distinct_sampled_minutes_equal_kept_count": true,
+    "minute_coverage_in_frozen_admitted_hours": {
+      "min": 0.1,
+      "p01": 0.1333,
+      "p05": 0.2,
+      "median": 0.2,
+      "max": 0.2
+    },
+    "share_of_frozen_admitted_hours_with_minute_coverage_at_least": {
+      "0.10": 1.0,
+      "0.1167": 0.9952,
+      "0.1333": 0.9952,
+      "0.15": 0.989,
+      "0.1667": 0.9732,
+      "0.20": 0.9619
+    },
+    "thinned_hours_admitted": {
+      "coverage_0.10_count_6": 46674,
+      "coverage_0.15_count_6": 45897
+    },
+    "same_inclusion_as_amended_variant": true
+  },
+  "protocol": {
+    "split_created_at_utc": "2026-10-11T10:55:00Z",
+    "expected_snapshot": {
+      "dataset_id": "pmdata",
+      "dataset_version": "simula-2020-04-24",
+      "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+    },
+    "folds": {
+      "outer_folds": 4,
+      "inner_folds": 3,
+      "min_train_subjects": 4,
+      "seed": 42
+    },
+    "active_outer_fold": 0,
+    "feature_policy": {
+      "metric": "heart_rate",
+      "aggregation": "mean",
+      "min_coverage": 0.1,
+      "min_observed_count": 6,
+      "availability_rule": "pmdata-aggregate-final-at-latest-input"
+    },
+    "evaluation": {
+      "data_mode": "real",
+      "metric": "heart_rate",
+      "aggregation": "mean",
+      "history_policy": "causal_prefix",
+      "pretrained_cohort_overlap": "not_applicable",
+      "overlap_note": "Native CPU comparators; new-person validation with explicitly permitted personal history. PMData clock mapping and historical availability are documented assumptions, not observed synchronization.",
+      "bootstrap_samples": 1000,
+      "confidence": 0.95,
+      "min_target_coverage": 0.5,
+      "min_target_observed_count": 30
+    },
+    "evaluation_window": {
+      "start_utc": "2020-01-01T00:00:00Z",
+      "end_utc": "2020-01-08T00:00:00Z"
+    },
+    "lookback_hours": 48,
+    "min_history_hours": 24,
+    "horizon_hours": 24,
+    "cutoff_stride_hours": 24,
+    "embargo_hours": 0,
+    "baselines": [
+      {
+        "method": "last_valid",
+        "metric": "heart_rate",
+        "aggregation": "mean",
+        "max_age_hours": 48,
+        "seasonal_period_hours": 24,
+        "min_samples_per_hour": 6
+      },
+      {
+        "method": "seasonal_naive",
+        "metric": "heart_rate",
+        "aggregation": "mean",
+        "max_age_hours": 48,
+        "seasonal_period_hours": 24,
+        "min_samples_per_hour": 6
+      },
+      {
+        "method": "train_population_mean",
+        "metric": "heart_rate",
+        "aggregation": "mean",
+        "max_age_hours": 48,
+        "seasonal_period_hours": 24,
+        "min_samples_per_hour": 6
+      }
+    ],
+    "tree": {
+      "metric": "heart_rate",
+      "aggregation": "mean",
+      "lookback_hours": 48,
+      "min_history_hours": 24,
+      "min_samples_per_hour": 6,
+      "max_age_hours": 2,
+      "max_lead_hours": 23,
+      "max_depth": 5,
+      "min_samples_leaf": 20,
+      "min_training_examples": 100,
+      "seed": 42
+    },
+    "exclusions": []
+  }
+}

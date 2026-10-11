@@ -1,0 +1,2743 @@
+{
+  "ablations": [
+    {
+      "ablation": "channel: past steps",
+      "evidence": {
+        "abstention_share": 0.0,
+        "candidate": "chronos-2-zero-shot-steps",
+        "coverage": {
+          "confidence_interval": [
+            0.7972972737207175,
+            0.8617033844958373
+          ],
+          "participants": 12,
+          "value": 0.8296320626688072
+        },
+        "incumbent": "chronos-2-zero-shot",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": 0.02337377539661247,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.019415562854609637,
+            0.04067489212551719
+          ],
+          "participants": 12,
+          "value": 0.010601277501945653
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -0.06994370305381109,
+            0.1372006045912285
+          ],
+          "participants": 12,
+          "value": 0.027628775236359832
+        },
+        "paired_points": 1599,
+        "peak_memory_bytes": 1676615680
+      }
+    },
+    {
+      "ablation": "context: 168 h",
+      "evidence": {
+        "abstention_share": 0.0,
+        "candidate": "chronos-2-zero-shot-ctx168",
+        "coverage": {
+          "confidence_interval": [
+            0.7753130518136855,
+            0.8190773214839063
+          ],
+          "participants": 12,
+          "value": 0.7978454311841103
+        },
+        "incumbent": "chronos-2-zero-shot",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": 0.02337377539661247,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.39964186472224833,
+            -0.008412861217566599
+          ],
+          "participants": 12,
+          "value": -0.21334788905248572
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -0.9913796153818093,
+            -0.03941584902086993
+          ],
+          "participants": 12,
+          "value": -0.5462794771197871
+        },
+        "paired_points": 1599,
+        "peak_memory_bytes": 1676615680
+      }
+    },
+    {
+      "ablation": "context: 720 h",
+      "evidence": {
+        "abstention_share": 0.0,
+        "candidate": "chronos-2-zero-shot-ctx720",
+        "coverage": {
+          "confidence_interval": [
+            0.7450790702287571,
+            0.8105604056411061
+          ],
+          "participants": 12,
+          "value": 0.7820733249081157
+        },
+        "incumbent": "chronos-2-zero-shot",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": 0.02337377539661247,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.5890520454187737,
+            -0.1566359482747855
+          ],
+          "participants": 12,
+          "value": -0.3792219454067389
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -1.3786139395091612,
+            -0.34972678957746994
+          ],
+          "participants": 12,
+          "value": -0.887566968742326
+        },
+        "paired_points": 1599,
+        "peak_memory_bytes": 1676615680
+      }
+    },
+    {
+      "ablation": "representation: Chronos embedding vs handcrafted",
+      "evidence": {
+        "abstention_share": 0.0,
+        "candidate": "chronos-2-embedding-ridge",
+        "coverage": {
+          "confidence_interval": [
+            0.727205200220969,
+            0.8364672561479749
+          ],
+          "participants": 12,
+          "value": 0.7839296116548568
+        },
+        "incumbent": "handcrafted-ridge-personal",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": 0.015067375999751675,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.6758913614956925,
+            0.12447096133348905
+          ],
+          "participants": 12,
+          "value": -0.22296402097430043
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -1.36369058318881,
+            0.27200563476455053
+          ],
+          "participants": 12,
+          "value": -0.44592804194860086
+        },
+        "paired_points": 1599,
+        "peak_memory_bytes": 1741271040
+      }
+    },
+    {
+      "ablation": "personalization: personal history vs population only",
+      "evidence": {
+        "abstention_share": 0.0,
+        "candidate": "handcrafted-ridge-personal",
+        "coverage": {
+          "confidence_interval": [
+            0.7386427755564492,
+            0.8363405908015259
+          ],
+          "participants": 12,
+          "value": 0.7873157695672751
+        },
+        "incumbent": "handcrafted-ridge-population",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": 0.00027387499994802056,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -1.524387946872464,
+            -0.4584796523304577
+          ],
+          "participants": 12,
+          "value": -0.9639325269929246
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -2.9818748535082658,
+            -0.9368528314543035
+          ],
+          "participants": 12,
+          "value": -1.9278650539858493
+        },
+        "paired_points": 1599,
+        "peak_memory_bytes": 636682240
+      }
+    },
+    {
+      "ablation": "adaptation: fine-tuned vs zero-shot (same context)",
+      "evidence": {
+        "abstention_share": 0.0,
+        "candidate": "chronos-2-finetuned",
+        "coverage": {
+          "confidence_interval": [
+            0.7304656955383555,
+            0.8013564516571429
+          ],
+          "participants": 12,
+          "value": 0.7665630962710189
+        },
+        "incumbent": "chronos-2-zero-shot-ctx720",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": 0.0154182802507421,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.05074913671981211,
+            0.13037977788725097
+          ],
+          "participants": 12,
+          "value": 0.030294679875627728
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -0.1438925511998738,
+            0.22805644197502714
+          ],
+          "participants": 12,
+          "value": 0.027241326962173778
+        },
+        "paired_points": 1599,
+        "peak_memory_bytes": 2405924864
+      }
+    },
+    {
+      "ablation": "combination: stacked vs equal weight",
+      "evidence": {
+        "abstention_share": 0.0,
+        "candidate": "ensemble-stacked",
+        "coverage": {
+          "confidence_interval": [
+            0.7623819751776305,
+            0.8159229873698021
+          ],
+          "participants": 12,
+          "value": 0.7919814877622331
+        },
+        "incumbent": "ensemble-equal-weight",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": 0.11227093458655872,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.6085330173550931,
+            -0.4047328618262955
+          ],
+          "participants": 12,
+          "value": -0.5068494476469882
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -0.827524799187445,
+            -0.37920271170287423
+          ],
+          "participants": 12,
+          "value": -0.5928001759803961
+        },
+        "paired_points": 1599,
+        "peak_memory_bytes": 1741271040
+      }
+    },
+    {
+      "ablation": "combination: stacked vs Chronos-2 zero-shot",
+      "evidence": {
+        "abstention_share": 0.0,
+        "candidate": "ensemble-stacked",
+        "coverage": {
+          "confidence_interval": [
+            0.7623819751776305,
+            0.8159229873698021
+          ],
+          "participants": 12,
+          "value": 0.7919814877622331
+        },
+        "incumbent": "chronos-2-zero-shot",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": 0.11227093458655872,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.5668676591433545,
+            -0.17604095793430602
+          ],
+          "participants": 12,
+          "value": -0.3742681161661409
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -1.3836718210909789,
+            -0.3765412263589326
+          ],
+          "participants": 12,
+          "value": -0.9023724719199294
+        },
+        "paired_points": 1599,
+        "peak_memory_bytes": 1741271040
+      }
+    },
+    {
+      "ablation": "representation: frozen WBM on #11's head",
+      "evidence": {
+        "abstention_share": 0.07379612257661038,
+        "candidate": "issue11-ridge-handcrafted-wbm",
+        "coverage": null,
+        "incumbent": "issue11-ridge-handcrafted",
+        "incumbent_abstention_share": 0.07379612257661038,
+        "latency_p95_seconds": null,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.21024190843327012,
+            0.45601298709748433
+          ],
+          "participants": 12,
+          "value": 0.11119723022066423
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -0.4563527505702949,
+            0.9597640846711268
+          ],
+          "participants": 12,
+          "value": 0.22239446044132816
+        },
+        "paired_points": 1481,
+        "peak_memory_bytes": null
+      }
+    },
+    {
+      "ablation": "representation: frozen MOMENT on #11's head",
+      "evidence": {
+        "abstention_share": 0.07379612257661038,
+        "candidate": "issue11-ridge-handcrafted-moment",
+        "coverage": null,
+        "incumbent": "issue11-ridge-handcrafted",
+        "incumbent_abstention_share": 0.07379612257661038,
+        "latency_p95_seconds": null,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.04701777300539454,
+            0.5563662000457056
+          ],
+          "participants": 12,
+          "value": 0.26488420917574695
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -0.07876282976520244,
+            1.0833571722285238
+          ],
+          "participants": 12,
+          "value": 0.5297684183514939
+        },
+        "paired_points": 1481,
+        "peak_memory_bytes": null
+      }
+    },
+    {
+      "ablation": "representation: #11 handcrafted ridge vs #12 handcrafted ridge",
+      "evidence": {
+        "abstention_share": 0.07379612257661038,
+        "candidate": "issue11-ridge-handcrafted",
+        "coverage": null,
+        "incumbent": "handcrafted-ridge-personal",
+        "incumbent_abstention_share": 0.0,
+        "latency_p95_seconds": null,
+        "paired_decile_loss": {
+          "confidence_interval": [
+            -0.04911759008194934,
+            0.22527286366493232
+          ],
+          "participants": 12,
+          "value": 0.08943702110541023
+        },
+        "paired_mae": {
+          "confidence_interval": [
+            -0.08862335668713991,
+            0.46973222111235996
+          ],
+          "participants": 12,
+          "value": 0.17887404221082046
+        },
+        "paired_points": 1481,
+        "peak_memory_bytes": null
+      }
+    }
+  ],
+  "adaptation_sha256": "5a3078a44b72ec32a85d1b440fea4318e29488c929e1b8225b8c796a1fd21826",
+  "candidates": {
+    "causal-hourly-tree-v1": {
+      "abstention_share": 0.07379612257661038,
+      "counts": {
+        "abstained_points": 118,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1481
+      },
+      "family": "comparator",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7644061128895924,
+          0.8420276393331187
+        ],
+        "participants": 12,
+        "value": 0.8049593783995181
+      },
+      "mae": {
+        "confidence_interval": [
+          9.380857323875746,
+          11.302113281852039
+        ],
+        "participants": 12,
+        "value": 10.323923219908261
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          30.678624319456045,
+          31.939629417934697
+        ],
+        "participants": 12,
+        "value": 31.268277275616416
+      },
+      "rmse": {
+        "confidence_interval": [
+          12.977478058816462,
+          15.848604476327944
+        ],
+        "participants": 12,
+        "value": 14.385815029087288
+      }
+    },
+    "chronos-2-embedding-ridge": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "ridge",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.727205200220969,
+          0.8364672561479749
+        ],
+        "participants": 12,
+        "value": 0.7839296116548568
+      },
+      "mae": {
+        "confidence_interval": [
+          8.234217423423352,
+          10.477546686300268
+        ],
+        "participants": 12,
+        "value": 9.275678412299387
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          26.020035839956787,
+          28.01285942201518
+        ],
+        "participants": 12,
+        "value": 26.975618420743885
+      },
+      "rmse": {
+        "confidence_interval": [
+          11.923859613469858,
+          15.496993328840771
+        ],
+        "participants": 12,
+        "value": 13.690916427007226
+      }
+    },
+    "chronos-2-finetuned": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "finetuned",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7304656955383555,
+          0.8013564516571429
+        ],
+        "participants": 12,
+        "value": 0.7665630962710189
+      },
+      "mae": {
+        "confidence_interval": [
+          7.080992284258093,
+          9.216058555149056
+        ],
+        "participants": 12,
+        "value": 8.079341774876108
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          20.587743408403703,
+          25.07260899442918
+        ],
+        "participants": 12,
+        "value": 22.760004617976307
+      },
+      "rmse": {
+        "confidence_interval": [
+          11.372664452386857,
+          14.635049852823933
+        ],
+        "participants": 12,
+        "value": 12.975679901561326
+      }
+    },
+    "chronos-2-zero-shot": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "chronos",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7790278228228024,
+          0.8455017667172274
+        ],
+        "participants": 12,
+        "value": 0.8123628375803609
+      },
+      "mae": {
+        "confidence_interval": [
+          7.691080571999516,
+          10.17092863984951
+        ],
+        "participants": 12,
+        "value": 8.939667416656262
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          26.480813050105844,
+          32.65114858921557
+        ],
+        "participants": 12,
+        "value": 29.422461666002874
+      },
+      "rmse": {
+        "confidence_interval": [
+          11.96629150323553,
+          15.967992210559304
+        ],
+        "participants": 12,
+        "value": 14.014987073580905
+      }
+    },
+    "chronos-2-zero-shot-ctx168": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "chronos",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7753130518136855,
+          0.8190773214839063
+        ],
+        "participants": 12,
+        "value": 0.7978454311841103
+      },
+      "mae": {
+        "confidence_interval": [
+          7.517187784708972,
+          9.376421690257292
+        ],
+        "participants": 12,
+        "value": 8.393387939536474
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          22.25014426235075,
+          26.730392273802416
+        ],
+        "participants": 12,
+        "value": 24.536703629739222
+      },
+      "rmse": {
+        "confidence_interval": [
+          11.819943636704828,
+          15.131460166610307
+        ],
+        "participants": 12,
+        "value": 13.485808445644999
+      }
+    },
+    "chronos-2-zero-shot-ctx720": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "chronos",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7450790702287571,
+          0.8105604056411061
+        ],
+        "participants": 12,
+        "value": 0.7820733249081157
+      },
+      "mae": {
+        "confidence_interval": [
+          7.150452193319816,
+          9.15306714544498
+        ],
+        "participants": 12,
+        "value": 8.052100447913935
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          20.633719371157415,
+          25.62148097104453
+        ],
+        "participants": 12,
+        "value": 23.02054720771046
+      },
+      "rmse": {
+        "confidence_interval": [
+          11.474457750958301,
+          14.561896355604915
+        ],
+        "participants": 12,
+        "value": 13.013156530481758
+      }
+    },
+    "chronos-2-zero-shot-steps": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "chronos",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7972972737207175,
+          0.8617033844958373
+        ],
+        "participants": 12,
+        "value": 0.8296320626688072
+      },
+      "mae": {
+        "confidence_interval": [
+          7.727058485974498,
+          10.20916767471156
+        ],
+        "participants": 12,
+        "value": 8.96729619189262
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          27.80921312413339,
+          34.02031431730023
+        ],
+        "participants": 12,
+        "value": 30.730360857533668
+      },
+      "rmse": {
+        "confidence_interval": [
+          11.953453168081035,
+          15.924742803276597
+        ],
+        "participants": 12,
+        "value": 14.022909490979119
+      }
+    },
+    "ensemble-equal-weight": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "ensemble",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.3231183814360729,
+          0.3870038344598151
+        ],
+        "participants": 12,
+        "value": 0.3529801329389757
+      },
+      "mae": {
+        "confidence_interval": [
+          7.6646287684397585,
+          9.760126845657696
+        ],
+        "participants": 12,
+        "value": 8.630095120716728
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          9.94559829241346,
+          12.232700359901814
+        ],
+        "participants": 12,
+        "value": 11.056966613405917
+      },
+      "rmse": {
+        "confidence_interval": [
+          11.512400156132411,
+          14.856547267500526
+        ],
+        "participants": 12,
+        "value": 13.218217140260313
+      }
+    },
+    "ensemble-stacked": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "ensemble",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7623819751776305,
+          0.8159229873698021
+        ],
+        "participants": 12,
+        "value": 0.7919814877622331
+      },
+      "mae": {
+        "confidence_interval": [
+          7.116988462155328,
+          9.143310971903862
+        ],
+        "participants": 12,
+        "value": 8.037294944736331
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          20.552274364907355,
+          25.163668652950243
+        ],
+        "participants": 12,
+        "value": 22.84268443740927
+      },
+      "rmse": {
+        "confidence_interval": [
+          11.402424204887714,
+          14.567733376955827
+        ],
+        "participants": 12,
+        "value": 12.970944829086312
+      }
+    },
+    "handcrafted-ridge-personal": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "ridge",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7386427755564492,
+          0.8363405908015259
+        ],
+        "participants": 12,
+        "value": 0.7873157695672751
+      },
+      "mae": {
+        "confidence_interval": [
+          8.868223632701289,
+          10.595667414155864
+        ],
+        "participants": 12,
+        "value": 9.721606454247986
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          26.90284068095409,
+          28.802375953799487
+        ],
+        "participants": 12,
+        "value": 27.80649966530993
+      },
+      "rmse": {
+        "confidence_interval": [
+          12.5614962094149,
+          15.30906992917621
+        ],
+        "participants": 12,
+        "value": 13.932790384645974
+      }
+    },
+    "handcrafted-ridge-population": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "ridge",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7363619203663411,
+          0.8781815563499275
+        ],
+        "participants": 12,
+        "value": 0.8109646447799129
+      },
+      "mae": {
+        "confidence_interval": [
+          10.022959556291966,
+          13.238104163539305
+        ],
+        "participants": 12,
+        "value": 11.649471508233836
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          34.29987329234729,
+          36.3280000314024
+        ],
+        "participants": 12,
+        "value": 35.32690534201401
+      },
+      "rmse": {
+        "confidence_interval": [
+          13.674999504672881,
+          17.20962288922097
+        ],
+        "participants": 12,
+        "value": 15.400191129588684
+      }
+    },
+    "hourly-last-valid-v1": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "comparator",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7733929985968891,
+          0.8464945079553128
+        ],
+        "participants": 12,
+        "value": 0.8117958282518177
+      },
+      "mae": {
+        "confidence_interval": [
+          10.942346892345657,
+          13.011816214955356
+        ],
+        "participants": 12,
+        "value": 12.025532450745864
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          36.42904486672003,
+          38.04874546548448
+        ],
+        "participants": 12,
+        "value": 37.19371539264093
+      },
+      "rmse": {
+        "confidence_interval": [
+          15.144231375211465,
+          19.168482533210028
+        ],
+        "participants": 12,
+        "value": 17.214322318087323
+      }
+    },
+    "issue11-ridge-handcrafted": {
+      "abstention_share": 0.07379612257661038,
+      "counts": {
+        "abstained_points": 118,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1481
+      },
+      "family": "external",
+      "interval_coverage": null,
+      "mae": {
+        "confidence_interval": [
+          8.825776476515424,
+          10.738599713064415
+        ],
+        "participants": 12,
+        "value": 9.781968733559461
+      },
+      "mean_interval_width": null,
+      "rmse": {
+        "confidence_interval": [
+          12.209991613710676,
+          15.349227992771086
+        ],
+        "participants": 12,
+        "value": 13.778597876816933
+      }
+    },
+    "issue11-ridge-handcrafted-moment": {
+      "abstention_share": 0.07379612257661038,
+      "counts": {
+        "abstained_points": 118,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1481
+      },
+      "family": "external",
+      "interval_coverage": null,
+      "mae": {
+        "confidence_interval": [
+          9.433304170382154,
+          11.166190307416167
+        ],
+        "participants": 12,
+        "value": 10.311737151910956
+      },
+      "mean_interval_width": null,
+      "rmse": {
+        "confidence_interval": [
+          12.9505450130424,
+          15.522402999966687
+        ],
+        "participants": 12,
+        "value": 14.16882138657447
+      }
+    },
+    "issue11-ridge-handcrafted-wbm": {
+      "abstention_share": 0.07379612257661038,
+      "counts": {
+        "abstained_points": 118,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1481
+      },
+      "family": "external",
+      "interval_coverage": null,
+      "mae": {
+        "confidence_interval": [
+          9.089322721300604,
+          10.82708639876313
+        ],
+        "participants": 12,
+        "value": 10.00436319400079
+      },
+      "mean_interval_width": null,
+      "rmse": {
+        "confidence_interval": [
+          12.89506289356721,
+          15.596360710536157
+        ],
+        "participants": 12,
+        "value": 14.192842467568022
+      }
+    },
+    "issue11-ridge-moment": {
+      "abstention_share": 0.07379612257661038,
+      "counts": {
+        "abstained_points": 118,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1481
+      },
+      "family": "external",
+      "interval_coverage": null,
+      "mae": {
+        "confidence_interval": [
+          11.302239385887347,
+          13.951919971167367
+        ],
+        "participants": 12,
+        "value": 12.643448280686444
+      },
+      "mean_interval_width": null,
+      "rmse": {
+        "confidence_interval": [
+          14.645033622738131,
+          17.831077533061144
+        ],
+        "participants": 12,
+        "value": 16.334732712000385
+      }
+    },
+    "issue11-ridge-wbm": {
+      "abstention_share": 0.07379612257661038,
+      "counts": {
+        "abstained_points": 118,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1481
+      },
+      "family": "external",
+      "interval_coverage": null,
+      "mae": {
+        "confidence_interval": [
+          10.882756632780286,
+          12.184717178006474
+        ],
+        "participants": 12,
+        "value": 11.566501888026885
+      },
+      "mean_interval_width": null,
+      "rmse": {
+        "confidence_interval": [
+          14.233642659966069,
+          17.073590680756727
+        ],
+        "participants": 12,
+        "value": 15.69282571436583
+      }
+    },
+    "train-population-mean-v1": {
+      "abstention_share": 0.0,
+      "counts": {
+        "abstained_points": 0,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1599
+      },
+      "family": "comparator",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.7611371843273119,
+          0.9108246749259873
+        ],
+        "participants": 12,
+        "value": 0.8387067682898603
+      },
+      "mae": {
+        "confidence_interval": [
+          10.269457472183735,
+          14.191326593356614
+        ],
+        "participants": 12,
+        "value": 12.195703254092995
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          39.317514510007534,
+          41.37434726413594
+        ],
+        "participants": 12,
+        "value": 40.32744317600425
+      },
+      "rmse": {
+        "confidence_interval": [
+          13.941232746512032,
+          18.388086393904043
+        ],
+        "participants": 12,
+        "value": 16.138935367634073
+      }
+    },
+    "utc-seasonal-naive-v1": {
+      "abstention_share": 0.08442776735459662,
+      "counts": {
+        "abstained_points": 135,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "predicted_origins": 77,
+        "scored_points": 1464
+      },
+      "family": "comparator",
+      "interval_coverage": {
+        "confidence_interval": [
+          0.6831060416647895,
+          0.8004103888777595
+        ],
+        "participants": 12,
+        "value": 0.7448153067230284
+      },
+      "mae": {
+        "confidence_interval": [
+          9.422525238518059,
+          12.942661497061493
+        ],
+        "participants": 12,
+        "value": 11.15451767800426
+      },
+      "mean_interval_width": {
+        "confidence_interval": [
+          29.59720387840773,
+          30.473285282559996
+        ],
+        "participants": 12,
+        "value": 30.026503497255664
+      },
+      "rmse": {
+        "confidence_interval": [
+          14.561298240095145,
+          19.73120794790601
+        ],
+        "participants": 12,
+        "value": 17.11349695988759
+      }
+    }
+  },
+  "context_policy_sha256": "9610dafb25607e811be8a2356f7d683c8b3cc8fd6a409687ceab87c67d30b845",
+  "costs": {
+    "causal-hourly-tree-v1": {
+      "fit_seconds": 3.067315416999918,
+      "latency_p50_seconds": 0.002937457999905746,
+      "latency_p95_seconds": 0.0030526250002367306,
+      "note": "process RSS includes loading the snapshot features this model serves from",
+      "peak_memory_bytes": 766066688,
+      "peak_rss_bytes": 766066688,
+      "predict_calls": 25,
+      "where": "Darwin arm64 CPU, fresh process, inner fold 0"
+    },
+    "chronos-2-embedding-ridge": {
+      "fit_seconds": 4.172561165999468,
+      "latency_p50_seconds": 0.0009057500001290464,
+      "latency_p95_seconds": 0.015067375999751675,
+      "note": "process RSS includes loading the snapshot features this model serves from",
+      "peak_memory_bytes": 1741271040,
+      "peak_rss_bytes": 799899648,
+      "predict_calls": 25,
+      "where": "Chronos-2 embedding on the GX10, then the ridge head on CPU"
+    },
+    "chronos-2-finetuned": {
+      "latency_p50_seconds": 0.014812076500675175,
+      "latency_p95_seconds": 0.0154182802507421,
+      "peak_cuda_allocated_bytes": 1022662656,
+      "peak_memory_bytes": 2405924864,
+      "peak_rss_bytes": 2405924864,
+      "training": {
+        "fit_seconds": 722.8346575090036,
+        "peak_cuda_allocated_bytes": 5568471040
+      },
+      "where": "GX10 gpu-run, fine-tuned checkpoint"
+    },
+    "chronos-2-zero-shot": {
+      "latency_p50_seconds": 0.016608853002253454,
+      "latency_p95_seconds": 0.02337377539661247,
+      "note": "single-request latency sampled over the first 32 requests across variants",
+      "peak_cuda_allocated_bytes": 1146514944,
+      "peak_memory_bytes": 1676615680,
+      "peak_rss_bytes": 1676615680,
+      "where": "GX10 NVIDIA GB10, gpu-run"
+    },
+    "chronos-2-zero-shot-ctx168": {
+      "latency_p50_seconds": 0.016608853002253454,
+      "latency_p95_seconds": 0.02337377539661247,
+      "note": "single-request latency sampled over the first 32 requests across variants",
+      "peak_cuda_allocated_bytes": 1146514944,
+      "peak_memory_bytes": 1676615680,
+      "peak_rss_bytes": 1676615680,
+      "where": "GX10 NVIDIA GB10, gpu-run"
+    },
+    "chronos-2-zero-shot-ctx720": {
+      "latency_p50_seconds": 0.016608853002253454,
+      "latency_p95_seconds": 0.02337377539661247,
+      "note": "single-request latency sampled over the first 32 requests across variants",
+      "peak_cuda_allocated_bytes": 1146514944,
+      "peak_memory_bytes": 1676615680,
+      "peak_rss_bytes": 1676615680,
+      "where": "GX10 NVIDIA GB10, gpu-run"
+    },
+    "chronos-2-zero-shot-steps": {
+      "latency_p50_seconds": 0.016608853002253454,
+      "latency_p95_seconds": 0.02337377539661247,
+      "note": "single-request latency sampled over the first 32 requests across variants",
+      "peak_cuda_allocated_bytes": 1146514944,
+      "peak_memory_bytes": 1676615680,
+      "peak_rss_bytes": 1676615680,
+      "where": "GX10 NVIDIA GB10, gpu-run"
+    },
+    "embedding": {
+      "latency_p95_seconds": 0.014066083999568945,
+      "peak_cuda_allocated_bytes": 558042624,
+      "peak_memory_bytes": 1741271040,
+      "peak_rss_bytes": 1741271040
+    },
+    "ensemble-equal-weight": {
+      "latency_p95_seconds": 0.11227093458655872,
+      "peak_memory_bytes": 1741271040,
+      "where": "sum of member p95 latencies; largest member memory (amendment 1)"
+    },
+    "ensemble-stacked": {
+      "latency_p95_seconds": 0.11227093458655872,
+      "peak_memory_bytes": 1741271040,
+      "where": "sum of member p95 latencies; largest member memory (amendment 1)"
+    },
+    "handcrafted-ridge-personal": {
+      "fit_seconds": 2.343828542000665,
+      "latency_p50_seconds": 0.0002227079994554515,
+      "latency_p95_seconds": 0.00027387499994802056,
+      "note": "process RSS includes loading the snapshot features this model serves from",
+      "peak_memory_bytes": 636682240,
+      "peak_rss_bytes": 636682240,
+      "predict_calls": 25,
+      "where": "Darwin arm64 CPU, fresh process, inner fold 0"
+    },
+    "handcrafted-ridge-population": {
+      "fit_seconds": 1.6182804999998552,
+      "latency_p50_seconds": 0.00012095900001440896,
+      "latency_p95_seconds": 0.00016045800020947354,
+      "note": "process RSS includes loading the snapshot features this model serves from",
+      "peak_memory_bytes": 635731968,
+      "peak_rss_bytes": 635731968,
+      "predict_calls": 25,
+      "where": "Darwin arm64 CPU, fresh process, inner fold 0"
+    },
+    "hourly-last-valid-v1": {
+      "fit_seconds": 0.10169904200029123,
+      "latency_p50_seconds": 0.00015216700012388173,
+      "latency_p95_seconds": 0.00017920800019055605,
+      "note": "process RSS includes loading the snapshot features this model serves from",
+      "peak_memory_bytes": 631422976,
+      "peak_rss_bytes": 631422976,
+      "predict_calls": 25,
+      "where": "Darwin arm64 CPU, fresh process, inner fold 0"
+    },
+    "train-population-mean-v1": {
+      "fit_seconds": 0.07170870799927798,
+      "latency_p50_seconds": 6.792000021960121e-06,
+      "latency_p95_seconds": 1.195799995912239e-05,
+      "note": "process RSS includes loading the snapshot features this model serves from",
+      "peak_memory_bytes": 635617280,
+      "peak_rss_bytes": 635617280,
+      "predict_calls": 25,
+      "where": "Darwin arm64 CPU, fresh process, inner fold 0"
+    },
+    "utc-seasonal-naive-v1": {
+      "fit_seconds": 0.08637575000011566,
+      "latency_p50_seconds": 0.0001491249995524413,
+      "latency_p95_seconds": 0.00019079100002272753,
+      "note": "process RSS includes loading the snapshot features this model serves from",
+      "peak_memory_bytes": 639811584,
+      "peak_rss_bytes": 639811584,
+      "predict_calls": 25,
+      "where": "Darwin arm64 CPU, fresh process, inner fold 0"
+    }
+  },
+  "dataset_snapshot": {
+    "dataset_id": "pmdata",
+    "dataset_version": "simula-2020-04-24",
+    "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+  },
+  "embeddings_sha256": "505904f4fe1341d364e1378fefd8fa332208670bb4d35474c49d364c8318fde6",
+  "ensemble_support": {
+    "inner-0": {
+      "complete_labelled_fit_points": 971,
+      "member_meta_abstentions": {
+        "causal-hourly-tree-v1": 72,
+        "chronos-2-embedding-ridge": 0,
+        "chronos-2-zero-shot": 0,
+        "chronos-2-zero-shot-ctx168": 0,
+        "chronos-2-zero-shot-ctx720": 0,
+        "chronos-2-zero-shot-steps": 0,
+        "handcrafted-ridge-personal": 0,
+        "hourly-last-valid-v1": 0,
+        "train-population-mean-v1": 0,
+        "utc-seasonal-naive-v1": 77
+      },
+      "meta_labelled": 1036,
+      "meta_points": 1176,
+      "weights": {
+        "0.1": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.10248020558644512,
+          "chronos-2-zero-shot-ctx168": 0.4975621846275572,
+          "chronos-2-zero-shot-ctx720": 0.39995760978599765,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.2": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.12023581726423192,
+          "chronos-2-zero-shot-ctx168": 0.3710275541289405,
+          "chronos-2-zero-shot-ctx720": 0.36875705243109225,
+          "chronos-2-zero-shot-steps": 0.13997957617573534,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.3": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.2342233782008459,
+          "chronos-2-zero-shot-ctx720": 0.5074010444911216,
+          "chronos-2-zero-shot-steps": 0.2583755773080326,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.4": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.18882961679396015,
+          "chronos-2-zero-shot-ctx720": 0.6472655327216802,
+          "chronos-2-zero-shot-steps": 0.16390485048435968,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.5": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.06703606922473028,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.15214043615240105,
+          "chronos-2-zero-shot-ctx720": 0.7612153738061068,
+          "chronos-2-zero-shot-steps": 0.019608120816761745,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.6": {
+          "causal-hourly-tree-v1": 0.019906815890109685,
+          "chronos-2-embedding-ridge": 0.11551212954780977,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.18548344779631618,
+          "chronos-2-zero-shot-ctx720": 0.6790976067657644,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.7": {
+          "causal-hourly-tree-v1": 0.06603793828292343,
+          "chronos-2-embedding-ridge": 0.1305524115659374,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.15243683447360212,
+          "chronos-2-zero-shot-ctx720": 0.5739713851001081,
+          "chronos-2-zero-shot-steps": 0.06081680427362962,
+          "handcrafted-ridge-personal": 0.01618462630379919,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.8": {
+          "causal-hourly-tree-v1": 0.009487230351676524,
+          "chronos-2-embedding-ridge": 0.0070848323306831745,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.029640592769549577,
+          "chronos-2-zero-shot-ctx720": 0.7309764672503338,
+          "chronos-2-zero-shot-steps": 0.13703747492455945,
+          "handcrafted-ridge-personal": 0.08577340237319744,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.9": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.0,
+          "chronos-2-zero-shot-ctx720": 0.834159893835401,
+          "chronos-2-zero-shot-steps": 0.1290022913379813,
+          "handcrafted-ridge-personal": 0.036837814826617694,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        }
+      }
+    },
+    "inner-1": {
+      "complete_labelled_fit_points": 1019,
+      "member_meta_abstentions": {
+        "causal-hourly-tree-v1": 72,
+        "chronos-2-embedding-ridge": 0,
+        "chronos-2-zero-shot": 0,
+        "chronos-2-zero-shot-ctx168": 0,
+        "chronos-2-zero-shot-ctx720": 0,
+        "chronos-2-zero-shot-steps": 0,
+        "handcrafted-ridge-personal": 0,
+        "hourly-last-valid-v1": 0,
+        "train-population-mean-v1": 0,
+        "utc-seasonal-naive-v1": 79
+      },
+      "meta_labelled": 1079,
+      "meta_points": 1200,
+      "weights": {
+        "0.1": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.024978569409470176,
+          "chronos-2-zero-shot-ctx168": 0.5370569026264372,
+          "chronos-2-zero-shot-ctx720": 0.4379645279640926,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.2": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.1328810207827336,
+          "chronos-2-zero-shot-ctx168": 0.46139970514666323,
+          "chronos-2-zero-shot-ctx720": 0.4057192740706032,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.3": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.11362904398381202,
+          "chronos-2-zero-shot-ctx168": 0.3993278361684135,
+          "chronos-2-zero-shot-ctx720": 0.4870431198477744,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.4": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.031069275025911672,
+          "chronos-2-zero-shot-ctx168": 0.4015694664297006,
+          "chronos-2-zero-shot-ctx720": 0.5673612585443877,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.5": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.46893565608752785,
+          "chronos-2-zero-shot-ctx720": 0.5310643439124721,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.6": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.38728892472736903,
+          "chronos-2-zero-shot-ctx720": 0.612711075272631,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.7": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.011807449441493062,
+          "chronos-2-zero-shot": 0.019751168768725486,
+          "chronos-2-zero-shot-ctx168": 0.42332819129975213,
+          "chronos-2-zero-shot-ctx720": 0.5451131904900293,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.8": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.029562203344730788,
+          "chronos-2-zero-shot-ctx168": 0.3062499120417783,
+          "chronos-2-zero-shot-ctx720": 0.6214787092441583,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.04270917536933257
+        },
+        "0.9": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.10168913666579084,
+          "chronos-2-zero-shot-ctx168": 0.09673187103448741,
+          "chronos-2-zero-shot-ctx720": 0.7394978846924872,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.06208110760723454
+        }
+      }
+    },
+    "inner-2": {
+      "complete_labelled_fit_points": 1110,
+      "member_meta_abstentions": {
+        "causal-hourly-tree-v1": 48,
+        "chronos-2-embedding-ridge": 0,
+        "chronos-2-zero-shot": 0,
+        "chronos-2-zero-shot-ctx168": 0,
+        "chronos-2-zero-shot-ctx720": 0,
+        "chronos-2-zero-shot-steps": 0,
+        "handcrafted-ridge-personal": 0,
+        "hourly-last-valid-v1": 0,
+        "train-population-mean-v1": 0,
+        "utc-seasonal-naive-v1": 58
+      },
+      "meta_labelled": 1157,
+      "meta_points": 1272,
+      "weights": {
+        "0.1": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.049372527149726925,
+          "chronos-2-zero-shot-ctx168": 0.4684858016284266,
+          "chronos-2-zero-shot-ctx720": 0.4821416712218465,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.2": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.09374239936628898,
+          "chronos-2-zero-shot-ctx168": 0.4612478265794758,
+          "chronos-2-zero-shot-ctx720": 0.44500977405423525,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.3": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.35881774734492794,
+          "chronos-2-zero-shot-ctx720": 0.5364019424937134,
+          "chronos-2-zero-shot-steps": 0.10454955739499457,
+          "handcrafted-ridge-personal": 0.0002307527663640986,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.4": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.3455282867860791,
+          "chronos-2-zero-shot-ctx720": 0.6086671454196186,
+          "chronos-2-zero-shot-steps": 0.04580456779430236,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.5": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.045806471826880246,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.28601937382550974,
+          "chronos-2-zero-shot-ctx720": 0.66817415434761,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.6": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.04620245312071563,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.24800891675023135,
+          "chronos-2-zero-shot-ctx720": 0.682644080967694,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.023144549161359006,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.7": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.039795368911523785,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.2755808145954023,
+          "chronos-2-zero-shot-ctx720": 0.6060357632322448,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.07858805326082915,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        },
+        "0.8": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.31314685008785426,
+          "chronos-2-zero-shot-ctx720": 0.5946684420420855,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.0665273328364054,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.025657375033654915
+        },
+        "0.9": {
+          "causal-hourly-tree-v1": 0.0,
+          "chronos-2-embedding-ridge": 0.0,
+          "chronos-2-zero-shot": 0.0,
+          "chronos-2-zero-shot-ctx168": 0.28606075232252537,
+          "chronos-2-zero-shot-ctx720": 0.5884295541503904,
+          "chronos-2-zero-shot-steps": 0.0,
+          "handcrafted-ridge-personal": 0.12550969352708413,
+          "hourly-last-valid-v1": 0.0,
+          "train-population-mean-v1": 0.0,
+          "utc-seasonal-naive-v1": 0.0
+        }
+      }
+    }
+  },
+  "environment_sha256": "1b290745f51cf459018c95226823b49db1422e08817402bfc111fef0c30b1297",
+  "export_git_sha": "7b49924105cda187242252eaf1a9292aa8fcd1cd",
+  "external_11": {
+    "models": {
+      "ridge-handcrafted": "issue11-ridge-handcrafted",
+      "ridge-handcrafted-moment": "issue11-ridge-handcrafted-moment",
+      "ridge-handcrafted-wbm": "issue11-ridge-handcrafted-wbm",
+      "ridge-moment": "issue11-ridge-moment",
+      "ridge-wbm": "issue11-ridge-wbm"
+    },
+    "role": "reported comparators only (amendment 2): published before insertion and without meta-fold predictions, so never selection candidates",
+    "sha256": "bd131e03df9e1301d085a1f819adbfcc21533fa5691fecf55ccdbdf920805d16",
+    "source": "issue11-run-20261011T120409Z/oof-predictions.parquet",
+    "tree_cross_check": {
+      "mismatches": 0,
+      "points": 1848
+    }
+  },
+  "finetune": {
+    "learning_rate_selection": {
+      "chosen": "1e-6",
+      "pooled_mae": {
+        "1e-5": {
+          "confidence_interval": [
+            7.206417852807208,
+            9.67298370860982
+          ],
+          "participants": 12,
+          "value": 8.380390034377283
+        },
+        "1e-6": {
+          "confidence_interval": [
+            7.080992284258093,
+            9.216058555149056
+          ],
+          "participants": 12,
+          "value": 8.079341774876108
+        }
+      },
+      "rule": "lowest pooled inner-validation MAE (predeclared)"
+    },
+    "receipts": {
+      "0": {
+        "best": {
+          "epoch": 0.3,
+          "eval_loss": 4.229257106781006,
+          "eval_runtime": 0.2003,
+          "eval_samples_per_second": 239.692,
+          "eval_steps_per_second": 4.994,
+          "step": 300
+        },
+        "finetune_json_sha256": "1e0062992ef52e00fb21b228905cb34a771378e9c11540790cb9d590e673e7c2",
+        "finetuned_weights_sha256": "b2b891a760645487036462be3c2dbaf7d64a9c707ecdc63cfa62f3f6c9b895c6",
+        "holdout_series": 48,
+        "hyperparameters": {
+          "batch_size": 64,
+          "context_length": 720,
+          "dtype": "float32",
+          "early_stopping": "load_best_model_at_end on holdout eval_loss",
+          "eval_every_steps": 100,
+          "finetune_mode": "full",
+          "learning_rate": 1e-06,
+          "lr_scheduler": "linear",
+          "max_steps": 1000,
+          "min_past": 24,
+          "optimizer": "adamw_torch_fused",
+          "prediction_length": 24,
+          "seed": 42,
+          "warmup": 0
+        },
+        "train_series": 8
+      },
+      "1": {
+        "best": {
+          "epoch": 0.1,
+          "eval_loss": 4.070167064666748,
+          "eval_runtime": 0.2016,
+          "eval_samples_per_second": 238.076,
+          "eval_steps_per_second": 4.96,
+          "step": 100
+        },
+        "finetune_json_sha256": "362c687bf029e155e3641b6f45de3b7923689822931a46ff23be9f31cca8a503",
+        "finetuned_weights_sha256": "b444ac404c064059c613382627a7741dfc4b07353918d5ca6e28db9755fa2ed7",
+        "holdout_series": 48,
+        "hyperparameters": {
+          "batch_size": 64,
+          "context_length": 720,
+          "dtype": "float32",
+          "early_stopping": "load_best_model_at_end on holdout eval_loss",
+          "eval_every_steps": 100,
+          "finetune_mode": "full",
+          "learning_rate": 1e-06,
+          "lr_scheduler": "linear",
+          "max_steps": 1000,
+          "min_past": 24,
+          "optimizer": "adamw_torch_fused",
+          "prediction_length": 24,
+          "seed": 42,
+          "warmup": 0
+        },
+        "train_series": 8
+      },
+      "2": {
+        "best": {
+          "epoch": 0.5,
+          "eval_loss": 4.084980010986328,
+          "eval_runtime": 0.2169,
+          "eval_samples_per_second": 239.783,
+          "eval_steps_per_second": 4.611,
+          "step": 500
+        },
+        "finetune_json_sha256": "074b78ad963c7e4341c391c91535bb24dd64c0935ee471994ed93d754719438e",
+        "finetuned_weights_sha256": "8ff0a365e26f092c1c4a4c36d9437587b47c6fa03cd7a490593de0bc5b32bb91",
+        "holdout_series": 52,
+        "hyperparameters": {
+          "batch_size": 64,
+          "context_length": 720,
+          "dtype": "float32",
+          "early_stopping": "load_best_model_at_end on holdout eval_loss",
+          "eval_every_steps": 100,
+          "finetune_mode": "full",
+          "learning_rate": 1e-06,
+          "lr_scheduler": "linear",
+          "max_steps": 1000,
+          "min_past": 24,
+          "optimizer": "adamw_torch_fused",
+          "prediction_length": 24,
+          "seed": 42,
+          "warmup": 0
+        },
+        "train_series": 8
+      }
+    }
+  },
+  "format": "issue12-pmdata-score-1",
+  "git_dirty": false,
+  "git_sha": "921265fc3300cda0197c952741c4a5cd4ba81e5f",
+  "inner_folds": 3,
+  "outer_test_sealed": true,
+  "packets_evaluation_sha256": {
+    "causal-hourly-tree-v1/inner-0": "ea69f26de3ab59a29dc0708876bd3e56f66c529ff4eaf5fcfdd8268f5ae9cd92",
+    "causal-hourly-tree-v1/inner-1": "d92af1ba34ecdec5408e3f63b8c0649b3fba818c60b3724b0e91b5c61e9dd1d3",
+    "causal-hourly-tree-v1/inner-2": "d8cb001b7c0bb5ed1118d4acce23dbb42615ffbe7fe5b21b777c51dae0184c3e",
+    "chronos-2-embedding-ridge/inner-0": "35b3a8fcfe7defdc843ecdb3a3361253e5d46a0a388534d1d8d3dd643caab503",
+    "chronos-2-embedding-ridge/inner-1": "30ec78804b33af16ee9a6f8b6bf1995477afc20ad16a84c81d1ada1651657931",
+    "chronos-2-embedding-ridge/inner-2": "d51a223f7f9927dfde779872a4e200730fa02171f0404e64546d231c494ec510",
+    "chronos-2-finetuned/inner-0": "bb5d8a2e353b9e5e3229cbc73bc10d347387acff60afcbb2bf0d7df370c6743c",
+    "chronos-2-finetuned/inner-1": "29b8d0a18364062bb854fe2592be28cab0eab3a1bfc167f6b252d0422e72c1b9",
+    "chronos-2-finetuned/inner-2": "dc6ffbbb62ca17557429a75835177aadfdf72aba14cd2da3c84b9571c2f57c04",
+    "chronos-2-zero-shot-ctx168/inner-0": "3e0ef877956147ea4c5b25ae8bcf88713d07997b3d1b9b6d62e0c34f9dbe2c39",
+    "chronos-2-zero-shot-ctx168/inner-1": "ad63094e5bdc489240c113db58a5b660e81c615a9f6e95f83f311306b6b1bf36",
+    "chronos-2-zero-shot-ctx168/inner-2": "9d32c35e69f0eaf9351cd6e4bde432374047424ec3be11a952bf3768d0a45438",
+    "chronos-2-zero-shot-ctx720/inner-0": "d20646aa5eebae59623a37d9d326351e3207ac49dd810d907b0c6ef6812863a8",
+    "chronos-2-zero-shot-ctx720/inner-1": "4d73ffc2e7bfd8f4baf60221328bc8d22364bf5bfd282fb68f5560b7d02852ef",
+    "chronos-2-zero-shot-ctx720/inner-2": "dd84acd85eae925653905559f39b5e9871e76cde72b20e11fe4727a27cb83549",
+    "chronos-2-zero-shot-steps/inner-0": "08c0f1e808a7b662964d2ab38ddbecc27c9e9e7a22a4aabe8cc0b54a9802afea",
+    "chronos-2-zero-shot-steps/inner-1": "81313d872bad6ebb1f566820343f1a3910ccfc01e8dde79136288ecbeec93356",
+    "chronos-2-zero-shot-steps/inner-2": "97e13ce42d8f86c60d72b13829ee9af911e26a4788ee3d9acc99c78dbf97324e",
+    "chronos-2-zero-shot/inner-0": "66594e157f81ef8c669a92c6a749b715036a61276ea605c7152789aa18da10dd",
+    "chronos-2-zero-shot/inner-1": "bd050132e221757d86d3b2b9ce641c92698b3f217977e9ac0195a619ca9134e8",
+    "chronos-2-zero-shot/inner-2": "6d513be224c5a3142a8fdb09eccda7f7db7be203c3dd60351304d6de83ae818e",
+    "ensemble-equal-weight/inner-0": "f0f7275bf620128b57573aa978f16cdee80e18586aa24029d6bb9f0264435954",
+    "ensemble-equal-weight/inner-1": "2f4e95be53cb3dd325811ef6367e07ce9085da08391bd613280e09f9dcdb7a5f",
+    "ensemble-equal-weight/inner-2": "65227682aed08ccd89cc42241206f82579df4b524df3551365ddca924ef34f83",
+    "ensemble-stacked/inner-0": "123ff2b6d08caa6c0b5715aa8c74af3605c129330fb9c18296ef0554d31a8b36",
+    "ensemble-stacked/inner-1": "4d74019a5ae50221affae002f694d1b5c37f7a03deb0d4b51adc1c54c2ad99de",
+    "ensemble-stacked/inner-2": "7656761988bb9d473d1228067a0ba48463b11ac69ff2309be43d2ccf494b1acf",
+    "handcrafted-ridge-personal/inner-0": "c45885d20283eb0995c34af051e81c3ab78f84eaefa7eb83a05c029cb4d31c2c",
+    "handcrafted-ridge-personal/inner-1": "083ed31807b38fa339c440da70badbecd0d85eceff49f6b949f9b8999e528b2e",
+    "handcrafted-ridge-personal/inner-2": "ac13aeb6dc58780c890ccacbf4d059d8e8baa80d49e32a731ca0fe5fbe971901",
+    "handcrafted-ridge-population/inner-0": "5a763860afb6e48793c72f2bb4dbd20bf129a4a1a0935e152311c0c53b58cded",
+    "handcrafted-ridge-population/inner-1": "d26f6d3db62918ce498beebc45cabae52daab456b37d07304854df6f73ce6f18",
+    "handcrafted-ridge-population/inner-2": "c32736b56ae280e88423c01ecbd307a1bb58de220efb5fd1433c176873f75e37",
+    "hourly-last-valid-v1/inner-0": "4ec0299ed3ebfd8751b995478340760029834c459d632d34986ad13eb373fdaf",
+    "hourly-last-valid-v1/inner-1": "ede385649511b89b18c2ea8e0b4db28e16c5afe73e035662ab5dacc338e0bd2e",
+    "hourly-last-valid-v1/inner-2": "1c30353efee37fd0cb5c7f1ac076015048a85991da6f994bf86591a0940078f7",
+    "issue11-ridge-handcrafted-moment/inner-0": "48ce3ae6e9eb9aa8a9e89e9ef2a92d4ae205816a739cd8e2d0d37d0e64a3b867",
+    "issue11-ridge-handcrafted-moment/inner-1": "b4cb95b52974faeff3795fec9e20d46bc3acaef803276370d2dbff97b19a04db",
+    "issue11-ridge-handcrafted-moment/inner-2": "61edc08bc5e4a57ffc6a737a1c0f8439a84c960d87c27d363de546a2a84075a6",
+    "issue11-ridge-handcrafted-wbm/inner-0": "ac04ec5d0bbb72c0fa0d6e527634496e236e6774cb4b2dde52f1ba95957f9b9c",
+    "issue11-ridge-handcrafted-wbm/inner-1": "43a10d9ce597b9f226b5f8ce59ee84d2dc9a9af12693261c9e1a503a35ecb49c",
+    "issue11-ridge-handcrafted-wbm/inner-2": "66d2677ff80e1a5c2cccd0a021b837a8bd9580b97d96f1695ed1fca255acbd8b",
+    "issue11-ridge-handcrafted/inner-0": "9d29f98a93ede69125ee0aaf80401e0ce2ce0770c2e48eda29de1fef95bbdfd2",
+    "issue11-ridge-handcrafted/inner-1": "be4cdfd972eabe02d654815f46821f3d6304c844695caa54f12f4d8fbd55501d",
+    "issue11-ridge-handcrafted/inner-2": "7f3882e151137139a64b13074dc1b56b7f0b37f5b93843bd97dd8b4e16f0b7b1",
+    "issue11-ridge-moment/inner-0": "9352a83f78cc34b3d243b42b2b562a9b089b28567922ff57758210de406446bc",
+    "issue11-ridge-moment/inner-1": "3b2f08c5613509da51c7bd7fc48ebb56fcc89ea22789469bcc2c0af12cf99a65",
+    "issue11-ridge-moment/inner-2": "e77a111145a24e39aad2fd8d0ee7e9db5158961671f1110ed9646c1f9a5bae68",
+    "issue11-ridge-wbm/inner-0": "82c8dcb0f95297cf50361038f54490d3f6933d3fddf135a5a3794b3ad7c6328d",
+    "issue11-ridge-wbm/inner-1": "56e263b0fdc75d159c671b00916ed2ca7c42f4fae3922acfb6e436645c665076",
+    "issue11-ridge-wbm/inner-2": "1bf0462b4acdd350ce8aade496d2308503025ff906d5d1a97d1f6a4270550b02",
+    "train-population-mean-v1/inner-0": "d57b09927b0ae5f61a4b041f90d6173ba52a86cbd29ac270edaaf937b48f31ab",
+    "train-population-mean-v1/inner-1": "f0918489f627e04eb14ce4930284543ce9a483b226989abcd97bd7a70e085932",
+    "train-population-mean-v1/inner-2": "a2568d8a0c70dc3885172a7a40ae1cdece2e94901446c54d3880bf94f7382c50",
+    "utc-seasonal-naive-v1/inner-0": "be8f48680d66c64b0a61bc9c99ff84b6e11e7bf7147ca8d5b50109aeb226ef07",
+    "utc-seasonal-naive-v1/inner-1": "d63343736f4fd5e2852f85c245fef924ee701de36d3f0a0190cf1d646bf1a22e",
+    "utc-seasonal-naive-v1/inner-2": "4e36ddbf8d1df78211ea2b6a262b51570864555157400e5775f48dccf6bea4a3"
+  },
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "requests": {
+    "embed": 2394,
+    "embed_training_windows": 16708,
+    "forecast": 612
+  },
+  "residual_offsets": {
+    "causal-hourly-tree-v1": {
+      "0": [
+        -15.435944112661902,
+        14.449371761568889
+      ],
+      "1": [
+        -16.606600171500574,
+        15.964124272003314
+      ],
+      "2": [
+        -14.993742247561444,
+        16.35504926155314
+      ]
+    },
+    "chronos-2-embedding-ridge": {
+      "0": [
+        -11.600290246840217,
+        13.826956029455808
+      ],
+      "1": [
+        -14.050320133175104,
+        15.525890148206088
+      ],
+      "2": [
+        -11.354313899153713,
+        14.569084805400726
+      ]
+    },
+    "handcrafted-ridge-personal": {
+      "0": [
+        -12.629349977759961,
+        13.480445419695656
+      ],
+      "1": [
+        -14.928231782074915,
+        15.165068769338944
+      ],
+      "2": [
+        -13.059629723102264,
+        14.156773323958046
+      ]
+    },
+    "handcrafted-ridge-population": {
+      "0": [
+        -15.839915192482579,
+        16.853716615552074
+      ],
+      "1": [
+        -18.56551283579241,
+        18.233653434881283
+      ],
+      "2": [
+        -17.321302030416412,
+        19.166615916917273
+      ]
+    },
+    "hourly-last-valid-v1": {
+      "0": [
+        -16.09850308192032,
+        21.005014749262536
+      ],
+      "1": [
+        -14.513964938104653,
+        24.47888069216323
+      ],
+      "2": [
+        -15.418829138715212,
+        20.06595357775685
+      ]
+    },
+    "train-population-mean-v1": {
+      "0": [
+        -19.057415350697042,
+        18.992874858972293
+      ],
+      "1": [
+        -21.479695589714797,
+        20.758210972481326
+      ],
+      "2": [
+        -18.94236676807238,
+        21.75176598807492
+      ]
+    },
+    "utc-seasonal-naive-v1": {
+      "0": [
+        -16.00236376683128,
+        15.146197684482104
+      ],
+      "1": [
+        -14.841527219174846,
+        14.72628193396743
+      ],
+      "2": [
+        -15.342684187478337,
+        14.020455699832992
+      ]
+    }
+  },
+  "selection": {
+    "rule_sha256": "9e1bc4d72f33c0d9bfaab7fa1118aba48c432dbc2d8130b067fc867efa2dd78c",
+    "selected": "chronos-2-zero-shot-ctx720",
+    "steps": [
+      {
+        "candidate": "hourly-last-valid-v1",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "hourly-last-valid-v1",
+          "coverage": {
+            "confidence_interval": [
+              0.7733929985968891,
+              0.8464945079553128
+            ],
+            "participants": 12,
+            "value": 0.8117958282518177
+          },
+          "incumbent": "train-population-mean-v1",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.00017920800019055605,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -0.8751267970301175,
+              0.6203527522968857
+            ],
+            "participants": 12,
+            "value": -0.08508540167356622
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -1.724060175462118,
+              1.2407295923851618
+            ],
+            "participants": 12,
+            "value": -0.1701708033471326
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 631422976
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": false,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "train-population-mean-v1",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "53c3fb8529bcd24b87deafb07ebd13272d598adb7c5af43aad38d5d9efa5a9bc",
+            "path": "chain/train-population-mean-v1__vs__hourly-last-valid-v1/inner-0",
+            "sha256.json": "a2aa96363daae2edc6ec3e8c4b399a39daf2626fad19f57b82c55af5ca96580e"
+          },
+          "inner-1": {
+            "comparison.json": "dc56d43f97c59cc6190731926b9f3626e758eb43c577b75a34d2925168da54ae",
+            "path": "chain/train-population-mean-v1__vs__hourly-last-valid-v1/inner-1",
+            "sha256.json": "1ced7589e8cc7b46e42aaa5a4315dddf35c72ef60f54e16ca594dd7b0b2e00a5"
+          },
+          "inner-2": {
+            "comparison.json": "9c636c6d1f414d84fcc7e808c1634ba4902b585bf4fc908db431782cdaed67ef",
+            "path": "chain/train-population-mean-v1__vs__hourly-last-valid-v1/inner-2",
+            "sha256.json": "646b6f3819a3f386604bdff3b0c62a370fb444f2a192570eaeb27f8649d50b2f"
+          }
+        },
+        "status": "kept_incumbent"
+      },
+      {
+        "candidate": "utc-seasonal-naive-v1",
+        "evidence": {
+          "abstention_share": 0.08442776735459662,
+          "candidate": "utc-seasonal-naive-v1",
+          "coverage": {
+            "confidence_interval": [
+              0.6831060416647895,
+              0.8004103888777595
+            ],
+            "participants": 12,
+            "value": 0.7448153067230284
+          },
+          "incumbent": "train-population-mean-v1",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.00019079100002272753,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -1.3322171305935122,
+              0.47261891143710466
+            ],
+            "participants": 12,
+            "value": -0.47264878871139887
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -2.658570584864394,
+              0.8045237172640084
+            ],
+            "participants": 12,
+            "value": -0.9452975774227977
+          },
+          "paired_points": 1464,
+          "peak_memory_bytes": 639811584
+        },
+        "gates": {
+          "abstention_within": false,
+          "coverage_in_range": false,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": false,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "train-population-mean-v1",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "4ed3ef353a0ed199705d8cb9e9bcd6e34dffbb73eedeccfbcc46b1b8ff60c0a1",
+            "path": "chain/train-population-mean-v1__vs__utc-seasonal-naive-v1/inner-0",
+            "sha256.json": "c80aa8a15f833f16fd4b4ec763eee2aa7f84af98c1a69795c842e22e7ffbae95"
+          },
+          "inner-1": {
+            "comparison.json": "40906e8af5f8c4529651389007f322761a4461968f6b204a00af9b0756de1220",
+            "path": "chain/train-population-mean-v1__vs__utc-seasonal-naive-v1/inner-1",
+            "sha256.json": "01372c75ba34eb8df4c0b7f115335ad140f6604d1bdd0bdc89f05f47850cca76"
+          },
+          "inner-2": {
+            "comparison.json": "2ee34f4ea74551135ba40a541838958de72ebeb9c3158f4ca698faba16ba12cd",
+            "path": "chain/train-population-mean-v1__vs__utc-seasonal-naive-v1/inner-2",
+            "sha256.json": "afab059e261416fcd9814b022838aebddab5528e8cb6075434861154d085549c"
+          }
+        },
+        "status": "kept_incumbent"
+      },
+      {
+        "candidate": "causal-hourly-tree-v1",
+        "evidence": {
+          "abstention_share": 0.07379612257661038,
+          "candidate": "causal-hourly-tree-v1",
+          "coverage": {
+            "confidence_interval": [
+              0.7644061128895924,
+              0.8420276393331187
+            ],
+            "participants": 12,
+            "value": 0.8049593783995181
+          },
+          "incumbent": "train-population-mean-v1",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.0030526250002367306,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -1.5080616887979805,
+              0.0925991706593601
+            ],
+            "participants": 12,
+            "value": -0.7664708943938656
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -2.9807753264899546,
+              0.11963124896730672
+            ],
+            "participants": 12,
+            "value": -1.5329417887877312
+          },
+          "paired_points": 1481,
+          "peak_memory_bytes": 766066688
+        },
+        "gates": {
+          "abstention_within": false,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": false,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "train-population-mean-v1",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "01f10b6b38adef4082ec8088983caa736783296fe894d6819f427747605744ae",
+            "path": "chain/train-population-mean-v1__vs__causal-hourly-tree-v1/inner-0",
+            "sha256.json": "bdcb55bc8000ed5acbd77489cc81f331fdd671907706f6106efb49bf493efa29"
+          },
+          "inner-1": {
+            "comparison.json": "99757e37b68f83cbf6c27bfb543f2bf4cb6729412f9933069cf4ba9e0d990490",
+            "path": "chain/train-population-mean-v1__vs__causal-hourly-tree-v1/inner-1",
+            "sha256.json": "1873d6023135166d2e3c2ff49f842859b50a7c434237a9a58f0bdfdf92124f89"
+          },
+          "inner-2": {
+            "comparison.json": "ce9951f55a3dbc98d6d4b9d48bdc8338b9d9c92d32972524f70d84024fd2d3ce",
+            "path": "chain/train-population-mean-v1__vs__causal-hourly-tree-v1/inner-2",
+            "sha256.json": "841298b6f754d4e90dfba0d4347668a4b6ebe8653a1abee1731161b89baf741f"
+          }
+        },
+        "status": "kept_incumbent"
+      },
+      {
+        "candidate": "handcrafted-ridge-personal",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "handcrafted-ridge-personal",
+          "coverage": {
+            "confidence_interval": [
+              0.7386427755564492,
+              0.8363405908015259
+            ],
+            "participants": 12,
+            "value": 0.7873157695672751
+          },
+          "incumbent": "train-population-mean-v1",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.00027387499994802056,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -2.0651859083103306,
+              -0.3390126278989617
+            ],
+            "participants": 12,
+            "value": -1.2370483999225046
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -4.166581702070478,
+              -0.689071205754028
+            ],
+            "participants": 12,
+            "value": -2.474096799845009
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 636682240
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": true,
+          "paired_mae_upper_below": true
+        },
+        "incumbent": "train-population-mean-v1",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "956e95684ca8ec87ee104bfc51148d8481d08af949b717780f5d5561e8072926",
+            "path": "chain/train-population-mean-v1__vs__handcrafted-ridge-personal/inner-0",
+            "sha256.json": "3b84ff347f0015cb2725fa9d1578a0506d8a2b5bb614a6576d3bb967aba2bd17"
+          },
+          "inner-1": {
+            "comparison.json": "68ac16ee8173d6b03ee08ec6a6082d82af8365cca04d8b70b4626f1c6d1197b1",
+            "path": "chain/train-population-mean-v1__vs__handcrafted-ridge-personal/inner-1",
+            "sha256.json": "78550a3d16b6d0954aea07f93e01530b5183d6e06950aa327e5e5b24b8cac741"
+          },
+          "inner-2": {
+            "comparison.json": "227f318074f1afa2cfa3a7be6dfbbf40e52c514a84d280afa24f707c453ab42e",
+            "path": "chain/train-population-mean-v1__vs__handcrafted-ridge-personal/inner-2",
+            "sha256.json": "f6e5e42c61ea5f1a4546c8e9efb84fe477cb88f6877aef7d09bb3b6aa7f65d6e"
+          }
+        },
+        "status": "promoted"
+      },
+      {
+        "candidate": "chronos-2-zero-shot",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "chronos-2-zero-shot",
+          "coverage": {
+            "confidence_interval": [
+              0.7790278228228024,
+              0.8455017667172274
+            ],
+            "participants": 12,
+            "value": 0.8123628375803609
+          },
+          "incumbent": "handcrafted-ridge-personal",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.02337377539661247,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -1.7690550761441906,
+              -0.858371686470142
+            ],
+            "participants": 12,
+            "value": -1.2532717344677058
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -1.9984658069135264,
+              0.12133750362668486
+            ],
+            "participants": 12,
+            "value": -0.7819390375917258
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 1676615680
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": true,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "handcrafted-ridge-personal",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "c2ba4ad8bafda04bdd88e5906de810bc9b043f8773ee39d217ebfb4711e0f6da",
+            "path": "chain/handcrafted-ridge-personal__vs__chronos-2-zero-shot/inner-0",
+            "sha256.json": "4416381ade8eece04c9d5ad03f6bce6e9d80ab63e461c5fd8ac74e846b27d43a"
+          },
+          "inner-1": {
+            "comparison.json": "584af6601f1952f57709ac5ebcf4f5f68a0363e26b2711d79bf5846c4521c499",
+            "path": "chain/handcrafted-ridge-personal__vs__chronos-2-zero-shot/inner-1",
+            "sha256.json": "d76edbacc487b1a5056f786f0c13e16f64d15a99c4620e963defae0b2bec859e"
+          },
+          "inner-2": {
+            "comparison.json": "a9ce64e80b071cc0c49d7395bac4d0446244f4ee8c2e26480f35edc44a5f6e57",
+            "path": "chain/handcrafted-ridge-personal__vs__chronos-2-zero-shot/inner-2",
+            "sha256.json": "7b2b1132ed9dfe3e05aeb91674e80165599a747f633528be6a1baf3294f68d5c"
+          }
+        },
+        "status": "kept_incumbent"
+      },
+      {
+        "candidate": "chronos-2-zero-shot-ctx168",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "chronos-2-zero-shot-ctx168",
+          "coverage": {
+            "confidence_interval": [
+              0.7753130518136855,
+              0.8190773214839063
+            ],
+            "participants": 12,
+            "value": 0.7978454311841103
+          },
+          "incumbent": "handcrafted-ridge-personal",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.02337377539661247,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -1.8746907348269621,
+              -1.1617016345195919
+            ],
+            "participants": 12,
+            "value": -1.4666196235201914
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -2.2082286871413013,
+              -0.6364510038142329
+            ],
+            "participants": 12,
+            "value": -1.3282185147115129
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 1676615680
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": true,
+          "paired_mae_upper_below": true
+        },
+        "incumbent": "handcrafted-ridge-personal",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "4a9c50dd14e5430eb52957b73412720c8ef30e46c0a3417e5ef03511d86e8ea4",
+            "path": "chain/handcrafted-ridge-personal__vs__chronos-2-zero-shot-ctx168/inner-0",
+            "sha256.json": "fb12cd6b6500fe3b3419f7dc78dfaf9d528069b1dfb9079c2f2fdb5bde4a79ac"
+          },
+          "inner-1": {
+            "comparison.json": "6b7060d5804940a2d52a1800f7b7fa96e7336839908cb5bb41dadd9230ea21bb",
+            "path": "chain/handcrafted-ridge-personal__vs__chronos-2-zero-shot-ctx168/inner-1",
+            "sha256.json": "43126ce2aa8f386715a0f439a1dc01e76af3e17a497a82e48931c87741232370"
+          },
+          "inner-2": {
+            "comparison.json": "8cb8ff75ded700869fe86fd2193c12c40296d61b0ffed1d4ab27821bee47c498",
+            "path": "chain/handcrafted-ridge-personal__vs__chronos-2-zero-shot-ctx168/inner-2",
+            "sha256.json": "690a977f71f3447e1578994fbabfb5f30b1017bbd8d2e17144d8d3885c242dba"
+          }
+        },
+        "status": "promoted"
+      },
+      {
+        "candidate": "chronos-2-zero-shot-ctx720",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "chronos-2-zero-shot-ctx720",
+          "coverage": {
+            "confidence_interval": [
+              0.7450790702287571,
+              0.8105604056411061
+            ],
+            "participants": 12,
+            "value": 0.7820733249081157
+          },
+          "incumbent": "chronos-2-zero-shot-ctx168",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.02337377539661247,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -0.2345108154363269,
+              -0.09144855992302058
+            ],
+            "participants": 12,
+            "value": -0.16587405635425315
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -0.5129882669091845,
+              -0.15941570360119803
+            ],
+            "participants": 12,
+            "value": -0.34128749162253885
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 1676615680
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": true,
+          "paired_mae_upper_below": true
+        },
+        "incumbent": "chronos-2-zero-shot-ctx168",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "14f59bdf51e5437a5c21f22e1cf98798556c3934296cd9addb8f6f6763694b63",
+            "path": "chain/chronos-2-zero-shot-ctx168__vs__chronos-2-zero-shot-ctx720/inner-0",
+            "sha256.json": "def31825456753cd3faf93b318b915a414ce7f91e5bbd137351af25dd37b4c2c"
+          },
+          "inner-1": {
+            "comparison.json": "53cd761a7e214f901d3b3719ce1f0627d50b63f6549740872f9efc3e837c7333",
+            "path": "chain/chronos-2-zero-shot-ctx168__vs__chronos-2-zero-shot-ctx720/inner-1",
+            "sha256.json": "529bba2f738219c2078e06357e2b293fe6094968f3110fec286f290d345329c4"
+          },
+          "inner-2": {
+            "comparison.json": "4fe5ffd6d29456b178f104ce50260ff2e8256be4463dcab4c06f10820870a605",
+            "path": "chain/chronos-2-zero-shot-ctx168__vs__chronos-2-zero-shot-ctx720/inner-2",
+            "sha256.json": "99fc46819e0f0a1013d5a118b6eabc82825447c939fe3041e66f6cb4538fdbc1"
+          }
+        },
+        "status": "promoted"
+      },
+      {
+        "candidate": "chronos-2-zero-shot-steps",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "chronos-2-zero-shot-steps",
+          "coverage": {
+            "confidence_interval": [
+              0.7972972737207175,
+              0.8617033844958373
+            ],
+            "participants": 12,
+            "value": 0.8296320626688072
+          },
+          "incumbent": "chronos-2-zero-shot-ctx720",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.02337377539661247,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              0.1697102799850257,
+              0.5812992402887155
+            ],
+            "participants": 12,
+            "value": 0.3898232229086845
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              0.35608640756695664,
+              1.393951624533447
+            ],
+            "participants": 12,
+            "value": 0.9151957439786859
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 1676615680
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": false,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "chronos-2-zero-shot-ctx720",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "af01d6f81ca9077dc391df7e49a8b4ad042b898e81efe93dccddf269bc1b9e05",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-zero-shot-steps/inner-0",
+            "sha256.json": "dcf565b92787f896069af696243fafefff0e6b317f9076d34065dc215f46f7a8"
+          },
+          "inner-1": {
+            "comparison.json": "75246202d0cf75e00ca210a5e12906fcfa0606310c198da188c86b1643954ff3",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-zero-shot-steps/inner-1",
+            "sha256.json": "61d50a5b1f14e73cec905086d931d704141e8fd726c4127dd9951a9fadfb5709"
+          },
+          "inner-2": {
+            "comparison.json": "7dc9d4514f0d2baba0c41427ed0c8985554d0607e602505e44225d5735f377a4",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-zero-shot-steps/inner-2",
+            "sha256.json": "e1fb28009eb0fb714f7ab5b860368939342f69d158b019e59c8d7d9a401065b7"
+          }
+        },
+        "status": "kept_incumbent"
+      },
+      {
+        "candidate": "chronos-2-embedding-ridge",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "chronos-2-embedding-ridge",
+          "coverage": {
+            "confidence_interval": [
+              0.727205200220969,
+              0.8364672561479749
+            ],
+            "participants": 12,
+            "value": 0.7839296116548568
+          },
+          "incumbent": "chronos-2-zero-shot-ctx720",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.015067375999751675,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              1.187592881631995,
+              1.62944658502996
+            ],
+            "participants": 12,
+            "value": 1.4095296589001443
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              0.8117875726634561,
+              1.6360055583856559
+            ],
+            "participants": 12,
+            "value": 1.223577964385451
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 1741271040
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": false,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "chronos-2-zero-shot-ctx720",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "8ee7d89f981aca9d333cb6e0f9682e1384be647aa1c0f88234eb648462884d01",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-embedding-ridge/inner-0",
+            "sha256.json": "df12bd545476ecceb9115c0eac2f2ec2491910c1f1ab94de5e5846232a78d0da"
+          },
+          "inner-1": {
+            "comparison.json": "53cb968e7923246ff450bca8d91b19d6cb780ae6d47bb95882ef3f22d9dbdbd2",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-embedding-ridge/inner-1",
+            "sha256.json": "b19d7cda652e4009648e4c9c904add485b09b8e221c8b6e44ab4f80c7b3f5b0d"
+          },
+          "inner-2": {
+            "comparison.json": "de45ed0de08e10520b7ec9ee67191ad6ce581325fd63c0125938a31bba0dde74",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-embedding-ridge/inner-2",
+            "sha256.json": "bae9d7939e9baf2eb6eef6a1870cddb881c79c0bb838a593f96d9eb1f91155df"
+          }
+        },
+        "status": "kept_incumbent"
+      },
+      {
+        "candidate": "chronos-2-finetuned",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "chronos-2-finetuned",
+          "coverage": {
+            "confidence_interval": [
+              0.7304656955383555,
+              0.8013564516571429
+            ],
+            "participants": 12,
+            "value": 0.7665630962710189
+          },
+          "incumbent": "chronos-2-zero-shot-ctx720",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.0154182802507421,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -0.05074913671981211,
+              0.13037977788725097
+            ],
+            "participants": 12,
+            "value": 0.030294679875627728
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -0.1438925511998738,
+              0.22805644197502714
+            ],
+            "participants": 12,
+            "value": 0.027241326962173778
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 2405924864
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": false,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "chronos-2-zero-shot-ctx720",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "9f766c1c39b8ba092f75cf7105ad742a7d4dca49bc528dbf9a2a839ffc0cad04",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-finetuned/inner-0",
+            "sha256.json": "b431b7fb41181c3b8580a69fe61c229c3ba8e8c1e3a40eb6718f7c58d69c38c2"
+          },
+          "inner-1": {
+            "comparison.json": "9f40bffe099a5dcef00a27acde94c78dbf6976840254d8101d26695f02c8f5f6",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-finetuned/inner-1",
+            "sha256.json": "7f10791343d1b20352948346047d0bd9e43a1a87f1f1b07d7c820f6d11a8bd69"
+          },
+          "inner-2": {
+            "comparison.json": "c74295a9457eeb1ad5519d43fc6e023f4c89f5b7a42c2b065e1eaa7b1a8e165c",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__chronos-2-finetuned/inner-2",
+            "sha256.json": "8bc4fe2bb81e42d061810cbef2df63fbed628e90068f9c2d14756af89f566f2e"
+          }
+        },
+        "status": "kept_incumbent"
+      },
+      {
+        "candidate": "ensemble-equal-weight",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "ensemble-equal-weight",
+          "coverage": {
+            "confidence_interval": [
+              0.3231183814360729,
+              0.3870038344598151
+            ],
+            "participants": 12,
+            "value": 0.3529801329389757
+          },
+          "incumbent": "chronos-2-zero-shot-ctx720",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.11227093458655872,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              0.39298598759594444,
+              0.6351705981319193
+            ],
+            "participants": 12,
+            "value": 0.5118032768875862
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              0.34940056395093366,
+              0.8116227880747264
+            ],
+            "participants": 12,
+            "value": 0.5779946728027927
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 1741271040
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": false,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": false,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "chronos-2-zero-shot-ctx720",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "c11aececcffdad8a1e319be815d9d3d9cfd99a2ee0b40cda99bc65903228337f",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__ensemble-equal-weight/inner-0",
+            "sha256.json": "338e8e4e268dc90c5e70931ee9a361b95d24e46fedc6606a4dcd8d189d1383fa"
+          },
+          "inner-1": {
+            "comparison.json": "98d93a8bb37d530e33b3f2ad06182dc970db3e026ae069aa967381b8351582ba",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__ensemble-equal-weight/inner-1",
+            "sha256.json": "afa2579508e9a228f5715bc184ec3157e1fa83bad2a795d1f79b0e7637e1f6c3"
+          },
+          "inner-2": {
+            "comparison.json": "29fe47fadac86b34fb6e87f5e4bdf6beead1e93745ab4e5402bd9c98cb88e51f",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__ensemble-equal-weight/inner-2",
+            "sha256.json": "e9eeafff1e5c54090afc25a24bd3ba46a2b9149cb6313b9740942464c25d562a"
+          }
+        },
+        "status": "kept_incumbent"
+      },
+      {
+        "candidate": "ensemble-stacked",
+        "evidence": {
+          "abstention_share": 0.0,
+          "candidate": "ensemble-stacked",
+          "coverage": {
+            "confidence_interval": [
+              0.7623819751776305,
+              0.8159229873698021
+            ],
+            "participants": 12,
+            "value": 0.7919814877622331
+          },
+          "incumbent": "chronos-2-zero-shot-ctx720",
+          "incumbent_abstention_share": 0.0,
+          "latency_p95_seconds": 0.11227093458655872,
+          "paired_decile_loss": {
+            "confidence_interval": [
+              -0.02700082752389837,
+              0.033956571430360974
+            ],
+            "participants": 12,
+            "value": 0.0049538292405979885
+          },
+          "paired_mae": {
+            "confidence_interval": [
+              -0.05887708761217896,
+              0.02759684595075489
+            ],
+            "participants": 12,
+            "value": -0.014805503177603466
+          },
+          "paired_points": 1599,
+          "peak_memory_bytes": 1741271040
+        },
+        "gates": {
+          "abstention_within": true,
+          "coverage_in_range": true,
+          "latency_within": true,
+          "memory_within": true,
+          "paired_decile_loss_upper_below": false,
+          "paired_mae_upper_below": false
+        },
+        "incumbent": "chronos-2-zero-shot-ctx720",
+        "packets": {
+          "inner-0": {
+            "comparison.json": "a78ea5fae5fbb44af6821658ef16d2bee812eb42cbf328dba3a087e2b889c193",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__ensemble-stacked/inner-0",
+            "sha256.json": "4057ad94c1d0f3737803a66ea93a70bbe4e23b2e3d5b710e597af61ed56a1f32"
+          },
+          "inner-1": {
+            "comparison.json": "ddab0400a8d8bbcbf0981fe16252af02b8df23cb5ca086d36b2d971649f86841",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__ensemble-stacked/inner-1",
+            "sha256.json": "7814c16a3e617a67061bf82a51a66805b08828495fb47b4794c9b191b5d9729a"
+          },
+          "inner-2": {
+            "comparison.json": "72c029655d8140c4b1996acd43148fa307838fe27465790824806500c3afc928",
+            "path": "chain/chronos-2-zero-shot-ctx720__vs__ensemble-stacked/inner-2",
+            "sha256.json": "e06d22130915ff5f7a7944dd726bf86e3133e8c7fc3f6d169364ba70f90b5ca6"
+          }
+        },
+        "status": "kept_incumbent"
+      }
+    ]
+  },
+  "selection_rule_sha256": "9e1bc4d72f33c0d9bfaab7fa1118aba48c432dbc2d8130b067fc867efa2dd78c",
+  "validation_participants": 12,
+  "zero_shot_predictions_sha256": "5574b93265a86cbb9d8366ced2fbb2ef889ab34fcd0af54f3400d3cfb91dfcc5"
+}

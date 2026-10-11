@@ -8,6 +8,22 @@ This report has aggregate results only: no participant ids, rows, cutoffs or pre
 
 **What it is not.** It is not evidence about real Apple Watch data. Device, wear-pattern and sampling-irregularity shifts remain (see Limitations). It is not a held-out test result: the outer test stays sealed. It is not a selection either; it is a candidate input to #12.
 
+## Amendment 1: Apple-helper coverage (supersedes the original gate wording)
+
+BoldHorizon (`hachi-issue-16`) found that the original variant's coverage didn't match served Apple features.
+- **Original variant:** coverage = share of 5-minute slots holding a sample, so full 5-minute cadence gives 12/12 = 1.0.
+- **Served Apple features** (`hachi.data.apple_health.hourly`, rule `apple-hour-end-sealed-native-v1`): coverage = distinct sampled start minutes / 60, so the same cadence gives 12/60 = 0.2.
+- **Consequence:** a gate of "coverage ≥ 0.5" validated here would still abstain on every typical Apple hour.
+
+**The amendment:** [`configs/evaluation/pmdata-hourly-validation-apple-minute-density.json`](../../configs/evaluation/pmdata-hourly-validation-apple-minute-density.json), file sha256 `72c75819…ffee`, protocol `document_sha256` `3629a9b8d98404edf187584375341e2f98351b363fc06a306895e5d229ab23f3`. It pins the original variant by SHA-256 and was committed at `8ce2530`. Timing: after the original variant was scored, but before its own scoring.
+- **Coverage** is computed exactly as the Apple helper does: distinct sampled start minutes / 60. A bin is null only when it holds no sample.
+- **The gate is coverage ≥ 0.10 and ≥ 6 samples per hour,** the frozen coverage-0.5 rule at 5-minute cadence in that denominator. The audit under this definition supports it:
+  - all 46,406 frozen-admitted hours keep coverage ≥ 0.10 (min 0.10, p01 0.133, median 0.20);
+  - coverage ≥ 0.15 would drop 1.1% of them with no structural basis.
+- **No gate is chosen from scores.** Under thinning, each kept sample sits in its own minute, so minute coverage ≥ 0.10 holds exactly when the original slot rule did. The admitted hours are identical (46,674). Rerun at `21a78e4`, all 15 thinned-history evaluations (5 models × 3 folds) have **identical predictions and counts**. The thinned Chronos request file is byte-identical (`3a2bcb87…`), and so is the paired-points file. **Every number below holds unchanged for the amended gate.**
+- **Scope:** this is evidence about **cadence** only. It is not a validation of a real Apple device, wear pattern or physiology.
+- **Serving:** a served Apple model is a **new artifact**, staged and evaluated at these gates. It never overrides the original receipt, and WindyTrout's PR #91 enforces that.
+
 ## Answer
 
 **At the density-matched gate, Apple-like history costs nothing measurable.**
@@ -24,9 +40,9 @@ This report has aggregate results only: no participant ids, rows, cutoffs or pre
 - **Coverage.** The origin plans are identical. The thinned gate admits slightly more hours, so the tree and seasonal-naive abstain *less*.
 - **Chronos's 80% interval** covers 0.83 on thinned history vs 0.81 on full.
 
-What an admission can cite: on PMData, hourly HR means built from **≥ 6 samples spread over ≥ 6 distinct 5-minute slots** (≥ 6 of 12 slots observed) forecast true hourly HR as well as full-density means, for all five served models.
+What an admission can cite: on PMData, hourly HR means with **≥ 6 samples and Apple-helper coverage ≥ 0.10** (distinct sampled minutes / 60; ≥ 6 distinct 5-minute slots at this cadence) forecast true hourly HR as well as full-density means, for all five served models. This is cadence evidence only.
 
-## The variant (predeclared, committed before any score)
+## The original variant (predeclared, committed before any score)
 
 - **File:** [`configs/evaluation/pmdata-hourly-validation-apple-density.json`](../../configs/evaluation/pmdata-hourly-validation-apple-density.json), committed at `132a219` before scoring. File sha256 `a5bd17c2…aa43`; protocol `document_sha256` `4aad3a87fa7fd390304031bd5e49b31ed2affe23edcfe6a6a9ea987323f7ee27`.
 - **Base:** the frozen protocol `configs/evaluation/pmdata-hourly-validation.json` (`2adbe991…4bd7`), pinned by file SHA-256. `load_variant` refuses any difference except the model-input density gates.
@@ -111,4 +127,5 @@ No target that full-density history predicted was lost with thinned history.
 
 Participant-level data never goes to Git or GitHub.
 - **Private outputs:** exports, GX10 runs, per-fold evaluations and `paired-points.parquet` are on Justin's T7 at `hachi.datasets/runs/justin06lee/apple-density-20261011T130430Z/`, mirrored on the GX10 at `~/hachi/runs/justin06lee/apple-density-20261011T130430Z/`.
+- **Amendment 1 rerun:** `…/apple-minute-density-20261011T135904Z/` (T7 and GX10). `score/summary.json` sha256 `f5144fc4…ac2f`; `paired-points.parquet` `d79f55a0…45ed`, identical to the original.
 - **Hashes:** `score/summary.json` sha256 `759e5fbc…8e2e`; `paired-points.parquet` `d79f55a0…45ed`.
