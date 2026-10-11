@@ -102,10 +102,21 @@ def _local_to_utc(local: datetime, zone: ZoneInfo, label: str) -> datetime:
     return instant
 
 
+# Naive wall-clock times are not RFC 3339 `date-time` (which requires an offset). They carry
+# their own format name so validators keep strict `date-time` for every UTC timestamp.
+type LocalDateTime = Annotated[
+    NaiveDatetime,
+    Field(
+        description="Local wall-clock time, without an offset.",
+        json_schema_extra={"format": "local-date-time"},
+    ),
+]
+
+
 class SleepSchedule(Contract):
     schedule_id: Identifier
-    bedtime_local: NaiveDatetime = Field(description="Local wall-clock time, without an offset.")
-    wake_time_local: NaiveDatetime = Field(description="Local wall-clock time, without an offset.")
+    bedtime_local: LocalDateTime
+    wake_time_local: LocalDateTime
 
 
 class ScenarioAssumptions(Contract):

@@ -15,6 +15,7 @@ from hachi.contracts.metrics import Metric
 from hachi.contracts.tables import Observation, SourceKind
 from hachi.data import pmdata
 from hachi.data.apple_health import iter_observations as apple_observations
+from hachi.data.apple_health.hourly import apple_hourly_features
 from hachi.evaluation.features import HourlyFeature, HourlyFeaturePolicy, hourly_features
 from hachi.storage import child
 
@@ -94,6 +95,11 @@ class SubjectData:
     def provides_hourly_features(self) -> bool:
         return self.kind == "dataset_snapshot"
 
+    @property
+    def source(self) -> str:
+        """The input source a serving profile admits: the training snapshot, or Apple Health."""
+        return "apple_health" if self.kind == "apple_import" else "dataset_snapshot"
+
     def observations(
         self, metric: Metric, as_of: datetime, start: datetime | None = None
     ) -> list[Observation]:
@@ -109,9 +115,14 @@ class SubjectData:
     def hourly_features(
         self, policy: HourlyFeaturePolicy, as_of: datetime, start: datetime | None = None
     ) -> list[HourlyFeature]:
-        """Derived hourly bins final by `as_of`, selected by the model's own feature policy."""
-        if self.kind != "dataset_snapshot":
-            raise ValueError("only dataset snapshots provide derived hourly features")
+        """Derived hourly bins final by `as_of`, selected by the model's own feature policy.
+
+        Apple imports are sealed at each hour end by #78's source rule; the policy must carry
+        that rule, so a PMData policy can never be stamped onto Apple bins.
+        """
+        if self.kind == "apple_import":
+            view = apple_hourly_features(self.path, policy, as_of, start)
+            return [f for f in view.features if start is None or f.start_utc >= start]
         bins = pmdata.iter_aggregates(
             self.path, "hour", as_of=as_of, subjects=[self.subject_id], metrics=[policy.metric]
         )

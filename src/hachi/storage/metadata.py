@@ -342,7 +342,7 @@ class Metadata:
     def subject_known(self, subject_id: str) -> bool:
         return any(
             self._rows(f"SELECT 1 FROM {table} WHERE subject_id=? LIMIT 1", (subject_id,))
-            for table in ("imports", "report_jobs", "self_reports")
+            for table in ("imports", "report_jobs", "self_reports", "self_report_tombstones")
         )
 
     def delete_subject(self, subject_id: str) -> list[str]:

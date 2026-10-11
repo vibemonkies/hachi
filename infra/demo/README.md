@@ -51,9 +51,9 @@ The authoritative policy is `terms.shared_gx10_account` in each
 - `prohibited`: never copy the source, derived rows, subject predictions or private
   weights to the shared `asus` login. Per-worker directories do not fix this.
 
-CovIdentify, GLOBEM and DREAMT are prohibited there. CMU analysis remains blocked
-until the human Data Analysis Form is recorded; encrypted-storage requirements
-remain a separate gate. Do not infer encryption or access from a folder name or
+CovIdentify, GLOBEM and DREAMT are prohibited there. CMU analysis requires the
+human Data Analysis Form to be recorded for each account user; encrypted-storage
+requirements remain a separate gate. This privacy lane does not authorize CMU analysis. Do not infer encryption or access from a folder name or
 permission bit. The #19 inspection makes no remote-storage/encryption claim and
 changes no security settings. Justin reported unresolved T7/GX10 encryption and
 interim password SSH; these are recorded limitations, not #19-authorized changes.
@@ -95,13 +95,45 @@ import. Temporary receiving files are removed when the request fails or finishes
 Failed import metadata is retained so the operator can see and delete the failure.
 Reports and self-reports live in the operator's metadata database until deletion.
 There is no automatic expiry, backup or personal-model training in the API.
+Chronos remote artifacts have a separate retention boundary described below.
 
 `DELETE /v1/subjects/<id>?confirm=<same-id>` removes that subject's import directories
 (including raw and derived records and files placed inside those directories),
-import status/summary records, report requests/results, and self-reports. It must
+import status/summary records, report requests/results, all self-report versions,
+and ID tombstones. A subject with only tombstones must still be erasable. It must
 refuse an incorrect confirmation and pending/running jobs. It must preserve other
 subjects. Failed filesystem removal must leave metadata for an explicit retry;
 concurrent publication must serialize against deletion (#16 service-owner fix).
+
+
+`DELETE /v1/subjects/<id>/observations/<entry-id>?confirm=<entry-id>` erases the
+whole correction chain, including superseded versions and its subject's dependent
+illness/recovery reports. It preserves unrelated reports and other subjects. A
+retained resolution, including a superseded resolution, prevents deleting its onset
+until the entire resolution chain is removed. The API retains subject ID, entry IDs
+and deletion time as tombstones to refuse reuse; these are linkable metadata, not
+anonymous data. They persist until whole-subject deletion. Whole deletion permits a
+subsequent fresh subject to reuse those IDs. Mutation validation, idempotent reuse
+and publication must serialize against deletion; a 200 no-op is still a mutation
+boundary and must be refused while whole deletion is in progress.
+
+### Chronos remote retention and personal-source gate
+
+PR76's GPU transport sends numeric context without subject IDs/cutoffs/targets and
+uses generated run IDs. That still transfers health measurements. It removes the
+request JSONL after the job, but cleanup failures are suppressed; remote
+`runs/<owner>/<run-id>/predictions.jsonl` and `inference.json` remain. API subject
+deletion does not inventory or erase those remote outputs. Removing identity fields
+does not make individual forecasts anonymous or satisfy withdrawal.
+
+Use that path only for generated data or research sources whose recorded terms
+permit the actual account/machine and retention. Personal Apple-to-GPU serving is
+gated on #21's explicit transfer/viewer consent and #16's remote copy inventory,
+retention and verified cleanup design, including errors/timeouts and failed request
+cleanup. The Apple hourly helper in PR78 is source-level work; it supplies neither
+that permission nor API wiring. The CPU/private import walkthrough below makes no
+remote erasure claim. Whole-source transfer validation and actual UI/display proof
+remain with #16/#18/#22 owners; GPU parity is the model/API owner's proof.
 
 SQLite uses `secure_delete=ON` to clear deleted cells, followed by a truncating WAL
 checkpoint. A blocked checkpoint is an error, not successful retention evidence.
@@ -124,7 +156,10 @@ only delete disposable roots and generated subjects they created themselves.
 ## Reproduce the evidence
 
 ```sh
-.venv/bin/pytest tests/privacy tests/api tests/data/apple_health
+# Focused correction/privacy follow-up (no GPU execution):
+.venv/bin/pytest tests/privacy/test_correction_http.py tests/privacy/test_gpu_boundary.py
+.venv/bin/python scripts/privacy/verify_corrections.py --port 8719
+# Original upload/parser/launcher acceptance; rerun when those paths change:
 .venv/bin/python scripts/privacy/verify_http.py --port 8719
 .venv/bin/python scripts/privacy/verify_launcher.py
 .venv/bin/python scripts/privacy/scan.py --assets infra/demo \
@@ -141,6 +176,13 @@ confirmation and deletion. A controlled generated-subject fault also checks real
 Uvicorn exception logging. It tests absence of raw/derived directories, metadata,
 WAL sentinel bytes and private log strings, preserves another subject, then cleans
 its own disposable root. It never contacts a pre-existing listener or real source.
+
+`verify_corrections.py` uses the same isolated production CLI harness for current/all/
+cutoff history, changed report keys, whole-chain erasure, tombstone-only deletion,
+ID reuse, report isolation and private response/log checks. The TCP pytest fixture
+binds its own socket on 8719 before starting a service and uses barriers at storage
+boundaries to reproduce deletion races. Run these sequentially; do not use parallel
+pytest workers on the reserved port. Tests never contact SSH or queue a GPU.
 
 The tests also cover receiving limits without Content-Length and deletion failure/
 retry. Uvicorn access logging is disabled; unexpected logs retain method/exception

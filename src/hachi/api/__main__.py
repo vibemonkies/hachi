@@ -19,7 +19,14 @@ from pathlib import Path
 from hachi.evaluation.features import HourlyFeaturePolicy
 from hachi.storage import DEFAULT_ARTIFACTS
 
-from .artifacts import ArtifactRefused, ServingSpec, load_served_artifact, stage_artifact
+from .artifacts import (
+    APPLE_AVAILABILITY_RULE,
+    ArtifactRefused,
+    ServingSpec,
+    SourceAdmission,
+    load_served_artifact,
+    stage_artifact,
+)
 from .settings import Settings, SettingsError, parse_pin
 
 
@@ -59,6 +66,12 @@ def main(argv: list[str] | None = None) -> int:
         "--protocol",
         type=Path,
         help="the run's protocol.json: serve hourly features with its feature_policy",
+    )
+    stage.add_argument(
+        "--admit-apple",
+        metavar="RATIONALE",
+        help="also admit Apple Health imports (#78 sealed hourly input) as a declared, "
+        "unvalidated transfer; the rationale is recorded and shown with every result",
     )
     stage.add_argument("--artifact-root", type=Path)
     check = sub.add_parser("check-artifact", help="verify a pinned artifact loads for serving")
@@ -122,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
             serving = (
                 ServingSpec.model_validate_json(args.serving.read_bytes())
                 if args.serving
-                else serving_from_protocol(args.protocol, args.model)
+                else serving_from_protocol(args.protocol, args.model, args.admit_apple)
             )
             pin = stage_artifact(root, args.model, args.packet, serving)
         else:
@@ -155,7 +168,9 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def serving_from_protocol(path: Path, model_dir: Path) -> ServingSpec:
+def serving_from_protocol(
+    path: Path, model_dir: Path, admit_apple: str | None = None
+) -> ServingSpec:
     """Hourly-feature serving bound to the exact protocol file the run wrote.
 
     A Chronos-2 artifact (#10/#12) is served on the GX10 with its own q0.1-q0.9 coverage;
@@ -167,6 +182,13 @@ def serving_from_protocol(path: Path, model_dir: Path) -> ServingSpec:
     chronos = model.get("format_version") == "chronos-2-artifact-1"
     if chronos:
         lower, upper = model["chronos"]["interval_lower"], model["chronos"]["interval_upper"]
+    policy = HourlyFeaturePolicy.model_validate_json(json.dumps(protocol["feature_policy"]))
+    admissions = []
+    if admit_apple:
+        apple = policy.model_copy(update={"availability_rule": APPLE_AVAILABILITY_RULE})
+        admissions.append(
+            SourceAdmission(source="apple_health", feature_policy=apple, rationale=admit_apple)
+        )
     return ServingSpec(
         format_version="hachi-serving-1",
         task="physiology_forecast",
@@ -175,12 +197,11 @@ def serving_from_protocol(path: Path, model_dir: Path) -> ServingSpec:
         if chronos
         else "hachi.models.baselines.load_artifact",
         input="hourly_features",
-        feature_policy=HourlyFeaturePolicy.model_validate_json(
-            json.dumps(protocol["feature_policy"])
-        ),
+        feature_policy=policy,
         interval_nominal_coverage=round(upper - lower, 10) if chronos else None,
         requires_gpu=chronos,
         protocol_sha256=hashlib.sha256(data).hexdigest(),
+        accepted_sources=admissions,
     )
 
 
