@@ -160,7 +160,7 @@ def scenario_requests() -> dict[str, Doc]:
 def self_report_requests() -> dict[str, Doc]:
     day = timedelta(days=1)
     onset = AS_OF - 3 * day
-    return {
+    documents = {
         "symptoms-tests-and-alertness": {
             "schema_version": SCHEMA_VERSION,
             "entries": [
@@ -228,8 +228,28 @@ def self_report_requests() -> dict[str, Doc]:
                     "resolved_latest_utc": ts(AS_OF + timedelta(hours=8)),
                 },
             ],
-        }
+        },
+        # A correction is a new entry naming the version it replaces; the original stays.
+        "correction-of-onset": {
+            "schema_version": SCHEMA_VERSION,
+            "entries": [
+                {
+                    "kind": "symptom_onset",
+                    "entry_id": "synthetic-entry-08",
+                    "entered_at_utc": ts(AS_OF - day + timedelta(hours=9)),
+                    "supersedes": "synthetic-entry-01",
+                    "onset_earliest_utc": ts(onset - timedelta(hours=6)),
+                    "onset_latest_utc": ts(onset + timedelta(hours=6)),
+                    "symptoms": ["sore_throat", "fatigue", "congestion", "headache"],
+                    "severity": 3,
+                }
+            ],
+        },
     }
+    for document in documents.values():
+        for entry in document["entries"]:
+            entry.setdefault("supersedes", None)
+    return documents
 
 
 # --- Results --------------------------------------------------------------------------------
@@ -1197,6 +1217,8 @@ INVALID: list[tuple[type[BaseModel], str, str, Callable[[Doc], None], str]] = [
      _set("entries.3.entered_at_utc", "2026-10-09T23:00:00Z"), "cannot be recorded before"),
     (SelfReportRequest, "checkin-present-without-symptoms", "symptoms-tests-and-alertness",
      _set("entries.1.symptoms", []), "exactly when symptoms are present"),
+    (SelfReportRequest, "entry-supersedes-itself", "correction-of-onset",
+     _set("entries.0.supersedes", "synthetic-entry-08"), "cannot supersede itself"),
     (SelfReportHistory, "duplicate-entry-ids", "recorded-entries",
      _set("entries.1.entry_id", "synthetic-entry-01"), "entry ids must not contain duplicates"),
     # Imports
