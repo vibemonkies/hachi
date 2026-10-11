@@ -24,3 +24,17 @@ def test_top_level_documents_carry_schema_version() -> None:
         for variant in variants:
             target = defs[variant["$ref"].split("/")[-1]]
             assert "schema_version" in target["required"], f"{target['title']} lacks a version"
+
+
+def test_only_naive_local_times_use_local_date_time() -> None:
+    """RFC 3339 `date-time` needs an offset; naive wall-clock fields carry their own format."""
+    schema = build_schema()
+    assert schema["$defs"]["LocalDateTime"]["format"] == "local-date-time"
+    users = {
+        f"{name}.{field}"
+        for name, definition in schema["$defs"].items()
+        for field, spec in definition.get("properties", {}).items()
+        if spec.get("$ref") == "#/$defs/LocalDateTime"
+    }
+    assert users == {"SleepSchedule.bedtime_local", "SleepSchedule.wake_time_local"}
+    assert '"format": "date-time"' in render_schema()  # UTC timestamps stay strict
