@@ -69,45 +69,68 @@ def direct_inference(
     return result.predictions[0].estimates if result.predictions else None
 
 
-def api_medians(job: ReportJob) -> dict[datetime, float] | None:
+type Point = tuple[float, float | None, float | None]  # median, lower, upper
+
+
+def api_points(job: ReportJob) -> dict[datetime, Point] | None:
     result = job.result.root if job.result is not None else None
     if not isinstance(result, PhysiologyForecastResult):
         return None
     (series,) = result.forecast.series
-    return {p.interval_start_utc: p.median for p in series.points}
+    return {p.interval_start_utc: (p.median, p.lower, p.upper) for p in series.points}
 
 
-def expected_medians(
+def expected_points(
     cutoff: datetime, estimates: tuple[ForecastEstimate | None, ...] | None
-) -> dict[datetime, float]:
-    return {cutoff + i * HOUR: e.median for i, e in enumerate(estimates or ()) if e is not None}
+) -> dict[datetime, Point]:
+    return {
+        cutoff + i * HOUR: (e.median, e.lower, e.upper)
+        for i, e in enumerate(estimates or ())
+        if e is not None
+    }
 
 
 class Tally:
-    """Aggregate agreement between API points and a reference's points."""
+    """Aggregate agreement between API points and a reference's points.
 
-    def __init__(self) -> None:
+    Median, lower and upper are compared where given; a bound present on one side only is a
+    mismatch. `tolerance` is the largest absolute difference still counted as agreement.
+    """
+
+    def __init__(self, tolerance: float = 0.0) -> None:
+        self.tolerance = tolerance
         self.compared = 0
         self.mismatched = 0
         self.missing_in_reference = 0
         self.max_difference = 0.0
+        self.with_intervals = 0
 
-    def add(self, shown: dict[datetime, float], reference: dict[datetime, float]) -> None:
-        for start, median in shown.items():
+    def add(self, shown: dict[datetime, Point], reference: dict[datetime, Point]) -> None:
+        for start, point in shown.items():
             if start not in reference:
                 self.missing_in_reference += 1
                 continue
-            difference = abs(median - reference[start])
+            expected = reference[start]
             self.compared += 1
-            self.mismatched += difference != 0.0
-            self.max_difference = max(self.max_difference, difference)
+            self.with_intervals += point[1] is not None
+            worst = 0.0
+            for got, want in zip(point, expected, strict=True):
+                if (got is None) != (want is None):
+                    worst = float("inf")
+                elif got is not None and want is not None:
+                    worst = max(worst, abs(got - want))
+            self.mismatched += worst > self.tolerance
+            if worst != float("inf"):
+                self.max_difference = max(self.max_difference, worst)
 
     def summary(self) -> dict[str, Any]:
         return {
             "points_compared": self.compared,
+            "points_with_intervals": self.with_intervals,
             "points_mismatched": self.mismatched,
             "api_points_without_reference": self.missing_in_reference,
             "max_abs_difference": self.max_difference,
+            "tolerance": self.tolerance,
         }
 
     @property
@@ -159,14 +182,20 @@ def load_packet(packet: Path) -> tuple[RunManifest, dict[str, Any]]:
 
 
 def run_handoff(
-    base_url: str, packet: Path, served: ServedArtifact, subjects: dict[str, SubjectData]
+    base_url: str,
+    packet: Path,
+    served: ServedArtifact,
+    subjects: dict[str, SubjectData],
+    *,
+    direct: bool = True,
+    tolerance: float = 0.0,
 ) -> dict[str, Any]:
     run, evaluation = load_packet(packet)
     if run.artifact != served.ref:
         raise ValueError("the packet's run names a different artifact than the one served")
     _, payload = _call(base_url, "GET", "/healthz")
     health = HealthStatus.model_validate_json(payload)
-    vs_packet, vs_direct = Tally(), Tally()
+    vs_packet, vs_direct = Tally(tolerance), Tally(tolerance)
     outcomes: Counter[str] = Counter()
     provenance_mismatches = 0
     for prediction in evaluation["predictions"]:
@@ -195,8 +224,8 @@ def run_handoff(
             None if e is None else ForecastEstimate.model_validate(e)
             for e in prediction["estimates"]
         )
-        reference = expected_medians(cutoff, packet_estimates)
-        shown = api_medians(job)
+        reference = expected_points(cutoff, packet_estimates)
+        shown = api_points(job)
         if shown is None:
             outcomes["agreed_abstention" if not reference else "api_missing_forecast"] += 1
             continue
@@ -206,11 +235,12 @@ def run_handoff(
         ):
             provenance_mismatches += 1
         vs_packet.add(shown, reference)
-        direct = direct_inference(served, subjects[origin["subject_id"]], cutoff, horizon)
-        vs_direct.add(shown, expected_medians(cutoff, direct))
+        if direct:
+            again = direct_inference(served, subjects[origin["subject_id"]], cutoff, horizon)
+            vs_direct.add(shown, expected_points(cutoff, again))
     agrees = (
         vs_packet.agrees
-        and vs_direct.agrees
+        and (vs_direct.agrees or not direct)
         and not provenance_mismatches
         and not outcomes["api_missing_forecast"]
         and served.ref in health.artifacts
@@ -225,5 +255,5 @@ def run_handoff(
         "outcomes": dict(sorted(outcomes.items())),
         "provenance_mismatches": provenance_mismatches,
         "vs_packet_predictions": vs_packet.summary(),
-        "vs_direct_inference": vs_direct.summary(),
+        "vs_direct_inference": vs_direct.summary() if direct else "skipped",
     }

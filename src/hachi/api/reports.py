@@ -46,6 +46,7 @@ from hachi.storage import Metadata, Workspace
 
 from .artifacts import ServedArtifact
 from .catalog import Catalog
+from .gpu import GpuOutputRejected, GpuTimeout, GpuUnavailable
 from .sources import SubjectData
 
 log = logging.getLogger("hachi.api")
@@ -341,13 +342,14 @@ def _forecast(
     partial = PartialProvenance(
         dataset_snapshot=subject.snapshot, artifact=artifact.ref, feature_coverage=[]
     )
-    if artifact.serving.requires_gpu:
+    if artifact.serving.requires_gpu and context.catalog.gx10 is None:
         return base.error(
             "GPU_UNAVAILABLE",
             "This model needs the GX10 GPU queue, which this API instance does not reach.",
         )
     model = artifact.model
-    if floor_hour(body.as_of) < model.fit_as_of:
+    fit_as_of = getattr(model, "fit_as_of", None)
+    if fit_as_of is not None and floor_hour(body.as_of) < fit_as_of:
         return base.error(
             "ARTIFACT_INCOMPATIBLE",
             "The served model was fitted on data later than this as_of; pick a later as_of.",
@@ -381,6 +383,17 @@ def _forecast(
         estimates = tuple(model.predict(model_input))
         if len(estimates) != len(targets):
             raise ValueError("one estimate or abstention per target")
+    except GpuUnavailable:
+        return base.error(
+            "GPU_UNAVAILABLE", "The GX10 GPU could not run this forecast now; try again later."
+        )
+    except GpuTimeout:
+        return base.error("INFERENCE_TIMEOUT", "The GPU forecast did not finish in time.")
+    except GpuOutputRejected as exc:
+        log.warning("report %s: %s", base.report_id, exc)
+        return base.error(
+            "INFERENCE_FAILED", "The GPU result failed its integrity checks and was not used."
+        )
     except (ValueError, ArithmeticError) as exc:
         log.warning("report %s: inference failed (%s)", base.report_id, type(exc).__name__)
         return base.error("INFERENCE_FAILED", "The model could not produce this forecast.")
