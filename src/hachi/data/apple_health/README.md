@@ -95,11 +95,34 @@ view = apple_hourly_features(database, apple_policy, cutoff, history_start)
 history = view.features  # canonical HourlyFeature, with source-specific readiness
 ```
 
-`iter_hourly_bins(path, metric=..., aggregation=..., as_of=..., start=...)` also
-exposes unfiltered canonical aggregates and per-hour `HourAudit`: included record
-count, excluded selected cross-hour records, sampled HR minutes, recorded step
-interval seconds, and private source-ID/count pairs. `HourlyFeatureView.counts`
-reports the existing exclusive inclusion/missing/density/count gate outcomes.
+The public entry point returns `AppleHourlyView`, retaining `.policy`, `.features`
+and `.counts` and adding `.audits`. Native bins and replay are private; callers must
+use the guarded Apple entry point, which refuses foreign readiness rules before
+building features. Serving must not feed private Apple bins through the shared
+selector with a PMData policy. The original policy is not rewritten.
+
+Each `HourAudit` is a separate receipt bound to hour start, fixed closure and the
+actual audit cutoff. It reports unique normalized native candidates whose starts
+belong to that hour and whose creation **and event end** are at or before the audit
+cutoff. Exact canonical duplicates count once; importer raw-record disposition
+counts are separate. The following reasons are exclusive and reconcile to
+`known_candidates`:
+
+1. `excluded_created_after_seal`: creation after fixed hour closure. This includes
+   late crossing records, which are attributed here only.
+2. `excluded_cross_hour`: remaining on-time candidates ending outside their start
+   hour; excluded whole, with no proration.
+3. `excluded_by_precedence`: remaining on-time contained candidates not selected
+   by the importer's source/overlap rules at closure.
+4. `included_records`: selected contained native records used in the aggregate.
+
+Audits also report sampled HR minutes, recorded step interval seconds and private
+source-ID/count pairs. A late candidate stays excluded even when its audit count
+becomes visible later. Records created or ending after an earlier audit cutoff are
+invisible to that receipt. Audit counts/time never enter feature value, identity,
+coverage or readiness. All-late history produces missing bins with visible late
+counts after the candidates become known; it does not manufacture usable history.
+`.counts` retains the existing inclusion/missing/density/count gate outcomes.
 
 | Property | Apple source protocol |
 | --- | --- |
@@ -124,8 +147,12 @@ ingestion time; backdated source metadata is not proof of historical receipt.
 
 Only fully contained native records contribute. Interval HR contributes one level
 sample at its start, without claiming continuous duration. Cross-hour amounts are
-excluded whole, leaving their portions unknown. Bins cover completed UTC hours
-from the earliest eligible candidate, or the requested lower bound, to the cutoff;
+excluded whole, leaving their portions unknown. Source precedence runs first: a
+crossing winner can suppress a contained loser and then be excluded itself; both
+contributions stay unknown. The loser is counted as a precedence exclusion in its
+start hour; the crossing winner is counted once in its own start hour. Bins cover
+completed UTC hours from the earliest known native candidate, or the requested
+lower bound, to the cutoff;
 an unaligned lower bound excludes its partial first hour. Empty metric history
 returns an empty view. Timezone offsets are normalized by the importer; no source
 calendars or individuals are joined. Source IDs and per-source audit counts stay
@@ -142,12 +169,25 @@ actual consented export and source-transfer validation remain separate gates.
 The focused tests exercise density versus duration, unchanged gates, late higher
 priority updates, exact duplicates, native precedence, creation/end boundaries,
 UTC offsets, whole cross-hour exclusion, zero-step intervals, instant step totals,
-missing/vendor-only history and foreign policy refusal. On this Mac, a generated
+missing/vendor-only history and foreign policy refusal. Additional sentinels verify
+known-only late counts, exclusive reason reconciliation, exact-duplicate counting,
+all-late missingness, crossing-winner suppression, read-only snapshots and native
+oracle agreement. Feature identity/readiness stay fixed while later audit receipts
+show newly known exclusions. On this Mac, a generated
 1,440-record/48-hour probe took 0.012 seconds for one native read versus 0.285
 seconds for sealed-hour replay (48 eligible bins), Python 3.12.13. Replay reuses a
-read-only SQLite connection and the existing selector, with private disk-backed
-temporary state. It scans prior candidates per hour; supply the model lookback
-`start` in serving, and measure larger exports before promising interactive latency.
+read-only SQLite snapshot and the canonical `iter_observations(as_of=closure)`
+boundary, with private disk-backed temporary state. Generated hostile-record tests
+pin agreement with an independent native-read oracle. It scans prior candidates
+per hour; supply the model lookback `start` in serving.
+
+GreenHawk's independent review at `cb1c5a7` measured a 48-hour lookback at 12.0
+seconds for 20,000 generated HR records and 69.5 seconds for 105,120 records; one
+native read of the latter took 1.46 seconds. These are reviewer measurements of
+prior replay, not an interactive-latency guarantee for the audited update. The
+history × lookback cost remains an explicit API integration gate. A performance
+change must preserve importer precedence, the fixed closure and native-read oracle;
+no parser/store or API changes are included in this audit update.
 
 A separate generated 48-hour dense/sparse probe loaded the actual frozen PMData
 `hourly-last-valid-v1-141306001b16e168` artifact with receipt
@@ -157,3 +197,9 @@ Apple feature policy → direct model inference produced 24/24 expected syntheti
 points; the unchanged gates yielded 24/24 abstentions for sparse input. This proves
 the helper's structural input compatibility with that immutable artifact. It does
 not prove HTTP integration, Apple source transfer, calibration or population accuracy.
+
+After the audit update, the same checksum/code-verified artifact again produced
+24/24 expected generated points. Thirty withheld future watch updates were invisible
+at the earlier cutoff; their later audit receipt counted 30 late exclusions while
+every prior feature, identity and readiness remained identical. The original CPU
+receipt verified without a descriptor or shared feature-contract override.

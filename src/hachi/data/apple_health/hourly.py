@@ -12,33 +12,57 @@ from typing import Literal
 
 from hachi.contracts.metrics import METRICS, Aggregation
 from hachi.contracts.tables import Aggregate, Observation
-from hachi.evaluation.features import HourlyFeaturePolicy, HourlyFeatureView, hourly_features
+from hachi.evaluation.features import HourlyFeature, HourlyFeaturePolicy
+from hachi.evaluation.features import hourly_features as _select_features
 
 from .importer import ImportConfig
-from .store import EPOCH, select_candidates, timestamp_us
+from .store import EPOCH, iter_observations, timestamp_us
 
 AVAILABILITY_RULE = "apple-hour-end-sealed-native-v1"
 PIPELINE_VERSION = "apple-hourly-1"
 HOUR = timedelta(hours=1)
 type NativeMetric = Literal["heart_rate", "steps"]
 
+__all__ = ["AVAILABILITY_RULE", "AppleHourlyView", "HourAudit", "apple_hourly_features"]
+
 
 @dataclass(frozen=True)
 class HourAudit:
-    """Counts after importer selection; density is not continuous observation."""
+    """Known unique native candidates, attributed once to their start hour.
 
-    included_records: int
+    Reasons are exclusive: late creation first, then crossing, then precedence
+    loss or inclusion. All counts require creation AND event end <= audit_as_of.
+    Audit receipts can grow after closure; they are never feature identity inputs.
+    """
+
+    interval_start_utc: datetime
+    closure_utc: datetime
+    audit_as_of_utc: datetime
+    known_candidates: int
+    excluded_created_after_seal: int
     excluded_cross_hour: int
+    excluded_by_precedence: int
+    included_records: int
     sample_minutes: int
     interval_seconds: float
     source_counts: tuple[tuple[str, int], ...]
 
 
 @dataclass(frozen=True)
-class AppleFeatureBin:
+class AppleHourlyView:
+    policy: HourlyFeaturePolicy
+    features: tuple[HourlyFeature, ...]
+    counts: dict[str, int]
+    audits: tuple[HourAudit, ...]
+
+
+@dataclass(frozen=True)
+class _AppleFeatureBin:
     aggregate: Aggregate
     available_at_utc: datetime
-    audit: HourAudit
+    sample_minutes: int
+    interval_seconds: float
+    source_counts: tuple[tuple[str, int], ...]
 
 
 def _interval_seconds(rows: Iterable[Observation]) -> float:
@@ -58,17 +82,14 @@ def _aggregate_hour(
     metric: NativeMetric,
     aggregation: Aggregation,
     start: datetime,
-) -> AppleFeatureBin:
+) -> _AppleFeatureBin:
     """Pure transform of selected rows already eligible at this hour's end."""
     end = start + HOUR
     included: list[Observation] = []
-    crossing = 0
     for row in rows:
         if row.metric != metric or row.start_utc >= end or row.end_utc < start:
             continue
         if row.start_utc < start or row.end_utc > end:
-            if row.end_utc > start:
-                crossing += 1
             continue
         included.append(row)
     included.sort(key=lambda r: (r.start_utc, r.record_id))
@@ -91,7 +112,7 @@ def _aggregate_hour(
                 value = sum(values)
             case _:
                 raise AssertionError("validated native aggregation")
-    return AppleFeatureBin(
+    return _AppleFeatureBin(
         Aggregate(
             dataset_id=config.dataset_id,
             subject_id=config.subject_id,
@@ -111,13 +132,9 @@ def _aggregate_hour(
             pipeline_version=PIPELINE_VERSION,
         ),
         end,
-        HourAudit(
-            len(included),
-            crossing,
-            minutes,
-            seconds,
-            tuple(sorted(Counter(r.source_id for r in included).items())),
-        ),
+        minutes,
+        seconds,
+        tuple(sorted(Counter(r.source_id for r in included).items())),
     )
 
 
@@ -127,14 +144,14 @@ def _utc(value: datetime, name: str) -> datetime:
     return value.astimezone(UTC)
 
 
-def iter_hourly_bins(
+def _iter_hourly_bins(
     path: Path,
     *,
     metric: NativeMetric,
     aggregation: Aggregation,
     as_of: datetime,
     start: datetime | None = None,
-) -> Iterator[AppleFeatureBin]:
+) -> Iterator[tuple[_AppleFeatureBin, HourAudit]]:
     """Replay native precedence at every completed hour end, never at a later cutoff.
 
     Late creations and intervals ending after that hour are permanently excluded
@@ -145,7 +162,8 @@ def iter_hourly_bins(
         raise ValueError("Apple hourly inputs support only native heart_rate and steps")
     if aggregation not in METRICS[metric].aggregations:
         raise ValueError("aggregation must match the native metric")
-    cutoff = _utc(as_of, "as_of").replace(minute=0, second=0, microsecond=0)
+    audit_as_of = _utc(as_of, "as_of")
+    cutoff = audit_as_of.replace(minute=0, second=0, microsecond=0)
     lower = _utc(start, "start") if start is not None else None
     with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
         connection.execute("PRAGMA cache_size=-4096")
@@ -160,7 +178,7 @@ def iter_hourly_bins(
         # winning watch record must not erase a previously eligible phone hour.
         (first,) = connection.execute(
             "SELECT min(start_us) FROM candidates WHERE family=? AND end_us<=? AND available_us<=?",
-            (metric, timestamp_us(cutoff), timestamp_us(cutoff)),
+            (metric, timestamp_us(audit_as_of), timestamp_us(audit_as_of)),
         ).fetchone()
         if first is None:
             return
@@ -170,9 +188,45 @@ def iter_hourly_bins(
             if hour < lower:
                 hour += HOUR
         while hour < cutoff:
-            selected = (row for _, row in select_candidates(connection, hour + HOUR))
-            yield _aggregate_hour(selected, config, metric, aggregation, hour)
+            selected = iter_observations(path, as_of=hour + HOUR)
+            item = _aggregate_hour(selected, config, metric, aggregation, hour)
+            yield item, _audit_hour(connection, item, metric, audit_as_of)
             hour += HOUR
+
+
+def _audit_hour(
+    connection: sqlite3.Connection,
+    item: _AppleFeatureBin,
+    metric: NativeMetric,
+    as_of: datetime,
+) -> HourAudit:
+    row = item.aggregate
+    begin, seal, cutoff = map(timestamp_us, (row.interval_start_utc, row.interval_end_utc, as_of))
+    known = late = crossing = 0
+    candidates = connection.execute(
+        "SELECT end_us, available_us FROM candidates WHERE family=? "
+        "AND start_us>=? AND start_us<? AND end_us<=? AND available_us<=?",
+        (metric, begin, seal, cutoff, cutoff),
+    )
+    for end, available in candidates:
+        known += 1
+        if available > seal:
+            late += 1
+        elif end > seal:
+            crossing += 1
+    return HourAudit(
+        row.interval_start_utc,
+        row.interval_end_utc,
+        as_of,
+        known,
+        late,
+        crossing,
+        known - late - crossing - row.observed_count,
+        row.observed_count,
+        item.sample_minutes,
+        item.interval_seconds,
+        item.source_counts,
+    )
 
 
 def apple_hourly_features(
@@ -180,7 +234,7 @@ def apple_hourly_features(
     policy: HourlyFeaturePolicy,
     as_of: datetime,
     start: datetime | None = None,
-) -> HourlyFeatureView:
+) -> AppleHourlyView:
     """Apply the existing model gates with an explicitly Apple-specific policy.
 
     Never silently rewrite a frozen PMData policy or claim its availability rule.
@@ -190,13 +244,12 @@ def apple_hourly_features(
         raise ValueError("Apple hourly inputs require their source-specific availability rule")
     if policy.metric not in ("heart_rate", "steps"):
         raise ValueError("Apple hourly inputs support only native heart_rate and steps")
-    return hourly_features(
-        iter_hourly_bins(
-            path,
-            metric=policy.metric,
-            aggregation=policy.aggregation,
-            as_of=as_of,
-            start=start,
-        ),
-        policy,
-    )
+    bins: list[_AppleFeatureBin] = []
+    audits: list[HourAudit] = []
+    for item, audit in _iter_hourly_bins(
+        path, metric=policy.metric, aggregation=policy.aggregation, as_of=as_of, start=start
+    ):
+        bins.append(item)
+        audits.append(audit)
+    view = _select_features(bins, policy)
+    return AppleHourlyView(view.policy, view.features, view.counts, tuple(audits))
