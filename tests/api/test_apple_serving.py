@@ -507,3 +507,19 @@ def test_committed_density_variants_are_registered_whole():
     assert protocol_key(committed["protocol"]) not in frozen_protocols()  # never unwrapped
     committed["thinning"]["slot_seconds"] = 60
     assert protocol_key(committed) not in frozen_protocols()
+
+
+def test_two_committed_variants_may_not_share_a_label(tmp_path):
+    from hachi.api.artifacts import FROZEN_PROTOCOL_DIR, committed_protocols
+
+    for name in (
+        "pmdata-hourly-validation.json",
+        "pmdata-hourly-validation-apple-minute-density.json",
+    ):
+        (tmp_path / name).write_bytes((FROZEN_PROTOCOL_DIR / name).read_bytes())
+    assert committed_protocols(tmp_path)  # one variant per label is fine
+    twin = json.loads((tmp_path / "pmdata-hourly-validation-apple-minute-density.json").read_text())
+    twin["thinning"]["slot_seconds"] = 60  # another recipe under the same label
+    (tmp_path / "twin.json").write_text(json.dumps(twin))
+    with pytest.raises(ValueError, match="share the label"):
+        committed_protocols(tmp_path)

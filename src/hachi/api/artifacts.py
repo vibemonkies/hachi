@@ -322,17 +322,24 @@ def protocol_key(document: object) -> str:
     return f"{kind}:{_sha256(canonical)}"
 
 
-@functools.cache
-def frozen_protocols() -> frozenset[str]:
-    """Predeclared protocols committed under configs/evaluation: each document as written,
-    and a PMData protocol also as a run's protocol.json writes it (normalized)."""
+def committed_protocols(directory: Path) -> frozenset[str]:
+    """Each committed protocol document as written, and a PMData protocol also as a run's
+    protocol.json writes it (normalized). Two variants may not share a thinning label, since
+    a packet's run_id label must name exactly one committed recipe."""
     from hachi.evaluation.pmdata_run import PMDataProtocol
 
     keys: set[str] = set()
-    for path in sorted(FROZEN_PROTOCOL_DIR.glob("*.json")):
+    labels: dict[str, str] = {}
+    for path in sorted(directory.glob("*.json")):
         document = json.loads(path.read_bytes())
         keys.add(protocol_key(document))
         if "thinning" in document:
+            label = document["thinning"]["pipeline_suffix"]
+            if label in labels:
+                raise ValueError(
+                    f"committed variants {labels[label]} and {path.name} share the label {label}"
+                )
+            labels[label] = path.name
             continue  # a variant is staged as its committed file, whole
         try:
             normalized = PMDataProtocol.model_validate_json(json.dumps(document))
@@ -340,6 +347,12 @@ def frozen_protocols() -> frozenset[str]:
             continue  # not a PMData protocol (e.g. a clinical one); its raw form is enough
         keys.add(protocol_key(normalized.model_dump(mode="json")))
     return frozenset(keys)
+
+
+@functools.cache
+def frozen_protocols() -> frozenset[str]:
+    """The predeclared protocols committed under configs/evaluation."""
+    return committed_protocols(FROZEN_PROTOCOL_DIR)
 
 
 def _check_protocol(
