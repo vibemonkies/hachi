@@ -34,8 +34,13 @@ UV_CACHE_DIR="$PWD/.cache/uv" uv run python scripts/evaluation/final_packet.py d
 Verification covers all indexed bytes and refuses extra/missing files, unsafe paths
 and symlinks. Forecast packets must bind clean code, real mode, exact configuration,
 task, snapshot, seed, sealed split, validation-only origin schedule, scored support,
-metric definition and source identity. Exported baseline models must resolve their
-receipt, target and feature order. Paired packets must bind both evaluations and
+metric definition and source identity. Baseline, zero-shot univariate Chronos and
+#11 encoder heads resolve their owner's existing receipt and model schema.
+Chronos binds checkpoint/runtime/protocol; encoder heads bind original experiment,
+configuration, features, fit cutoff and embedding-table hashes. Source scopes follow
+the producing owner format. The encoder `ProtocolRef` pins original config-file
+bytes; these are checked at the producing commit and parsed against the canonical
+saved protocol, whose JSON digest may differ. Paired packets bind both evaluations and
 the same split/origin schedule. Prediction-origin coverage and scored support
 must reconcile; exported fit time must match the evaluator's training cutoff.
 It checks identity and internal consistency;
@@ -56,6 +61,29 @@ owner's corrected source-bound rerun: its censoring could overstate observed
 event-free follow-up, and report-wide totals could expose sealed-test outcome
 counts by subtraction. Preserve it only as audit provenance, never as accepted
 final evidence. No recovery adapter in this release accepts that packet.
+
+## Assemble model-card development evidence
+
+```sh
+UV_CACHE_DIR="$PWD/.cache/uv" uv run python -I -m hachi.evaluation.finalization evidence \
+  --bundle /approved/private/runs/development \
+  --expected-index-sha256 APPROVED_INDEX_SHA256 \
+  --output /approved/private/runs/new-aggregate-evidence
+```
+
+Artifact-only dependencies use the same separately pinned arguments as development
+verification. The resulting `evidence.json` contains model/code/environment/data/
+config/artifact identities, counts, overlap disclosures, saved metric aggregates
+and paired differences. Equivalent repeated runs count once. Canonical aggregation
+refuses overlapping scored participants; different model/code/config/environment/
+data/seed identities remain separate. No participant rows or coefficients are emitted.
+
+This is validation-only evidence with `selection_status: pending_owner_selection`,
+`inference_reproduced: false`, `runtime_measurements: not_assembled` and no test
+authority. It cannot fill final held-out fields or establish missingness/device
+analysis. HTTP and warm model-only latency remain separate measurement scopes.
+Fine-tuned or extended-context Chronos exports and #12 ridge heads require their
+actual owner fit/context/export handoffs before adapters can accept them.
 
 ## Freeze exact decisions
 
@@ -91,7 +119,7 @@ coordinated test opening are still required. There is no test-opening command.
 The parent must verify actual delivered prerequisites before authorizing the later
 final-test action; neither a hashed declaration nor a green check substitutes for it.
 The #12 owner will supply direct selection-step-to-comparison/evaluation packet hash
-links and selected export receipts. Ridge/Chronos serving receipt integration and
+links and selected export receipts. Selected #12 ridge/adapted export integration and
 fresh selected inference remain pending those actual exports. #10 score packets
 with null export references can establish development evidence without establishing
 a served final artifact.

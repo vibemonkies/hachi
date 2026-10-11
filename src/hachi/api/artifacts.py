@@ -26,9 +26,10 @@ from typing import Annotated, Literal, Self
 
 from pydantic import Field, ValidationError, model_validator
 
-from hachi.contracts.base import ArtifactRef, Contract, Sha256
+from hachi.contracts.base import ArtifactRef, Contract, Sha256, Text
 from hachi.contracts.manifests import RunManifest, SplitManifest
 from hachi.contracts.metrics import Aggregation, Metric
+from hachi.data.apple_health.hourly import AVAILABILITY_RULE as APPLE_AVAILABILITY_RULE
 from hachi.evaluation import EvaluationConfig
 from hachi.evaluation.features import HourlyFeaturePolicy
 from hachi.evaluation.serialization import document_bytes, document_sha256
@@ -56,6 +57,25 @@ class ArtifactRefused(ValueError):
         self.code = code
 
 
+class SourceAdmission(Contract):
+    """Input from a source the artifact was not evaluated on, admitted explicitly.
+
+    Admitting a source is the serving owner's transfer decision, not validation. The policy
+    keeps the model's metric, aggregation and gates but uses the source's own readiness
+    rule; results then carry a DEVICE_SHIFT warning naming the evaluated source.
+    """
+
+    source: Literal["apple_health"]
+    feature_policy: HourlyFeaturePolicy
+    rationale: Text
+
+    @model_validator(mode="after")
+    def _rule(self) -> Self:
+        if self.feature_policy.availability_rule != APPLE_AVAILABILITY_RULE:
+            raise ValueError("Apple Health input uses its own sealed availability rule")
+        return self
+
+
 class ServingSpec(Contract):
     """How to call the model the way the evaluator did. Written by the model owner."""
 
@@ -74,12 +94,36 @@ class ServingSpec(Contract):
     protocol_sha256: Sha256 | None = Field(
         default=None, description="Evaluation protocol the feature policy was taken from."
     )
+    accepted_sources: list[SourceAdmission] = Field(
+        default_factory=list,
+        description="Other input sources this artifact may serve, each declared explicitly.",
+    )
 
     @model_validator(mode="after")
     def _policy(self) -> Self:
         if (self.input == "hourly_features") != (self.feature_policy is not None):
             raise ValueError("feature_policy is given exactly for hourly_features input")
+        sources = [a.source for a in self.accepted_sources]
+        if len(sources) != len(set(sources)):
+            raise ValueError("each accepted source is declared once")
+        for admission in self.accepted_sources:
+            # Only readiness differs by source: the model's metric, aggregation and every
+            # inclusion gate (coverage, count) are kept, so an admission never weakens them.
+            if (
+                self.feature_policy is None
+                or admission.feature_policy.model_copy(
+                    update={"availability_rule": self.feature_policy.availability_rule}
+                )
+                != self.feature_policy
+            ):
+                raise ValueError(
+                    "an accepted source keeps the model's feature policy; only its "
+                    "availability_rule may differ"
+                )
         return self
+
+    def admission(self, source: str) -> SourceAdmission | None:
+        return next((a for a in self.accepted_sources if a.source == source), None)
 
 
 type ForecastModel = BaselineArtifact | TreeArtifact | ChronosServed

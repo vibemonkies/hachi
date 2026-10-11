@@ -25,11 +25,12 @@ from ..conftest import BASE
 
 
 def reindex(root: Path) -> str:
-    for packet in root.glob("fold/evaluations/*"):
+    for index_path in sorted(root.rglob("sha256.json"), key=lambda p: len(p.parts), reverse=True):
         payload = {
-            p.name: digest(p.read_bytes()) for p in packet.iterdir() if p.name != "sha256.json"
+            name: digest((index_path.parent / name).read_bytes())
+            for name in json.loads(index_path.read_bytes())
         }
-        (packet / "sha256.json").write_bytes(document_bytes(payload))
+        index_path.write_bytes(document_bytes(payload))
     index = {
         p.relative_to(root).as_posix(): digest(p.read_bytes())
         for p in root.rglob("*")
