@@ -46,7 +46,7 @@ and privacy boundary tests passed. PR #72's check job passed at this revision.
 ## Remaining acceptance
 
 This is a useful checkpoint, not complete #18 acceptance. Stored corrections and
-per-entry deletion await WindyTrout's coordinated contract/API changes. #17 must
+per-entry deletion are verified in the follow-up below. #17 must
 wire the feature exports into the actual selected-subject app. #15 must publish
 and be served before computed comparison curves can be inspected. Those missing
 paths are not replaced by fixture evidence; #18 remains open.
@@ -82,3 +82,20 @@ nested entries/dates, unknown schema keywords, form/domain boundaries and episod
 roots.24 API/correction/privacy checks passed after #79 integration. The remaining
 #18 gates are #17 app-route integration and #15 computed scenario publication/API
 wiring and rendered curves, plus the supported output/evaluation limitations.
+
+## Frozen component review and latest integration
+
+`review-mobile-d2868ba.png` and `review-desktop-d2868ba.png` are fresh T3 captures
+of committed UI `d2868ba`, with the still-running API `f2870c3`. The ignored
+harness header names both revisions and ports 5181/8721. A full navigation and
+actual backend GET returned seven synthetic entries; the extra entry after the
+six-entry deletion receipt was a later synthetic onset used to inspect result
+metadata. At mobile375 and desktop1280, document width equals viewport width.
+These images support the parent's rendered review, not real-data acceptance or
+the missing #17 root seam. Committed feature/package files were unchanged by
+integration of current main at `63dfc40`, including PR81's mutation-lock fixes.
+
+At that integration checkpoint, web build and eight Node checks pass. The scoped
+API/correction/privacy suite now passes all27 checks, including upstream lock
+coverage. These checks execute the updated source; earlier browser receipts
+retain their original API identity. No new concurrency browser receipt is claimed.
