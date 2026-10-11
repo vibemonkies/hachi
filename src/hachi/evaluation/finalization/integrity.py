@@ -72,7 +72,23 @@ def _git_blob(repo: Path, git_sha: str, relative: str) -> bytes:
     return result.stdout
 
 
-def verify_sources(raw: bytes, repo: Path, git_sha: str, prefix: str) -> None:
+def read_producing_file(repo: Path, git_sha: str, relative: str) -> bytes:
+    """Read a pinned historical document, with the same path/size boundary as inputs."""
+    path = TypeAdapter(RelativePath).validate_python(relative)
+    raw = _git_blob(repo, git_sha, path)
+    if len(raw) > MAX_JSON_BYTES:
+        raise EvidenceRefused("producing document exceeds its format limit")
+    return raw
+
+
+def verify_sources(
+    raw: bytes,
+    repo: Path,
+    git_sha: str,
+    prefix: str,
+    *,
+    required_files: frozenset[str] | None = None,
+) -> None:
     """Compare historical source receipts with their producing commit, not current main."""
     sources = SOURCES.validate_json(raw)
     if not sources:
@@ -85,11 +101,15 @@ def verify_sources(raw: bytes, repo: Path, git_sha: str, prefix: str) -> None:
         text=True,
         check=False,
     )
-    required = {
-        p
-        for p in tracked.stdout.splitlines()
-        if str(Path(p).parent) == prefix and Path(p).suffix == ".py"
-    }
+    required = (
+        required_files
+        if required_files is not None
+        else {
+            p
+            for p in tracked.stdout.splitlines()
+            if str(Path(p).parent) == prefix and Path(p).suffix == ".py"
+        }
+    )
     if tracked.returncode or not required or not required <= paths:
         raise EvidenceRefused("source receipt omits producing implementation files")
     for name, expected in sources.items():
