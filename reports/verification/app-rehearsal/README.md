@@ -6,9 +6,120 @@ assignee remains CoffeeCoder1015. Parent SnowyFortress confirmed the delegated
 tooling scope through hachi-mail. Work chat:
 `t3-thread://v1/mcp:7a352bae-fe61-4baf-8d94-fdc8ae1db703`.
 
-The real baseline **backend** path passed. The product's real
-import → report → chart and offline replay remain unverified. No final model is
+The real baseline **backend** and independent private replay consumer paths passed.
+The product's real import → report → chart and app replay remain unverified. No final model is
 selected, no outer test was opened, and no clinical/product gate is waived.
+
+## Private replay consumer follow-up
+
+The corrected current-source receipts are [API](api-e76626b.json),
+[replay](replay-e76626b.json) and [browser](replay-browser-e76626b.json), produced
+at clean `e76626b` after main through #72/#80/#84/#85. The real API again matched
+25 origins/600 points against packet and direct inference. With the live API
+stopped, the real viewer matched all 24 medians, all 48 visible interval endpoints,
+the exact visible cutoff and elapsed UTC geometry, with zero discrepancies.
+No real timestamp/row/prediction was emitted in browser tool output or captured.
+The saved response is unchanged except `ReplayInfo`; its original mode and source
+provenance remain intact.
+
+The valid generated staggered-window replay matched five points and ten visible
+endpoints, retaining three missing target windows and the unavailable HRV reason.
+The [synthetic desktop](replay-utc-synthetic-desktop.png),
+[mobile cutoff](replay-utc-synthetic-phone-cutoff.png),
+[mobile intervals](replay-utc-synthetic-phone-intervals.png),
+[mobile bounds after local horizontal scroll](replay-utc-synthetic-phone-bounds.png)
+and [missing-cache error](replay-utc-synthetic-missing-cache.png) are bound by exact
+SHA256 and capture metadata in the browser receipt. Mobile body width is 390;
+only the focusable tables scroll horizontally. All screenshots contain generated
+synthetic content or an empty error, and belong to this corrected source.
+
+Local `make check`, with api/baselines extras installed, passed 687 tests, six
+subtests, five coordination checks and generated-contract checks. All 19 focused
+runtime/replay tests pass. Owned services and tabs were stopped. Full app/#22
+integration remains gated; this is the standalone replay consumer.
+
+The parent review of `e33ed3e` found a rendered fidelity blocker: the original
+viewer omitted `as_of` and interval endpoints, and its chart x coordinate was an
+ordinal index. Earlier browser receipts verified numeric points, recorded/generated
+metadata and that ordinal geometry; they **did not verify forecast target times**.
+Their dates and hashes remain historical evidence, not UTC target fidelity proof.
+The scoped correction shows canonical UTC cutoff/intervals, uses interval midpoints
+on one elapsed UTC domain across series, leaves initial/inter-series/trailing target
+gaps blank, and displays unavailable metric reasons. The new comparison checks
+visible cutoff, every interval endpoint and independent elapsed UTC geometry.
+
+Generated gap coverage uses valid contiguous series with staggered target windows:
+HR hours 1–4, steps hours 10–12, on the request's common 24-hour domain. The
+initial hour, six-hour separation and final twelve hours remain blank. The shared
+contract forbids noncontiguous points within one series; it was not bypassed.
+A focused regression failed before the correction on the missing cutoff, then
+passed. Host refusal and non-GET tests exercise real loopback HTTP. Five focused
+runtime guard tests now cover sealed test/validation-only origins, exact source
+coverage, forbidden interval claims/warnings and abstention only with empty
+packet **and** direct references. The original 12-test suite is now 19 tests.
+
+GreenBison's independent review had no blocking findings at `e33ed3e`. Its base CI
+count was 524 passed / 12 skipped / three subtests; api/baselines extra stages ran
+separately. The local totals below include those extras and should not be read as
+base-CI totals. Screenshots are now bound by SHA256/capture metadata in their
+producing browser receipt.
+
+After integrating main through PR75/78/81, `d947f55` repeated the actual runtime
+and rendered replay, rather than relying on the earlier receipts. Current
+[API](api-d947f55.json), [replay](replay-d947f55.json) and
+[browser aggregate](replay-browser-d947f55.json) receipts again show 25 origins,
+600 exact API points, the whole saved response unchanged except replay metadata,
+and 24 exact rendered points/geometry with the live API stopped. The final
+`make check`, with api/baselines extras installed, passed 629 tests, three subtests, five coordination tests and all
+generated contract checks. Replay viewer source and synthetic screenshots are
+unchanged from `d812e94`; the earlier producing-source evidence remains below.
+
+On branch `issue-22-private-replay`, source `849bff2` ran the current API after
+PR76/77/79. [API receipt](api-849bff2.json) repeats all 25 origins and 600 points
+exactly against both references. It now records the owner and public packet key
+with matching evaluation/origin/split digests. The actual launch caught a second
+PR76 caller break (`serving_from_protocol` needs the model directory); the owned
+caller was fixed before any inference. The failed run root remains private.
+
+The live API was stopped. At consumer `d812e94`, the versioned private cache
+projected that actual saved completed response through authoritative contracts.
+[Replay receipt](replay-d812e94.json) checks the entire response unchanged except
+`ReplayInfo`: 24 forecast points, original `real` mode, original generated time,
+code, artifact, snapshot, quality and warning state retained. The separately pinned
+cache digest prevents a rehashed substitute from passing. No API request or fresh
+inference happens in the replay provider.
+
+[Rendered aggregate receipt](replay-browser-d812e94.json) binds the cache and
+`browser_compare.js` hash. T3's actual DOM/SVG/table had 24/24 equal medians and
+correct point geometry, unit, quality, timestamps and source provenance. Null
+bounds appeared as unavailable, and no interval band/coverage claim appeared.
+The page omitted subject/report identifiers. No snapshot or screenshot of the
+real chart was taken. Browser observation returned aggregates only; external
+resource requests were disallowed by CSP and the live API port had no listener.
+This establishes the **dedicated rehearsal viewer**, not Coffee's app path.
+
+Separate synthetic contract-fixture replay passed the same 24-point rendered
+comparison. These screenshots are illustrations, not real-data evidence:
+
+- [Synthetic desktop replay](replay-synthetic-desktop.png)
+- [Synthetic 390×844 replay](replay-synthetic-phone.png), body width 390 with no overflow
+- [Missing private cache error](replay-missing-cache.png), actual HTTP 409,
+  `CACHE_MISSING`, visible alert/action and no fallback; no overflow on mobile
+
+Local `make check`, with api/baselines extras installed, passed 580 tests, three subtests, five coordination tests and
+generated schema/fixture/TypeScript checks. Twelve focused integrity/replay tests
+pass, including original response preservation, tampering after rehash, missing
+and corrupt cache, changed schema, public files/symlinks, pending/already replayed
+sources, point-only/unavailable/error rendering and actual loopback HTTP behavior.
+All owned services/tabs were stopped after capture. Private cache/responses stay
+outside Git. Historical receipts below retain the gates that existed at their
+producing commits.
+
+Coffee's [#17 response](https://github.com/vibemonkies/hachi/issues/17#issuecomment-6109148723)
+says a local review package is being prepared, publication is withheld, and the
+replay module/root wiring is not yet agreed. No Coffee code was copied or published.
+Full #22 still requires #17/#18/#19/#20/#21 and actual source-specific Apple/API
+integration; there is no final-model, held-out-test or friend-case claim.
 
 ## What was observed
 
@@ -20,6 +131,8 @@ Both comparisons had zero missing/extra points, zero mismatches and max |Δ| 0.
 The API result had the actual artifact/snapshot/code identity, `data_mode: real`,
 HR in bpm, null bounds and nominal coverage, and `interval_calibration: none`.
 Report retry returned the same job. All original private artifacts were preserved.
+This earliest receipt predates the public packet-index gate and has no
+`published_packet_index_sha256`; the later receipts enforce that gate.
 
 After integrating main through PR65, at clean
 `e17f825d636b5902549e7821c21f3a751f4f6dd4`, the stricter check also bound the
@@ -123,7 +236,8 @@ The upstream fix, PR68 (`9e6f651`), was integrated at a clean checkpoint. Base
 checks skip those optional numerical tests when their dependencies are absent;
 the existing CI `--extra baselines pytest tests/models` stage runs them with
 NumPy/SciPy installed. Runtime source is unchanged by that test-only integration,
-so the final real-data receipt remains bound to `4129197`. Do not merge until
+so the pre-privacy real-data receipt remains bound to `4129197`. The later
+post-privacy receipt is `api-88094a3.json` as described above. Do not merge until
 fresh CI and the independent tooling review pass.
 The original PR head `d2a49fe` passed all CI stages, including baselines and API
 extras, in run `38138236148`. The post-privacy head needs its own fresh CI result

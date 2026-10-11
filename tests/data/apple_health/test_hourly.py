@@ -2,6 +2,7 @@
 
 import hashlib
 import random
+import sqlite3
 from datetime import UTC, datetime, timedelta
 from statistics import fmean
 
@@ -329,8 +330,9 @@ def test_public_audited_view_keeps_recorded_zero_duration_and_snapshot_read_only
     assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
 
 
-def test_generated_replay_matches_importer_oracle_with_hostile_intervals(tmp_path, config):
-    rng = random.Random(42)
+@pytest.mark.parametrize("seed", [42, 7, 911])
+def test_generated_replay_matches_importer_oracle_with_hostile_intervals(tmp_path, config, seed):
+    rng = random.Random(seed)
     records = []
     for _ in range(160):
         minute = rng.randrange(240)
@@ -371,3 +373,97 @@ def test_generated_replay_matches_importer_oracle_with_hostile_intervals(tmp_pat
             )
             assert row.value == expected
             assert row.source_ids == sorted({o.source_id for o in selected})
+
+
+def test_transitive_precedence_chain_before_lookback_is_retained(tmp_path, config):
+    config = config.model_copy(update={"source_priority": ("First", "Second", "Third", "Late")})
+    rows = [
+        native(-90, steps=True, end=START - timedelta(minutes=30), sourceName="First"),
+        native(-40, steps=True, end=START + timedelta(minutes=10), sourceName="Second"),
+        native(0, steps=True, end=START + timedelta(minutes=5), sourceName="Third", value="10"),
+        # At the exact half-open edge, this point does not suppress the target.
+        native(-30, steps=True, sourceName="First", value="20"),
+        native(
+            -100,
+            steps=True,
+            end=START + timedelta(minutes=20),
+            sourceName="Late",
+            created=START + HOUR + timedelta(microseconds=1),
+        ),
+    ]
+    _, _, path = run(tmp_path, config, rows)
+    selected = list(iter_observations(path, as_of=START + HOUR))
+    expected = hourly._aggregate_hour(selected, config, "steps", "sum", START)
+    (actual,) = bins(path, metric="steps", aggregation="sum")
+    assert actual == expected
+    # First suppresses Second, so Third survives. Dropping the earlier First
+    # would keep Second and incorrectly suppress Third inside the lookback.
+    assert actual.aggregate.value == 10
+    assert bins(path, metric="steps", aggregation="sum", as_of=START + 2 * HOUR)[0] == actual
+
+
+def test_selector_parses_local_component_instead_of_disconnected_history(
+    tmp_path, config, monkeypatch
+):
+    rows = [native(m, value="70") for m in range(-2400, 30)]
+    rows += [native(m, steps=True, value="1") for m in range(30)]
+    _, _, path = run(tmp_path, config, rows)
+    original = hourly.select_candidates
+    parsed = []
+
+    def capture(connection, closure):
+        for row_id, observation in original(connection, closure):
+            parsed.append(observation)
+            yield row_id, observation
+
+    monkeypatch.setattr(hourly, "select_candidates", capture)
+    view = apple_hourly_features(path, policy(), START + HOUR, START)
+    assert len(view.features) == 1
+    assert len(parsed) == 30
+    assert all(o.metric == "heart_rate" and o.start_utc >= START for o in parsed)
+    assert view.audits[0].known_candidates == 30
+
+
+@pytest.mark.parametrize("failure", [RuntimeError, KeyboardInterrupt])
+def test_private_numeric_index_is_memory_only_and_closes_on_failure(
+    tmp_path, config, monkeypatch, failure
+):
+    _, _, path = run(tmp_path, config, [native(m) for m in range(30)])
+    before = {
+        p.relative_to(tmp_path): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in tmp_path.rglob("*")
+        if p.is_file()
+    }
+    connect = sqlite3.connect
+    connections = []
+
+    def capture(*args, **kwargs):
+        connection = connect(*args, **kwargs)
+        connections.append(connection)
+        return connection
+
+    def interrupt(connection, *_):
+        assert connection.execute("PRAGMA temp_store").fetchone() == (2,)
+        assert connection.execute("SELECT count(*) FROM temp.hourly_index").fetchone() == (30,)
+        assert all(
+            not filename
+            for _, name, filename in connection.execute("PRAGMA database_list")
+            if name == "temp"
+        )
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            connection.execute("DELETE FROM main.candidates")
+        raise failure("injected after private index creation")
+
+    monkeypatch.setattr(hourly.sqlite3, "connect", capture)
+    monkeypatch.setattr(hourly, "_set_hour_window", interrupt)
+    with pytest.raises(failure, match="injected"):
+        apple_hourly_features(path, policy(), START + HOUR, START)
+    assert len(connections) == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        connections[0].execute("SELECT 1")
+    after = {
+        p.relative_to(tmp_path): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in tmp_path.rglob("*")
+        if p.is_file()
+    }
+    assert before == after

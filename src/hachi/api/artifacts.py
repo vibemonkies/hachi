@@ -107,12 +107,19 @@ class ServingSpec(Contract):
         if len(sources) != len(set(sources)):
             raise ValueError("each accepted source is declared once")
         for admission in self.accepted_sources:
-            policy = admission.feature_policy
-            if self.feature_policy is None or (policy.metric, policy.aggregation) != (
-                self.feature_policy.metric,
-                self.feature_policy.aggregation,
+            # Only readiness differs by source: the model's metric, aggregation and every
+            # inclusion gate (coverage, count) are kept, so an admission never weakens them.
+            if (
+                self.feature_policy is None
+                or admission.feature_policy.model_copy(
+                    update={"availability_rule": self.feature_policy.availability_rule}
+                )
+                != self.feature_policy
             ):
-                raise ValueError("an accepted source feeds the model's own metric and aggregation")
+                raise ValueError(
+                    "an accepted source keeps the model's feature policy; only its "
+                    "availability_rule may differ"
+                )
         return self
 
     def admission(self, source: str) -> SourceAdmission | None:
