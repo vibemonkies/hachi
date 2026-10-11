@@ -1,0 +1,99 @@
+# Final evaluation packet preparation
+
+This directory contains preparation guidance and a model-card template. It contains
+no final scores, winner, completed-task claim, or authorization to open outer test.
+Full #20 acceptance still requires #12, #13, #14 and #15 evidence.
+
+`hachi.evaluation.finalization` reads existing immutable private #7 packets and #9
+model receipts. It never imports executable serialized models, fits candidates,
+scores test participants, changes splits, or selects a winner. Source receipts
+are checked against the producing Git commit, so a newer implementation does not
+silently replace historical provenance. Artifact-only dependencies must be pinned
+separately; paired #9 packets refer to their original baseline run's artifacts.
+
+## Development verification
+
+Run in an isolated environment with its own cache. Use the **published/approved**
+index digest, not a fresh checksum of a possibly altered input. Private bundle paths
+are operator inputs, and outputs are new private directories with 0700/0600 modes.
+
+```sh
+UV_CACHE_DIR="$PWD/.cache/uv" uv run python -I -m hachi.evaluation.finalization development \
+  --bundle /approved/private/runs/primary-validation \
+  --expected-index-sha256 APPROVED_INDEX_SHA256 \
+  --output /approved/private/runs/new-development-receipt
+
+UV_CACHE_DIR="$PWD/.cache/uv" uv run python scripts/evaluation/final_packet.py development \
+  --bundle /approved/private/runs/paired-validation \
+  --expected-index-sha256 APPROVED_PAIRED_INDEX_SHA256 \
+  --artifact-bundle /approved/private/runs/primary-validation \
+  --artifact-index-sha256 APPROVED_INDEX_SHA256 \
+  --output /approved/private/runs/new-paired-receipt
+```
+
+Verification covers all indexed bytes and refuses extra/missing files, unsafe paths
+and symlinks. Forecast packets must bind clean code, real mode, exact configuration,
+task, snapshot, seed, sealed split, validation-only origin schedule, scored support,
+metric definition and source identity. Exported baseline models must resolve their
+receipt, target and feature order. Paired packets must bind both evaluations and
+the same split/origin schedule. It checks identity and internal consistency;
+it does not recompute scientific metrics from source labels or certify source access.
+
+The aggregate `development.json` contains digests and support counts, without
+participant IDs or predictions. Physiology development evidence is explicitly
+separate from final selection. Every other task stays blocked until its own adapter
+and evidence land. The CLI emits aggregate status only, including on failures.
+
+## Freeze exact decisions
+
+The internal `FreezeRequest` names hashed documents for development receipts,
+protocol, selection rule/log, experiment budgets, preprocessing, thresholds,
+calibration, and selected canonical run/split/config. All five required tasks must
+retain explicit support states. An explicit decision such as no calibration must
+be a nonempty document; missing or empty decisions fail.
+
+```sh
+UV_CACHE_DIR="$PWD/.cache/uv" uv run python -I -m hachi.evaluation.finalization freeze \
+  --root /approved/private/freeze-inputs \
+  --request /approved/private/freeze-inputs/request.json \
+  --output /approved/private/runs/new-decision-freeze
+```
+
+This consumes `hachi.models.ensemble.selection.SelectionRule`/`SelectionLog` and
+`judge` from #12. Until those modules land it refuses with the named dependency.
+It checks the recorded incumbent chain and gates against the owner's rule; it
+does not invent a rule or choose a different model. It preserves exact selection,
+calibration and manifest hashes, plus the decision documents, in exclusive output.
+The selected split must retain the development/test membership digests from the
+verified input. Changing thresholds, calibration, selection, or preprocessing
+requires a new freeze, never mutation of an existing one.
+
+Supported transitions are `development_verified` → `decisions_frozen`.
+Both have `final_test_authorized: false`. Decision freezing remains
+`blocked_pending_acceptance`: task acceptance, selection-to-packet linkage, fresh
+selected-artifact inference reproduction, independent review, and the parent's
+coordinated test opening are still required. There is no test-opening command.
+The parent must verify actual delivered prerequisites before authorizing the later
+final-test action; neither a hashed declaration nor a green check substitutes for it.
+
+Read back any emitted packet with its approved index digest:
+
+```sh
+UV_CACHE_DIR="$PWD/.cache/uv" uv run python -I -m hachi.evaluation.finalization verify \
+  --bundle /approved/private/runs/new-decision-freeze \
+  --expected-index-sha256 APPROVED_OUTPUT_INDEX_SHA256
+```
+
+## Scientific and privacy boundaries
+
+Clinical phase 1 is a floating, shifted local clock represented with `Z`; it is not
+actual UTC and cannot establish cross-dataset date alignment. Missing surveys and
+unlabeled controls are unknown. Phase 2 supplies no negative/recovery follow-up.
+Retrospective episode/outcome metadata are not earlier-cutoff predictors. Simulation
+assumptions are distinct from measured alertness; daily fatigue is not hourly truth.
+Friend-case tuning and test reopening are outside this tooling's authorized path.
+
+Keep model weights, participant predictions, split memberships and raw data in
+approved private storage. The freeze manifest is private even though CLI summaries
+and development receipts contain only aggregate fields. Review all public claims
+against measured evidence before final publication.
