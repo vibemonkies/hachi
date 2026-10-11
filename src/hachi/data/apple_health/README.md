@@ -75,8 +75,10 @@ Primary semantics: [HealthKit percent units](https://developer.apple.com/documen
 
 `hourly.py` bridges the immutable importer snapshot to the evaluator's structural
 `FeatureBin` interface. The importer/parser/normalization/selection policy is unchanged.
-The original API rejects Apple imports unconditionally for hourly-feature artifacts;
-this helper supplies the data seam. WindyTrout owns API wiring and source compatibility.
+The API consumes this seam only for artifacts with an explicitly recorded Apple
+source admission ([PR85](https://github.com/vibemonkies/hachi/pull/85)). WindyTrout
+owns that serving metadata and API wiring. Original PMData receipts remain intact;
+every admitted Apple forecast carries a warning about the unvalidated source transfer.
 
 ```python
 from hachi.data.apple_health.hourly import AVAILABILITY_RULE, apple_hourly_features
@@ -219,6 +221,14 @@ replay exactly (serialized receipt SHA256
 `4397a59847a382ce969c32ae0e5114ec3e18e2532ef97dd2bc3463170a48edca`).
 The unchanged 0.5/30 gates yield zero features for this sparse fixture; faster
 abstention is not increased source readiness or a physiological coverage claim.
+
+A second generated year at 60 samples/hour (525,600 native points; 685,486,080-byte
+snapshot) took 4.974 s process-cold and 2.764 s warm for the same 48-hour lookback,
+with 149.8 MB process peak RSS. Its 2,880 context points produced 48 features at
+the original gates; feature and audit hashes were identical cold/warm. This measures
+larger-history scaling and memory, not source-transfer accuracy. Numeric index
+memory scales with known candidates; a pathological connected interval chain can
+still require historical replay to preserve exact precedence.
 
 The generated-only runner refuses real-source metadata and emits counts, timings
 and hashes. Use a fresh private owner/run root and the project's Python environment:
