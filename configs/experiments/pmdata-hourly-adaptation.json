@@ -1,0 +1,92 @@
+{
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "selection_rule_sha256": "acbe2e96240219b24cff74a6624e10cfa4259e8fedb7f803a9ba734eb5f80a2f",
+  "data_rule": "Only the 12 development participants of outer fold 0. Fitting uses each inner fold's training participants up to the protocol fit cutoff (2020-01-01T00:00Z); the outer test participants are never read for training, tuning or calibration.",
+  "history_accessor": {
+    "rule": "rows of the protocol feature policy (and the steps policy below) whose start is at or after cutoff minus context and that are available_by the cutoff; the last 48 h must equal the harness history exactly",
+    "steps_policy": {
+      "metric": "steps",
+      "aggregation": "sum",
+      "min_coverage": 0.5,
+      "min_observed_count": 30
+    }
+  },
+  "chronos_zero_shot": {
+    "context_hours": [
+      48,
+      168,
+      720
+    ],
+    "steps_covariate_context_hours": 48,
+    "steps_covariate_role": "past-only covariate; never a future covariate"
+  },
+  "chronos_finetune": {
+    "mode": "full",
+    "dtype": "float32 (bf16 and tf32 disabled; #1 did not certify BF16 on the GB10)",
+    "context_hours": "the zero-shot context with the lowest pooled inner-validation MAE",
+    "prediction_length": 24,
+    "learning_rates": [
+      1e-06,
+      1e-05
+    ],
+    "learning_rate_selection": "lowest pooled inner-validation MAE",
+    "max_steps": 1000,
+    "eval_every_steps": 100,
+    "early_stopping": "keep the checkpoint with the lowest loss on the training participants' last 168 h before the fit cutoff (temporal holdout); training windows end before that holdout",
+    "batch_size": 64,
+    "optimizer": "adamw_torch_fused, linear schedule, no warmup",
+    "seed": 42
+  },
+  "ridge_head": {
+    "context_hours": 48,
+    "window_stride_hours": 6,
+    "target": "the next 24 hourly values minus the context mean (personal) or minus the training population mean (population)",
+    "alphas": [
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "alpha_selection": "lowest MAE on the training participants' windows whose targets fall in the last 168 h before the fit cutoff, then refit on all training windows",
+    "handcrafted_personal_features": [
+      "last_value",
+      "mean_6h",
+      "mean_24h",
+      "mean_48h",
+      "std_48h",
+      "observed_fraction_48h",
+      "hours_since_last_value"
+    ],
+    "embedding_features": "mean over all Chronos-2 encoder tokens of the context, plus the context location and scale",
+    "population_features": "target hour-of-day (sin/cos) and lead only; the ablation removes every personal-history feature"
+  },
+  "intervals_for_point_candidates": "cross-fitted residual quantiles: fold k uses the 0.1/0.9 quantiles of truth minus median pooled over the other folds' validation predictions",
+  "ensembles": {
+    "members": [
+      "train-population-mean-v1",
+      "hourly-last-valid-v1",
+      "utc-seasonal-naive-v1",
+      "causal-hourly-tree-v1",
+      "handcrafted-ridge-personal",
+      "chronos-2-zero-shot",
+      "chronos-2-zero-shot-ctx168",
+      "chronos-2-zero-shot-ctx720",
+      "chronos-2-zero-shot-steps",
+      "chronos-2-embedding-ridge",
+      "chronos-2-finetuned"
+    ],
+    "levels": [
+      0.1,
+      0.5,
+      0.9
+    ],
+    "equal_weight": "mean of available members' quantiles per level (point members contribute their median at every level)",
+    "stacked": "per level, nonnegative weights summing to 1 minimizing pinball loss (linear programme); fold k's weights are fitted only on the other folds' validation predictions",
+    "abstaining_members": "weights renormalized over the members present at a point; no member means abstain"
+  },
+  "serving_refit": "the selected candidate is refit on all 12 development participants of outer fold 0 with the same fit cutoff; residual-based intervals use all three folds' validation residuals",
+  "budgets": {
+    "gpu_job_notice_minutes": 30
+  }
+}
