@@ -6,7 +6,9 @@ A catalog entry is not proof of access. Only `downloaded` and `validated` source
 
 ```sh
 python -m hachi.data.registry                 # status table
-python -m hachi.data.registry verify [ROOT]   # check local archives; ROOT defaults to $HACHI_DATA_ROOT
+python -m hachi.data.registry verify [ROOT]   # exit 0 only if every held archive is present and matches
+python -m hachi.data.registry verify ROOT --dataset pmdata   # the same proof for named sources
+python -m hachi.data.registry verify ROOT --partial          # catalog audit; missing is not a failure, nor proof
 ```
 
 Raw archives live outside Git under each person's data root as `$HACHI_DATA_ROOT/<dataset_id>/<archive>`, on storage only that person uses. Sources whose `shared_gx10_account` is `allowed` also have one read-only team copy on the GX10 at `~/hachi/data/<dataset_id>/<version>/`, next to a `SHA256SUMS` file produced by `python -m hachi.data.registry sums`. Where an agreement requires security (CMU, every PhysioNet, Synapse and Dataverse source), the target is an encrypted volume with key-only SSH. As of 2026-10-11 neither Justin's T7 nor the GX10 disk is encrypted and the GX10 still allows password SSH on its private lab network. The owners accepted this interim state for CMU and plan to fix both.
@@ -14,7 +16,7 @@ Raw archives live outside Git under each person's data root as `$HACHI_DATA_ROOT
 ## Rules that follow from the terms
 
 - **Per-person access.** CMU, every PhysioNet restricted or credentialed project, Synapse (Homekit2020, Evidation), TILES, OpenMHC-XS and All of Us must be accepted or credentialed by each teammate who touches the data. One person's access never covers the team.
-- **The shared GX10 account.** All three teammates share one Unix account, so a copy there is shared with everyone. CovIdentify and the other PhysioNet credentialed data must never go there: PhysioNet does not permit sharing within teams. Other per-person data may go there only once every teammate has accepted the terms; CMU qualified on 2026-10-11. The registry's `shared_gx10_account` field records this per source.
+- **The shared GX10 account.** All three teammates share one Unix account, so a copy there is shared with everyone. CovIdentify, GLOBEM, DREAMT and every other PhysioNet restricted or credentialed source must never go there, even when every teammate has signed: each DUA says "I will not share access to PhysioNet restricted data with anyone else", PhysioNet does not permit sharing within teams, and a shared login is sharing. Per-person GX10 accounts would be needed. Other per-person data may go there only once every teammate has accepted the terms; CMU qualified on 2026-10-11. The registry's `shared_gx10_account` field records this per source.
 - **No participant rows in hosted LLM conversations.** PhysioNet counts sending restricted data to an LLM API as sharing with a third party unless the service guarantees zero retention, no training and no human review. CMU forbids passing data to anyone who has not accepted its agreement. Agents work on these datasets through code and aggregate counts only, and never print, paste or upload participant-level rows.
 - **Analysis registration.** CMU requires planned analyses to be registered with its laboratory before analysis. Synapse cohorts publish your intended-use statement.
 - **Attribution.** Each entry's `citation` and `acknowledgement` fields hold the required text, including grant numbers.
@@ -44,8 +46,8 @@ PMData's license sources conflict: the Simula page and OSF's project field say C
 | [WESAD](../configs/datasets/wesad.toml) | rejected_for_task | public | Single-session lab stress, raw chest and wrist signals | Not longitudinal; no watch summaries |
 | [PPG-DaLiA](../configs/datasets/ppg-dalia.toml) | rejected_for_task | public | Raw PPG with ECG HR reference | Raw-PPG branch only (#24) |
 | [Sleep-EDF Expanded](../configs/datasets/sleep-edfx.toml) | rejected_for_task | public | Clinical PSG with hypnograms | Clinical waveform branch only (#24) |
-| [DREAMT 2.2.0](../configs/datasets/dreamt.toml) | access_pending | registration | One night of Empatica E4 plus PSG staging, 100 adults | Optional wrist-sleep validation. All three signed the DUA; the 21.8 GB zip is downloading (about three days) |
-| [GLOBEM 1.1](../configs/datasets/globem.toml) | candidate | credentialed | Daily Fitbit steps and sleep, 497 people over 705 person-years | Recommended once the PhysioNet credential exists; no HR, no illness labels |
+| [DREAMT 2.2.0](../configs/datasets/dreamt.toml) | access_pending | registration | One night of Empatica E4 plus PSG staging, 100 adults | Optional wrist-sleep validation. All three signed the DUA; the 21.8 GB zip is downloading (about three days) to Justin's data root. Never on the shared GX10 login |
+| [GLOBEM 1.1](../configs/datasets/globem.toml) | candidate | credentialed | Daily Fitbit steps and sleep, 497 people over 705 person-years | Recommended once the PhysioNet credential exists; no HR, no illness labels. Never on the shared GX10 login |
 | [All of Us](../configs/datasets/all-of-us.toml) | candidate | institutional application | Fitbit data for 68,000+ people plus EHR, cloud-only | Only if the university already has a DURA |
 | [UK Biobank](../configs/datasets/uk-biobank.toml) | candidate | institutional application | 7-day accelerometry, ~103,000 people | Applications paused until late 2026 |
 | [MiPACT](../configs/datasets/mipact.toml) | rejected_for_task | institutional application | Apple Watch, blood pressure, EHR | No access route without a University of Michigan collaborator |

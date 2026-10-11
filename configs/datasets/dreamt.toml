@@ -15,11 +15,11 @@ access_steps = [
 ]
 access_owner = "justin06lee"
 approved_users = ["justin06lee", "ezzy1630", "CoffeeCoder1015"]
-storage = "Only accounts used solely by users who signed; not the shared GX10 account unless all three have signed."
+storage = "Only machines and accounts used solely by one user who signed the DUA, such as Justin's data root. Never the shared GX10 Unix account, even though all three have signed: the DUA forbids sharing access and a shared login is sharing. Per-person GX10 accounts would be needed."
 checksum_strategy = "SHA-256 per file, compared with PhysioNet's SHA256SUMS.txt."
 blocked_capabilities = []
 notes = [
-  "All three teammates signed the PhysioNet Restricted Health Data Use Agreement on 2026-10-11, so a shared GX10 copy is allowed. The 21.8 GB zip (122 GB unpacked) is downloading from PhysioNet at about 90 KB/s, roughly three days.",
+  "All three teammates signed the PhysioNet Restricted Health Data Use Agreement on 2026-10-11. That gives each of them individual access but does not allow a copy on the shared GX10 login. The 21.8 GB zip (122 GB unpacked) is downloading from PhysioNet at about 90 KB/s, roughly three days.",
   "100 adults from a sleep-disorder lab, one night each: Empatica E4 wrist signals aligned with PSG 30-second sleep stages.",
   "Optional (#24): validating wrist sleep/wake against PSG; clinical apnea-heavy population and raw E4 signals.",
 ]
@@ -30,12 +30,22 @@ license_url = "https://physionet.org/content/dreamt/2.2.0/"
 commercial_use = "unclear"
 redistribution = "prohibited"
 team_access = "each_user_must_accept"
-shared_gx10_account = "only_if_all_users_authorized"
+shared_gx10_account = "prohibited"
 analysis_registration_required = false
 
 [[terms.evidence]]
 url = "https://physionet.org/content/dreamt/2.2.0/"
 quote = "Only registered users who sign the specified data use agreement can access the files."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://physionet.org/content/dreamt/view-dua/2.2.0/"
+quote = "I will not share access to PhysioNet restricted data with anyone else."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://physionet.org/about/faq/"
+quote = "each user must obtain individual access rights. Sharing data within teams or classes is not permitted."
 checked_on = 2026-10-11
 
 [[tasks]]
