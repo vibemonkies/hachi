@@ -184,3 +184,65 @@ def test_a_superseded_resolution_still_protects_its_onset(client):
     )
     assert client.delete(f"{PATH}/onset-1", params={"confirm": "onset-1"}).status_code == 204
     assert [e.entry_id for e in history(client, versions="all").entries] == ["onset-2"]
+
+
+def test_a_subject_with_only_tombstones_can_still_be_deleted(client):
+    post(client, ONSET)
+    assert client.delete(f"{PATH}/onset-1", params={"confirm": "onset-1"}).status_code == 204
+    gone = client.delete(f"/v1/subjects/{SUBJECT}", params={"confirm": SUBJECT})
+    assert gone.status_code == 204
+    service = client.app.state.service
+    assert service.metadata.self_report_tombstones(SUBJECT) == set()
+    assert not service.metadata.subject_known(SUBJECT)
+
+
+def test_cached_answers_wait_out_a_subject_deletion(client):
+    post(client, ONSET)
+    report = {
+        "schema_version": "0.1",
+        "subject_id": SUBJECT,
+        "as_of": "2026-09-04T12:00:00Z",
+        "task": "illness_onset",
+        "horizon_hours": 24,
+    }
+    first = client.post("/v1/reports", json=report)
+    wait(client)
+    service = client.app.state.service
+    service._deleting.add(SUBJECT)
+    try:
+        assert post(client, ONSET).status_code == 409  # identical resubmission
+        assert client.post("/v1/reports", json=report).status_code == 409  # cached job
+    finally:
+        service._deleting.discard(SUBJECT)
+    again = client.post("/v1/reports", json=report)
+    assert again.status_code == 200 and again.json()["report_id"] == first.json()["report_id"]
+
+
+def test_self_report_mutations_read_history_under_the_deletion_guard(client, monkeypatch):
+    import threading
+
+    service = client.app.state.service
+    seen = []
+    real = service.metadata.self_reports
+
+    def watched(subject_id):
+        # Report jobs read on their worker thread by design; request paths must hold the guard.
+        if not threading.current_thread().name.startswith("hachi-"):
+            seen.append(service._subjects.locked())
+        return real(subject_id)
+
+    monkeypatch.setattr(service.metadata, "self_reports", watched)
+    report = {
+        "schema_version": "0.1",
+        "subject_id": SUBJECT,
+        "as_of": "2026-09-04T12:00:00Z",
+        "task": "recovery",
+        "episode_id": "onset-1",
+    }
+    post(client, ONSET)  # add
+    post(client, CORRECTION)  # add a correction
+    post(client, ONSET)  # identical resubmission
+    client.post("/v1/reports", json=report)  # report key over self-reports
+    wait(client)
+    client.delete(f"{PATH}/onset-1b", params={"confirm": "onset-1b"})  # chain delete
+    assert len(seen) >= 5 and all(seen)
