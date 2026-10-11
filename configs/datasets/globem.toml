@@ -15,7 +15,7 @@ access_steps = [
 ]
 access_owner = "justin06lee"
 approved_users = []
-storage = "Only accounts used solely by credentialed users who signed; not the shared GX10 account unless all three are credentialed."
+storage = "Only machines and accounts used solely by one credentialed user who signed the DUA. Never the shared GX10 Unix account, even if all three are credentialed: the DUA forbids sharing access and a shared login is sharing. Per-person GX10 accounts would be needed."
 checksum_strategy = "SHA-256 per file, compared with PhysioNet's SHA256SUMS.txt."
 blocked_capabilities = []
 notes = [
@@ -30,12 +30,22 @@ license_url = "https://physionet.org/content/globem/1.1/"
 commercial_use = "unclear"
 redistribution = "prohibited"
 team_access = "each_user_must_be_credentialed"
-shared_gx10_account = "only_if_all_users_authorized"
+shared_gx10_account = "prohibited"
 analysis_registration_required = false
 
 [[terms.evidence]]
 url = "https://physionet.org/content/globem/1.1/"
 quote = "Only credentialed users who sign the DUA can access the files."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://physionet.org/content/globem/view-dua/1.1/"
+quote = "I will not share access to PhysioNet restricted data with anyone else."
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://physionet.org/about/faq/"
+quote = "each user must obtain individual access rights. Sharing data within teams or classes is not permitted."
 checked_on = 2026-10-11
 
 [[tasks]]

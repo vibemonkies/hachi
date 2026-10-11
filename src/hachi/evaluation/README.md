@@ -1,8 +1,10 @@
-# Issue #7 — CPU evaluation groundwork
+# Issue #7 — causal physiology evaluation
 
-This implements the data-independent portion of #7, continued from NobleBadger's existing work without modifying its original checkout. The real-cohort
-acceptance gate remains **blocked on #5 PMData**. Synthetic results demonstrate
-software behavior, not forecast accuracy or real-data integration.
+This continues NobleBadger's evaluator without modifying its original checkout.
+The merged #5 reader and frozen protocol now have actual PMData validation,
+paired baselines, raw-source reconciliation and real-input leakage sentinels.
+See [the aggregate acceptance report](../../../reports/evaluation/pmdata-hourly-validation/README.md).
+Generated checks establish software behavior; they remain distinct from real metrics.
 
 ## Caller and boundaries
 
@@ -268,15 +270,47 @@ uv run python -m hachi.evaluation.demo --paired --output runs/my-paired-demo
 This compares last-known-value and two-sample linear-prefix **synthetic callback
 examples**, not validated physiological models or the full #9 baseline suite.
 
+## Real PMData validation command
+
+`configs/evaluation/pmdata-hourly-validation.json` freezes the first comparison
+before metrics are observed: hourly HR means, at least 50% native coverage and
+30 samples, 48 hours of personal history with 24 eligible bins, 24-hour targets,
+daily origins, zero embargo, and January 1–8, 2020. It uses four outer folds and
+three inner folds (seed 42), executing only outer fold 0's inner validation.
+Its four outer-test participants remain sealed. Do not pool other outer folds'
+inner validation to select this fold's hyperparameters.
+
+```sh
+uv run --extra baselines python -I -m hachi.evaluation.pmdata_run \
+  --snapshot /approved/private/derived/pmdata-features-1-simula-2020-04-24-06606ac2708b \
+  --protocol configs/evaluation/pmdata-hourly-validation.json \
+  --output /approved/private/runs/pmdata-validation-001
+```
+
+The command verifies the admitted snapshot, creates deterministic canonical
+splits with a protocol-pinned creation timestamp, fits four CPU baselines on each
+causal training prefix, and checks saved-artifact prediction/count replay.
+Keep the complete output private: split rosters and per-person predictions are
+0700/0600. Only `aggregate-summary.json` may be considered for publication after
+inspection. Each participant validates once; combined metrics weight participants
+equally. Run timestamps describe actual execution, independently of the fixed
+split timestamp. Exact packet/run hashes can differ between executions.
+
+The default protocol is a first HR experiment, not a final selection or clinical
+acceptance. PMData availability and timezone mapping remain documented assumptions.
+Its illness outcomes are unknown, so healthy alert burden cannot be estimated.
+No intervals, episode labels, automatic winner, or outer-test results are invented.
+
 ## Remaining integration gates
 
-- #5's admitted, reproducible PMData snapshot and availability-preserving adapter;
-  representative source-to-feature reconciliation and a nonempty real cohort.
+- The admitted PMData snapshot, source-to-feature reconciliation and nonempty real
+  physiology cohort are verified in the acceptance report above.
 - Cohort-appropriate use of the nested grouped-fold helper and scientific split/count,
   coverage, lookback, embargo, and bootstrap sensitivity choices frozen before
   test opening. This implementation supports one explicit fold at a time.
-- The agreed real baseline report with code/data/split hashes. Current checks
-  establish causal software behavior only.
+- The primary real baseline report, paired comparisons, explicit hashes and two
+  validation sensitivities are published. Final model selection/test opening remain
+  later gates; this harness does not select a winner.
 - Outcome-specific episode grouping, illness/anomaly/recovery metrics, and
   supervised/stacking safeguards after their inputs/protocols are defined. This
   hourly physiology slice does not complete those parts of #7 or later issues.
