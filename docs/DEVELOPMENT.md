@@ -140,4 +140,6 @@ At handoff, post commit/PR, reproducible command, artifact id, relevant result, 
 
 Default to a laptop-hosted UI and a backend reachable through a private SSH tunnel. Bind services to loopback unless exposure is deliberately authorized and configured. Use a separate metadata DB/ports per developer. A team-shared inference service must use frozen read-only artifacts and coordinate GPU access.
 
+Run the API with `uv run --extra api python -I -m hachi.api serve --owner <login>`. It listens on `127.0.0.1`, on port 8716 for justin06lee, 8717 for CoffeeCoder1015 and 8718 for ezzy1630. Its metadata goes in the owner's `state/metadata.sqlite3`. Served dataset snapshots and artifacts are pinned through environment variables; see [the API README](../src/hachi/api/README.md).
+
 Use a saved result from a real, identified inference run for offline replay if the GPU/network fails, with a visible replay label and timestamp. It is not a live run. No paid provider, public deployment, or external upload is required by this plan.

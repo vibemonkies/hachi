@@ -24,3 +24,4 @@ jobs:
       - run: make setup
       - run: make check
       - run: uv run --locked --extra baselines pytest tests/models
+      - run: uv run --locked --extra api pytest tests/api
