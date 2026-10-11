@@ -117,23 +117,40 @@ subsequent fresh subject to reuse those IDs. Mutation validation, idempotent reu
 and publication must serialize against deletion; a 200 no-op is still a mutation
 boundary and must be refused while whole deletion is in progress.
 
-### Chronos remote retention and personal-source gate
+### Chronos remote cleanup and personal-source gate
 
-PR76's GPU transport sends numeric context without subject IDs/cutoffs/targets and
-uses generated run IDs. That still transfers health measurements. It removes the
-request JSONL after the job, but cleanup failures are suppressed; remote
-`runs/<owner>/<run-id>/predictions.jsonl` and `inference.json` remain. API subject
-deletion does not inventory or erase those remote outputs. Removing identity fields
-does not make individual forecasts anonymous or satisfy withdrawal.
+GPU requests send numeric context without subject IDs/cutoffs/targets and use
+unique generated run IDs. That still transfers health measurements. After PR87,
+the supported request lifecycle erases both the request JSONL and its whole owned
+run directory: predictions, inference evidence, supervisor stdout/stderr and job
+metadata, plus partial/nested files. Sibling runs, shared inputs and model weights
+are preserved. Partial writes, read/integrity failures and unexpected errors also
+enter cleanup. A local timeout or lost SSH response requires the owned job's end
+to be confirmed before cleanup can be considered complete, so a queued writer
+cannot later recreate output.
 
-Use that path only for generated data or research sources whose recorded terms
-permit the actual account/machine and retention. Personal Apple-to-GPU serving is
-gated on #21's explicit transfer/viewer consent and #16's remote copy inventory,
-retention and verified cleanup design, including errors/timeouts and failed request
-cleanup. The Apple hourly helper in PR78 is source-level work; it supplies neither
-that permission nor API wiring. The CPU/private import walkthrough below makes no
-remote erasure claim. Whole-source transfer validation and actual UI/display proof
-remain with #16/#18/#22 owners; GPU parity is the model/API owner's proof.
+Both removal operations are attempted even if termination/removal fails. Any
+unconfirmed cleanup withholds the forecast and returns `INFERENCE_FAILED` with a
+fixed safe message; it never returns a successful forecast while ignoring a failed
+removal. Stop that GPU demo and have the authorized runtime owner reconcile its
+owned request/run inventory and resolve the failure before retrying. Do not delete
+another worker's files/jobs or alter its environment. These are logical removal
+checks, not physical media erasure. An unreachable host cannot be claimed erased.
+
+GPU-backed artifacts are unavailable for real personal Apple imports **before any
+remote transport call**, even if an artifact's serving profile admits Apple input.
+The guard uses resolved source and `data_mode`, not the subject name or result's
+synthetic label. The service trusts its authorized single operator's source-mode
+selection; mislabelling a person's export as synthetic is not permission. GPU use
+is limited to genuinely generated data or admitted research inputs whose recorded
+terms permit the actual account/machine. No real personal Apple transfer is enabled.
+
+The merged Apple helper PR78 and CPU serving PR85 provide explicit feature/source
+compatibility with device-shift warnings; their generated structural evidence does
+not grant personal transfer, calibration or display consent. Any future personal
+GPU design needs #21's explicit processors/viewers/machine/account consent and a
+verified copy inventory/retention design. Actual source-transfer/scientific/UI
+follow-ups remain with #16/#18/#21/#22; expensive GPU parity stays with its owner.
 
 SQLite uses `secure_delete=ON` to clear deleted cells, followed by a truncating WAL
 checkpoint. A blocked checkpoint is an error, not successful retention evidence.
@@ -157,7 +174,8 @@ only delete disposable roots and generated subjects they created themselves.
 
 ```sh
 # Focused correction/privacy follow-up (no GPU execution):
-.venv/bin/pytest tests/privacy/test_correction_http.py tests/privacy/test_gpu_boundary.py
+.venv/bin/pytest tests/privacy/test_correction_http.py \
+  tests/privacy/test_gpu_boundary.py tests/privacy/test_gpu_http.py
 .venv/bin/python scripts/privacy/verify_corrections.py --port 8719
 # Original upload/parser/launcher acceptance; rerun when those paths change:
 .venv/bin/python scripts/privacy/verify_http.py --port 8719
@@ -182,7 +200,11 @@ cutoff history, changed report keys, whole-chain erasure, tombstone-only deletio
 ID reuse, report isolation and private response/log checks. The TCP pytest fixture
 binds its own socket on 8719 before starting a service and uses barriers at storage
 boundaries to reproduce deletion races. Run these sequentially; do not use parallel
-pytest workers on the reserved port. Tests never contact SSH or queue a GPU.
+pytest workers on the reserved port. The remote boundary tests use generated in-memory
+and actual disposable-file inventories, a controlled late-writer thread, and verified
+staged generated artifacts through TCP HTTP. They assert complete erasure or a surfaced
+cleanup error, no private error/log echo, sibling preservation and real-classified
+generated Apple refusal. Tests never contact SSH or queue a GPU.
 
 The tests also cover receiving limits without Content-Length and deletion failure/
 retry. Uvicorn access logging is disabled; unexpected logs retain method/exception
