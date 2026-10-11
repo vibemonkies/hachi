@@ -169,6 +169,58 @@ def test_deletion_requires_confirmation_and_removes_private_data(client, make_se
     assert client.delete("/v1/subjects/nobody", params={"confirm": "nobody"}).status_code == 404
 
 
+def test_failed_file_removal_keeps_records_so_deletion_can_be_retried(
+    client, make_settings, monkeypatch
+):
+    import hachi.api.service as service_module
+
+    response = upload(client, hourly_export(30))
+    import_id = response.json()["import_id"]
+    wait(client)
+    directory = make_settings().workspace.import_directory(import_id)
+    assert directory.exists()
+
+    real_remove = service_module.remove_tree
+
+    def failing_remove(path):
+        raise PermissionError("simulated: file still open elsewhere")
+
+    monkeypatch.setattr(service_module, "remove_tree", failing_remove)
+    confirm = {"confirm": "synthetic-apple-001"}
+    failed = client.delete("/v1/subjects/synthetic-apple-001", params=confirm)
+    assert failed.status_code == 500 and failed.json()["error_code"] == "INTERNAL_ERROR"
+    assert "Retry" in failed.json()["message"]
+    # Nothing was orphaned: the records still name the import and its files remain.
+    assert client.get(f"/v1/imports/{import_id}").json()["state"] == "succeeded"
+    assert directory.exists()
+
+    monkeypatch.setattr(service_module, "remove_tree", real_remove)
+    retried = client.delete("/v1/subjects/synthetic-apple-001", params=confirm)
+    assert retried.status_code == 204
+    assert not directory.exists()
+    assert client.get(f"/v1/imports/{import_id}").status_code == 404
+
+
+def test_writes_wait_out_a_deletion_in_progress(client):
+    service = client.app.state.service
+    client.post("/v1/subjects/synthetic-001/observations", json=entries(ONSET))
+    service._deleting.add("synthetic-001")
+    try:
+        blocked = client.post(
+            "/v1/subjects/synthetic-001/observations",
+            json=entries(ONSET | {"entry_id": "onset-2"}),
+        )
+        assert blocked.status_code == 409 and blocked.json()["error_code"] == "CONFLICT"
+        twice = client.delete("/v1/subjects/synthetic-001", params={"confirm": "synthetic-001"})
+        assert twice.status_code == 409
+        assert upload(client, hourly_export(30), subject="synthetic-001").status_code == 409
+        assert private_files(service.workspace.imports) == []  # refused before any file
+    finally:
+        service._deleting.discard("synthetic-001")
+    done = client.delete("/v1/subjects/synthetic-001", params={"confirm": "synthetic-001"})
+    assert done.status_code == 204
+
+
 def test_health_and_request_boundary(client, open_client):
     health = HealthStatus.model_validate_json(client.get("/healthz").content)
     assert health.status == "ok" and len(health.artifacts) == 1 and health.git_sha == "a" * 40
