@@ -78,6 +78,16 @@ earlier `as_of` still sees what was known then. An episode is identified by its 
 onset's `entry_id`, the root of its `supersedes` chain. `symptom_resolution.onset_entry_id`
 and `RecoveryRequest.episode_id` use that id.
 
+- **Cutoff projection:** at a cutoff T, each chain contributes its latest version with
+  `entered_at_utc ≤ T` (inclusive). History (`?as_of=T`), illness/recovery episode state
+  and the report idempotency key all use this one projection. Without `as_of`, history
+  projects over every recorded version, with no cutoff.
+- **Deletion:** deleting any version of an entry removes its whole chain from every cutoff.
+  Tombstones never appear in history; they keep only the subject and entry ids, so the ids
+  can't be reused.
+- **Onset protection:** while any retained version of a resolution, superseded or not,
+  refers to an onset, deleting that onset answers 409. Delete the resolution's chain first.
+
 Transport conventions:
 
 - The import body is the export file itself. The declared source comes as query parameters: `subject_id`, `tz_name`, `source_format` and `data_mode`.

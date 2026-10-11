@@ -1,0 +1,3 @@
+# Build-only tools for the wheels in ../sources.json; installed with the runtime lock in a disposable builder venv.
+wheel
+hatchling

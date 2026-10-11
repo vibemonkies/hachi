@@ -1,0 +1,60 @@
+{
+  "model": "moment-1-large",
+  "checkpoint": {
+    "repository": "AutonLab/MOMENT-1-large",
+    "revision": "ca58581bc7bea2ebed4e80dc0a3e4b8b609c6ecc",
+    "files": {
+      "model.safetensors": "a56928052ac6f5d09b97c3834bea6ce3aef9f02b513b5fac98954e7377801572",
+      "config.json": "b0111650e8718e31d7e89575666aa3e140747d35279ec1a7c9f6ed7616c29433",
+      "README.md": "3b00cbfdecd6b64c96558eb3bd39049405aee6497c7e4788da4bc78db17611de"
+    },
+    "load": "momentfm.MOMENTPipeline.from_pretrained(repository, revision, model_kwargs={'task_name': 'embedding'}); safetensors only",
+    "parameters": 341240320
+  },
+  "config_sha256": "30df828422c53bfa5228733c30941d17ebb6a9400771ea652beddc5527b5abbb",
+  "device": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "versions": {
+    "torch": "2.8.0+cu129",
+    "triton": "3.4.0",
+    "numpy": "2.5.4",
+    "huggingface-hub": "0.36.2",
+    "momentfm": "0.1.5",
+    "transformers": "4.57.6"
+  },
+  "host": {
+    "machine": "aarch64",
+    "python": "3.12.3"
+  },
+  "load_seconds": 5.77,
+  "inputs_sha256": "63cb2622d8d40038bef1f0cf9d0799dbdc0767aee287f73cbc9001fdb256056e",
+  "determinism_max_abs_diff": 0.0,
+  "embed_seconds": 131.99,
+  "outputs_sha256": "9fb75b7a9ebe80a4e51b27026369bc4240d004a8e260174c0600fa2dd53c832b",
+  "outputs": [
+    {
+      "name": "moment",
+      "shape": [
+        2143,
+        5120
+      ],
+      "dtype": "float32",
+      "finite": true,
+      "row_norm_min": 4.546515464782715,
+      "row_norm_mean": 6.290282249450684,
+      "row_norm_max": 9.18447208404541
+    }
+  ],
+  "moment_channel_ok_fraction": [
+    0.997200186654223,
+    0.9967335510965936,
+    0.9967335510965936,
+    1.0,
+    1.0
+  ],
+  "peak_cuda_allocated_mib": 1659.1,
+  "peak_cuda_reserved_mib": 1750.0
+}
