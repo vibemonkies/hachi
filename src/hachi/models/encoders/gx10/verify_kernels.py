@@ -19,6 +19,9 @@ import traceback
 from pathlib import Path
 
 import torch
+from _runtime import python_headers
+
+CPATH = python_headers()  # before any Triton kernel compiles
 
 FORWARD_TOLERANCE = 2e-3
 BACKWARD_TOLERANCE = 1e-2
@@ -227,6 +230,7 @@ def main():
         },
         "torch_cuda": torch.version.cuda,
         "triton_ptxas_path": os.environ.get("TRITON_PTXAS_PATH"),
+        "triton_launcher_cpath": CPATH,
         "tolerances": {"forward": FORWARD_TOLERANCE, "backward": BACKWARD_TOLERANCE},
         "cases": {},
     }

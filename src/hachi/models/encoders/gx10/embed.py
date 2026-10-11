@@ -25,6 +25,9 @@ from urllib.request import Request, urlopen
 
 import numpy as np
 import torch
+from _runtime import python_headers
+
+CPATH = python_headers()  # before any Triton kernel compiles
 
 BATCH = 64
 MODEL_PACKAGES = {"wbm": ("mamba-ssm", "causal-conv1d"), "moment": ("momentfm", "transformers")}
@@ -160,7 +163,8 @@ def prove(model_name, model, device):
         x[:, :, 19:] = (torch.rand(4, 168, 19, device=device) < 0.5).float()
     else:
         x = torch.randn(4, 1, 512, device=device)
-    params = [p for p in model.parameters() if p.requires_grad]
+    named = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
+    params = [p for _, p in named]
     optimizer = torch.optim.SGD(params, lr=1e-3)
     before = [p.detach().clone() for p in params]
     torch.cuda.synchronize()
@@ -171,20 +175,26 @@ def prove(model_name, model, device):
         r = model.embed(x_enc=x, input_mask=torch.ones(4, 512, device=device)).embeddings
     loss = r.float().pow(2).mean()
     loss.backward()
-    grads_finite = all(p.grad is not None and bool(torch.isfinite(p.grad).all()) for p in params)
+    # A parameter this input never reaches (e.g. a mask embedding when every step is observed)
+    # has no gradient; that is reported by name, separately from non-finite gradients.
+    no_grad = [n for n, p in named if p.grad is None]
+    grads_finite = all(bool(torch.isfinite(p.grad).all()) for p in params if p.grad is not None)
     optimizer.step()
     torch.cuda.synchronize()
     seconds = time.perf_counter() - began
     changed = sum(int(not torch.equal(a, p.detach())) for a, p in zip(before, params, strict=True))
     return {
         "output_shape": list(r.shape),
-        "loss": float(loss),
+        "loss": float(loss.detach()),
         "loss_finite": bool(torch.isfinite(loss)),
         "trainable_tensors": len(params),
         "gradients_finite": grads_finite,
+        "tensors_without_gradient": no_grad,
         "tensors_changed_by_update": changed,
         "forward_backward_update_ms": round(seconds * 1000, 1),
-        "passed": bool(torch.isfinite(loss)) and grads_finite and changed > 0,
+        "passed": bool(torch.isfinite(loss))
+        and grads_finite
+        and changed == len(params) - len(no_grad) > 0,
     }
 
 
@@ -227,6 +237,7 @@ def main():
         },
         "host": {"machine": platform.machine(), "python": platform.python_version()},
         "load_seconds": round(load_seconds, 2),
+        "triton_launcher_cpath": CPATH,
     }
     if args.prove:
         receipt["proof"] = prove(args.model, model, device)
