@@ -1,9 +1,9 @@
 """Translate the existing request/result contracts at the simulation boundary."""
 
-from datetime import UTC, datetime, time
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
-from hachi.contracts.requests import ScenarioRequest
+from hachi.contracts.requests import ScenarioRequest, _local_to_utc
 from hachi.contracts.results import AlertnessResult
 
 from .model import Curve, ModelConfig, Scenario, Schedule
@@ -14,19 +14,15 @@ def scenario_from_request(request: ScenarioRequest, config: ModelConfig) -> Scen
     schedules = tuple(
         Schedule(
             s.schedule_id,
-            s.bedtime_local.replace(tzinfo=zone, fold=0).astimezone(UTC),
-            s.wake_time_local.replace(tzinfo=zone, fold=0).astimezone(UTC),
+            _local_to_utc(s.bedtime_local, zone, "bedtime"),
+            _local_to_utc(s.wake_time_local, zone, "wake time"),
         )
         for s in request.schedules
     )
     earliest = min(schedules, key=lambda s: (s.bedtime, s.schedule_id))
     local_date = earliest.bedtime.astimezone(zone).date()
     local_anchor = datetime.combine(local_date, time(config.anchor_local_hour))
-    anchor = local_anchor.replace(tzinfo=zone, fold=0).astimezone(UTC)
-    if anchor.astimezone(zone).replace(tzinfo=None) != local_anchor:
-        raise ValueError(
-            f"anchor {local_anchor.isoformat()} does not exist in {zone.key} (DST gap)"
-        )
+    anchor = _local_to_utc(local_anchor, zone, "anchor")
     return Scenario(schedules, request.assumptions.prior_sleep_hours, anchor)
 
 
