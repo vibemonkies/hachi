@@ -39,7 +39,9 @@ def direct_inference(
         raise ValueError("the evaluator takes whole-hour cutoffs")
     if served.serving.input == "hourly_features":
         assert served.serving.feature_policy is not None
-        history: list = subject.hourly_features(served.serving.feature_policy, cutoff)
+        history: list = subject.hourly_features(
+            served.serving.feature_policy, cutoff, thinning=served.serving.history_thinning
+        )
     else:
         history = subject.observations(served.metric, cutoff)
     split = SplitManifest(

@@ -4,12 +4,17 @@
   # GX10: hachi.models.chronos inference.py on PRIVATE_DIR/{full,thin}/requests.jsonl (gpu-run)
   python -m hachi.models.density.run score --snapshot DIR --export PRIVATE_DIR \
       --gx10-full RUN --gx10-thin RUN --output PRIVATE_DIR/score
+  python -m hachi.models.density.run fit --snapshot DIR --variant FILE --output PRIVATE_DIR/fit
 
 Each model (the four #9 comparators and Chronos-2 zero-shot) is evaluated twice on the same
 sealed splits and the same full-density targets: once with the frozen protocol's full-density
 history, once with the predeclared variant's thinned history. Predictions are paired per
 participant, cutoff and target hour; abstentions on either side leave the pairing and are
 counted. Only the active outer fold's inner validation folds are scored; its test stays sealed.
+
+`fit --variant FILE` freezes the CPU comparators at a variant's gates for serving: the committed
+#9 runner fits, saves and replay-checks each model on that variant's thinned history, with
+full-density labels, and labels every packet's run_id with the thinning's pipeline suffix.
 """
 
 import argparse
@@ -31,6 +36,8 @@ import pyarrow.parquet as pq
 from hachi.evaluation import evaluate_forecast, hourly_features
 from hachi.evaluation.forecast import EvaluationResult, target_quality_eligible
 from hachi.evaluation.metrics import ScoredPoint, bootstrap_participant_mean, forecast_metrics
+from hachi.evaluation.pmdata_run import ReplacementHistory
+from hachi.evaluation.pmdata_run import run as run_protocol
 from hachi.evaluation.serialization import document_bytes, document_sha256
 from hachi.models.chronos import AdapterLog, load_forecasts, replay_factory
 from hachi.models.chronos.pmdata import (
@@ -353,6 +360,25 @@ def run_score(
         raise
 
 
+def run_fit(snapshot: Path, output: Path, variant_path: Path) -> dict[str, Any]:
+    """Every CPU comparator frozen on a variant's thinned history, with its own packet."""
+    variant, base = load_variant(variant_path)
+    bins, counts = thinned_bins(snapshot, variant.thinning)
+    history = ReplacementHistory(
+        label=variant.thinning.pipeline_suffix,
+        bins=bins,
+        audit={
+            "variant_file_sha256": hashlib.sha256(variant_path.read_bytes()).hexdigest(),
+            "variant_sha256": document_sha256(variant),
+            "variant_protocol_sha256": document_sha256(variant.protocol),
+            "base_protocol_sha256": document_sha256(base),
+            "thinning": variant.thinning.model_dump(),
+            "thinning_counts": counts,
+        },
+    )
+    return run_protocol(snapshot, output, variant.protocol, history=history)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -368,10 +394,16 @@ def main() -> int:
     for command in (e, s):
         command.add_argument("--variant", type=Path, default=VARIANT)
         command.add_argument("--chronos-thin", type=Path, default=CHRONOS_THIN)
+    f = sub.add_parser("fit")
+    f.add_argument("--snapshot", required=True, type=Path)
+    f.add_argument("--output", required=True, type=Path)
+    f.add_argument("--variant", required=True, type=Path)
     args = parser.parse_args()
     try:
         if args.command == "export":
             result = run_export(args.snapshot, args.output, args.variant, args.chronos_thin)
+        elif args.command == "fit":
+            result = run_fit(args.snapshot, args.output, args.variant)
         else:
             result = run_score(
                 args.snapshot,

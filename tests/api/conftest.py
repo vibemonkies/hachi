@@ -4,7 +4,9 @@ Every value is generated: the snapshot comes from tests/data/pmdata's synthetic 
 the artifact is fitted on it. Nothing here reads real data.
 """
 
+import hashlib
 import importlib.util
+import json
 import os
 import zipfile
 from dataclasses import dataclass
@@ -14,7 +16,7 @@ from xml.sax.saxutils import quoteattr
 
 import pytest
 
-from hachi.api.artifacts import ServingSpec, stage_artifact
+from hachi.api.artifacts import SPLIT_PARAMETERS, ServingSpec, protocol_key, stage_artifact
 from hachi.api.settings import Settings
 from hachi.contracts.base import ArtifactRef
 from hachi.contracts.manifests import ModelRef, RunManifest, SplitManifest
@@ -71,6 +73,22 @@ class Packet:
     model_dir: Path
     packet_dir: Path
     serving: ServingSpec
+    protocol: Path
+
+
+UNSET = object()
+# Synthetic fixture protocols count as committed, predeclared protocols in these tests only.
+FIXTURE_PROTOCOLS: set[str] = set()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def fixture_protocols_are_predeclared():
+    from hachi.api import artifacts
+
+    committed = artifacts.frozen_protocols
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(artifacts, "frozen_protocols", lambda: committed() | FIXTURE_PROTOCOLS)
+        yield
 
 
 def make_packet(
@@ -81,9 +99,35 @@ def make_packet(
     serving: ServingSpec | None = None,
     feature_order: list[str] | None = None,
     artifact_id: str = "synthetic-last-valid-hr",
+    evaluated_policy: HourlyFeaturePolicy | None = None,
+    evaluated_thinning: object = UNSET,
+    run_label: object = UNSET,
+    predeclared: bool = True,
+    comparators: list[BaselineConfig] | None = None,
 ) -> Packet:
-    """Fit a baseline, save it, and write the evaluation packet files it would ship with."""
-    config = config or BaselineConfig(method="last_valid", metric="heart_rate", aggregation="mean")
+    """Fit a baseline, save it, and write the evaluation packet files it would ship with.
+
+    It writes the synthetic protocol the packet was "evaluated" under (`protocol`), wrapped
+    as a density variant when it thinned history, and its run_id carries the runner's label.
+    By default both follow `serving`; the evaluated_* and run_label overrides build mismatches.
+    The protocol lists the model's config as its comparator, with the evaluated count gate, and
+    counts as predeclared unless `predeclared` is False.
+    """
+    serving = serving or ServingSpec(
+        format_version="hachi-serving-1",
+        task="physiology_forecast",
+        resolution="hour",
+        entry_point="hachi.models.baselines.load_artifact",
+        input="hourly_features",
+        feature_policy=HR_POLICY,
+    )
+    evaluated_policy = evaluated_policy or serving.feature_policy
+    config = config or BaselineConfig(
+        method="last_valid",
+        metric="heart_rate",
+        aggregation="mean",
+        min_samples_per_hour=evaluated_policy.min_observed_count,
+    )
     model = fit_baseline(TrainingPrefix(FIT_AS_OF, ("p01",), ()), config)
     model_dir = base / "model"
     ref = save_artifact(model_dir, model, artifact_id=artifact_id)
@@ -119,9 +163,27 @@ def make_packet(
         bootstrap_samples=10,
         confidence=0.9,
     )
+    thinning = serving.history_thinning if evaluated_thinning is UNSET else evaluated_thinning
+    label = (thinning.pipeline_suffix if thinning else None) if run_label is UNSET else run_label
+    protocol: dict = {
+        "feature_policy": evaluated_policy.model_dump(mode="json"),
+        "evaluation": evaluation.model_dump(mode="json"),
+        "baselines": [c.model_dump(mode="json") for c in comparators or [config]],
+        **{key: getattr(split, key) for key in SPLIT_PARAMETERS},
+    }
+    if not predeclared:
+        protocol["note"] = "written by hand for this artifact"  # never committed
+    if thinning is not None:
+        protocol = {"thinning": thinning.model_dump(mode="json"), "protocol": protocol}
+    if predeclared:
+        FIXTURE_PROTOCOLS.add(protocol_key(protocol))
+    protocol_bytes = json.dumps(protocol, sort_keys=True).encode()
+    serving = serving.model_copy(
+        update={"protocol_sha256": hashlib.sha256(protocol_bytes).hexdigest()}
+    )
     run = RunManifest(
         schema_version="0.1",
-        run_id="synthetic-run",
+        run_id="synthetic-run" + (f"-{model.model_id}-{label}" if label else ""),
         created_at_utc=FIT_AS_OF,
         git_sha=GIT_SHA,
         git_dirty=False,
@@ -142,22 +204,15 @@ def make_packet(
     packet_dir.mkdir()
     for name, document in (("run.json", run), ("split.json", split), ("config.json", evaluation)):
         (packet_dir / name).write_bytes(document_bytes(document))
-    serving = serving or ServingSpec(
-        format_version="hachi-serving-1",
-        task="physiology_forecast",
-        resolution="hour",
-        entry_point="hachi.models.baselines.load_artifact",
-        input="hourly_features",
-        feature_policy=HR_POLICY,
-    )
-    return Packet(model_dir, packet_dir, serving)
+    (base / "protocol.json").write_bytes(protocol_bytes)
+    return Packet(model_dir, packet_dir, serving, base / "protocol.json")
 
 
 @pytest.fixture(scope="session")
 def served(tmp_path_factory, data_root, snapshot_id) -> tuple[Path, ArtifactRef]:
     root = tmp_path_factory.mktemp("artifacts")
     packet = make_packet(tmp_path_factory.mktemp("packet"), data_root / "derived" / snapshot_id)
-    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving)
+    pin = stage_artifact(root, packet.model_dir, packet.packet_dir, packet.serving, packet.protocol)
     return root, pin
 
 

@@ -171,7 +171,9 @@ def prepare(args) -> dict:
     require(digest(args.protocol) == published["protocol_sha256"], "Protocol is not frozen")
     root = private_directory(args.runtime_root.resolve())
     spec = serving_from_protocol(args.protocol, args.model)
-    pin = stage_artifact(private_directory(root / "artifacts"), args.model, args.packet, spec)
+    pin = stage_artifact(
+        private_directory(root / "artifacts"), args.model, args.packet, spec, args.protocol
+    )
     require(pin == run.artifact, "Staged pin differs from frozen packet")
     operator = Operator(
         format_version="hachi-rehearsal-2",
