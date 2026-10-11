@@ -12,8 +12,9 @@ from hachi.contracts.base import Contract, DataMode, Text
 from hachi.contracts.causality import available_by
 from hachi.contracts.manifests import SplitManifest, TimeWindow
 from hachi.contracts.metrics import METRICS, Aggregation, Metric, check_metric_value
-from hachi.contracts.tables import Aggregate, Observation
+from hachi.contracts.tables import Aggregate
 
+from .features import ForecastObservation, HourlyFeature, require_input_series
 from .metrics import MetricReport, ScoredPoint, forecast_metrics
 from .serialization import document_sha256
 from .splits import Origin, OriginExclusion, OriginPlan, Partition, rolling_origins
@@ -61,7 +62,7 @@ class ForecastEstimate(Contract):
 class TrainingPrefix:
     fit_as_of: datetime
     subjects: tuple[str, ...]
-    observations: tuple[Observation, ...]
+    observations: tuple[ForecastObservation, ...]
 
 
 @dataclass(frozen=True)
@@ -69,7 +70,7 @@ class ForecastInput:
     subject_id: str
     cutoff: datetime
     targets: tuple[TimeWindow, ...]
-    history: tuple[Observation, ...]
+    history: tuple[ForecastObservation, ...]
 
 
 type Predictor = Callable[[ForecastInput], Sequence[ForecastEstimate | None]]
@@ -92,13 +93,13 @@ class EvaluationResult:
     metrics: MetricReport
 
 
-def _observation_order(o: Observation) -> tuple[datetime, datetime, str]:
+def _observation_order(o: ForecastObservation) -> tuple[datetime, datetime, str]:
     return o.end_utc, o.available_at_utc, o.record_id
 
 
 def evaluate_forecast(
     manifest: SplitManifest,
-    observations: Sequence[Observation],
+    observations: Sequence[ForecastObservation],
     targets: Sequence[Aggregate],
     factory: PredictorFactory,
     config: EvaluationConfig,
@@ -109,8 +110,10 @@ def evaluate_forecast(
 
     Caller-supplied factories must not capture uncensored data in their closures. We
     can enforce what we pass to a model, not audit arbitrary Python model internals.
-    Raw observations supply availability; aggregates are used only as future labels.
+    Raw observations or readiness-bearing hourly features supply availability;
+    bare aggregates are used only as future labels.
     """
+    require_input_series(observations, config.metric, config.aggregation)
     plan = rolling_origins(manifest, partition)
     assigned = set(manifest.train_subjects + manifest.validation_subjects + manifest.test_subjects)
     excluded_subjects = {e.subject_id for e in manifest.exclusions if e.record_id is None}
@@ -124,6 +127,18 @@ def evaluate_forecast(
     if len(set(keys)) != len(keys):
         raise ValueError("duplicate observation record ids; ingestion must deduplicate first")
     excluded_records = {(e.subject_id, e.record_id) for e in manifest.exclusions}
+    if any(isinstance(o, HourlyFeature) for o in observations):
+        feature_keys = {(o.subject_id, o.record_id) for o in observations}
+        unmatched = {
+            (e.subject_id, e.record_id)
+            for e in manifest.exclusions
+            if e.record_id is not None and e.subject_id not in excluded_subjects
+        } - feature_keys
+        if unmatched:
+            raise ValueError(
+                "derived inputs require derived feature record exclusions; "
+                "apply raw record exclusions before aggregation"
+            )
     usable = [
         o
         for o in observations

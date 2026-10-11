@@ -132,3 +132,15 @@ artifact inference. No model promotion or real-data acceptance is implied here.
 Primary APIs: [tree regressor](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html),
 [persistence](https://scikit-learn.org/stable/model_persistence.html), and
 [NightSignal paper](https://www.nature.com/articles/s41591-021-01593-2).
+
+### Derived hourly features
+
+The hourly baseline and tree paths also accept #7's internal `HourlyFeature`,
+which retains its canonical aggregate, complete-bin readiness and source rule.
+Its value is already aggregated: the model preserves it and checks aggregation
+compatibility. Native observed count supplies the model sample-count threshold;
+#7's explicit policy checks coverage. Mixing raw and derived inputs for the same
+metric or giving duplicate derived bins is refused. Saved source receipts bind
+`evaluation/features.py`, `evaluation/serialization.py` and `contracts/causality.py`
+as well as baseline modules. Archived receipts describe their exact earlier code;
+new artifacts must be built for the new implementation.

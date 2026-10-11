@@ -1,0 +1,273 @@
+{
+  "checks": {
+    "coordination_tests": 5,
+    "focused_evaluation_model_causality_tests": 70,
+    "full_python_tests": 272,
+    "make_check": "passed",
+    "packet_hash_readback": "passed",
+    "private_creation_modes": "0700 directories / 0600 files",
+    "saved_model_replays": 4
+  },
+  "data_mode": "synthetic",
+  "environment_sha256": "5185dbaf65e14ee9013c6f115214e5fbc367123ab22d2d938eb97ba5dd8904a5",
+  "git_dirty": false,
+  "git_sha": "4cd9da72073e554b5ccb7ece3cf401630f3aaa9d",
+  "models": {
+    "causal-hourly-tree-v1": {
+      "artifact": {
+        "artifact_id": "causal-hourly-tree-v1-935bca0f450dda77",
+        "artifact_sha256": "7a8d5d5ee442b143dc0934f73310cdfe47e7a10dbd7dbb05ee7548c4d280b584"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            1.00000000000019,
+            2.00000000000019
+          ],
+          "participants": 2,
+          "value": 1.50000000000019
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.500000000000095,
+            1.000000000000095
+          ],
+          "participants": 2,
+          "value": 0.750000000000095
+        },
+        "rmse": {
+          "confidence_interval": [
+            1.0012086958961415,
+            2.0006046217927302
+          ],
+          "participants": 2,
+          "value": 1.500906658844436
+        }
+      },
+      "packet_sha256": {
+        "config.json": "ee5ee31744c743e0275419302c413b57b3d7d387f9bae73d68b017942772c598",
+        "evaluation.json": "c1305c1930a7087b4bf2978d4dea424685a77d8ee4916c69ca57dc885bbbaa26",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "1274cd4e92f7e57fc4759262d2b2a9d52b7b42d541460033e863a2a69e564e0c",
+        "source-sha256.json": "5530e7717071579d9cb0b86d413f9f9039f6996e7732a7e357027253c433765f",
+        "split.json": "4ce18b42800be74e25b4ed8377be268eedb7e1793746166a31f2e7d6251e9f70"
+      }
+    },
+    "hourly-last-valid-v1": {
+      "artifact": {
+        "artifact_id": "hourly-last-valid-v1-064c76f737b4a059",
+        "artifact_sha256": "b21f4f24eae4e1753698b5bb201acc62b0b89fab1e274f2e31a6c426577c2696"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            1.1985860423127583,
+            1.1985860423127583
+          ],
+          "participants": 2,
+          "value": 1.1985860423127583
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.5992930211563792,
+            0.5992930211563792
+          ],
+          "participants": 2,
+          "value": 0.5992930211563792
+        },
+        "rmse": {
+          "confidence_interval": [
+            1.4657230659065732,
+            1.4657230659065732
+          ],
+          "participants": 2,
+          "value": 1.4657230659065732
+        }
+      },
+      "packet_sha256": {
+        "config.json": "ee5ee31744c743e0275419302c413b57b3d7d387f9bae73d68b017942772c598",
+        "evaluation.json": "a2d497aff6a7af054b8d29fb3735658a8f37db9c922e01b5b2b7fcd17e837caf",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "2cf5703cf2b2c30bfd05c4890978b8a2a1970330741b75225612a30ce5f5832d",
+        "source-sha256.json": "5530e7717071579d9cb0b86d413f9f9039f6996e7732a7e357027253c433765f",
+        "split.json": "4ce18b42800be74e25b4ed8377be268eedb7e1793746166a31f2e7d6251e9f70"
+      }
+    },
+    "train-population-mean-v1": {
+      "artifact": {
+        "artifact_id": "train-population-mean-v1-29b564acc3dfda2d",
+        "artifact_sha256": "7d0457e0f3a0ebb70b4eb0bff39094b16e4afc3008de60e9c7960268315e2106"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            1.4663529952791272,
+            1.7163529952791272
+          ],
+          "participants": 2,
+          "value": 1.5913529952791272
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.7331764976395636,
+            0.8581764976395636
+          ],
+          "participants": 2,
+          "value": 0.7956764976395636
+        },
+        "rmse": {
+          "confidence_interval": [
+            1.7532903586720159,
+            1.9114865118872286
+          ],
+          "participants": 2,
+          "value": 1.8323884352796223
+        }
+      },
+      "packet_sha256": {
+        "config.json": "ee5ee31744c743e0275419302c413b57b3d7d387f9bae73d68b017942772c598",
+        "evaluation.json": "d684e0943efae7dcd61b8b8bebc983a539a702503247e60f8180760f40738b33",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "10cc497ac0fa381772bdacd63701ee84dbca6bef33c181c02a13b485b2153f98",
+        "source-sha256.json": "5530e7717071579d9cb0b86d413f9f9039f6996e7732a7e357027253c433765f",
+        "split.json": "4ce18b42800be74e25b4ed8377be268eedb7e1793746166a31f2e7d6251e9f70"
+      }
+    },
+    "utc-seasonal-naive-v1": {
+      "artifact": {
+        "artifact_id": "utc-seasonal-naive-v1-1e551bae8751b485",
+        "artifact_sha256": "8b2aabf021be115c98f17c3c258cfb774cdbf179199fc53ddef8f42c5014aa5f"
+      },
+      "artifact_replay_verified": true,
+      "counts": {
+        "abstained_points": 0,
+        "assigned_participants": 8,
+        "evaluation_participants": 2,
+        "excluded_observation_records": 0,
+        "excluded_origins_insufficient_history": 0,
+        "excluded_origins_overlapping_targets": 0,
+        "excluded_origins_target_outside_window": 0,
+        "excluded_participants": 0,
+        "expected_points": 16,
+        "insufficient_history_points": 0,
+        "missing_labels": 0,
+        "planned_origins": 8,
+        "predicted_origins": 8,
+        "roster_participants": 8,
+        "scored_participants": 2,
+        "scored_points": 16,
+        "training_observations": 384
+      },
+      "metrics": {
+        "mae": {
+          "confidence_interval": [
+            0.0,
+            0.0
+          ],
+          "participants": 2,
+          "value": 0.0
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.0,
+            0.0
+          ],
+          "participants": 2,
+          "value": 0.0
+        },
+        "rmse": {
+          "confidence_interval": [
+            0.0,
+            0.0
+          ],
+          "participants": 2,
+          "value": 0.0
+        }
+      },
+      "packet_sha256": {
+        "config.json": "ee5ee31744c743e0275419302c413b57b3d7d387f9bae73d68b017942772c598",
+        "evaluation.json": "5f368f3178c3624fc4696c8c4903420ab74630fc56996a8720869f42c7dc8e49",
+        "origins.json": "d1b201cd4813bf1098b11d4416f6918a2ae897b115e6f666c16b7ba7d6663d74",
+        "run.json": "7ea267048cdfb4a60174e1d4c665d2866327f150ba3cadebff3fffae69c7cd9f",
+        "source-sha256.json": "5530e7717071579d9cb0b86d413f9f9039f6996e7732a7e357027253c433765f",
+        "split.json": "4ce18b42800be74e25b4ed8377be268eedb7e1793746166a31f2e7d6251e9f70"
+      }
+    }
+  },
+  "python": "3.12.13",
+  "real_cohort_gate": "pending #5 admitted PMData snapshot, approved access, and frozen scientific protocol",
+  "scope": "Hourly adapter software validation; four baseline replay runs use generated raw inputs. Derived inputs are separately covered by evaluator and fitted-tree parity/serialization tests.",
+  "sklearn": "1.9.1",
+  "source_sha256": {
+    "__init__.py": "e2fb7e82110e73dfbe634534d8560272ef1ee1b91e9f432d789f64c5ca1c8116",
+    "artifacts.py": "dd78536155fc43ab9b735334db17597e4f5da2ad42eeb1cb82b7b7509b58d92c",
+    "contracts/causality.py": "88d16cf15818cdbbb2d3ad7910f698fbe74d1b9da1f12916d628d2975d316093",
+    "demo.py": "fecd79deef72197606a47e153b9ea8be24fd194aa03e86b5785968611bb5f010",
+    "evaluation/features.py": "af5f0f929abc9800061f0dd9c3c305e1787e50efc6422d8e25b326aedf029526",
+    "evaluation/serialization.py": "483680723b4dae29758a8a6bde4ebaeadcb00aeaf97b425f8d73817d65cd7052",
+    "forecast.py": "261961ccaa102f3679d073da3995fe6e7c9c8e2b380a524bc85c4f5ab293d410",
+    "nightsignal_reproduction.py": "0949ab9433bd3e4f6d1d235aa4f1cca776d8d24aee6ad3cfbe53d65502bef001",
+    "robust.py": "cea96d1b5bb1b909682071f205e0ae912bee12cb6dd7048fd29e3341f1bfdfb1",
+    "tree.py": "036af1454eea7a20b78361ec3f3f291d5321409034a5e7f8c7ab38121b52dc19"
+  }
+}
