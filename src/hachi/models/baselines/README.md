@@ -98,8 +98,13 @@ new isolated directories on generated Fitbit-format inputs. A documented palette
 alias/Agg shim accommodates modern plotting; computation is unchanged. The
 compatibility environment is separate from Hachi's model extra and recorded by
 its hash-locked package file, versions, source/runner/shim hashes and aggregate
-receipt. It does not reproduce the original NumPy 1.18.5/pandas 1.0.4 environment,
-real input examples, or the Apple Watch branch. The robust comparator has its own
+receipt. It does not reproduce the original NumPy 1.18.5/pandas 1.0.4 environment. A separate admitted-example run exercised
+both the Fitbit and Apple Watch branches privately; its aggregate receipt is
+[evidence/admitted-example-reproduction.json](evidence/admitted-example-reproduction.json).
+Both commands exited successfully and produced 305 output nights in total. This
+checks code/format execution, not healthy-period alert burden or accuracy. Raw
+inputs, dated predictions, and plots remain in private ignored storage with the
+source license notice. The robust comparator has its own
 id and is not presented as faithful NightSignal.
 
 ## Reproduce
