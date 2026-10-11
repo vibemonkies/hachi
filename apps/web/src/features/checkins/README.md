@@ -12,8 +12,16 @@ an operator-configured `apiBaseUrl` and selected `subjectId`:
 Import the components into the coordinated `SectionView` symptoms/sleep branches.
 No browser storage persists labels. Every history refresh reads the API. A subject
 or API change remounts the feature, so one subject's draft/report cannot be shown
-as another's. A missing `asOf` means the recovery button uses the current instant;
-an explicit cutoff is displayed and sent unchanged.
+as another's. A selected `asOf` change also remounts the workspace, clearing the
+previous cutoff's history, pending requests, draft and correction/deletion selection.
+Both current and all-version history requests pass that exact cutoff through the
+backend's `as_of` query; initial load, manual reload and post-save/delete reload
+share the same loader. Episode-root lookup therefore uses only versions known at
+that cutoff. The client does not filter entries or infer their availability from
+event timestamps. New entries and corrections saved after a historical cutoff
+remain stored but are absent from that historical view until a later cutoff.
+A missing `asOf` preserves unbounded current/all history, and the recovery button
+uses the current instant; an explicit cutoff is displayed and sent unchanged.
 
 ## Recorded values
 
@@ -67,6 +75,18 @@ absence, linked resolution, test uncertainty, KSS/PVT bounds, scenario assumptio
 correction event-field round trips and episode-chain safety. Browser acceptance
 must additionally exercise save/read-back/reload, correction/deletion, invalid
 inputs, keyboard/mobile use and the actual report/scenario endpoints.
+
+`checkins-history.test.mjs` builds the actual feature through Vite and sends its
+requests to the actual FastAPI app and temporary SQLite via a test-only stdin
+transport (`checkins-history-api.py`). It needs the locked API extra in this
+checkout's `.venv`; set `HACHI_TEST_PYTHON` to another compatible isolated Python
+if needed. No sockets, persistent API service, artifacts or datasets are used.
+The regression covers absent pre-recording entries, inclusive earlier original
+versions, later corrections/new entries, both history modes, changing cutoff
+queries, offset encoding, unbounded compatibility and whole-chain deletion.
+The exported component's workspace identity changes with the selected cutoff,
+so an old request/selection cannot populate the new cutoff's workspace. This
+repository check does not claim a rendered PR111 integration walkthrough.
 
 Stored correction/deletion is verified against the coordinated #16 API from PR #79; see `reports/verification/checkins/correction-deletion-receipt.json`. This feature checkpoint does not close #18. App-route integration belongs to the active #17 worker, and computed comparison curves depend on #15 publication/wiring. Supported
 illness/recovery/alertness claims retain their own real-label/evaluation gates.
