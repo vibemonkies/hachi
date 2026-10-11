@@ -239,7 +239,7 @@ def _fold_delta(fold: dict[str, Any]) -> float:
     def mae(points):
         by = defaultdict(list)
         for p in points:
-            by[p.subject_id].append(abs(p.prediction - p.truth))
+            by[p.subject_id].append(abs(p.median - p.truth))
         return {s: sum(v) / len(v) for s, v in by.items()}
 
     a, b = mae(fold["full"]), mae(fold["thin"])
@@ -304,7 +304,7 @@ def run_score(snapshot: Path, export_dir: Path, gx10_full: Path, gx10_thin: Path
                 for side, points in (("full", paired["full"]), ("thin", paired["thin"])):
                     rows += [
                         {"fold": name, "model": model, "history": side, "subject_id": p.subject_id,
-                         "truth": p.truth, "median": p.prediction}
+                         "truth": p.truth, "median": p.median}
                         for p in points
                     ]  # fmt: skip
         sink = pa.BufferOutputStream()
