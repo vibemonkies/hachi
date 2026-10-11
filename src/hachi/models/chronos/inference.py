@@ -24,18 +24,30 @@ import resource
 import subprocess
 import sys
 import time
-from collections.abc import Callable, Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from itertools import pairwise
 from pathlib import Path
-from typing import Any
+from types import MappingProxyType
+from typing import Any, NamedTuple
 
 REQUEST_FORMAT = "chronos-context-1"
 PREDICTION_FORMAT = "chronos-quantiles-1"
+EMBEDDING_FORMAT = "chronos-embeddings-1"
 # Model card limits for amazon/chronos-2 (config.json: context_length, max_output_patches * 16).
 MODEL_CONTEXT_LIMIT = 8192
 MODEL_HORIZON_LIMIT = 1024
 
-type Forecaster = Callable[[list[list[float | None]], int], list[list[list[float]]]]
+
+class Request(NamedTuple):
+    request_id: str
+    context: list[float | None]
+    prediction_length: int
+    # Past-only covariates aligned with the context; never values after the cutoff.
+    past_covariates: Mapping[str, list[float | None]] = MappingProxyType({})
+
+
+type Forecaster = Callable[[list[Request], int], list[list[list[float]]]]
+type Embedder = Callable[[list[Request]], list[tuple[list[float], float, float]]]
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -44,13 +56,22 @@ def canonical_bytes(value: Any) -> bytes:
     ).encode()
 
 
-def request_id(context: Sequence[float | None], prediction_length: int) -> str:
-    """Content identity of one causal context; identical windows share one forecast."""
-    document = {
+def request_id(
+    context: Sequence[float | None],
+    prediction_length: int,
+    past_covariates: Mapping[str, Sequence[float | None]] | None = None,
+) -> str:
+    """Content identity of one causal context; identical windows share one forecast.
+
+    Univariate requests hash exactly as before covariates existed.
+    """
+    document: dict[str, Any] = {
         "format": REQUEST_FORMAT,
         "context": list(context),
         "prediction_length": prediction_length,
     }
+    if past_covariates:
+        document["past_covariates"] = {k: list(v) for k, v in past_covariates.items()}
     return hashlib.sha256(canonical_bytes(document)).hexdigest()
 
 
@@ -59,39 +80,56 @@ def file_sha256(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def check_request(row: dict[str, Any]) -> tuple[str, list[float | None], int]:
-    if set(row) != {"request_id", "context", "prediction_length"}:
-        raise ValueError("request rows hold exactly request_id, context and prediction_length")
+def _check_series(values: Any, length: int | None, label: str) -> int:
+    if not isinstance(values, list) or not 0 < len(values) <= MODEL_CONTEXT_LIMIT:
+        raise ValueError(f"{label} must be a nonempty list within the model's context limit")
+    if length is not None and len(values) != length:
+        raise ValueError(f"{label} must align with the context")
+    observed = 0
+    for value in values:
+        if value is None:
+            continue
+        if not isinstance(value, float) or not math.isfinite(value):
+            raise ValueError(f"{label} values must be finite floats or null")
+        observed += 1
+    return observed
+
+
+def check_request(row: dict[str, Any]) -> Request:
+    keys = {"request_id", "context", "prediction_length"}
+    if not keys <= set(row) <= keys | {"past_covariates"}:
+        raise ValueError(
+            "request rows hold exactly request_id, context, prediction_length "
+            "and optional past_covariates"
+        )
     context, length = row["context"], row["prediction_length"]
     if not isinstance(length, int) or isinstance(length, bool) or length <= 0:
         raise ValueError("prediction_length must be a positive integer")
     if length > MODEL_HORIZON_LIMIT:
         raise ValueError("prediction_length exceeds the model's output limit")
-    if not isinstance(context, list) or not 0 < len(context) <= MODEL_CONTEXT_LIMIT:
-        raise ValueError("context must be a nonempty list within the model's context limit")
-    observed = 0
-    for value in context:
-        if value is None:
-            continue
-        if not isinstance(value, float) or not math.isfinite(value):
-            raise ValueError("context values must be finite floats or null")
-        observed += 1
-    if not observed:
+    if not _check_series(context, None, "context"):
         raise ValueError("a context needs at least one observed value")
-    if row["request_id"] != request_id(context, length):
+    covariates = row.get("past_covariates", {})
+    if not isinstance(covariates, dict) or ("past_covariates" in row and not covariates):
+        raise ValueError("past_covariates must be a nonempty mapping when present")
+    for name, values in covariates.items():
+        if not isinstance(name, str) or not name:
+            raise ValueError("covariate names must be nonempty strings")
+        _check_series(values, len(context), f"covariate {name}")
+    if row["request_id"] != request_id(context, length, covariates):
         raise ValueError("request id does not match its content")
-    return row["request_id"], context, length
+    return Request(row["request_id"], context, length, covariates)
 
 
-def read_requests(path: Path) -> list[tuple[str, list[float | None], int]]:
+def read_requests(path: Path) -> list[Request]:
     seen: set[str] = set()
     requests = []
     with path.open() as stream:
         for line in stream:
             parsed = check_request(json.loads(line))
-            if parsed[0] in seen:
+            if parsed.request_id in seen:
                 raise ValueError("duplicate request id; the exporter writes each context once")
-            seen.add(parsed[0])
+            seen.add(parsed.request_id)
             requests.append(parsed)
     if not requests:
         raise ValueError("no requests")
@@ -103,42 +141,68 @@ def batches[T](items: Sequence[T], size: int) -> Iterator[Sequence[T]]:
         yield items[start : start + size]
 
 
+def _schema(item: Request) -> tuple[int, tuple[str, ...]]:
+    return item.prediction_length, tuple(sorted(item.past_covariates))
+
+
 def forecast_rows(
-    requests: Sequence[tuple[str, list[float | None], int]],
+    requests: Sequence[Request],
     forecaster: Forecaster,
     *,
     batch_size: int,
     levels: Sequence[float],
     clock: Callable[[], float] = time.perf_counter,
 ) -> tuple[list[dict[str, Any]], list[dict[str, float | int]], int]:
-    """Forecast in fixed request order; group by horizon so a batch shares one length.
+    """Forecast in fixed request order; a batch shares one horizon and covariate schema.
 
     Raw quantiles are stored unchanged. Steps whose quantiles cross are counted here;
     the CPU adapter rearranges them, so the stored forecast stays the model's output.
     """
-    by_length: dict[int, list[tuple[str, list[float | None], int]]] = {}
+    groups: dict[tuple[int, tuple[str, ...]], list[Request]] = {}
     for item in requests:
-        by_length.setdefault(item[2], []).append(item)
+        groups.setdefault(_schema(item), []).append(item)
     rows: list[dict[str, Any]] = []
     timings: list[dict[str, float | int]] = []
     crossed = 0
-    for length, group in sorted(by_length.items()):
+    for (length, _), group in sorted(groups.items()):
         for batch in batches(group, batch_size):
             started = clock()
-            output = forecaster([context for _, context, _ in batch], length)
+            output = forecaster(list(batch), length)
             elapsed = clock() - started
             if len(output) != len(batch):
                 raise ValueError("forecaster returned the wrong number of series")
-            for (rid, _, _), quantiles in zip(batch, output, strict=True):
+            for item, quantiles in zip(batch, output, strict=True):
                 if len(quantiles) != length or any(len(step) != len(levels) for step in quantiles):
                     raise ValueError("forecast shape must be prediction_length x quantile levels")
                 for step in quantiles:
                     if not all(math.isfinite(v) for v in step):
                         raise ValueError("forecast contains a non-finite quantile")
                     crossed += any(b < a for a, b in pairwise(step))
-                rows.append({"request_id": rid, "quantiles": quantiles})
+                rows.append({"request_id": item.request_id, "quantiles": quantiles})
             timings.append({"series": len(batch), "prediction_length": length, "seconds": elapsed})
     return rows, timings, crossed
+
+
+def embed_rows(
+    requests: Sequence[Request], embedder: Embedder, *, batch_size: int
+) -> list[dict[str, Any]]:
+    """One pooled encoder embedding per univariate context, with its location and scale."""
+    if any(item.past_covariates for item in requests):
+        raise ValueError("embeddings are defined for univariate contexts only")
+    rows: list[dict[str, Any]] = []
+    width = None
+    for batch in batches(list(requests), batch_size):
+        output = embedder(list(batch))
+        if len(output) != len(batch):
+            raise ValueError("embedder returned the wrong number of series")
+        for item, (vector, loc, scale) in zip(batch, output, strict=True):
+            width = len(vector) if width is None else width
+            if len(vector) != width or not all(math.isfinite(v) for v in (*vector, loc, scale)):
+                raise ValueError("embeddings must be finite and of one width")
+            rows.append(
+                {"request_id": item.request_id, "embedding": vector, "loc": loc, "scale": scale}
+            )
+    return rows
 
 
 def write_new(path: Path, lines: Iterable[bytes]) -> str:
@@ -161,24 +225,28 @@ def _percentile(values: Sequence[float], probability: float) -> float:
 def write_run(
     output: Path,
     requests_path: Path,
-    requests: Sequence[tuple[str, list[float | None], int]],
+    requests: Sequence[Request],
     rows: Sequence[dict[str, Any]],
     levels: Sequence[float],
     crossed: int,
     details: dict[str, Any],
+    *,
+    kind: str = "forecast",
 ) -> dict[str, Any]:
-    """Write forecasts and the identity the CPU harness verifies before scoring them."""
+    """Write forecasts (or embeddings) and the identity the CPU side verifies before use."""
+    filename = {"forecast": "predictions.jsonl", "embed": "embeddings.jsonl"}[kind]
     evidence = {
-        "format": PREDICTION_FORMAT,
+        "format": PREDICTION_FORMAT if kind == "forecast" else EMBEDDING_FORMAT,
         "request_format": REQUEST_FORMAT,
         "data": "causal context windows only; no subject ids, cutoffs or targets",
         "requests_sha256": file_sha256(requests_path),
-        "predictions_sha256": write_new(
-            output / "predictions.jsonl", (canonical_bytes(r) for r in rows)
+        f"{filename.split('.')[0]}_sha256": write_new(
+            output / filename, (canonical_bytes(r) for r in rows)
         ),
         "requests": len(requests),
-        "context_lengths": sorted({len(c) for _, c, _ in requests}),
-        "prediction_lengths": sorted({n for _, _, n in requests}),
+        "context_lengths": sorted({len(r.context) for r in requests}),
+        "prediction_lengths": sorted({r.prediction_length for r in requests}),
+        "past_covariates": sorted({k for r in requests for k in r.past_covariates}),
         "quantile_levels": list(levels),
         "crossed_quantile_steps": crossed,
         **details,
@@ -187,11 +255,106 @@ def write_run(
     return evidence
 
 
-def run(args: argparse.Namespace) -> dict[str, Any]:
+def load_pipeline(spec: dict[str, Any], checkpoint: Path | None, checkpoint_sha256: str | None):
+    """The pinned public checkpoint, or a local fine-tuned one verified by its weight hash."""
     import torch
     from huggingface_hub import snapshot_download
 
     from chronos import Chronos2Pipeline
+
+    if checkpoint is None:
+        # The owner cache already holds the pinned revision; never resolve a newer one here.
+        directory = Path(
+            snapshot_download(
+                spec["model_id"],
+                revision=spec["revision"],
+                allow_patterns=["config.json", "model.safetensors"],
+                local_files_only=True,
+            )
+        )
+        expected = spec["weights_sha256"]
+    else:
+        if checkpoint_sha256 is None:
+            raise SystemExit("a local checkpoint needs its expected weight sha256")
+        directory, expected = checkpoint, checkpoint_sha256
+    weights = file_sha256(directory / "model.safetensors")
+    if weights != expected:
+        raise SystemExit("checkpoint checksum does not match the expected weights")
+    pipeline = Chronos2Pipeline.from_pretrained(
+        str(directory), device_map="cuda", torch_dtype=torch.float32
+    )
+    pipeline.model.eval()
+    return pipeline, weights
+
+
+def environment() -> dict[str, Any]:
+    import torch
+
+    return {
+        "python": sys.version,
+        "python_executable": sys.executable,
+        "architecture": platform.machine(),
+        "torch": torch.__version__,
+        "torch_cuda": torch.version.cuda,
+        "gpu": torch.cuda.get_device_name(0),
+        "capability": list(torch.cuda.get_device_capability(0)),
+        "gpu_identity": subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=uuid,name,driver_version", "--format=csv,noheader"],
+            text=True,
+        ).strip(),
+        "packages": {
+            name: importlib.metadata.version(name)
+            for name in ("chronos-forecasting", "transformers", "accelerate", "numpy")
+        },
+        "script_sha256": file_sha256(Path(__file__).resolve()),
+        "source_commit": subprocess.run(
+            ["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        or None,
+    }
+
+
+def model_inputs(items: Sequence[Request]) -> list[Any]:
+    """Chronos-2 inputs: a tensor per univariate context, a dict when covariates exist."""
+    import torch
+
+    def tensor(values: Sequence[float | None]):
+        return torch.tensor([math.nan if v is None else v for v in values], dtype=torch.float32)
+
+    return [
+        {
+            "target": tensor(item.context),
+            "past_covariates": {k: tensor(v) for k, v in item.past_covariates.items()},
+        }
+        if item.past_covariates
+        else tensor(item.context)
+        for item in items
+    ]
+
+
+def pipeline_forecaster(pipeline, batch_size: int) -> Forecaster:
+    import torch
+
+    def forecaster(items: list[Request], length: int) -> list[list[list[float]]]:
+        with torch.no_grad():
+            predictions = pipeline.predict(
+                model_inputs(items),
+                prediction_length=length,
+                batch_size=batch_size,
+                cross_learning=False,
+                limit_prediction_length=True,
+            )
+        torch.cuda.synchronize()
+        # Each prediction is (target variates=1, quantiles, horizon); store horizon x quantiles.
+        return [p[0].T.tolist() for p in predictions]
+
+    return forecaster
+
+
+def run(args: argparse.Namespace) -> dict[str, Any]:
+    import torch
 
     started = time.monotonic()
     output = Path(os.environ.get("HACHI_RUN_DIR", "")) if args.output is None else args.output
@@ -205,48 +368,54 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     torch.cuda.reset_peak_memory_stats()
 
     load_start = time.monotonic()
-    # The owner cache already holds the pinned revision; never resolve a newer one here.
-    snapshot = Path(
-        snapshot_download(
-            spec["model_id"],
-            revision=spec["revision"],
-            allow_patterns=["config.json", "model.safetensors"],
-            local_files_only=True,
-        )
-    )
-    weights = file_sha256(snapshot / "model.safetensors")
-    if weights != spec["weights_sha256"]:
-        raise SystemExit("checkpoint checksum does not match the pinned weights")
-    pipeline = Chronos2Pipeline.from_pretrained(
-        str(snapshot), device_map="cuda", torch_dtype=torch.float32
-    )
-    pipeline.model.eval()
+    pipeline, weights = load_pipeline(spec, args.checkpoint, args.checkpoint_sha256)
     load_seconds = time.monotonic() - load_start
     levels = [float(q) for q in pipeline.quantiles]
+    model = {
+        "base": spec,
+        "weights_sha256": weights,
+        "checkpoint": None if args.checkpoint is None else args.checkpoint.name,
+    }
+    if args.mode == "embed":
 
-    def forecaster(contexts: list[list[float | None]], length: int) -> list[list[list[float]]]:
-        tensors = [
-            torch.tensor([math.nan if v is None else v for v in c], dtype=torch.float32)
-            for c in contexts
-        ]
-        with torch.no_grad():
-            predictions = pipeline.predict(
-                tensors,
-                prediction_length=length,
-                batch_size=args.batch_size,
-                cross_learning=False,
-                limit_prediction_length=True,
-            )
-        torch.cuda.synchronize()
-        # Each prediction is (variates=1, quantiles, horizon); store horizon x quantiles.
-        return [p[0].T.tolist() for p in predictions]
+        def embedder(items: list[Request]) -> list[tuple[list[float], float, float]]:
+            with torch.no_grad():
+                embeddings, loc_scale = pipeline.embed(
+                    model_inputs(items), batch_size=args.batch_size
+                )
+            return [
+                (
+                    e[0].mean(dim=0).float().tolist(),
+                    float(ls[0].flatten()[0]),
+                    float(ls[1].flatten()[0]),
+                )
+                for e, ls in zip(embeddings, loc_scale, strict=True)
+            ]
 
+        embed_start = time.monotonic()
+        rows = embed_rows(requests, embedder, batch_size=args.batch_size)
+        details = {
+            "owner": os.environ.get("HACHI_OWNER"),
+            "model": model["base"],
+            "weights_sha256": weights,
+            "checkpoint": model["checkpoint"],
+            "embedding": "mean over all encoder tokens of the first variate",
+            "timing": {
+                "model_load_seconds": load_seconds,
+                "embed_seconds": time.monotonic() - embed_start,
+            },
+            "memory": {"peak_cuda_allocated_bytes": torch.cuda.max_memory_allocated()},
+            "environment": environment(),
+        }
+        return write_run(output, args.requests, requests, rows, levels, 0, details, kind="embed")
+
+    forecaster = pipeline_forecaster(pipeline, args.batch_size)
     # Warm kernels on the first request, then time single-request and batched paths.
-    forecaster([requests[0][1]], requests[0][2])
+    forecaster([requests[0]], requests[0].prediction_length)
     single: list[float] = []
-    for _, context, length in requests[: args.latency_samples]:
+    for item in requests[: args.latency_samples]:
         single_start = time.perf_counter()
-        forecaster([context], length)
+        forecaster([item], item.prediction_length)
         single.append(time.perf_counter() - single_start)
     single_peak = torch.cuda.max_memory_allocated()
     torch.cuda.reset_peak_memory_stats()
@@ -260,13 +429,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "owner": os.environ.get("HACHI_OWNER"),
         "model": spec,
         "weights_sha256": weights,
+        "checkpoint": model["checkpoint"],
         "inference": {
             "device_map": "cuda",
             "torch_dtype": "float32",
             "batch_size": args.batch_size,
             "cross_learning": False,
             "missing_values": "NaN in context (Chronos-2 masks them)",
-            "covariates": "none",
+            "covariates": "past-only when present; never future covariates",
         },
         "timing": {
             "model_load_seconds": load_seconds,
@@ -287,30 +457,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "peak_process_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
             "note": "GB10 memory is unified; allocator peaks do not cover all device memory",
         },
-        "environment": {
-            "python": sys.version,
-            "python_executable": sys.executable,
-            "architecture": platform.machine(),
-            "torch": torch.__version__,
-            "torch_cuda": torch.version.cuda,
-            "gpu": torch.cuda.get_device_name(0),
-            "capability": list(torch.cuda.get_device_capability(0)),
-            "gpu_identity": subprocess.check_output(
-                ["nvidia-smi", "--query-gpu=uuid,name,driver_version", "--format=csv,noheader"],
-                text=True,
-            ).strip(),
-            "packages": {
-                name: importlib.metadata.version(name)
-                for name in ("chronos-forecasting", "transformers", "accelerate", "numpy")
-            },
-            "script_sha256": file_sha256(Path(__file__).resolve()),
-            "source_commit": subprocess.run(
-                ["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "HEAD"],
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-            or None,
-        },
+        "environment": environment(),
     }
     return write_run(output, args.requests, requests, rows, levels, crossed, details)
 
@@ -319,11 +466,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--requests", required=True, type=Path)
     parser.add_argument("--model", required=True, type=Path, help="infra/gx10/model.json")
+    parser.add_argument("--checkpoint", type=Path, help="local fine-tuned checkpoint directory")
+    parser.add_argument("--checkpoint-sha256", help="expected model.safetensors sha256")
+    parser.add_argument("--mode", choices=("forecast", "embed"), default="forecast")
     parser.add_argument("--output", type=Path, help="defaults to $HACHI_RUN_DIR")
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--latency-samples", type=int, default=32)
     evidence = run(parser.parse_args(argv))
-    print(json.dumps({k: evidence[k] for k in ("requests", "timing", "memory")}, indent=2))
+    print(json.dumps({k: evidence.get(k) for k in ("requests", "timing", "memory")}, indent=2))
 
 
 if __name__ == "__main__":
