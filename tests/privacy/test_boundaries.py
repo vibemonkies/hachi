@@ -181,3 +181,56 @@ def test_failed_file_deletion_keeps_metadata_for_retry(private_api, monkeypatch)
     )
     assert not settings.workspace.import_directory(iid).exists()
     assert not service.metadata.subject_known("synthetic-retry")
+
+
+@pytest.mark.parametrize("same_upload", [False, True])
+def test_upload_publication_conflicts_with_in_progress_deletion(
+    private_api, monkeypatch, same_upload
+):
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    import hachi.api.service as module
+
+    client, settings = private_api
+    subject = "synthetic-concurrent"
+    params = {
+        "subject_id": subject,
+        "tz_name": "UTC",
+        "source_format": "apple_health_export_xml",
+        "data_mode": "synthetic",
+    }
+    xml = b"<HealthData></HealthData>"
+    headers = {"Content-Type": "application/octet-stream"}
+    assert (
+        client.post("/v1/imports", params=params, content=xml, headers=headers).status_code == 202
+    )
+    assert client.app.state.service.runner.wait_idle()
+    entered, release = threading.Event(), threading.Event()
+    original = module.remove_tree
+
+    def paused(path):
+        entered.set()
+        assert release.wait(5)
+        original(path)
+
+    monkeypatch.setattr(module, "remove_tree", paused)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        deletion = executor.submit(
+            client.delete, f"/v1/subjects/{subject}", params={"confirm": subject}
+        )
+        try:
+            assert entered.wait(5)
+            response = client.post(
+                "/v1/imports",
+                params=params,
+                content=xml if same_upload else b"<HealthData/>",
+                headers=headers,
+            )
+            assert response.status_code == 409
+            assert response.json()["error_code"] == "CONFLICT"
+        finally:
+            release.set()
+        assert deletion.result(timeout=5).status_code == 204
+    assert not list(settings.workspace.uploads.iterdir())
+    assert not list(settings.workspace.imports.iterdir())

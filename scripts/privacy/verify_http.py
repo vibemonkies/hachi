@@ -196,6 +196,10 @@ def verify(base: str, root: Path, git_sha: str) -> dict:
         == 422,
         "cross_subject_reference_rejected",
     )
+    require(
+        request("GET", "/v1/subjects/synthetic-keep/observations")[1]["entries"] == [],
+        "other_subject_history_empty",
+    )
     status, report, _ = request(
         "POST",
         "/v1/reports",
@@ -221,7 +225,8 @@ def verify(base: str, root: Path, git_sha: str) -> dict:
     require(
         request("GET", f"/v1/imports/{iid}")[0] == 404
         and request("GET", f"/v1/reports/{report['report_id']}")[0] == 404
-        and request("GET", "/v1/subjects/synthetic-delete/coverage")[0] == 404,
+        and request("GET", "/v1/subjects/synthetic-delete/coverage")[0] == 404
+        and request("GET", "/v1/subjects/synthetic-delete/observations")[0] == 404,
         "all_deleted_subject_api_records_absent",
     )
     state = root / "workspaces" / "privacy-http" / "state"
