@@ -57,12 +57,12 @@ Validated predictions require the response's measured-validation evidence.
 ## Checks
 
 ```sh
-node --experimental-strip-types --test apps/web/tests/checkins.test.mjs
+node --experimental-strip-types --test apps/web/tests/*.test.mjs
 npm run build --prefix apps/web
 uv run --locked --extra api pytest tests/api/test_subjects.py
 ```
 
-The Node checks cover date/time separation, impossible dates, explicit symptom
+The Node checks compile the generated Draft 2020-12 schema through pinned Ajv/Ajv-formats, reject malformed nested fields and unknown schema keywords without coercion, and cover date/time separation, impossible dates, explicit symptom
 absence, linked resolution, test uncertainty, KSS/PVT bounds, scenario assumptions,
 correction event-field round trips and episode-chain safety. Browser acceptance
 must additionally exercise save/read-back/reload, correction/deletion, invalid
