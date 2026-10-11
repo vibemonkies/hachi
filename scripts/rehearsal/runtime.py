@@ -173,6 +173,8 @@ def serve(operator: Operator) -> None:
 class Client:
     def __init__(self, port: int):
         self.base = f"http://127.0.0.1:{port}"
+        # Private loopback requests must never inherit an operator's HTTP proxy.
+        self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
     def call(self, method: str, path: str, body: object = None, *, raw: bytes | None = None):
         data = raw if raw is not None else None if body is None else json.dumps(body).encode()
@@ -182,7 +184,7 @@ class Client:
                 "Content-Type", "application/xml" if raw is not None else "application/json"
             )
         try:
-            with urllib.request.urlopen(request, timeout=60) as response:
+            with self.opener.open(request, timeout=60) as response:
                 return response.status, response.read()
         except urllib.error.HTTPError as error:
             return error.code, error.read()
@@ -266,6 +268,12 @@ def check(operator: Operator) -> dict:
             first_request, first_job = request, job
         result = job.result.root
         outcomes[result.status] += 1
+        require(
+            result.subject_id == origin["subject_id"]
+            and result.as_of == cutoff
+            and result.report_id == job.report_id,
+            "Result subject, cutoff or job identity differs",
+        )
         require(result.git_sha == health.git_sha, "Result code identity differs")
         require(
             result.data_mode == "real" and result.replay is None, "Result is not a real live run"
