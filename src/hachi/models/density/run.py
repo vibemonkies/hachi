@@ -374,7 +374,13 @@ def main() -> int:
             result = run_export(args.snapshot, args.output, args.variant, args.chronos_thin)
         else:
             result = run_score(
-                args.snapshot, args.export, args.gx10_full, args.gx10_thin, args.output
+                args.snapshot,
+                args.export,
+                args.gx10_full,
+                args.gx10_thin,
+                args.output,
+                args.variant,
+                args.chronos_thin,
             )
         print(json.dumps(result, indent=2, sort_keys=True, default=str))
         return 0
