@@ -1,7 +1,7 @@
 # Issue #7 — CPU evaluation groundwork
 
 This implements the data-independent portion of #7, continued from NobleBadger's existing work without modifying its original checkout. The real-cohort
-acceptance gate remains **blocked on #5 PMData**. Synthetic results demonstrate
+acceptance gate now uses the merged #5 PMData reader and the protocol below. Synthetic results demonstrate
 software behavior, not forecast accuracy or real-data integration.
 
 ## Caller and boundaries
@@ -267,6 +267,37 @@ uv run python -m hachi.evaluation.demo --paired --output runs/my-paired-demo
 
 This compares last-known-value and two-sample linear-prefix **synthetic callback
 examples**, not validated physiological models or the full #9 baseline suite.
+
+## Real PMData validation command
+
+`configs/evaluation/pmdata-hourly-validation.json` freezes the first comparison
+before metrics are observed: hourly HR means, at least 50% native coverage and
+30 samples, 48 hours of personal history with 24 eligible bins, 24-hour targets,
+daily origins, zero embargo, and January 1–8, 2020. It uses four outer folds and
+three inner folds (seed 42), executing only outer fold 0's inner validation.
+Its four outer-test participants remain sealed. Do not pool other outer folds'
+inner validation to select this fold's hyperparameters.
+
+```sh
+uv run --extra baselines python -I -m hachi.evaluation.pmdata_run \
+  --snapshot /approved/private/derived/pmdata-features-1-simula-2020-04-24-06606ac2708b \
+  --protocol configs/evaluation/pmdata-hourly-validation.json \
+  --output /approved/private/runs/pmdata-validation-001
+```
+
+The command verifies the admitted snapshot, creates deterministic canonical
+splits with a protocol-pinned creation timestamp, fits four CPU baselines on each
+causal training prefix, and checks saved-artifact prediction/count replay.
+Keep the complete output private: split rosters and per-person predictions are
+0700/0600. Only `aggregate-summary.json` may be considered for publication after
+inspection. Each participant validates once; combined metrics weight participants
+equally. Run timestamps describe actual execution, independently of the fixed
+split timestamp. Exact packet/run hashes can differ between executions.
+
+The default protocol is a first HR experiment, not a final selection or clinical
+acceptance. PMData availability and timezone mapping remain documented assumptions.
+Its illness outcomes are unknown, so healthy alert burden cannot be estimated.
+No intervals, episode labels, automatic winner, or outer-test results are invented.
 
 ## Remaining integration gates
 
