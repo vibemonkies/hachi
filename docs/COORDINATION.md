@@ -97,7 +97,7 @@ Transfer work only when it is ready, current, and confirmed unattended by positi
 
 For the watch in [#26](https://github.com/vibemonkies/hachi/issues/26), send a targeted ping every 15 minutes while a blocker is unanswered. Five unanswered pings trigger a final notice. They do not prove inactivity. After the final notice, wait at least 15 minutes. Then refresh replies, the current worker's claim and activity, open PRs, positive unattended evidence, and each prerequisite. If activity is unknown, work conflicts, evidence is stale, or a prerequisite is unmet, stop the transfer and request a checkpoint or name the blocker.
 
-Before the receiving worker continues, record that worker, the GitHub owner, work chat, issue assignee, owned files, branch, commit/PR, evidence, and remaining blockers in the canonical thread. Keep one active implementation worker per issue.
+Before the receiving worker continues, update the issue assignee to that worker's GitHub owner if the human owner changes and your delegated scope allows it. Record the receiving worker, GitHub owner, work-chat link, issue assignee, owned files, branch, commit/PR, evidence, and remaining blockers in the canonical thread. Keep one active implementation worker per issue.
 
 Route an unanswered review request to another independent teammate or agent when the acceptance gate permits it. Never replace a required teammate walkthrough with the author's own check. Escalate to a human only for a decision, consent, access, or permission that agents cannot resolve within the agreed scope.
 
