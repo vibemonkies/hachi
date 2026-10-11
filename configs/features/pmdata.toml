@@ -1,0 +1,38 @@
+# PMData canonical feature pipeline (#5). Any change here changes the snapshot hash; changes to
+# processing semantics also bump pipeline_version. The admitted archive (version, size, SHA-256)
+# comes from the dataset registry, configs/datasets/pmdata.toml.
+schema_version = "0.1"
+pipeline_version = "pmdata-features-1"
+dataset_id = "pmdata"
+
+# The paper states no timezone. The cohort is Norwegian (NSD-approved, Simula) and the data
+# agrees: Fitbit sleep logs sit exactly one hour after UTC intraday data in winter. The audit
+# re-measures that alignment on every build.
+local_timezone = "Europe/Oslo"
+device_model = "Fitbit Versa 2"
+source_kind = "watch"
+
+# Fitbit's export carries no sync or creation time, so availability is assumed, never observed.
+# Each lag is added to the moment the record could first exist.
+[availability]
+intraday_lag_seconds = 0      # heart rate, steps, distance: at the end of the record
+daily_summary_lag_seconds = 0 # vendor resting HR: at the end of its local day
+sleep_lag_seconds = 0         # every sleep segment: at the end of its whole sleep log
+
+# Bins whose usable-minute coverage falls below these fractions are null with
+# null_reason "insufficient_coverage". Coverage is always stored, so stricter filters stay possible.
+[min_coverage]
+heart_rate = { hour = 0.5, day = 0.5 }
+steps = { hour = 0.0, day = 0.0 }
+walking_running_distance = { hour = 0.0, day = 0.0 }
+resting_heart_rate_vendor = { day = 1.0 }
+sleep_in_bed = { hour = 0.0, day = 0.0 }
+sleep_asleep_unspecified = { hour = 0.0, day = 0.0 }
+sleep_asleep_core = { hour = 0.0, day = 0.0 }
+sleep_asleep_deep = { hour = 0.0, day = 0.0 }
+sleep_asleep_rem = { hour = 0.0, day = 0.0 }
+sleep_awake = { hour = 0.0, day = 0.0 }
+
+[aggregations]
+heart_rate = ["mean", "min", "max"]
+resting_heart_rate_vendor = ["mean"]
