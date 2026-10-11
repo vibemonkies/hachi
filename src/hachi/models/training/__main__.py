@@ -76,6 +76,7 @@ def main() -> int:
                 "--finetune", action="append", default=[], help="RATE:FOLD:RUN_DIR, repeatable"
             )
             command.add_argument("--output", required=True, type=Path)
+            command.add_argument("--external-11", type=Path, help="#11 oof-predictions.parquet")
         if name == "cost":
             command.add_argument("--candidate", required=True)
     args = parser.parse_args()
@@ -111,6 +112,7 @@ def main() -> int:
                 embed_dir=args.embed,
                 finetune_runs=runs,
                 output=args.output,
+                external_11=args.external_11,
             )
             result = {k: result[k] for k in ("selection", "candidates")}
         print(json.dumps(result, indent=2, sort_keys=True, default=str))

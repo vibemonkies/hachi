@@ -110,6 +110,7 @@ class Scoring:
     def config(self, name: str) -> EvaluationConfig:
         family = self.candidates[name].family
         cpu = family in {"comparator", "ridge"} and name != "chronos-2-embedding-ridge"
+        # External (#11) heads sit on pretrained encoders: overlap is unknown as for Chronos.
         return self.inputs.evaluation if cpu else self.inputs.chronos_evaluation
 
 
@@ -361,7 +362,8 @@ def run_selection(
         packets[(incumbent, name)] = results
         return evidence
 
-    log = select(rule, document_sha256(rule), list(scoring.candidates), judge)
+    available = [n for n, c in scoring.candidates.items() if c.family != "external"]
+    log = select(rule, document_sha256(rule), available, judge)
     return log, packets
 
 
@@ -568,6 +570,7 @@ def run_score(
     finetune_runs: Mapping[str, Mapping[int, Path]],
     output: Path,
     measure: Callable[[str, Path, Path, Path], dict[str, Any]] | None = None,
+    external_11: Path | None = None,
 ) -> dict[str, Any]:
     import hashlib
     import subprocess
@@ -650,6 +653,7 @@ def run_score(
         chosen = scoring.candidates[FINETUNED].notes["receipts"]
         costs[FINETUNED] = finetune_cost(chosen[0])
     support = calibrate_and_combine(scoring)
+    external = add_external_11(scoring, external_11) if external_11 is not None else None
     run_official(scoring)
     # CPU costs in fresh processes, so each RSS is that model's own serving process.
     for name in (*COMPARATORS, *RIDGES):
@@ -676,7 +680,28 @@ def run_score(
             "context_length"
         ]
         best_context = next(v for v, (h, c) in VARIANTS.items() if h == hours and not c)
-    for label, base, cand in ABLATIONS:
+    extra = (
+        [
+            (
+                "representation: frozen WBM on #11's head",
+                "issue11-ridge-handcrafted",
+                "issue11-ridge-handcrafted-wbm",
+            ),
+            (
+                "representation: frozen MOMENT on #11's head",
+                "issue11-ridge-handcrafted",
+                "issue11-ridge-handcrafted-moment",
+            ),
+            (
+                "representation: #11 handcrafted ridge vs #12 handcrafted ridge",
+                "handcrafted-ridge-personal",
+                "issue11-ridge-handcrafted",
+            ),
+        ]
+        if external is not None
+        else []
+    )
+    for label, base, cand in [*ABLATIONS, *extra]:
         if cand == FINETUNED:
             if best_context is None:
                 continue
@@ -769,6 +794,7 @@ def run_score(
             ],
         },
         "ablations": ablations,
+        "external_11": external,
         "ensemble_support": support,
         "residual_offsets": {
             n: {str(k): list(v) for k, v in c.notes.get("residual_offsets", {}).items()}
@@ -806,3 +832,57 @@ def run_score(
     if "subject_id" in json.dumps(summary, default=str):
         raise RuntimeError("summary must not carry participant identifiers")
     return summary
+
+
+EXTERNAL_11 = {
+    "ridge-handcrafted": "issue11-ridge-handcrafted",
+    "ridge-handcrafted-wbm": "issue11-ridge-handcrafted-wbm",
+    "ridge-handcrafted-moment": "issue11-ridge-handcrafted-moment",
+    "ridge-wbm": "issue11-ridge-wbm",
+    "ridge-moment": "issue11-ridge-moment",
+}
+
+
+def add_external_11(scoring: Scoring, parquet: Path) -> dict[str, Any]:
+    """#11's out-of-fold medians as reported comparators (amendment 2), plus a tree cross-check.
+
+    They are point forecasts without meta-fold predictions, so the predeclared interval
+    method cannot apply and they are never selection candidates.
+    """
+    import pyarrow.parquet as pq
+
+    inputs = scoring.inputs
+    table = pq.read_table(parquet).to_pylist()
+    outer = inputs.experiment.protocol.active_outer_fold
+    by_model: dict[str, dict[int, stacking.Table]] = defaultdict(lambda: defaultdict(dict))
+    for row in table:
+        if row["outer_fold"] != outer:
+            continue
+        key = (row["subject_id"], row["cutoff_utc"], row["target_start_utc"])
+        median = row["median"]
+        by_model[row["model"]][row["inner_fold"]][key] = (
+            None if median is None else stacking.Point(median, None, None, None)
+        )
+    mismatches = 0
+    compared = 0
+    mine = scoring.candidates["causal-hourly-tree-v1"].main_table
+    for fold, theirs in by_model["causal-hourly-tree-v1"].items():
+        for key, point in theirs.items():
+            compared += 1
+            other = mine[fold].get(key)
+            same = (point is None and other is None) or (
+                point is not None and other is not None and point.median == other.median
+            )
+            mismatches += not same
+    for source, name in EXTERNAL_11.items():
+        candidate = Candidate(name, "external")
+        candidate.final = {fold: dict(t) for fold, t in by_model[source].items()}
+        scoring.candidates[name] = candidate
+    return {
+        "source": "issue11-run-20261011T120409Z/oof-predictions.parquet",
+        "sha256": file_sha256(parquet),
+        "models": dict(EXTERNAL_11),
+        "tree_cross_check": {"points": compared, "mismatches": mismatches},
+        "role": "reported comparators only (amendment 2): published before insertion and "
+        "without meta-fold predictions, so never selection candidates",
+    }
