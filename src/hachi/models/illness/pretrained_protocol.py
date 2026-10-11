@@ -62,10 +62,12 @@ class PretrainedProtocol(Contract):
     min_context_supported_calibration_participants: Annotated[int, Field(ge=4)]
     require_both_classes_in_context_supported_fit_and_calibration: Literal[True]
     all_missing_feature_status: Literal["unavailable-not-a-pretrained-success"]
+    supported_vector_policy: Literal["finite-expected-width-and-runtime-support-flag-true"]
+    unsupported_vector_policy: Literal["null-features-not-finite-zero-sentinel"]
     missing_feature_policy: Literal["null-until-fit-only-imputation-with-indicators"]
     full_window_comparison: Literal[True]
     common_context_comparison: Literal[
-        "same-risk-labels-and-intersection-of-all-finite-primary-vectors"
+        "same-risk-labels-and-intersection-of-all-supported-primary-vectors"
     ]
     paired_baselines: tuple[
         Literal["survey-history", "nightly-rest", "anomaly-derived", "meanpool_hr"], ...

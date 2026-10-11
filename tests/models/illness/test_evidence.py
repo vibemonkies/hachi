@@ -184,3 +184,4 @@ def test_report_render_matches_canonical_json_order():
         for h, groups in reversed(list(report["past_survey_distribution_by_label"].items()))
     }
     assert render(reordered) == render(report)
+    assert render(report) == Path("reports/models/illness/phase1.md").read_text()

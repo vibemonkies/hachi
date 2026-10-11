@@ -23,6 +23,8 @@ def test_frozen_supported_clinical_representation_pins():
     assert protocol.outer_test == "sealed-not-opened"
     assert protocol.prior_cpu_development_scores_seen
     assert not protocol.feature_scores_seen_at_freeze
+    assert protocol.supported_vector_policy == "finite-expected-width-and-runtime-support-flag-true"
+    assert protocol.unsupported_vector_policy == "null-features-not-finite-zero-sentinel"
 
 
 @pytest.mark.parametrize("change", ["width", "revision", "scores-seen", "pca"])

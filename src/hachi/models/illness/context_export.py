@@ -14,6 +14,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from hachi.contracts.base import Contract, Sha256
+from hachi.data.clinical.config import registry_admission
 from hachi.data.clinical.snapshot import dataset_snapshot_ref, read_table
 from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
 from hachi.evaluation.serialization import document_bytes, document_sha256
@@ -73,6 +74,9 @@ def verify_packet(snapshot: Path, output: Path) -> dict:
     summary = ContextSummary.model_validate_json((output / "summary.json").read_bytes()).model_dump(
         mode="json"
     )
+    admitted = registry_admission(protocol.dataset_id).files["COVID-19-Wearables.zip"]
+    if summary["archive_sha256"] != admitted.sha256:
+        raise ValueError("context source archive differs from admitted private source")
     if summary["protocol_sha256"] != document_sha256(protocol):
         raise ValueError("context policy hash differs")
     if summary["shared_protocol_sha256"] != document_sha256(clinical) or summary[

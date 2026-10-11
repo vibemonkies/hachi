@@ -49,7 +49,13 @@ def test_export_actual_chronos_boundary_private_folds_and_sealed_reads(tmp_path,
     monkeypatch.setattr(module, "load_context_protocol", lambda _: protocol)
     monkeypatch.setattr(module, "clinical_fold_plan", lambda *args: plan)
     monkeypatch.setattr(module, "dataset_snapshot_ref", lambda _: clinical.compatible_snapshots[0])
-    monkeypatch.setattr(module, "verify_archive", lambda *args: "a" * 64)
+    monkeypatch.setattr(
+        module,
+        "verify_archive",
+        lambda *args: (
+            module.registry_admission(protocol.dataset_id).files["COVID-19-Wearables.zip"].sha256
+        ),
+    )
     monkeypatch.setattr(
         module.subprocess,
         "check_output",
@@ -126,6 +132,11 @@ def test_export_actual_chronos_boundary_private_folds_and_sealed_reads(tmp_path,
 
     names = ("requests.jsonl", "encoder-requests.jsonl", "summary.json", "joins.json")
     saved = {name: (output / name).read_bytes() for name in names}
+    wrong_source = {**summary, "archive_sha256": "0" * 64}
+    (output / "summary.json").write_bytes(document_bytes(wrong_source))
+    with pytest.raises(ValueError, match="admitted private source"):
+        verify_packet(tmp_path, output)
+    (output / "summary.json").write_bytes(saved["summary.json"])
     extra = {**encoder, "channels": {"heart_rate": [61.0]}}
     extra["request_sha256"] = document_sha256(extra)
     with (output / "encoder-requests.jsonl").open("ab") as stream:
