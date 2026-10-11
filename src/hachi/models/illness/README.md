@@ -123,3 +123,15 @@ Verification exercises the actual Chronos request reader, encoder content hashes
 coverage policy, exact development eligibility/fold joins and private permissions.
 The public receipt binds both extraction and verification revisions and input
 file hashes; arbitrary private-summary fields cannot become public report data.
+
+The frozen representation comparison is configs/experiments/illness/pretrained.json.
+It binds the original task/shared protocol and the supported model specifications:
+MeanPool76, WBM256, MOMENT1024, and Chronos768 plus its location/scale in bpm.
+Chronos request metadata uses24 hours; the encoder sees the same168-hour past
+context and this metadata does not change its embedding. Pretraining overlap with
+Stanford remains unknown. No PCA or hyperparameter search is introduced. All-missing
+inputs and inadequate context-supported fit/calibration people or classes are
+unavailable states. Reports must include full-window missingness and identical
+common-context comparisons, with no final cross-family winner or opened outer test.
+Prior CPU development metrics were already seen; the new feature protocol is
+frozen before any representation scores, rather than claiming a blind original study.
