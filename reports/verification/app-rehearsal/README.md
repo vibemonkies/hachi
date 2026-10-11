@@ -12,6 +12,16 @@ selected, no outer test was opened, and no clinical/product gate is waived.
 
 ## Private replay consumer follow-up
 
+After integrating main through PR75/78/81, `d947f55` repeated the actual runtime
+and rendered replay, rather than relying on the earlier receipts. Current
+[API](api-d947f55.json), [replay](replay-d947f55.json) and
+[browser aggregate](replay-browser-d947f55.json) receipts again show 25 origins,
+600 exact API points, the whole saved response unchanged except replay metadata,
+and 24 exact rendered points/geometry with the live API stopped. The final
+`make check` passed 629 tests, three subtests, five coordination tests and all
+generated contract checks. Replay viewer source and synthetic screenshots are
+unchanged from `d812e94`; the earlier producing-source evidence remains below.
+
 On branch `issue-22-private-replay`, source `849bff2` ran the current API after
 PR76/77/79. [API receipt](api-849bff2.json) repeats all 25 origins and 600 points
 exactly against both references. It now records the owner and public packet key
