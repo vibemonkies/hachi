@@ -1,0 +1,1 @@
+"""Synthetic baseline regression cases."""
