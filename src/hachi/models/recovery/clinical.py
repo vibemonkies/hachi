@@ -54,9 +54,12 @@ def build_landmarks(
     for row in episodes:
         by_subject[row["subject_id"]].append(row["onset_first_day"])
     symptom_days: dict[str, list[date]] = defaultdict(list)
+    nonfree_days: dict[str, list[date]] = defaultdict(list)
     for row in surveys:
         if row["state"] == "symptomatic":
             symptom_days[row["subject_id"]].append(row["local_date"])
+        if row["state"] in ("symptomatic", "intermediate"):
+            nonfree_days[row["subject_id"]].append(row["local_date"])
     score_days = {(r["subject_id"], r["local_date"]): r for r in scores}
     if len(score_days) != len(scores):
         raise ValueError("duplicate daily symptom scores")
@@ -111,7 +114,16 @@ def build_landmarks(
                 continue
         elif row["status"] == "right_censored":
             lower = None
-            upper = (row["follow_up_last_day"] - day).days
+            # A free final survey can be the first day of an eventual qualifying
+            # run, and a gap before it can contain the interval's earliest event.
+            # Only an observed non-free day proves unresolved state through it.
+            known_unresolved = max(
+                d
+                for d in nonfree_days[subject]
+                if day <= d <= row["follow_up_last_day"] and (next_onset is None or d < next_onset)
+            )
+            upper = (known_unresolved - day).days
+            audit["censor_bound_before_last_survey"] += known_unresolved < row["follow_up_last_day"]
         else:
             raise ValueError("unknown recovery label status")
         if upper < 1:

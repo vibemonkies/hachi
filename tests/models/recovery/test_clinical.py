@@ -75,3 +75,66 @@ def test_next_episode_cannot_supply_landmark_to_previous_episode():
     args = inputs()
     args[1].append({"subject_id": "synthetic", "onset_first_day": D + timedelta(days=1)})
     assert build_landmarks(*args)[1]["excluded_no_symptomatic_landmark"] == 1
+
+
+@pytest.mark.parametrize(
+    "tail_state,expected", [("symptom_free", 2), ("intermediate", 3), ("symptomatic", 3)]
+)
+def test_censor_bound_is_known_unresolved_not_last_answered_day(tail_state, expected):
+    args = inputs()
+    args[0][0].update(
+        status="right_censored",
+        reason="no_qualifying_run",
+        follow_up_last_day=D + timedelta(days=5),
+    )
+    args[2].extend(
+        [
+            {
+                "subject_id": "synthetic",
+                "local_date": D + timedelta(days=4),
+                "state": "symptomatic",
+            },
+            {"subject_id": "synthetic", "local_date": D + timedelta(days=5), "state": tail_state},
+        ]
+    )
+    rows, _ = build_landmarks(*args)
+    assert rows[0].observation.upper == expected
+
+
+def test_free_tail_after_gap_cannot_prove_unresolved_inside_gap():
+    args = inputs()
+    args[0][0].update(
+        status="right_censored",
+        reason="no_qualifying_run",
+        follow_up_last_day=D + timedelta(days=8),
+    )
+    args[2].extend(
+        [
+            {
+                "subject_id": "synthetic",
+                "local_date": D + timedelta(days=3),
+                "state": "intermediate",
+            },
+            {
+                "subject_id": "synthetic",
+                "local_date": D + timedelta(days=8),
+                "state": "symptom_free",
+            },
+        ]
+    )
+    assert build_landmarks(*args)[0][0].observation.upper == 1
+
+
+def test_only_landmark_then_free_tail_has_zero_known_remaining_followup():
+    args = inputs()
+    args[0][0].update(
+        status="right_censored",
+        reason="no_qualifying_run",
+        follow_up_last_day=D + timedelta(days=3),
+    )
+    args[2].append(
+        {"subject_id": "synthetic", "local_date": D + timedelta(days=3), "state": "symptom_free"}
+    )
+    rows, audit = build_landmarks(*args)
+    assert rows == []
+    assert audit["excluded_no_future_follow_up"] == 1
