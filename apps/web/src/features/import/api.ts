@@ -1,32 +1,21 @@
 import type { Coverage, DataMode, ImportStatus } from "@hachi/contracts";
-import { isRecord, requestJson, waitForPoll } from "../api";
+import { requestJson, waitForPoll } from "../api";
+import { parseContractDocument } from "../contract-validation";
 
-function readImportStatus(value: ImportStatus): ImportStatus {
-  if (
-    !isRecord(value) ||
-    value.schema_version !== "0.1" ||
-    typeof value.import_id !== "string" ||
-    typeof value.subject_id !== "string" ||
-    !["pending", "running", "succeeded", "failed"].includes(String(value.state)) ||
-    !Array.isArray(value.record_issues)
-  ) {
+function readImportStatus(value: unknown): ImportStatus {
+  try {
+    return parseContractDocument<ImportStatus>("ImportStatus", value);
+  } catch {
     throw new Error("The Hachi API returned an invalid import status.");
   }
-  return value;
 }
 
-function readCoverage(value: Coverage): Coverage {
-  if (
-    !isRecord(value) ||
-    value.schema_version !== "0.1" ||
-    typeof value.subject_id !== "string" ||
-    !["empty", "insufficient", "sufficient"].includes(String(value.history)) ||
-    !Array.isArray(value.metrics) ||
-    !Array.isArray(value.task_support)
-  ) {
+function readCoverage(value: unknown): Coverage {
+  try {
+    return parseContractDocument<Coverage>("Coverage", value);
+  } catch {
     throw new Error("The Hachi API returned invalid coverage data.");
   }
-  return value;
 }
 
 export async function submitImport(

@@ -18,6 +18,7 @@ export type ImportSubmission = {
   subjectId: string;
   timeZone: string;
   dataMode: DataMode;
+  importId?: string;
 };
 
 export type SubjectSelection = {
@@ -29,7 +30,7 @@ export type Workflow =
   | { kind: "empty" }
   | { kind: "uploading"; operationId: string; submission: ImportSubmission }
   | { kind: "importing"; operationId: string; submission: ImportSubmission; status: ImportStatus }
-  | { kind: "import-error"; submission: ImportSubmission; message: string }
+  | { kind: "import-error"; submission: ImportSubmission; message: string; failureCode?: string; action?: string }
   | { kind: "coverage-loading"; operationId: string; subject: SubjectSelection; asOf: string | null; previousCoverage: Coverage | null }
   | { kind: "coverage-error"; subject: SubjectSelection; coverage: Coverage | null; asOf: string; message: string }
   | { kind: "coverage"; subject: SubjectSelection; coverage: Coverage; asOf: string }
@@ -84,8 +85,10 @@ export function reducer(state: Workflow, action: Action): Workflow {
       }
       return {
         kind: "import-error",
-        submission: state.submission,
-        message: action.status.failure?.action ?? "The Apple Health export could not be imported.",
+        submission: { ...state.submission, importId: action.status.import_id },
+        message: action.status.failure?.message ?? "The Apple Health export could not be imported.",
+        failureCode: action.status.failure?.error_code,
+        action: action.status.failure?.action,
       };
     case "import-request-failed":
       if ((state.kind === "uploading" || state.kind === "importing") && state.operationId === action.operationId) {

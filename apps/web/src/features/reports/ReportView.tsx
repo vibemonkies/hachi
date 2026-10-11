@@ -96,15 +96,10 @@ export function TaskResultPanel({
   }
   const result = task.result;
   if (result.status === "unavailable") {
-    const explanation = result.reason_code === "NO_ARTIFACT_FOR_TASK"
-      ? "No forecast model is set up for this data source yet."
-      : result.reason_code === "INSUFFICIENT_HISTORY"
-        ? "The available history is too sparse for this forecast."
-        : null;
     return (
       <div className="notice">
         <h2>{title} unavailable</h2>
-        {explanation && <p>{explanation}</p>}
+        {result.reason_code === "INSUFFICIENT_HISTORY" && <p>The available history does not meet this task's requirements.</p>}
         <p>Reason · <code>{result.reason_code}</code></p>
         <div className="result-identity">
           <span className={`mode-badge mode-${result.data_mode}`}>{result.data_mode} data</span>
@@ -112,14 +107,16 @@ export function TaskResultPanel({
           <span>Report · {result.report_id}</span>
           {result.provenance?.artifact && <span>Model · {result.provenance.artifact.artifact_id} · {result.provenance.artifact.artifact_sha256}</span>}
           {result.provenance?.dataset_snapshot && <span>Dataset · {result.provenance.dataset_snapshot.dataset_id} / {result.provenance.dataset_snapshot.dataset_version}</span>}
+          {result.provenance?.feature_coverage.map((feature) => <span key={feature.metric}>Input coverage · {labels[feature.metric] ?? feature.metric} {Math.round(feature.coverage * 100)}%</span>)}
           <span>Code · {result.git_sha}</span>
         </div>
+        {result.warnings.map((warning) => <p key={warning.code} className="warning-line"><strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}</p>)}
         <ul>{result.requirements.map((requirement) => <li key={requirement}>{requirement}</li>)}</ul>
       </div>
     );
   }
   if (result.status === "error") {
-    return <div className="notice error" role="alert"><h2>{title} error · {result.error_code}</h2><p>{result.message}</p><ResultIdentity result={result} /></div>;
+    return <div className="notice error" role="alert"><h2>{title} error · {result.error_code}</h2><p>{result.message}</p><ResultIdentity result={result} />{result.warnings.map((warning) => <p key={warning.code} className="warning-line"><strong>{warning.code.replaceAll("_", " ")}</strong> · {warning.message}</p>)}</div>;
   }
   if (result.task !== expectedTask) {
     return <div className="notice error" role="alert"><h2>{title} response mismatch</h2><p>The API returned a {result.task.replaceAll("_", " ")} result for a {expectedTask.replaceAll("_", " ")} request. It was not rendered as the requested chart.</p></div>;
@@ -254,9 +251,11 @@ function AnomalyChart({ result, expanded }: { result: AnomalyResult; expanded: b
   const max = Math.max(anomaly.alert_threshold, ...values);
   const range = max === min ? 1 : max - min;
   const y = (value: number) => 220 - (value - min) / range * 170;
-  const start = Date.parse(anomaly.baseline_window_start_utc);
-  const end = Date.parse(anomaly.baseline_window_end_utc);
+  const start = Math.min(Date.parse(anomaly.baseline_window_start_utc), Date.parse(anomaly.timeline[0].interval_start_utc));
+  const end = Math.max(Date.parse(anomaly.baseline_window_end_utc), Date.parse(anomaly.timeline.at(-1)!.interval_end_utc));
   const x = (timestamp: string) => 58 + (Date.parse(timestamp) - start) * 560 / Math.max(1, end - start);
+  const tickCount = 4;
+  const ticks = Array.from({ length: tickCount + 1 }, (_, index) => start + (end - start) * index / tickCount);
   const path = anomaly.timeline.map((point, index) => {
     if (point.score === null) return "";
     const previous = anomaly.timeline[index - 1];
@@ -273,7 +272,10 @@ function AnomalyChart({ result, expanded }: { result: AnomalyResult; expanded: b
           {[min, (min + max) / 2, max].map((value) => <g key={value}><line x1="58" x2="640" y1={y(value)} y2={y(value)} className="grid-line" /><text x="8" y={y(value) + 4}>{value.toFixed(2)}</text></g>)}
           <line x1="58" x2="640" y1={y(anomaly.alert_threshold)} y2={y(anomaly.alert_threshold)} className="threshold" />
           <text x="8" y="18">score</text>
-          {anomaly.timeline.map((point) => <text key={point.interval_start_utc} x={x(point.interval_start_utc)} y="254" textAnchor="middle">{point.interval_start_utc.slice(5, 10)} {point.interval_start_utc.slice(11, 16)}</text>)}
+          {ticks.map((timestamp) => {
+            const iso = new Date(timestamp).toISOString();
+            return <g key={timestamp}><line x1={x(iso)} x2={x(iso)} y1="42" y2="220" className="grid-line" /><text x={x(iso)} y="254" textAnchor={timestamp === ticks[0] ? "start" : timestamp === ticks.at(-1) ? "end" : "middle"}>{iso.slice(5, 16).replace("T", " ")}</text></g>;
+          })}
           <path d={path} className="series" />
           {anomaly.timeline.map((point) => point.score === null ? <text key={point.interval_start_utc} x={x(point.interval_start_utc)} y="238" textAnchor="middle">abstained</text> : <circle key={point.interval_start_utc} cx={x(point.interval_start_utc)} cy={y(point.score)} r="4" className={point.alert ? "alert-dot" : "dot"} />)}
         </svg>

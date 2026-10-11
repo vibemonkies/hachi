@@ -126,17 +126,19 @@ export default function App() {
     "replay-report": "Saved offline replay loaded.",
   }[workflow.kind];
   const phase = section === "symptoms" || section === "sleep" ? "" : workflowPhase;
-  const dataMode = workflow.kind === "coverage" || workflow.kind === "report"
-    ? workflow.coverage.data_mode
-    : workflow.kind === "coverage-error" && workflow.coverage
+  const dataMode =
+    workflow.kind === "coverage" || workflow.kind === "report" || workflow.kind === "reporting"
       ? workflow.coverage.data_mode
-        : workflow.kind === "coverage-loading" || workflow.kind === "coverage-error" || workflow.kind === "reporting"
+      : workflow.kind === "coverage-error" && workflow.coverage
+        ? workflow.coverage.data_mode
+        : workflow.kind === "coverage-loading"
           ? workflow.subject.imported?.data_mode ?? null
           : workflow.kind === "importing"
             ? workflow.status.data_mode
-          : workflow.kind === "uploading" || workflow.kind === "import-error"
+            : workflow.kind === "uploading" || workflow.kind === "import-error"
               ? workflow.submission.dataMode
               : null;
+  const replaying = workflow.kind === "replay-loading" || workflow.kind === "replay-report";
   return (
     <>
       <a
@@ -169,7 +171,7 @@ export default function App() {
         <div className="main-column">
           <header className="topbar">
             <span>Wearable research prototype</span>
-            {dataMode ? <span className={`mode-badge mode-${dataMode}`}>{dataMode} data</span> : <span className="mode-badge">No data loaded</span>}
+            {replaying ? <span className="mode-badge">REPLAY</span> : dataMode ? <span className={`mode-badge mode-${dataMode}`}>{dataMode} data</span> : <span className="mode-badge">No data loaded</span>}
           </header>
           <div className="synthetic-banner">Reports use the selected subject and UTC cutoff. Check source mode and provenance before interpreting results.</div>
           <main id="main" tabIndex={-1}>

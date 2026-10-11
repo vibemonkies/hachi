@@ -205,7 +205,10 @@ export function ImportPanel({
       {workflow.kind === "import-error" && (
         <div className="notice error" role="alert">
           <h2>Import could not be completed</h2>
+          {workflow.submission.importId && <p>Import · <code>{workflow.submission.importId}</code></p>}
+          {workflow.failureCode && <p>Reason · <code>{workflow.failureCode}</code></p>}
           <p>{workflow.message}</p>
+          {workflow.action && <p>Next step · {workflow.action}</p>}
           <button onClick={() => submitImportAgain(workflow.submission, dispatch)}>
             Retry import
           </button>

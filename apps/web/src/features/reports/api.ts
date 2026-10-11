@@ -6,7 +6,7 @@ import type {
   SubjectId,
 } from "@hachi/contracts";
 import { ApiRequestError, isRecord, requestJson, waitForPoll } from "../api";
-import { parseDocument } from "../checkins/schema";
+import { parseContractDocument } from "../contract-validation";
 
 export type TaskResult =
   | { kind: "result"; result: ReportResult }
@@ -16,7 +16,7 @@ export type ReportPair = { forecast: TaskResult; anomaly: TaskResult };
 
 export function readReportJob(value: unknown): ReportJob {
   try {
-    return parseDocument("ReportJob", value);
+    return parseContractDocument<ReportJob>("ReportJob", value);
   } catch {
     throw new Error("The Hachi API returned an invalid report job.");
   }
