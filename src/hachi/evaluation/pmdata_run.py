@@ -20,6 +20,7 @@ from pydantic import Field, TypeAdapter, model_validator
 
 from hachi.contracts.base import Contract, DatasetSnapshotRef, SubjectId, UtcDatetime
 from hachi.contracts.manifests import Exclusion, ModelRef, RunManifest, SplitManifest, TimeWindow
+from hachi.contracts.tables import Aggregate
 from hachi.data.pmdata import (
     AGGREGATE_AVAILABILITY_RULE,
     dataset_snapshot_ref,
@@ -39,8 +40,8 @@ from hachi.models.baselines.artifacts import ForecastArtifact, source_hashes
 from hachi.models.baselines.tree import FEATURES
 
 from .artifacts import write_packet
-from .features import HourlyFeaturePolicy, hourly_features
-from .folds import NestedFoldConfig, nested_participant_folds
+from .features import HourlyFeaturePolicy, HourlyFeatureView, hourly_features
+from .folds import NestedFold, NestedFoldConfig, NestedFoldPlan, nested_participant_folds
 from .forecast import EvaluationConfig, TrainingPrefix, evaluate_forecast
 from .metrics import MetricReport, combine_metric_reports
 from .serialization import document_bytes, document_sha256
@@ -111,22 +112,52 @@ def _aggregate_metrics(report: MetricReport) -> dict[str, object]:
     }
 
 
+def load_inputs(
+    snapshot: Path, protocol: PMDataProtocol
+) -> tuple[NestedFoldPlan, HourlyFeatureView, tuple[Aggregate, ...]]:
+    """Verify the admitted snapshot and build the shared model-comparison inputs."""
+    verified = verify(snapshot)
+    if not verified["ok"] or dataset_snapshot_ref(snapshot) != protocol.expected_snapshot:
+        raise ValueError("snapshot verification or admitted identity mismatch")
+    roster = TypeAdapter(list[SubjectId], config=Contract.model_config).validate_python(
+        load_manifest(snapshot)["subjects"]
+    )
+    plan = nested_participant_folds(roster, protocol.folds, exclusions=protocol.exclusions)
+    bins = tuple(iter_aggregates(snapshot, "hour", metrics=[protocol.evaluation.metric]))
+    view = hourly_features(bins, protocol.feature_policy)
+    labels = tuple(b.aggregate for b in bins)
+    return plan, view, labels
+
+
+def fold_split(protocol: PMDataProtocol, fold: NestedFold) -> SplitManifest:
+    """Build the same sealed, timestamp-pinned canonical split for every comparator."""
+    return SplitManifest(
+        schema_version="0.1",
+        manifest_id=f"pmdata-outer{fold.outer_fold}-inner{fold.inner_fold}",
+        created_at_utc=protocol.split_created_at_utc,
+        dataset_snapshot=protocol.expected_snapshot,
+        task="physiology_forecast",
+        fold=fold.outer_fold,
+        n_folds=protocol.folds.outer_folds,
+        **fold.partitions(),
+        lookback_hours=protocol.lookback_hours,
+        horizon_hours=protocol.horizon_hours,
+        embargo_hours=protocol.embargo_hours,
+        cutoff_stride_hours=protocol.cutoff_stride_hours,
+        min_history_hours=protocol.min_history_hours,
+        evaluation_window=protocol.evaluation_window,
+        seed=protocol.folds.seed,
+        test_opened_at_utc=None,
+    )
+
+
 def run(snapshot: Path, output: Path, protocol: PMDataProtocol) -> dict[str, object]:
     """Run only inner validation cohorts of one outer fold, exporting each frozen model."""
     output_created = False
     started = perf_counter()
     try:
-        verified = verify(snapshot)
-        if not verified["ok"] or dataset_snapshot_ref(snapshot) != protocol.expected_snapshot:
-            raise ValueError("snapshot verification or admitted identity mismatch")
-        roster = TypeAdapter(list[SubjectId], config=Contract.model_config).validate_python(
-            load_manifest(snapshot)["subjects"]
-        )
-        plan = nested_participant_folds(roster, protocol.folds, exclusions=protocol.exclusions)
+        plan, view, labels = load_inputs(snapshot, protocol)
         selected = [f for f in plan.folds if f.outer_fold == protocol.active_outer_fold]
-        bins = tuple(iter_aggregates(snapshot, "hour", metrics=[protocol.evaluation.metric]))
-        view = hourly_features(bins, protocol.feature_policy)
-        labels = tuple(b.aggregate for b in bins)
         repo = Path(__file__).resolve().parents[3]
         git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
         dirty = bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=repo, text=True))
@@ -146,24 +177,7 @@ def run(snapshot: Path, output: Path, protocol: PMDataProtocol) -> dict[str, obj
             fold_root.mkdir(mode=0o700)
             (fold_root / "models").mkdir(mode=0o700)
             (fold_root / "evaluations").mkdir(mode=0o700)
-            split = SplitManifest(
-                schema_version="0.1",
-                manifest_id=f"pmdata-outer{fold.outer_fold}-inner{fold.inner_fold}",
-                created_at_utc=protocol.split_created_at_utc,
-                dataset_snapshot=protocol.expected_snapshot,
-                task="physiology_forecast",
-                fold=fold.outer_fold,
-                n_folds=protocol.folds.outer_folds,
-                **fold.partitions(),
-                lookback_hours=protocol.lookback_hours,
-                horizon_hours=protocol.horizon_hours,
-                embargo_hours=protocol.embargo_hours,
-                cutoff_stride_hours=protocol.cutoff_stride_hours,
-                min_history_hours=protocol.min_history_hours,
-                evaluation_window=protocol.evaluation_window,
-                seed=protocol.folds.seed,
-                test_opened_at_utc=None,
-            )
+            split = fold_split(protocol, fold)
             for model_config in [*protocol.baselines, protocol.tree]:
                 fitted: list[ForecastArtifact] = []
 
