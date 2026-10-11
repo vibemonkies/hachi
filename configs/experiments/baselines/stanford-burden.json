@@ -1,0 +1,30 @@
+{
+  "expected_snapshot": {
+    "dataset_id": "stanford-covid19-wearables",
+    "dataset_version": "2020-nbe",
+    "snapshot_sha256": "168d54133c8bc1c566f0b1a023d4f7ca04f54cecbadd3257fa4840e0031e8a33"
+  },
+  "folds": {"outer_folds": 4, "inner_folds": 3, "min_train_subjects": 4, "seed": 42},
+  "active_outer_fold": 0,
+  "rest": {
+    "clock": "floating_local_shifted",
+    "step_timestamp": "both",
+    "min_hr_samples_per_minute": 1,
+    "min_rest_minutes": 30
+  },
+  "robust": {
+    "baseline_days": 28,
+    "min_nights": 7,
+    "min_zero_step_minutes": 30,
+    "scale_floor_bpm": 1,
+    "alert_threshold": 3,
+    "direction": "two_sided"
+  },
+  "controls": "onset_24h_negative",
+  "cutoff": "next_floating_midnight",
+  "episode_definition": "consecutive_scored_alert_nights_intersecting_control_days",
+  "bootstrap_samples": 1000,
+  "confidence": 0.95,
+  "sensitivities": ["start", "end"],
+  "split_created_at_utc": "2026-10-11T11:45:00Z"
+}

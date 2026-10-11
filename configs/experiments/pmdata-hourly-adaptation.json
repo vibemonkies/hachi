@@ -1,0 +1,123 @@
+{
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "selection_rule_sha256": "9e1bc4d72f33c0d9bfaab7fa1118aba48c432dbc2d8130b067fc867efa2dd78c",
+  "data_rule": "Only the 12 development participants of outer fold 0. Fitting uses each inner fold's training participants up to the protocol fit cutoff (2020-01-01T00:00Z); the outer test participants are never read for training, tuning or calibration.",
+  "history_accessor": {
+    "rule": "rows of the protocol feature policy (and the steps policy below) whose start is at or after cutoff minus context and that are available_by the cutoff; the last 48 h must equal the harness history exactly",
+    "steps_policy": {
+      "metric": "steps",
+      "aggregation": "sum",
+      "min_coverage": 0.5,
+      "min_observed_count": 30
+    }
+  },
+  "chronos_zero_shot": {
+    "context_hours": [
+      48,
+      168,
+      720
+    ],
+    "steps_covariate_context_hours": 48,
+    "steps_covariate_role": "past-only covariate; never a future covariate"
+  },
+  "chronos_finetune": {
+    "mode": "full",
+    "dtype": "float32 (bf16 and tf32 disabled; #1 did not certify BF16 on the GB10)",
+    "context_hours": "the zero-shot context with the lowest pooled inner-validation MAE",
+    "prediction_length": 24,
+    "learning_rates": [
+      1e-06,
+      1e-05
+    ],
+    "learning_rate_selection": "lowest pooled inner-validation MAE",
+    "max_steps": 1000,
+    "eval_every_steps": 100,
+    "early_stopping": "keep the checkpoint with the lowest loss on the training participants' last 168 h before the fit cutoff (temporal holdout); training windows end before that holdout",
+    "batch_size": 64,
+    "optimizer": "adamw_torch_fused, linear schedule, no warmup",
+    "seed": 42
+  },
+  "ridge_head": {
+    "context_hours": 48,
+    "window_stride_hours": 6,
+    "target": "the next 24 hourly values minus the context mean (personal) or minus the training population mean (population)",
+    "alphas": [
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "alpha_selection": "lowest MAE on the training participants' windows whose targets fall in the last 168 h before the fit cutoff, then refit on all training windows",
+    "handcrafted_personal_features": [
+      "last_value",
+      "mean_6h",
+      "mean_24h",
+      "mean_48h",
+      "std_48h",
+      "observed_fraction_48h",
+      "hours_since_last_value"
+    ],
+    "embedding_features": "mean over all Chronos-2 encoder tokens of the context, plus the context location and scale",
+    "population_features": "target hour-of-day (sin/cos) and lead only; the ablation removes every personal-history feature"
+  },
+  "intervals_for_point_candidates": "each point model's own meta out-of-fold residuals within the inner fold's training participants: median + the 0.1/0.9 quantiles of truth minus median (lower offset capped at 0, upper at least 0), clipped to metric bounds; coverage is measured only on the inner fold's untouched validation participants",
+  "ensembles": {
+    "members": [
+      "train-population-mean-v1",
+      "hourly-last-valid-v1",
+      "utc-seasonal-naive-v1",
+      "causal-hourly-tree-v1",
+      "handcrafted-ridge-personal",
+      "chronos-2-zero-shot",
+      "chronos-2-zero-shot-ctx168",
+      "chronos-2-zero-shot-ctx720",
+      "chronos-2-zero-shot-steps",
+      "chronos-2-embedding-ridge"
+    ],
+    "excluded_members": {
+      "chronos-2-finetuned": "a fine-tune per meta-fold would add 24 fine-tunes (~8 GPU hours); it stays a standalone candidate"
+    },
+    "levels": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ],
+    "member_quantiles": "a member's native deciles when it has them (Chronos-2 variants); point members contribute their median at every level",
+    "equal_weight": "mean of present members' value per decile",
+    "stacked": "per decile, nonnegative weights summing to 1 minimizing pinball loss (linear programme, HiGHS) over the inner fold's meta out-of-fold points where every member predicted and the label is eligible",
+    "abstaining_members": "weights renormalized over the members present at a point; no member present means abstain",
+    "quantile_crossing": "the combined deciles are sorted (monotone rearrangement) before the median and 0.1/0.9 interval are read",
+    "support_reporting": "per fold: meta points available, labelled, complete across members (used to fit), and each member's meta abstentions"
+  },
+  "serving_refit": "the selected candidate is refit on all 12 development participants of outer fold 0 with the same fit cutoff; residual-based intervals use all three folds' validation residuals",
+  "budgets": {
+    "gpu_job_notice_minutes": 30
+  },
+  "amendment_1": {
+    "date": "2026-10-11",
+    "before_scores": true,
+    "reviewer": "SnowyFortress (hachi-issue-12, msgs 104 and 111)",
+    "meta_plan": {
+      "meta_folds": 4,
+      "seed": 42,
+      "salt": "meta:<outer>:<inner>",
+      "window_start_utc": "2019-12-25T00:00:00Z",
+      "window_end_utc": "2020-01-01T00:00:00Z",
+      "manifests": "train = inner-fold training participants minus the held meta group; validation = the held group; test = outer test plus the inner fold's validation participants (sealed); protocol lookback/horizon/stride/min history/embargo"
+    },
+    "budgets": {
+      "latency": "p95 of a single request on the model's serving hardware <= 1.0 s; an ensemble's latency is the sum of its members' p95",
+      "memory": "peak RSS of a dedicated fit+predict process (CPU models) or the GX10 inference process plus its CUDA-allocated peak (GPU models), each <= 4 GiB; an ensemble takes its largest member; traced Python allocations are reported, never gated",
+      "coverage_denominator": "the candidate's scored, label-eligible validation targets, participant-weighted; abstentions excluded and gated separately",
+      "alerts": "none: physiology forecasts"
+    },
+    "post_selection_calibration": "after selection only, a point model's served interval may be recalibrated on the three folds' inner-validation residuals; recorded with its own provenance and never reported as independently calibrated coverage; the outer test stays sealed"
+  }
+}
