@@ -12,6 +12,7 @@ from time import perf_counter
 from hachi.contracts.manifests import ModelRef, RunManifest, SplitManifest
 from hachi.data.clinical.snapshot import dataset_snapshot_ref, verify
 from hachi.evaluation.clinical_protocol import ClinicalProtocol, clinical_fold_plan
+from hachi.evaluation.folds import NestedFold
 from hachi.evaluation.serialization import document_bytes, document_sha256
 
 from .artifacts import export, load, save
@@ -27,6 +28,29 @@ from .pretrained_protocol import PretrainedProtocol, representation_feature_name
 from .protocol import Protocol
 from .support import CutoffKey, support_evidence
 from .training import calibration_partition, fit
+
+
+def clinical_split(
+    snapshot: Path, fold: NestedFold, protocol: Protocol, clinical: ClinicalProtocol, h: int
+) -> SplitManifest:
+    return SplitManifest(
+        schema_version="0.1",
+        manifest_id=f"illness-outer0-inner{fold.inner_fold}-{h}h",
+        created_at_utc=clinical.split_created_at_utc,
+        dataset_snapshot=dataset_snapshot_ref(snapshot),
+        task="illness_onset",
+        fold=0,
+        n_folds=protocol.outer_folds,
+        **fold.partitions(),
+        lookback_hours=protocol.feature_lookback_days * 24,
+        horizon_hours=h,
+        embargo_hours=0,
+        cutoff_stride_hours=24,
+        min_history_hours=0,
+        evaluation_window=None,
+        seed=protocol.seed,
+        test_opened_at_utc=None,
+    )
 
 
 def write_private(path: Path, document: object) -> None:
@@ -141,24 +165,7 @@ def run(
                 if comparison is not None
                 else None
             )
-            split = SplitManifest(
-                schema_version="0.1",
-                manifest_id=f"illness-outer0-inner{fold.inner_fold}-{h}h",
-                created_at_utc=clinical.split_created_at_utc,
-                dataset_snapshot=dataset_snapshot_ref(snapshot),
-                task="illness_onset",
-                fold=0,
-                n_folds=protocol.outer_folds,
-                **fold.partitions(),
-                lookback_hours=protocol.feature_lookback_days * 24,
-                horizon_hours=h,
-                embargo_hours=0,
-                cutoff_stride_hours=24,
-                min_history_hours=0,
-                evaluation_window=None,
-                seed=protocol.seed,
-                test_opened_at_utc=None,
-            )
+            split = clinical_split(snapshot, fold, protocol, clinical, h)
             for candidate in protocol.candidate_order:
                 root = output / f"inner-{fold.inner_fold}-{h}h-{candidate}"
                 root.mkdir(mode=0o700)

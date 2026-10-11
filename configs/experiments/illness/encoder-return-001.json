@@ -1,0 +1,12 @@
+{
+  "producer_commit": "422e6f49f33c0547f77c67b687791e9fe201e070",
+  "files": {
+    "frozen-features.parquet": "207828605b47c2878ca49caf6611dd193c3cc93dd0f7f45e6795aeea08798bdd",
+    "encoder-requests.jsonl": "e7b77364bdf82a9359b3b7ff47024351dcedaee1b4db961e97b94db055e3841b",
+    "inputs.npz": "c5592c7dec4d2b7b9517329e66d3b17e6f951df4313202736961606012cb576b",
+    "wbm.npz": "016cc1813fad0baf3eb0642a04e768164652187559a8809557403a951f9f92c4",
+    "moment.npz": "3df9f31d70b4809d504de20cfb2efe55a8ca200d10d2e116b8caa4df52f5dc5a",
+    "wbm.receipt.json": "6358a20b8dc06263b1d50aaff0ae48fa9e6033c2f103e54f4d2c54b9bbd9c748",
+    "moment.receipt.json": "89e4229a3866fd754cc2754fca7e3b221f0e5c1ad8d07a32f1ea77e4c552bfa2"
+  }
+}

@@ -8,6 +8,7 @@ from pathlib import Path
 from hachi.evaluation.clinical_protocol import ClinicalProtocol
 from hachi.evaluation.serialization import document_sha256
 
+from .encoder_features import EncoderReturnPins, load_encoder_features
 from .pretrained_features import build_meanpool_features, load_chronos_features
 from .pretrained_protocol import REPO, load_pretrained_protocol
 from .protocol import load_protocol
@@ -18,7 +19,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshot", type=Path, required=True)
     parser.add_argument("--context-packet", type=Path, required=True)
-    parser.add_argument("--family", choices=["meanpool_hr", "chronos_hr"], default="chronos_hr")
+    parser.add_argument(
+        "--family",
+        choices=["meanpool_hr", "wbm_hr", "moment_hr", "chronos_hr"],
+        default="chronos_hr",
+    )
+    parser.add_argument("--encoder-return", type=Path)
+    parser.add_argument(
+        "--encoder-pins",
+        type=Path,
+        default=REPO / "configs/experiments/illness/encoder-return-001.json",
+    )
     parser.add_argument("--chronos-inference", type=Path)
     parser.add_argument(
         "--output", type=Path, required=True, help="fresh private CPU run directory"
@@ -31,19 +42,25 @@ def main() -> int:
         parser.error("--output must be a fresh private run directory")
     if args.family == "chronos_hr" and args.chronos_inference is None:
         parser.error("Chronos features require the queued --chronos-inference packet")
+    if args.family in {"wbm_hr", "moment_hr"} and args.encoder_return is None:
+        parser.error("Frozen encoders require the original --encoder-return packet")
     try:
         comparison = load_pretrained_protocol(args.comparison)
         task = load_protocol(REPO / comparison.task_protocol.path)
         clinical = ClinicalProtocol.model_validate_json(
             (REPO / comparison.clinical_protocol.path).read_bytes()
         )
-        features = (
-            build_meanpool_features(args.snapshot, args.context_packet, comparison)
-            if args.family == "meanpool_hr"
-            else load_chronos_features(
+        if args.family in {"wbm_hr", "moment_hr"}:
+            pins = EncoderReturnPins.model_validate_json(args.encoder_pins.read_bytes())
+            features = load_encoder_features(
+                args.snapshot, args.context_packet, args.encoder_return, comparison, pins
+            )[args.family]
+        elif args.family == "meanpool_hr":
+            features = build_meanpool_features(args.snapshot, args.context_packet, comparison)
+        else:
+            features = load_chronos_features(
                 args.snapshot, args.context_packet, args.chronos_inference, comparison
             )
-        )
         result = run(
             args.snapshot,
             args.output,

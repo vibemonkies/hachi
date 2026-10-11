@@ -90,7 +90,13 @@ def clean_run(monkeypatch):
     monkeypatch.setattr("hachi.evaluation.clinical_protocol.verify", lambda snapshot: {"ok": True})
     monkeypatch.setattr(
         "hachi.models.illness.run.subprocess.check_output",
-        lambda args, **kwargs: "" if "--porcelain" in args else "a" * 40,
+        lambda args, **kwargs: (
+            Path("uv.lock").read_bytes()
+            if args[1:2] == ["show"]
+            else ""
+            if "--porcelain" in args
+            else "a" * 40
+        ),
     )
 
 
@@ -362,6 +368,33 @@ def test_frozen_report_rederives_real_head_packets_and_rejects_prediction_tamper
     assert result["head_replay"]["predictions"] == 6480
     assert result["head_replay"]["max_probability_delta"] < 1e-12
     assert result["serving"] == "unavailable" and result["outer_test"] == "sealed"
+    split_path = output / "inner-0-24h-logistic/split.json"
+    manifest_path = output / "inner-0-24h-logistic/run.json"
+    original_split, original_manifest = split_path.read_bytes(), manifest_path.read_bytes()
+    split = json.loads(original_split)
+    split["horizon_hours"] = 48
+    split_path.write_bytes(document_bytes(split))
+    manifest = json.loads(original_manifest)
+    manifest["split_manifest_sha256"] = document_sha256(split)
+    manifest_path.write_bytes(document_bytes(manifest))
+    with pytest.raises(ValueError, match="complete frozen split"):
+        module.compile_report(path, tmp_path / "unused-contexts", output)
+    split_path.write_bytes(original_split)
+    manifest_path.write_bytes(original_manifest)
+    manifest = json.loads(original_manifest)
+    manifest["feature_order"] = ["substituted-feature"]
+    manifest_path.write_bytes(document_bytes(manifest))
+    with pytest.raises(ValueError, match="manifest differs"):
+        module.compile_report(path, tmp_path / "unused-contexts", output)
+    manifest_path.write_bytes(original_manifest)
+    summary_path = output / "summary.json"
+    original_summary = summary_path.read_bytes()
+    summary = json.loads(original_summary)
+    summary["outer_test_status"] = "opened"
+    summary_path.write_bytes(document_bytes(summary))
+    with pytest.raises(ValueError, match="run identity"):
+        module.compile_report(path, tmp_path / "unused-contexts", output)
+    summary_path.write_bytes(original_summary)
     prediction_path = output / "inner-0-24h-logistic/predictions.json"
     predictions = json.loads(prediction_path.read_bytes())
     predictions[0]["window"]["positive"] = not predictions[0]["window"]["positive"]
