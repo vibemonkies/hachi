@@ -77,13 +77,25 @@ def test_archive_is_fresh_isolated_and_worker_failure_output_is_withheld(tmp_pat
     assert not any(p.exists() for p in directories)
 
 
-def test_real_archived_worker_handles_invalid_private_packet_without_traceback(tmp_path):
+def test_real_archived_worker_handles_invalid_private_packet_without_traceback(
+    tmp_path, monkeypatch
+):
     # Exercise the actual subprocess/import boundary at the producing source. No
     # patient data is needed to prove exception details stay inside captured output.
     from hachi.models.illness.pretrained_protocol import REPO
 
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     (tmp_path / "summary.json").write_text(json.dumps({"git_sha": commit}))
+    invoke = subprocess.run
+
+    def inspect_archive(args, **kwargs):
+        # Chronos's public model pin is outside configs. Missing it prevented the
+        # real archive path from reaching clinical validation despite mock tests.
+        if args[0] != "git":
+            assert (Path(args[4]).parent / "infra/gx10/model.json").is_file()
+        return invoke(args, **kwargs)
+
+    monkeypatch.setattr(evidence.subprocess, "run", inspect_archive)
     with pytest.raises(ValueError, match="failed archived verification"):
         evidence.archived_report(
             tmp_path,
@@ -93,6 +105,23 @@ def test_real_archived_worker_handles_invalid_private_packet_without_traceback(t
             tmp_path,
             REPO / "configs/experiments/illness/encoder-return-001.json",
         )
+
+
+def test_original_input_capture_detects_changes_outside_scored_packets(tmp_path):
+    packet = tmp_path / "contexts"
+    packet.mkdir()
+    (packet / "joins.json").write_text("[]")
+    accepted = tmp_path / "accepted.json"
+    accepted.write_text("{}")
+    paths = {"contexts": packet, "accepted": accepted}
+    captured = evidence.immutable_inputs(paths)
+    (packet / "joins.json").write_text('["synthetic-sensitive-token"]')
+    assert evidence.immutable_inputs(paths) != captured
+    (packet / "joins.json").write_text("[]")
+    assert evidence.immutable_inputs(paths) == captured
+    accepted.write_text('{"changed":true}')
+    assert evidence.immutable_inputs(paths) != captured
+    assert "synthetic-sensitive-token" not in json.dumps(captured)
 
 
 def test_markdown_uses_canonical_json_order():

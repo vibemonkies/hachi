@@ -52,7 +52,7 @@ def archived_report(snapshot, packet, root, chronos, encoder_return, encoder_pin
     if resolved != commit:
         raise ValueError("scoring revision must be an exact retained commit")
     payload = subprocess.check_output(
-        ["git", "archive", commit, "src", "configs", "uv.lock"], cwd=REPO
+        ["git", "archive", commit, "src", "configs", "infra", "uv.lock"], cwd=REPO
     )
     arguments = {
         "snapshot": str(snapshot.absolute()),
@@ -105,6 +105,20 @@ def accepted_baselines(roots: dict[str, Path], accepted: dict) -> dict:
     return inventories
 
 
+def immutable_inputs(paths: dict[str, Path]) -> dict[str, str]:
+    """Publish only aggregate inventory pins; private relative paths stay local."""
+    return {
+        role: (
+            sha(path)
+            if path.is_file()
+            else document_sha256(
+                {str(p.relative_to(path)): sha(p) for p in sorted(path.rglob("*")) if p.is_file()}
+            )
+        )
+        for role, path in paths.items()
+    }
+
+
 def assemble(
     snapshot, packet, roots, baseline_root, chronos, encoder_return, encoder_pins, base_python
 ):
@@ -118,6 +132,15 @@ def assemble(
         raise ValueError("all four original frozen-feature packets are required")
     baseline_roots = {f: baseline_root / f"{f}-002" for f in FAMILIES}
     accepted_path = REPO / "reports/models/illness/phase1.json"
+    immutable_paths = {
+        "accepted_baseline_report": accepted_path,
+        "clinical_snapshot": snapshot,
+        "context_packet": packet,
+        "chronos_return": chronos,
+        "encoder_return": encoder_return,
+        "encoder_pins": encoder_pins,
+    }
+    captured_inputs = immutable_inputs(immutable_paths)
     accepted = json.loads(accepted_path.read_bytes())
     inventories = accepted_baselines(baseline_roots, accepted)
     frozen_inventories = {name: input_hashes(root) for name, root in roots.items()}
@@ -218,8 +241,10 @@ def assemble(
         views[str(h)] = compare(
             scores, supported, [w for w in windows if w.horizon_hours == h], task, comparison
         )
-    if accepted_baselines(baseline_roots, accepted) != inventories or any(
-        input_hashes(roots[name]) != value for name, value in frozen_inventories.items()
+    if (
+        accepted_baselines(baseline_roots, accepted) != inventories
+        or any(input_hashes(roots[name]) != value for name, value in frozen_inventories.items())
+        or immutable_inputs(immutable_paths) != captured_inputs
     ):
         raise ValueError("private evidence changed during comparison")
     return {
@@ -230,7 +255,8 @@ def assemble(
         "task_sha256": task.sha256,
         "clinical_sha256": document_sha256(clinical),
         "fold_plan_sha256": document_sha256(plan),
-        "accepted_baseline_report_sha256": sha(accepted_path),
+        "accepted_baseline_report_sha256": captured_inputs["accepted_baseline_report"],
+        "original_inputs_sha256": captured_inputs,
         "baseline_input_inventories_sha256": {
             k: document_sha256(v) for k, v in inventories.items()
         },
