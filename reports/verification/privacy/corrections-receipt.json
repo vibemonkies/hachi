@@ -1,0 +1,95 @@
+{
+  "source_commit": "8ff3d95af114dfc8d4b7d8a061c6ac66bfa09759",
+  "source_clean": true,
+  "fixed_dependency": {
+    "pr": 81,
+    "merge_commit": "e88b0f802b11a099d51b4858107ace073eceee92"
+  },
+  "baseline_commit": "84a5cbe1b389b5314f695758e20e99fe9cbfb478",
+  "baseline_tcp_failures": 6,
+  "host": "MacBook-Air-4.local",
+  "owner": "ezzy1630",
+  "worker": "NobleCat",
+  "loopback_port": 8719,
+  "model_refs": [],
+  "generated_subjects_only": true,
+  "real_source_data_deleted": false,
+  "commands": {
+    "focused": ".venv/bin/python -m pytest tests/privacy/test_correction_http.py tests/privacy/test_gpu_boundary.py tests/api/test_corrections.py --tb=short",
+    "cli": ".venv/bin/python scripts/privacy/verify_corrections.py --port 8719",
+    "scan": ".venv/bin/python scripts/privacy/scan.py --assets infra/demo --clinical-snapshot <permitted-private-phase1-snapshot>"
+  },
+  "focused": {
+    "tcp_cases_passed": 10,
+    "independent_gpu_boundaries_passed": 7,
+    "owner_corrections_passed": 10,
+    "total_passed": 27,
+    "actual_ssh_or_gpu_jobs": 0
+  },
+  "cli": {
+    "checks": [
+      "exact_cli_checkout_empty_model_pins",
+      "history_fault_safe_response",
+      "onset_recorded",
+      "report_request_accepted",
+      "report_request_accepted",
+      "correction_appended",
+      "history_read_accepted",
+      "current_history_latest_version",
+      "history_read_accepted",
+      "as_of_inclusive_original",
+      "history_read_accepted",
+      "as_of_before_recording_empty",
+      "history_read_accepted",
+      "all_history_append_only",
+      "report_request_accepted",
+      "earlier_report_key_unchanged",
+      "report_request_accepted",
+      "current_report_key_changed",
+      "identical_correction_noop",
+      "correction_error_no_submitted_value",
+      "isolated_second_subject",
+      "report_request_accepted",
+      "report_request_accepted",
+      "erase_entire_chain_via_corrected_id",
+      "history_read_accepted",
+      "erased_versions_not_returned",
+      "dependent_reports_invalidated",
+      "other_subject_and_independent_report_preserved",
+      "tombstoned_ids_refused",
+      "deleted_chain_content_absent_database_wal",
+      "whole_subject_erases_tombstones_and_reports",
+      "new_subject_after_whole_erasure_can_reuse_id",
+      "last_chain_erased",
+      "tombstone_only_subject_erasable",
+      "other_subject_survives_whole_erasure",
+      "self_created_second_subject_cleanup",
+      "all_personal_tables_empty_including_tombstones"
+    ],
+    "checks_passed": 37,
+    "data_mode": "synthetic",
+    "git_sha": "8ff3d95af114dfc8d4b7d8a061c6ac66bfa09759",
+    "model_refs": [],
+    "ok": true,
+    "real_source_data_deleted": false,
+    "safe_logs": true,
+    "service_log_sha256": "b7209aaee347bc087df4b9a61230da88bc4cbd2a49ef3a4ba7c8a03453fa73ad"
+  },
+  "scan": {
+    "ok": true,
+    "files_scanned": 630,
+    "findings": {},
+    "participant_roster_checked": true,
+    "scope": "current tracked files plus explicit infra/demo assets; no Git history"
+  },
+  "remaining_gates": [
+    "Personal GPU source transfer consent, remote artifact inventory/retention and verified cleanup including failures (#16/#21).",
+    "Actual Apple serving/profile and source-transfer validation; merged helper alone does not deliver HTTP integration (#16/#78).",
+    "Rendered personal display/recording consent and intended screenshot/video review (#18/#21/#22)."
+  ],
+  "proof_limits": [
+    "No expensive GPU parity run; owner evidence remains required.",
+    "Remote predictions/inference evidence are retained by current transport and are not erased by API subject deletion.",
+    "Logical SQLite/WAL hygiene, not SSD/APFS/backup erasure or participant authentication."
+  ]
+}

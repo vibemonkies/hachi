@@ -75,7 +75,8 @@ def test_gpu_identity_mismatch_refuses_output_without_echo(mutation):
     assert SENTINEL not in str(error.value)
 
 
-def test_remote_artifacts_are_outside_subject_erasure_inventory():
+@pytest.mark.parametrize("cleanup_failure", [False, True])
+def test_remote_artifacts_are_outside_subject_erasure_inventory(cleanup_failure):
     """Bind the documented personal-GPU gate to observed transport retention behavior."""
     from hachi.api.gpu import Gx10Target, chronos_quantiles
 
@@ -90,6 +91,8 @@ def test_remote_artifacts_are_outside_subject_erasure_inventory():
             self.files[path] = data
 
         def remove(self, path):
+            if cleanup_failure:
+                raise GpuUnavailable(SENTINEL)
             self.files.pop(path, None)
 
         def read(self, path):
@@ -125,8 +128,6 @@ def test_remote_artifacts_are_outside_subject_erasure_inventory():
         target, PIN, {"request_id": "generated", "context": [70], "prediction_length": 1}
     )
     assert result.rows == ((65, 70, 75),)
-    assert not any("api-requests" in path for path in remote.files)
-    assert {path.rsplit("/", 1)[-1] for path in remote.files} == {
-        "predictions.jsonl",
-        "inference.json",
-    }
+    assert any("api-requests" in path for path in remote.files) == cleanup_failure
+    outputs = {path.rsplit("/", 1)[-1] for path in remote.files if "/runs/" in path}
+    assert outputs == {"predictions.jsonl", "inference.json"}
