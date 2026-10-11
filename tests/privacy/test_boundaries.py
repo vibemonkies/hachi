@@ -234,3 +234,13 @@ def test_upload_publication_conflicts_with_in_progress_deletion(
         assert deletion.result(timeout=5).status_code == 204
     assert not list(settings.workspace.uploads.iterdir())
     assert not list(settings.workspace.imports.iterdir())
+
+
+def test_static_constraint_errors_remain_actionable_without_echo(private_api):
+    client, _ = private_api
+    response = client.post(
+        "/v1/subjects/synthetic-error/observations",
+        json={"schema_version": "0.1", "entries": [ONSET | {"severity": 987654}]},
+    )
+    assert response.status_code == 422 and "987654" not in response.text
+    assert any("Input should be" in issue["message"] for issue in response.json()["field_issues"])
