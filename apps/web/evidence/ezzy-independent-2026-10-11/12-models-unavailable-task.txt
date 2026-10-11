@@ -1,0 +1,37 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Forecast" [active] [level=1]
+  - status: Synthetic report ready.
+  - paragraph:
+    - text: Cutoff
+    - strong: 2026-10-10T07:00:00Z
+  - link "Change cutoff":
+    - /url: "#import"
+  - heading "Unavailable" [level=3]
+  - paragraph: No compatible forecast artifact. A frozen evaluated model and generated API contract are required.
+  - paragraph: Import-wide count · 342/360 hourly bins. Reports are pre-authored examples for the selected cutoff; no observations are analyzed.
+- document

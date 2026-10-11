@@ -1,0 +1,38 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Sleep comparison" [level=1]
+  - status
+  - generic: Named fixture preset
+  - combobox "Named fixture preset":
+    - option "Steady evening · 22:30 to 06:30"
+    - option "Later night · 00:30 to 06:30"
+    - option "Unsupported schedule · 03:00 to 07:00" [selected]
+  - paragraph: Both examples use America/Los_Angeles, PDT (UTC−07:00). Steady evening starts October 9; later night starts October 10. Both wake October 10.
+  - status:
+    - heading "Schedule unavailable." [level=2]
+    - paragraph: 03:00 to 07:00 has no static fixture. Choose a named supported preset. No curve is computed for arbitrary schedules.
+- document

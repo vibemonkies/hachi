@@ -1,0 +1,10 @@
+{
+  "data_mode": "synthetic",
+  "metric": "heart_rate",
+  "aggregation": "mean",
+  "history_policy": "causal_prefix",
+  "pretrained_cohort_overlap": "not_applicable",
+  "overlap_note": "Synthetic demonstration without a pretrained model; no cohort evidence implied.",
+  "bootstrap_samples": 1000,
+  "confidence": 0.95
+}

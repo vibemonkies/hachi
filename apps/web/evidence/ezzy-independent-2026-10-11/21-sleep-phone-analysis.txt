@@ -1,0 +1,59 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Sleep comparison" [active] [level=1]
+  - status
+  - generic: Named fixture preset
+  - combobox "Named fixture preset":
+    - option "Steady evening · 22:30 to 06:30" [selected]
+    - option "Later night · 00:30 to 06:30"
+    - option "Unsupported schedule · 03:00 to 07:00"
+  - paragraph: Both examples use America/Los_Angeles, PDT (UTC−07:00). Steady evening starts October 9; later night starts October 10. Both wake October 10.
+  - generic: SYNTHETIC SCHEDULE
+  - paragraph:
+    - text: Bedtime
+    - strong: 22:30
+    - text: · Wake
+    - strong: 06:30
+    - text: · October 10, 2026 wake date
+  - figure "Steady evening · illustrative alertness Arbitrary illustration index, 0 to 100, higher means more alert in the drawing. No measured scale, equations, calibration, or personal accuracy claim.":
+    - heading "Steady evening · illustrative alertness" [level=3]
+    - paragraph: Arbitrary illustration index, 0 to 100, higher means more alert in the drawing. No measured scale, equations, calibration, or personal accuracy claim.
+    - region "Steady evening · illustrative alertness chart, scroll horizontally on narrow screens":
+      - img "Steady evening · illustrative alertness. Synthetic illustration. Arbitrary illustration index, 0 to 100, higher means more alert in the drawing. No measured scale, equations, calibration, or personal accuracy claim. Exact UTC timestamps and values follow in the table. Gaps mean missing observations.":
+        - generic: "0.0"
+        - generic: "50.0"
+        - generic: "100.0"
+        - generic: index
+        - generic: 10-10 14:00
+        - generic: 10-10 17:00
+        - generic: 10-10 20:00
+        - generic: 10-10 23:00
+        - generic: 10-11 02:00
+    - paragraph: All times UTC. Gaps are missing observations, not zero.
+    - generic "View exact values and missing observations"
+  - generic "Fixed assumptions and source"
+- document

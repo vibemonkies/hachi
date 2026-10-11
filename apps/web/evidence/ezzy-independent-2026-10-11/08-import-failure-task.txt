@@ -1,0 +1,46 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Import & coverage" [active] [level=1]
+  - status: Import failed.
+  - heading "Synthetic history" [level=2]
+  - paragraph: No files are read or uploaded.
+  - generic: Demonstration scenario
+  - combobox "Demonstration scenario":
+    - option "Complete history"
+    - option "Empty observations"
+    - option "Sparse history"
+    - option "Access failure"
+    - option "Import failure" [selected]
+    - option "Models unavailable"
+    - option "Report failure"
+  - button "Load synthetic history"
+  - button "Reset workspace"
+  - alert:
+    - heading "History could not be loaded." [level=2]
+    - paragraph: Synthetic import could not be decoded. No observations were loaded.
+    - button "Retry import"
+- document

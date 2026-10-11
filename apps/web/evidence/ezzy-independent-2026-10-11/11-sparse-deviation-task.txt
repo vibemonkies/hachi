@@ -1,0 +1,85 @@
+- document
+- link "Skip to content":
+  - /url: "#main"
+- complementary:
+  - link "Hachi import":
+    - /url: "#import"
+    - generic: h
+    - text: hachi
+  - navigation "Workspace sections":
+    - link "Import & coverage":
+      - /url: "#import"
+    - link "Overview":
+      - /url: "#overview"
+    - link "Forecast":
+      - /url: "#forecast"
+    - link "Baseline deviation":
+      - /url: "#anomaly"
+    - link "Symptoms":
+      - /url: "#symptoms"
+    - link "Sleep comparison":
+      - /url: "#sleep"
+- banner:
+  - generic: Wearable research prototype
+  - generic: SYNTHETIC DATA ONLY
+- generic: No model runs or personal data.
+- main:
+  - heading "Baseline deviation" [level=1]
+  - status: Synthetic report ready.
+  - paragraph:
+    - text: Cutoff
+    - strong: 2026-10-10T07:00:00Z
+  - link "Change cutoff":
+    - /url: "#import"
+  - figure "Historical baseline deviation Synthetic standardized absolute deviation from a personal historical baseline. Zero means baseline-like; larger scores mean greater deviation. Not illness probability. No validated alert threshold or measured alert burden.":
+    - heading "Historical baseline deviation" [level=3]
+    - paragraph: Synthetic standardized absolute deviation from a personal historical baseline. Zero means baseline-like; larger scores mean greater deviation. Not illness probability. No validated alert threshold or measured alert burden.
+    - region "Historical baseline deviation chart, scroll horizontally on narrow screens":
+      - img "Historical baseline deviation. Synthetic illustration. Synthetic standardized absolute deviation from a personal historical baseline. Zero means baseline-like; larger scores mean greater deviation. Not illness probability. No validated alert threshold or measured alert burden. Exact UTC timestamps and values follow in the table. Gaps mean missing observations.":
+        - generic: "-1.0"
+        - generic: "1.0"
+        - generic: "3.0"
+        - generic: score
+        - generic: 10-05 07:00
+        - generic: 10-06 07:00
+        - generic: 10-07 07:00
+        - generic: 10-08 07:00
+        - generic: 10-09 07:00
+        - generic: 10-10 07:00
+    - paragraph: All times UTC. Gaps are missing observations, not zero.
+    - generic "View exact values and missing observations" [active]
+    - region "Historical baseline deviation values":
+      - table "Historical baseline deviation · synthetic values in score":
+        - caption: Historical baseline deviation · synthetic values in score
+        - rowgroup:
+          - row "Timestamp UTC Value (score) Illustrative bounds (score)":
+            - columnheader "Timestamp UTC"
+            - columnheader "Value (score)"
+            - columnheader "Illustrative bounds (score)"
+        - rowgroup:
+          - row "2026-10-05T07:00:00Z 0.6 Not applicable":
+            - cell "2026-10-05T07:00:00Z"
+            - cell "0.6"
+            - cell "Not applicable"
+          - row "2026-10-06T07:00:00Z 0.3 Not applicable":
+            - cell "2026-10-06T07:00:00Z"
+            - cell "0.3"
+            - cell "Not applicable"
+          - row "2026-10-07T07:00:00Z Missing Not applicable":
+            - cell "2026-10-07T07:00:00Z"
+            - cell "Missing"
+            - cell "Not applicable"
+          - row "2026-10-08T07:00:00Z 1.1 Not applicable":
+            - cell "2026-10-08T07:00:00Z"
+            - cell "1.1"
+            - cell "Not applicable"
+          - row "2026-10-09T07:00:00Z 0.9 Not applicable":
+            - cell "2026-10-09T07:00:00Z"
+            - cell "0.9"
+            - cell "Not applicable"
+          - row "2026-10-10T07:00:00Z 1.4 Not applicable":
+            - cell "2026-10-10T07:00:00Z"
+            - cell "1.4"
+            - cell "Not applicable"
+  - generic "Baseline method and coverage"
+- document

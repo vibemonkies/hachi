@@ -2,7 +2,7 @@
 
 **All three teammates can work at once. Multiple agents for one person are also useful when their issues are independent. Issue numbers belong to the whole team; they are not steps each person repeats.**
 
-If Ezzy already has #1 running, do not personally launch #2, #3 and #4 as the next steps: #2/#3 belong to Justin and #4 belongs to CoffeeCoder. Those four issues can run simultaneously across the team, with one active owner/agent per issue. Reassigning ownership requires agreement with the teammate first.
+If Ezzy already has #1 running, do not personally launch #2, #3 and #4 as the next steps: #2/#3 belong to Justin and #4 belongs to CoffeeCoder. Those four issues can run simultaneously across the team, with one active owner/agent per issue. Agents coordinate ownership changes directly in issue and PR threads. Use the handoff process below and preserve active agents and implementation PRs.
 
 There is no blanket batch of #1–#4 followed by #5–#7. For example, #7 needs the output of #5, so those two cannot be completed independently in the same batch.
 
@@ -78,12 +78,30 @@ An open issue with partially delivered prerequisites may permit a specifically s
 
 ## Claiming work and avoiding collisions
 
-1. The human identifies an unclaimed issue assigned to them (or agrees on a reassignment). Check issue comments, labels and open PRs; if another agent is already working on it, continue that work rather than duplicate it.
-2. Give one agent the exact issue, owned files, branch/worktree and permitted actions. When GitHub status updates are authorized, record the claim with owner, branch and worktree and set `status:in-progress`. A label is advisory, not an atomic lock; the human coordinates simultaneous starts.
+1. Establish which GitHub owner you represent from your task or session identity. The team's owners are `@CoffeeCoder1015`, `@ezzy1630`, and `@justin06lee`. Select an issue assigned to your represented owner or explicitly handed to you within your delegated scope. The live issue assignee shows the current accountable owner. Compare it with your identity and recorded claims before acting. Do not act as another owner because you read that owner's issue. If another worker already owns the item, coordinate with that worker instead of duplicating it.
+2. Keep four identities clear. The GitHub assignee is the current accountable human owner. Your represented owner comes from your task or session identity. The current worker is the agent acting within its explicit task or handoff scope. The work chat is where that worker owns the issue's implementation and evidence. Record the current assignee, your represented owner, your worker identity, a link to the work chat, exact issue scope, branch/worktree, and permitted actions in the canonical issue or PR thread. Set `status:in-progress` under the agreed coordination workflow. A label is advisory, not an atomic lock. If two workers claim the same issue, resolve the conflict with both named workers in that thread before implementation starts.
 3. Start from fresh `origin/main` in a separate worktree. Two terminals on different branches in the **same folder** are not isolated: changing the branch changes both agents' files.
 4. Keep virtual environments, mutable caches, test databases, run directories and service ports separate per agent/run. The same human can have several agents, so an owner-only shared checkout/database is insufficient. Reuse an environment only when immutable and compatible.
 5. Shared schemas, root package files, lockfiles and CI have one coordinating owner (#3 initially). Agree interface changes before implementing both callers. Preserve unrelated work.
 6. GPU jobs go through the runtime coordination wrapper once #1 supplies it. CPU coding, tests and data work can continue while another agent owns the GPU. Do not provision over someone else's checkout or update a running experiment's environment.
+
+## Coordinate handoffs between agents
+
+Handle routine dependency requests, scope clarification, and eligible ownership handoffs in the relevant issue or PR thread when your task delegates that authority. Use only actions within that delegated scope. Ask a human only for a decision, consent, or access you cannot resolve within that scope.
+
+For the #26 watch, the coordinating chat inspects the queue and routes each new actionable issue or PR to a dedicated work chat. The worker for that issue or PR owns its implementation and evidence in that chat. Keep later updates for the same item in its existing work chat.
+
+Track three states separately. Completion is incomplete or delivered with acceptance evidence. Readiness is ready or blocked by a named prerequisite. Activity is actively owned, confirmed unattended, or unknown. Missing completion evidence, no open PR, old updates, silence, unfinished work, and unanswered pings do not establish inactivity. Preserve active claims before a PR exists. When activity is unknown, ask the current worker for its identity, work chat, branch, scope, and checkpoint. Do not send a final notice or reassign work while activity is active or unknown.
+
+Transfer work only when it is ready, current, and confirmed unattended by positive evidence. Name the receiving worker and represented owner before transferring. Positive evidence can be a current, explicit owner or agent release, a not-started status confirmed by the current owner, or an authoritative agent-status source. A coordination handoff counts only when it explicitly releases the current worker and names the receiver. Silence, stale updates, unfinished work, and a missing PR do not count.
+
+For the watch in [#26](https://github.com/vibemonkies/hachi/issues/26), send a targeted ping every 15 minutes while a blocker is unanswered. Five unanswered pings trigger an evidence check, not a final notice. Before sending a final notice, refresh activity and ownership and verify fresh positive evidence that implementation is unattended and every prerequisite is ready. If activity is active or unknown, request a checkpoint. Do not send the final notice or reassign the work. If the evidence is stale, a claim or implementation PR is active, or a prerequisite is unmet, name the blocker and stop escalation.
+
+After the final notice, wait at least 15 minutes. Then refresh replies, the current worker's claim and activity, open PRs, positive unattended evidence, and every prerequisite. Transfer only if the issue remains ready and positively confirmed unattended. If activity is active or unknown, request a checkpoint and do not reassign.
+
+Before the receiving worker continues, update the issue assignee to that worker's represented GitHub owner if the accountable human owner changes and your delegated scope allows it. Record the current assignee, receiving worker and represented owner, work-chat link, owned files, branch, commit/PR, evidence, and remaining blockers in the canonical thread. Keep one active implementation worker per issue.
+
+Verify the issue's acceptance criteria and record the commands, artifacts, and observed results. If a review is requested, route an unanswered request to another available reviewer within the delegated scope. A review-only request authorizes review only. Do not promise implementation takeover unless a separate eligible handoff is confirmed. Escalate to a human only for a decision, consent, access, or permission that agents cannot resolve within the agreed scope.
 
 ## When to commit, push, fetch and integrate
 
@@ -146,6 +164,6 @@ Fetching alone does not update your feature branch. Updating your laptop does no
 
 ## Prompt to hand an agent
 
-> Work on issue #N in vibemonkies/hachi, assigned to MY_USERNAME. Read AGENTS.md and docs/COORDINATION.md. Check live dependencies, existing claims and PRs before starting. Use a separate worktree/branch and own only the issue's listed files. Preserve other agents' work and coordinate shared interfaces. Implement and verify the acceptance criteria, and report exact blockers rather than weakening them. My allowed actions for this task are: INSERT_AUTHORIZATION_HERE. Do not merge or take another issue unless I authorize that separately.
+> Work on issue #N in vibemonkies/hachi, assigned to MY_USERNAME. Read AGENTS.md and docs/COORDINATION.md. Check live dependencies, existing claims and PRs before starting. Use a separate worktree/branch and own only the issue's listed files. Preserve other agents' work and coordinate shared interfaces. Implement and verify the acceptance criteria, and report exact blockers rather than weakening them. My allowed actions for this task are: INSERT_AUTHORIZATION_HERE. Follow recorded agent handoffs within that scope. Do not merge or begin work outside the agreed coordination scope.
 
 For example, the human may explicitly allow “commit your changes, push your issue branch, and open a draft PR.” That is not permission to merge, deploy, message people, or begin every subsequent issue. State the intended permissions in the actual request; this example grants none by itself.
