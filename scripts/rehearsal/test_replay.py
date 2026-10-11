@@ -8,10 +8,12 @@ import unittest
 import urllib.error
 import urllib.request
 from datetime import UTC, datetime
+from html.parser import HTMLParser
 from http.server import HTTPServer
 from pathlib import Path
 
 from replay import REPO, OfflineReplayProvider, ReplayFailure, handler, page, receipt, save, sha256
+from synthetic_replay import gapped_target_job
 
 from hachi.contracts.api import ReportJob
 
@@ -165,6 +167,59 @@ class ReplayTests(unittest.TestCase):
                 self.assertIn("CACHE_MISSING", body)
                 self.assertNotIn(str(self.root), body)
                 self.assertIn("No live request or synthetic fallback", body)
+            finally:
+                server.shutdown()
+                thread.join()
+
+    def test_exact_cutoff_and_gapped_target_windows_are_visible(self):
+        self.write_source(gapped_target_job().model_dump(mode="json"))
+        job = self.provider().report()
+        result = job.result.root
+        body = page(job).decode()
+        self.assertIn(result.as_of.isoformat(), body)
+        for series in result.forecast.series:
+            for point in series.points:
+                self.assertIn(point.interval_start_utc.isoformat(), body)
+                self.assertIn(point.interval_end_utc.isoformat(), body)
+        self.assertIn("METRIC_NOT_OBSERVED", body)
+        self.assertNotIn('data-interval-band="true"', body)
+
+        class Positions(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.x = []
+
+            def handle_starttag(self, tag, attrs):
+                if tag == "circle":
+                    self.x.append(float(dict(attrs)["cx"]))
+
+        parsed = Positions()
+        parsed.feed(body)
+        # The requested 24-hour domain is shared by both series, preserving
+        # initial, between-window and trailing missing target periods.
+        self.assertEqual(parsed.x, [63.75, 86.25, 108.75, 266.25, 288.75])
+
+    def test_actual_host_refusal_and_post_cannot_read_or_mutate_cache(self):
+        provider = self.provider()
+        original = self.cache.read_bytes()
+        with HTTPServer(("127.0.0.1", 0), handler(provider)) as server:
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            base = f"http://127.0.0.1:{server.server_port}"
+            try:
+                request = urllib.request.Request(base + "/replay/report")
+                request.add_header("Host", f"localhost:{server.server_port}")
+                with self.assertRaises(urllib.error.HTTPError) as refused:
+                    opener.open(request)
+                with refused.exception as response:
+                    self.assertEqual(response.code, 409)
+                    self.assertEqual(json.loads(response.read())["error_code"], "HOST_REFUSED")
+                with self.assertRaises(urllib.error.HTTPError) as post:
+                    opener.open(urllib.request.Request(base + "/replay/report", data=b"{}"))
+                with post.exception as response:
+                    self.assertEqual(response.code, 501)
+                self.assertEqual(self.cache.read_bytes(), original)
             finally:
                 server.shutdown()
                 thread.join()

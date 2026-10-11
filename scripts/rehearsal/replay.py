@@ -7,7 +7,7 @@ import json
 import logging
 import os
 import stat
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Literal, Protocol, Self
@@ -17,6 +17,7 @@ from pydantic import ValidationError, model_validator
 from hachi.api.settings import git_dirty, git_sha
 from hachi.contracts.api import ReportJob
 from hachi.contracts.base import Contract, Sha256, UtcDatetime
+from hachi.contracts.requests import PhysiologyForecastHourlyRequest
 from hachi.contracts.results import PhysiologyForecastResult
 from hachi.storage import private_directory
 
@@ -209,6 +210,8 @@ def page(job: ReportJob) -> bytes:
         f"<p>Replay · original data mode: <strong>{escape(result.data_mode)}</strong></p>"
         f"<p>Recorded: {escape(replay.recorded_at_utc.isoformat())}</p>"
         f"<p>Source generated: {escape(result.generated_at_utc.isoformat())}</p>"
+        f'<p>Report cutoff (UTC): <time data-report-cutoff datetime="{result.as_of.isoformat()}">'
+        f"{escape(result.as_of.isoformat())}</time></p>"
         f"<p>Source code: {escape(result.git_sha)}</p>"
         f"<p>Model artifact: {escape(artifact.artifact_id if artifact else 'Unavailable')}</p>"
         f"<p>Artifact SHA256: {escape(artifact.artifact_sha256 if artifact else 'Unavailable')}</p>"
@@ -216,38 +219,58 @@ def page(job: ReportJob) -> bytes:
     )
     content = ""
     if isinstance(result, PhysiologyForecastResult):
+        scale_end = max(
+            p.interval_end_utc for series in result.forecast.series for p in series.points
+        )
+        if isinstance(job.request.root, PhysiologyForecastHourlyRequest):
+            scale_end = max(
+                scale_end, result.as_of + timedelta(hours=job.request.root.horizon_hours)
+            )
+        scale_seconds = (scale_end - result.as_of).total_seconds()
+        content += (
+            "<p>Shared elapsed UTC scale from report cutoff to "
+            f"{escape(scale_end.isoformat())}. Points mark interval midpoints; "
+            "missing target periods are left blank.</p>"
+        )
         for series in result.forecast.series:
             points = series.points
-            values = [p.median for p in points]
             lo = min(p.lower if p.lower is not None else p.median for p in points)
             hi = max(p.upper if p.upper is not None else p.median for p in points)
             span = hi - lo or 1
-            count = len(points)
 
-            def xy(index: int, value: float, n=count, low=lo, width=span) -> str:
-                x = 30 + index * 540 / max(1, n - 1)
+            def xy(point, value: float, low=lo, width=span) -> str:
+                midpoint = (
+                    point.interval_start_utc
+                    + (point.interval_end_utc - point.interval_start_utc) / 2
+                )
+                elapsed = (midpoint - result.as_of).total_seconds()
+                x = 30 + elapsed * 540 / scale_seconds
                 y = 170 - (value - low) * 140 / width
                 return f"{x:.4f},{y:.4f}"
 
-            line = " ".join(xy(i, value) for i, value in enumerate(values))
+            line = " ".join(xy(p, p.median) for p in points)
             band = ""
             if series.interval_calibration != "none":
-                boundary = [xy(i, p.lower) for i, p in enumerate(points)]
-                boundary += [xy(i, p.upper) for i, p in reversed(list(enumerate(points)))]
+                boundary = [xy(p, p.lower) for p in points]
+                boundary += [xy(p, p.upper) for p in reversed(points)]
                 band = (
                     f'<polygon data-interval-band="true" points="{" ".join(boundary)}" '
                     'fill="#dbeafe"/>'
                 )
             circles = "".join(
-                f'<circle data-median="{p.median}" cx="{xy(i, p.median).split(",")[0]}" '
-                f'cy="{xy(i, p.median).split(",")[1]}" r="3" fill="#1d4ed8"/>'
-                for i, p in enumerate(points)
+                f'<circle data-median="{p.median}" cx="{xy(p, p.median).split(",")[0]}" '
+                f'cy="{xy(p, p.median).split(",")[1]}" r="3" fill="#1d4ed8"/>'
+                for p in points
             )
             rows = "".join(
-                f'<tr><td>{i + 1}</td><td data-value="median">{p.median}</td>'
+                f'<tr><td><time data-interval-start datetime="{p.interval_start_utc.isoformat()}">'
+                f"{escape(p.interval_start_utc.isoformat())}</time></td>"
+                f'<td><time data-interval-end datetime="{p.interval_end_utc.isoformat()}">'
+                f"{escape(p.interval_end_utc.isoformat())}</time></td>"
+                f'<td data-value="median">{p.median}</td>'
                 f"<td>{p.lower if p.lower is not None else '—'}</td>"
                 f"<td>{p.upper if p.upper is not None else '—'}</td></tr>"
-                for i, p in enumerate(points)
+                for p in points
             )
             interval = (
                 "Point-only forecast · no interval or coverage claim"
@@ -258,15 +281,30 @@ def page(job: ReportJob) -> bytes:
                 )
             )
             content += (
-                f"<section><h2>{escape(series.metric)} · {escape(series.unit)}</h2>"
+                f'<section data-metric="{escape(series.metric)}">'
+                f"<h2>{escape(series.metric)} · {escape(series.unit)}</h2>"
                 f"<p>{escape(interval)}</p>"
                 '<svg viewBox="0 0 600 200" role="img" '
                 'aria-label="Saved forecast; exact values in table">'
-                f'{band}<polyline points="{line}" fill="none" stroke="#1d4ed8"/>{circles}</svg>'
-                "<table><caption>Exact saved forecast values by future bin</caption><thead><tr>"
-                "<th>Bin</th><th>Median</th><th>Lower</th><th>Upper</th></tr></thead>"
-                f"<tbody>{rows}</tbody></table></section>"
+                f'{band}<polyline points="{line}" fill="none" stroke="#1d4ed8"/>{circles}'
+                '<text x="30" y="194" font-size="10">+0 h</text>'
+                f'<text x="570" y="194" text-anchor="end" font-size="10">'
+                f"+{scale_seconds / 3600:g} h</text></svg>"
+                '<div class="table-scroll" tabindex="0" '
+                'aria-label="Exact forecast intervals; scroll horizontally">'
+                "<table><caption>Exact saved forecast values and UTC target intervals</caption>"
+                "<thead><tr>"
+                "<th>Interval start (UTC)</th><th>Interval end (UTC)</th>"
+                "<th>Median</th><th>Lower</th><th>Upper</th></tr></thead>"
+                f"<tbody>{rows}</tbody></table></div></section>"
             )
+        missing = "".join(
+            f'<li data-unavailable-metric="{escape(m.metric)}">'
+            f"{escape(m.metric)}: {escape(m.reason_code)}</li>"
+            for m in result.forecast.unavailable_metrics
+        )
+        if missing:
+            content += f"<h2>Unavailable metrics</h2><ul>{missing}</ul>"
     elif result.status == "unavailable":
         requirements = "".join(f"<li>{escape(r)}</li>" for r in result.requirements)
         content = f"<h2>Unavailable</h2><p>{escape(result.reason_code)}</p><ul>{requirements}</ul>"
@@ -298,7 +336,8 @@ def document(content: str) -> bytes:
         "body{font:16px system-ui;max-width:840px;margin:24px auto;padding:0 16px;color:#172033}"
         "p{overflow-wrap:anywhere}svg{width:100%;max-height:260px}table{width:100%;border-collapse:collapse}"
         "th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd}"
-        "header{border-bottom:3px solid #2563eb}"
+        "header{border-bottom:3px solid #2563eb}.table-scroll{overflow-x:auto}"
+        "time{white-space:nowrap}"
         "</style><header><h1>Offline replay rehearsal</h1>"
         "<p>Saved response only · no live inference. "
         "This viewer is separate from the app integration.</p></header><main>"

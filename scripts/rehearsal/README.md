@@ -116,6 +116,12 @@ warnings and quality. Projection sets only `ReplayInfo`. Recording time is when
 the cache was saved, not when inference happened. The viewer visibly labels replay,
 original mode and both timestamps; point-only forecasts have no interval band or
 coverage claim. Unavailable/error results retain their actual reason codes.
+The exact report cutoff and canonical `interval_start_utc`/`interval_end_utc` are
+visible. Every series uses the same elapsed UTC x domain, with points at interval
+midpoints. Hourly requests retain the whole requested horizon, so missing initial,
+inter-series and trailing target windows stay blank. A keyboard-focusable table
+scrolls locally on small screens. The contract requires contiguous targets within
+each series; no unsupported per-point abstention shape is manufactured.
 
 Only private regular files outside Git are accepted, bounded to 16 MiB. Cache files
 are created exclusively at mode 0600 under a 0700 parent. Symlinks, public files,
@@ -156,6 +162,11 @@ newline) with T3 `preview_evaluate`, `awaitPromise: true`. It reads the actual
 same-origin replay transport and compares rendered SVG geometry/table numbers,
 units, quality and provenance; output contains booleans/counts only. Keep it out
 of snapshots of private real content. A false `ok` is a failed comparison.
+It also checks the exact visible cutoff/interval timestamps and shared UTC geometry.
+Generate an explicitly synthetic staggered-window source with
+`python scripts/rehearsal/synthetic_replay.py --destination /private/owned/gaps/source.json`,
+then use the same save/check/serve path. Its five points and three missing target
+windows are a rendered gap regression, not real-data or inference evidence.
 
 This viewer proves the independent consumer path. App replay integration remains
 pending Coffee's concrete #17 source handoff and narrowly agreed module/root wiring.

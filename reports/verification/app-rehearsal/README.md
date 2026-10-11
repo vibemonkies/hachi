@@ -12,13 +12,39 @@ selected, no outer test was opened, and no clinical/product gate is waived.
 
 ## Private replay consumer follow-up
 
+The parent review of `e33ed3e` found a rendered fidelity blocker: the original
+viewer omitted `as_of` and interval endpoints, and its chart x coordinate was an
+ordinal index. Earlier browser receipts verified numeric points, recorded/generated
+metadata and that ordinal geometry; they **did not verify forecast target times**.
+Their dates and hashes remain historical evidence, not UTC target fidelity proof.
+The scoped correction shows canonical UTC cutoff/intervals, uses interval midpoints
+on one elapsed UTC domain across series, leaves initial/inter-series/trailing target
+gaps blank, and displays unavailable metric reasons. The new comparison checks
+visible cutoff, every interval endpoint and independent elapsed UTC geometry.
+
+Generated gap coverage uses valid contiguous series with staggered target windows:
+HR hours 1–4, steps hours 10–12, on the request's common 24-hour domain. The
+initial hour, six-hour separation and final twelve hours remain blank. The shared
+contract forbids noncontiguous points within one series; it was not bypassed.
+A focused regression failed before the correction on the missing cutoff, then
+passed. Host refusal and non-GET tests exercise real loopback HTTP. Five focused
+runtime guard tests now cover sealed test/validation-only origins, exact source
+coverage, forbidden interval claims/warnings and abstention only with empty
+packet **and** direct references. The original 12-test suite is now 19 tests.
+
+GreenBison's independent review had no blocking findings at `e33ed3e`. Its base CI
+count was 524 passed / 12 skipped / three subtests; api/baselines extra stages ran
+separately. The local totals below include those extras and should not be read as
+base-CI totals. Screenshots are now bound by SHA256/capture metadata in their
+producing browser receipt.
+
 After integrating main through PR75/78/81, `d947f55` repeated the actual runtime
 and rendered replay, rather than relying on the earlier receipts. Current
 [API](api-d947f55.json), [replay](replay-d947f55.json) and
 [browser aggregate](replay-browser-d947f55.json) receipts again show 25 origins,
 600 exact API points, the whole saved response unchanged except replay metadata,
 and 24 exact rendered points/geometry with the live API stopped. The final
-`make check` passed 629 tests, three subtests, five coordination tests and all
+`make check`, with api/baselines extras installed, passed 629 tests, three subtests, five coordination tests and all
 generated contract checks. Replay viewer source and synthetic screenshots are
 unchanged from `d812e94`; the earlier producing-source evidence remains below.
 
@@ -54,7 +80,7 @@ comparison. These screenshots are illustrations, not real-data evidence:
 - [Missing private cache error](replay-missing-cache.png), actual HTTP 409,
   `CACHE_MISSING`, visible alert/action and no fallback; no overflow on mobile
 
-Local `make check` passed 580 tests, three subtests, five coordination tests and
+Local `make check`, with api/baselines extras installed, passed 580 tests, three subtests, five coordination tests and
 generated schema/fixture/TypeScript checks. Twelve focused integrity/replay tests
 pass, including original response preservation, tampering after rehash, missing
 and corrupt cache, changed schema, public files/symlinks, pending/already replayed

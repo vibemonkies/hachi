@@ -111,15 +111,52 @@ def validation_packet(packet: Path, packet_index: Path):
     run, evaluation = load_packet(packet)
     split = SplitManifest.model_validate_json((packet / "split.json").read_bytes())
     require(run.split_manifest_sha256 == digest(packet / "split.json"), "Split hash mismatch")
+    require_validation_origins(split, evaluation["predictions"])
+    return run, evaluation
+
+
+def require_validation_origins(split: SplitManifest, predictions: list) -> None:
     require(split.test_opened_at_utc is None, "Outer test must remain sealed")
-    require(bool(evaluation["predictions"]), "Packet has no origins")
+    require(bool(predictions), "Packet has no origins")
     validation = set(split.validation_subjects)
     require(not validation.intersection(split.test_subjects), "Split overlap")
     require(
-        all(p["origin"]["subject_id"] in validation for p in evaluation["predictions"]),
+        all(p["origin"]["subject_id"] in validation for p in predictions),
         "Only inner-validation origins may be rehearsed",
     )
-    return run, evaluation
+
+
+def require_point_only(
+    result: PhysiologyForecastResult, metric: str, source_coverage: float
+) -> None:
+    require(len(result.forecast.series) == 1, "Unexpected forecast series count")
+    series = result.forecast.series[0]
+    require(series.metric == metric and series.unit == "bpm", "Metric/unit differs")
+    require(
+        series.interval_calibration == "none" and series.nominal_coverage is None,
+        "Point forecast claims intervals",
+    )
+    require(
+        all(p.lower is None and p.upper is None for p in series.points),
+        "Point forecast has bounds",
+    )
+    require(
+        len(result.provenance.feature_coverage) == 1
+        and result.provenance.feature_coverage[0].metric == metric
+        and result.provenance.feature_coverage[0].coverage == source_coverage,
+        "Feature coverage differs from source history",
+    )
+    require(
+        all(w.code != "UNCALIBRATED_INTERVALS" for w in result.warnings),
+        "Point forecast carries interval warning",
+    )
+
+
+def require_abstention(status: str, expected: dict, direct: dict) -> None:
+    require(
+        status == "unavailable" and not expected and not direct,
+        "Unexpected forecast failure/abstention",
+    )
 
 
 def prepare(args) -> dict:
@@ -300,44 +337,17 @@ def check(operator: Operator) -> dict:
                 result.provenance.dataset_snapshot == run.dataset_snapshot,
                 "Result snapshot differs",
             )
-            require(len(result.forecast.series) == 1, "Unexpected forecast series count")
-            series = result.forecast.series[0]
-            require(series.metric == served.metric and series.unit == "bpm", "Metric/unit differs")
-            require(
-                series.interval_calibration == "none" and series.nominal_coverage is None,
-                "Point forecast claims intervals",
-            )
-            require(
-                all(p.lower is None and p.upper is None for p in series.points),
-                "Point forecast has bounds",
-            )
-            require(
-                all(0 <= f.coverage <= 1 for f in result.provenance.feature_coverage),
-                "Invalid quality coverage",
-            )
             history = subject.hourly_features(
                 served.serving.feature_policy,
                 cutoff,
                 start=cutoff - timedelta(hours=served.split.lookback_hours),
             )
             observed = {f.start_utc for f in history if f.value is not None}
-            require(
-                len(result.provenance.feature_coverage) == 1
-                and result.provenance.feature_coverage[0].metric == served.metric
-                and result.provenance.feature_coverage[0].coverage
-                == len(observed) / served.split.lookback_hours,
-                "Feature coverage differs from source history",
-            )
+            require_point_only(result, served.metric, len(observed) / served.split.lookback_hours)
             warnings.update(w.code for w in result.warnings)
-            require(
-                "UNCALIBRATED_INTERVALS" not in warnings, "Point forecast carries interval warning"
-            )
-            shown = {p.interval_start_utc: p.median for p in series.points}
+            shown = {p.interval_start_utc: p.median for p in result.forecast.series[0].points}
         else:
-            require(
-                result.status == "unavailable" and not expected and not direct,
-                "Unexpected forecast failure/abstention",
-            )
+            require_abstention(result.status, expected, direct)
         for name, reference in (("packet", expected), ("direct", direct)):
             summary = agreement(shown, reference)
             for key, value in summary.items():

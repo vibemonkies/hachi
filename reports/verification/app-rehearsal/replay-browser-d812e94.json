@@ -61,5 +61,24 @@
     "real_apple_upload_to_chart": "pending source-policy API seam and17",
     "full_issue22": "blocked17/18/19/20/21; no final model/test/friend claim"
   },
-  "page_external_resource_requests_disallowed_by_csp": true
+  "page_external_resource_requests_disallowed_by_csp": true,
+  "screenshots": {
+    "replay-synthetic-desktop.png": {
+      "sha256": "48eb727976be887ac0d910093b7d616cc50215f8373fe79ed0474b67a132cfcc",
+      "captured_at_utc": "2026-10-11T12:49:12.310971+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)"
+    },
+    "replay-synthetic-phone.png": {
+      "sha256": "2bf5184b8262e98a6dc999f5da02a9259e10967fddb2eb230a54db8f24db1f37",
+      "captured_at_utc": "2026-10-11T12:49:20.569381+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)"
+    },
+    "replay-missing-cache.png": {
+      "sha256": "f6d1bbf8457ddbd3d3871f32f37e05b745ebef6d4c96dce2162e0b75605762ab",
+      "captured_at_utc": "2026-10-11T12:49:34.411170+00:00",
+      "capture_time_basis": "original T3 screenshot file mtime (UTC)"
+    }
+  },
+  "target_cutoff_and_interval_times_verified": false,
+  "x_scale": "ordinal point index; superseded by UTC fidelity fix"
 }
