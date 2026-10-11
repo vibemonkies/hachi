@@ -1,9 +1,10 @@
-"""Build the #11 encoder wheels (causal-conv1d, mamba-ssm, momentfm) from pinned, verified sources.
+"""Build the #11 encoder wheels (causal-conv1d, mamba-ssm, momentfm) from pinned Git commits.
 
 Runs on the GX10 with the system CPython 3.12, CPU only (no GPU lock needed). Everything it
 creates lives under the owner's workspace; the machine CUDA 13.0 toolkit, existing environments
 and the shared runtime lock are never read for building or changed. Every download is checked
-against a SHA-256 (CUDA redist, sdists, wheels) or an exact Git commit before use.
+against a SHA-256 (CUDA redist, wheels) or an exact Git commit before use. The PyPI sdists
+of causal-conv1d and mamba-ssm omit their CUDA sources, so both build from their release tags.
 """
 
 import argparse
@@ -223,33 +224,6 @@ def main():
         env["NVCC_APPEND_FLAGS"] = flags
     wanted = set(args.only or [])
     records = []
-    for item in sources["sdists"]:
-        if wanted and item["name"] not in wanted:
-            continue
-        sdist = fetch(
-            item["url"],
-            workspace / "toolchains/downloads" / Path(urlparse(item["url"]).path).name,
-            item["sha256"],
-        )
-        before = set(output.glob("*.whl"))
-        seconds = build_wheel(
-            builder,
-            sdist,
-            output,
-            {**env, item["force_build_env"]: "TRUE"},
-            output / f"{item['name']}.log",
-        )
-        (wheel,) = set(output.glob("*.whl")) - before
-        records.append(
-            {
-                "name": item["name"],
-                "version": item["version"],
-                "filename": wheel.name,
-                "sha256": digest(wheel),
-                "source": {"url": item["url"], "sha256": item["sha256"]},
-                "build_seconds": seconds,
-            }
-        )
     for item in sources["git"]:
         if wanted and item["name"] not in wanted:
             continue
@@ -268,7 +242,8 @@ def main():
         if head != item["commit"]:
             raise SystemExit(f"{item['name']} checkout is {head}, expected {item['commit']}")
         before = set(output.glob("*.whl"))
-        seconds = build_wheel(builder, checkout, output, env, output / f"{item['name']}.log")
+        build_env = {**env, item["force_build_env"]: "TRUE"} if "force_build_env" in item else env
+        seconds = build_wheel(builder, checkout, output, build_env, output / f"{item['name']}.log")
         (wheel,) = set(output.glob("*.whl")) - before
         records.append(
             {
