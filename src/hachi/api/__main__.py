@@ -83,7 +83,25 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(str(exc))
         port = args.port or int(os.environ.get("HACHI_API_PORT", settings.port))
         extra = frozenset() if _loopback(args.host) else frozenset({args.host})
-        uvicorn.run(create_app(settings, extra_hosts=extra), host=args.host, port=port)
+        import logging
+
+        class SafeServerErrors(logging.Filter):
+            def filter(self, record: logging.LogRecord) -> bool:
+                if record.exc_info:
+                    error = record.exc_info[1]
+                    record.msg = "ASGI request failed (%s)"
+                    record.args = (type(error).__name__,)
+                    record.exc_info = None
+                    record.exc_text = None
+                    record.stack_info = None
+                return True
+
+        # Uvicorn access logs contain raw URL/query subject IDs; traceback messages
+        # may contain request values. Keep startup diagnostics and exception classes.
+        logging.getLogger("uvicorn.error").addFilter(SafeServerErrors())
+        uvicorn.run(
+            create_app(settings, extra_hosts=extra), host=args.host, port=port, access_log=False
+        )
         return 0
     if args.command == "handoff":
         return _handoff(args, parser)
