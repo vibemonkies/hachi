@@ -173,21 +173,66 @@ missing/vendor-only history and foreign policy refusal. Additional sentinels ver
 known-only late counts, exclusive reason reconciliation, exact-duplicate counting,
 all-late missingness, crossing-winner suppression, read-only snapshots and native
 oracle agreement. Feature identity/readiness stay fixed while later audit receipts
-show newly known exclusions. On this Mac, a generated
-1,440-record/48-hour probe took 0.012 seconds for one native read versus 0.285
-seconds for sealed-hour replay (48 eligible bins), Python 3.12.13. Replay reuses a
-read-only SQLite snapshot and the canonical `iter_observations(as_of=closure)`
-boundary, with private disk-backed temporary state. Generated hostile-record tests
-pin agreement with an independent native-read oracle. It scans prior candidates
-per hour; supply the model lookback `start` in serving.
+show newly known exclusions.
 
-GreenHawk's independent review at `cb1c5a7` measured a 48-hour lookback at 12.0
-seconds for 20,000 generated HR records and 69.5 seconds for 105,120 records; one
-native read of the latter took 1.46 seconds. These are reviewer measurements of
-prior replay, not an interactive-latency guarantee for the audited update. The
-history × lookback cost remains an explicit API integration gate. A performance
-change must preserve importer precedence, the fixed closure and native-read oracle;
-no parser/store or API changes are included in this audit update.
+### Exact windowed replay and performance
+
+Serving should pass its declared lookback `start`. The helper opens one read-only
+snapshot connection and builds a numeric index of the requested metric's candidates
+known by the audit cutoff. Each hour starts with its own `[start, closure)` window.
+It repeatedly extends the left edge across closure-eligible overlapping intervals,
+retaining transitive dependencies even before the model lookback. Candidates ending
+after closure are ineligible, so the right edge cannot extend. Disconnected overlap
+components cannot affect each other's greedy winners. A connection-local view feeds
+that window to the **unchanged importer `select_candidates`** ordering and overlap
+rules. Exact integer predicates decide edges; outward-rounded RTree bounds only
+narrow the search. This avoids parsing the entire historical import once per hour
+without applying a naive date filter that would change precedence.
+
+Numeric metadata and selector state use connection-local in-memory SQLite TEMP
+tables (`temp_store=MEMORY`); health payloads are read from the original snapshot.
+No temporary participant file is created. Closing the connection releases state on
+success, failure or interruption, and process termination leaves no temp file.
+Tests pin equality to the independent full `iter_observations(as_of=closure)` oracle,
+including a transitive pre-lookback suppressor chain, half-open edges, late/future
+records, other metric families and randomized hostile intervals. Failure injection
+checks read-only source hashes, memory-only TEMP storage and closed connections.
+
+Measured on MacBook-Air-4.local, macOS arm64, Python 3.12.13 / SQLite 3.50.4, with
+105,120 **generated** native HR points (8,760 hours × 12/hour) in a 137,154,560-byte
+snapshot; context 48 hours / 576 points. Baseline was merged helper `0662bef`
+(SHA256 `06a4b378c7258a93fac7d474c2b9d8d7a4c24f4f0341ff6cdfde268b7068c891`).
+The optimized helper SHA256 is
+`7987e96e77a6a349722d6e44532a93cbb39c5d372b7e0ad3991b09d5fe9cd820`.
+
+| Replay | Process-cold | Warm | Process peak RSS |
+| --- | ---: | ---: | ---: |
+| Full-history baseline | 60.376 s | 67.860 s | 55.5 MB |
+| Windowed, initial measurement | 0.406 s | 0.430 s | 68.3 MB |
+| Windowed, repeat measurement | 0.777 s | 0.775 s | 69.1 MB |
+
+“Process-cold” means the first call in a fresh Python process; the OS filesystem
+cache was **not** evicted. Each warm call rebuilds its own index; no participant
+cache is shared. Native iteration once took 1.976 s in the baseline process.
+All 48 bins **and audits**, including sub-threshold values, match the merged full
+replay exactly (serialized receipt SHA256
+`4397a59847a382ce969c32ae0e5114ec3e18e2532ef97dd2bc3463170a48edca`).
+The unchanged 0.5/30 gates yield zero features for this sparse fixture; faster
+abstention is not increased source readiness or a physiological coverage claim.
+
+The generated-only runner refuses real-source metadata and emits counts, timings
+and hashes. Use a fresh private owner/run root and the project's Python environment:
+
+```sh
+python tests/data/apple_health/hourly_benchmark.py prepare --run-root /private/owner/hourly-bench
+python tests/data/apple_health/hourly_benchmark.py measure --run-root /private/owner/hourly-bench --output /private/owner/hourly-bench/timing.json
+```
+
+These are helper measurements. The prior ~70-second API-path result from GreenHawk
+and WindyTrout remains the integration baseline until the same native volume and
+context are measured through the source-admitted serving path. No parser/store,
+evaluation-contract, artifact descriptor or model-gate changes are part of this
+performance change.
 
 A separate generated 48-hour dense/sparse probe loaded the actual frozen PMData
 `hourly-last-valid-v1-141306001b16e168` artifact with receipt
