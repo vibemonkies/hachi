@@ -1,0 +1,43 @@
+schema_version = "0.1"
+dataset_id = "dreamt"
+name = "DREAMT: Dataset for Real-time sleep stage EstimAtion using Multisensor wearable Technology"
+version = "2.2.0"
+status = "candidate"
+access = "registration"
+primary_url = "https://physionet.org/content/dreamt/2.2.0/"
+doi = "10.13026/3f7y-2d80"
+catalog_checked_on = 2026-10-11
+citation = "Wang K, Yang J, Shetty A, Dunn J. DREAMT (version 2.2.0). PhysioNet (2026). doi:10.13026/3f7y-2d80; Wang WK et al., CHIL 2024, PMLR 248:380-396; plus the standard PhysioNet citation shown on the project page."
+access_steps = [
+  "Create a PhysioNet account.",
+  "Sign the PhysioNet Restricted Health Data Use Agreement on the DREAMT project page; no training is required.",
+  "Download. Each teammate signs individually.",
+]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Only accounts used solely by users who signed; not the shared GX10 account unless all three have signed."
+checksum_strategy = "SHA-256 per file, compared with PhysioNet's SHA256SUMS.txt."
+blocked_capabilities = []
+notes = [
+  "100 adults from a sleep-disorder lab, one night each: Empatica E4 wrist signals aligned with PSG 30-second sleep stages.",
+  "Optional (#24): validating wrist sleep/wake against PSG; clinical apnea-heavy population and raw E4 signals.",
+]
+
+[terms]
+license = "PhysioNet Restricted Health Data License 1.5.0"
+license_url = "https://physionet.org/content/dreamt/2.2.0/"
+commercial_use = "unclear"
+redistribution = "prohibited"
+team_access = "each_user_must_accept"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://physionet.org/content/dreamt/2.2.0/"
+quote = "Only registered users who sign the specified data use agreement can access the files."
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "alertness"
+role = "exploratory"
+notes = "Checks how well wrist signals recover sleep timing that the scenario model consumes."

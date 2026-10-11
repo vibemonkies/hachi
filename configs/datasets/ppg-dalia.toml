@@ -1,0 +1,34 @@
+schema_version = "0.1"
+dataset_id = "ppg-dalia"
+name = "PPG-DaLiA"
+version = "uci-495"
+status = "rejected_for_task"
+access = "public"
+primary_url = "https://archive.ics.uci.edu/dataset/495/ppg+dalia"
+doi = "10.24432/C53890"
+catalog_checked_on = 2026-10-11
+citation = "Reiss A, Indlekofer I, Schmidt P, Van Laerhoven K. Deep PPG: Large-Scale Heart Rate Estimation with Convolutional Neural Networks. Sensors 2019;19(14):3079. doi:10.3390/s19143079"
+access_steps = ["Download data.zip (2.7 GB) and readme.pdf from the UCI page."]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Any team machine."
+checksum_strategy = "SHA-256 of the archive as downloaded."
+blocked_capabilities = []
+tasks = []
+notes = [
+  "Rejected for the core tasks: raw PPG with ECG-derived HR for 15 subjects over a few hours; useful only for a raw-PPG sensor-quality branch (#24), not watch-summary forecasting.",
+]
+
+[terms]
+license = "CC BY 4.0"
+license_url = "https://creativecommons.org/licenses/by/4.0/legalcode"
+commercial_use = "allowed"
+redistribution = "allowed_with_attribution"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://archive.ics.uci.edu/dataset/495/ppg+dalia"
+quote = "This dataset is licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) license."
+checked_on = 2026-10-11

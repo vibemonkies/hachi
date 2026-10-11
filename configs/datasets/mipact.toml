@@ -1,0 +1,36 @@
+schema_version = "0.1"
+dataset_id = "mipact"
+name = "MiPACT: Michigan Predictive Activity & Clinical Trajectories"
+version = "unreleased"
+status = "rejected_for_task"
+access = "institutional_application"
+primary_url = "https://depressioncenter.org/research-services/mobile-technologies-core/mobile-health-datasets"
+catalog_checked_on = 2026-10-11
+citation = "Golbus JR, et al. Wearable device signals and home blood pressure data across age, sex, race, ethnicity, and clinical phenotypes in the Michigan Predictive Activity & Clinical Trajectories in Health (MIPACT) study. Lancet Digit Health 2021;3(11):e707-e715. doi:10.1016/S2589-7500(21)00138-2"
+access_steps = [
+  "Only through a University of Michigan collaborator using DataDirect (U-M account, IRB approval, PEERRS training, faculty sponsor).",
+]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Not applicable."
+checksum_strategy = "Not applicable."
+blocked_capabilities = []
+tasks = []
+notes = [
+  "Rejected for now: individual-level data are not publicly available and the team has no University of Michigan collaborator; reconsider if one appears.",
+  "Content would fit well: Apple Watch HR/steps, home blood pressure and EHR for about 6,700 people.",
+]
+
+[terms]
+license = "Not publicly available; University of Michigan DataDirect access"
+license_url = "https://depressioncenter.org/research-services/mobile-technologies-core/mobile-health-datasets"
+commercial_use = "unclear"
+redistribution = "prohibited"
+team_access = "each_user_must_accept"
+shared_gx10_account = "prohibited"
+analysis_registration_required = true
+
+[[terms.evidence]]
+url = "https://depressioncenter.org/research-services/mobile-technologies-core/mobile-health-datasets"
+quote = "can be accessed through DataDirect"
+checked_on = 2026-10-11

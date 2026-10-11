@@ -1,0 +1,41 @@
+schema_version = "0.1"
+dataset_id = "all-of-us"
+name = "All of Us Research Program (Researcher Workbench)"
+version = "CDR-v9"
+status = "candidate"
+access = "institutional_application"
+primary_url = "https://www.researchallofus.org/data-tools/workbench/"
+catalog_checked_on = 2026-10-11
+citation = "Use the All of Us acknowledgement and citation wording given in the Workbench at access time (not verified from outside)."
+acknowledgement = "Required program acknowledgement (wording unverified outside the Workbench)."
+access_steps = [
+  "Check whether your institution has signed an All of Us Data Use and Registration Agreement (DURA); if not, a signing official must, which can take weeks to months.",
+  "Register with an institutional email, enable two-step verification and verify identity (Login.gov or ID.me).",
+  "Complete Responsible Conduct of Research training and sign the Data User Code of Conduct.",
+  "Create a Workbench project with a public description; all analysis happens inside the cloud Workbench.",
+]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Cloud Workbench only; participant-level data cannot be downloaded."
+checksum_strategy = "Not applicable: data never leaves the Workbench; record the CDR version used."
+blocked_capabilities = [
+  "Local or GX10 training: participant-level data cannot leave the Workbench.",
+]
+notes = [
+  "Fitbit heart rate, activity and sleep for 68,000+ participants plus EHR, which could supply illness labels (from search snippets; primary support pages blocked automated fetch).",
+  "Optional (#24): only worthwhile if the university already has a DURA.",
+]
+
+[terms]
+license = "All of Us Data Use and Registration Agreement and Data User Code of Conduct"
+license_url = "https://www.researchallofus.org/data-tools/workbench/"
+commercial_use = "unclear"
+redistribution = "prohibited"
+team_access = "each_user_must_accept"
+shared_gx10_account = "prohibited"
+analysis_registration_required = true
+
+[[terms.evidence]]
+url = "https://www.researchallofus.org/data-tools/workbench/"
+quote = "Researchers must complete registration, training and agree to the Data User Code of Conduct to access data in the Researcher Workbench."
+checked_on = 2026-10-11

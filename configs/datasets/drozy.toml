@@ -1,0 +1,40 @@
+schema_version = "0.1"
+dataset_id = "drozy"
+name = "DROZY: the ULg multimodality drowsiness database"
+version = "orbi-2018-07"
+status = "candidate"
+access = "public"
+primary_url = "https://orbi.uliege.be/handle/2268/191620"
+doi = "10.1109/WACV.2016.7477715"
+catalog_checked_on = 2026-10-11
+citation = "Massoz Q, Langohr T, Francois C, Verly JG. The ULg multimodality drowsiness database (called DROZY) and examples of use. WACV 2016. doi:10.1109/WACV.2016.7477715"
+access_steps = [
+  "Read DROZY-LicenseAgreement-20180718.pdf on the ORBi record and record its terms here before downloading.",
+  "Download the 2.46 GB archive from ORBi.",
+]
+access_owner = "justin06lee"
+storage = "Pending the license agreement's terms."
+checksum_strategy = "SHA-256 of the archive as downloaded."
+notes = [
+  "14 subjects, three lab sessions each with increasing sleep deprivation: KSS, PVT reaction times and 512 Hz PSG; some sessions lost.",
+  "No consumer wearable; the only verified open source of paired KSS and PVT found, useful to sanity-check alertness scales, not to fit a personal model.",
+]
+
+[terms]
+license = "DROZY license agreement PDF (terms not yet read)"
+license_url = "https://orbi.uliege.be/handle/2268/191620"
+commercial_use = "unclear"
+redistribution = "unclear"
+team_access = "unclear"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://www.drozy.ulg.ac.be/"
+quote = "Check our website, read our paper(s), or contact us to get other informations."
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "alertness"
+role = "exploratory"
+notes = "KSS and PVT under controlled sleep deprivation."

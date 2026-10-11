@@ -1,0 +1,44 @@
+schema_version = "0.1"
+dataset_id = "stanford-covid19-wearables-phase2"
+name = "Stanford COVID-19 wearables data, phase 2 (Alavi et al. 2022)"
+version = "2022-nm"
+status = "candidate"
+access = "public"
+primary_url = "https://www.nature.com/articles/s41591-021-01593-2"
+doi = "10.1038/s41591-021-01593-2"
+catalog_checked_on = 2026-10-11
+citation = "Alavi A, Bogu GK, Wang M, et al. Real-time alerting system for COVID-19 and other stress events using wearable data. Nat Med 28, 175-184 (2022). doi:10.1038/s41591-021-01593-2"
+access_steps = [
+  "Download https://storage.googleapis.com/gbsc-gcp-project-ipop_public/COVID-19-Phase2/COVID-19-Phase2-Wearables.zip (5,537,624,129 bytes).",
+  "Compare with the bucket's published MD5 (base64 GcW5agCBOE7a4+Lhj+i/NA==), then record the SHA-256 here.",
+]
+access_owner = "justin06lee"
+storage = "Any team machine or the GX10; attribution required."
+checksum_strategy = "Verify the GCS MD5 at download, then pin SHA-256 of the archive."
+notes = [
+  "3,318 participants, 84 infected, from the real-time alerting study; no explicit data license is stated, so terms are recorded as unclear (non-commercial research with citation only).",
+]
+
+[terms]
+license = "No explicit data license; public download from the paper's data availability statement"
+license_url = "https://www.nature.com/articles/s41591-021-01593-2"
+commercial_use = "unclear"
+redistribution = "unclear"
+team_access = "shareable_within_team"
+shared_gx10_account = "allowed"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://www.nature.com/articles/s41591-021-01593-2"
+quote = "https://storage.googleapis.com/gbsc-gcp-project-ipop_public/COVID-19-Phase2/COVID-19-Phase2-Wearables.zip"
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Alert burden and lead time on a larger multi-device cohort."
+
+[[tasks]]
+task = "illness_onset"
+role = "outcome_labels"
+notes = "84 infection episodes with wearable history; check onset-label definitions before use."

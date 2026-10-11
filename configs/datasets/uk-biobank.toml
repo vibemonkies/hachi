@@ -1,0 +1,40 @@
+schema_version = "0.1"
+dataset_id = "uk-biobank"
+name = "UK Biobank (accelerometry, field 90001)"
+version = "applications-paused-2026"
+status = "candidate"
+access = "institutional_application"
+primary_url = "https://www.ukbiobank.ac.uk/use-our-data/apply-for-access/"
+catalog_checked_on = 2026-10-11
+citation = "Cite UK Biobank and the application number as required by the Material Transfer Agreement."
+acknowledgement = "UK Biobank application number (required by the MTA)."
+access_steps = [
+  "Wait for applications to reopen (UK Biobank states late 2026).",
+  "Apply through the Access Management System with an institutional affiliation; students apply for one supervised project at the reduced student fee.",
+  "Analyse on the UK Biobank Research Analysis Platform as permitted by the MTA.",
+]
+access_owner = "justin06lee"
+approved_users = []
+storage = "As permitted by the MTA; not the shared GX10 account."
+checksum_strategy = "Per the access platform; record the release and field identifiers."
+blocked_capabilities = [
+  "Everything until applications reopen.",
+]
+notes = [
+  "Primary pages blocked automated fetch; status comes from search snippets of UK Biobank's pages.",
+  "7-day 100 Hz wrist accelerometry for about 103,000 participants; one week per person, no heart rate.",
+]
+
+[terms]
+license = "UK Biobank Material Transfer Agreement"
+license_url = "https://www.ukbiobank.ac.uk/use-our-data/apply-for-access/"
+commercial_use = "unclear"
+redistribution = "prohibited"
+team_access = "each_user_must_accept"
+shared_gx10_account = "prohibited"
+analysis_registration_required = true
+
+[[terms.evidence]]
+url = "https://www.ukbiobank.ac.uk/use-our-data/apply-for-access/"
+quote = "applications are currently paused ... We intend to accept new applications in late 2026."
+checked_on = 2026-10-11

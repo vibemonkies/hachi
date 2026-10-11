@@ -1,0 +1,113 @@
+# Carnegie Mellon Common Cold Project: five viral-challenge studies plus an aggregated set.
+# CMU publishes no release numbers, so the version names the retrieval and the archives are
+# pinned by checksum.
+schema_version = "0.1"
+dataset_id = "cmu-common-cold-project"
+name = "Common Cold Project (BCS, PCS1, PCS2, PMBC, PCS3, aggregated Studies 1-5)"
+version = "retrieved-2026-10-10"
+status = "downloaded"
+access = "registration"
+primary_url = "https://www.cmu.edu/common-cold-project/data/index.html"
+catalog_checked_on = 2026-10-11
+citation = "Methods: The data were collected by the Laboratory for the Study of Stress, Immunity, and Disease at Carnegie Mellon University under the directorship of Sheldon Cohen, PhD; and were accessed via the Common Cold Project website (www.commoncoldproject.com; grant number NCCIH AT006694). Reference: Laboratory for the Study of Stress, Immunity, and Disease. (2016). Common Cold Project. Retrieved from http://www.commoncoldproject.com"
+acknowledgement = "Cite each study's grants: aggregated NCCIH AT006694; BCS NIAID R01 AI23072 and ONR N00014-88-K-0063; PCS1/PCS2 NIMH R01 MH50429 and NIH 5M01 RR00056; PMBC NHLBI P01 HL65111 and HL65112, MacArthur Network, NCI P30CA047904; PCS3 NIAID R01 AI066367, UL1 RR024153 and UL1 TR000005 (the CMU page also prints this number as TR0005 and RT000005), PA DOH 08-01-2, NCCIH RC1AT005799."
+access_steps = [
+  "Read the CCP Data-Sharing Agreement at https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html.",
+  "Complete the CCP registration form yourself; submitting it accepts the agreement. Registration is per person.",
+  "Download the study archives from the link CMU sends.",
+  "Before analysing, register the planned analysis with CMU's Laboratory for the Study of Stress, Immunity, and Disease using the Data Analysis Form.",
+  "After publishing anything, report it with the Data Set Publication Form.",
+]
+access_owner = "justin06lee"
+approved_users = ["justin06lee", "ezzy1630", "CoffeeCoder1015"]
+storage = "Raw archives stay on storage only the access owner uses, outside Git, on an encrypted volume (the agreement requires appropriate security; an unencrypted external drive does not meet it). Not on the shared GX10 account until every teammate with access to that account has accepted the CCP agreement."
+checksum_strategy = "SHA-256 of each downloaded archive as received; ingestion later records per-file checksums of the extracted codebooks and data files."
+blocked_capabilities = [
+  "Wearable-based illness-onset prediction: the studies contain no wearable signals.",
+  "Any analysis before the planned analysis is registered with CMU.",
+  "Hosted-LLM processing of participant-level rows.",
+  "Placing the data on the shared GX10 account before all users accept the agreement.",
+]
+notes = [
+  "Controlled viral-challenge (inoculation) studies of healthy adults aged 18-55, 1986-2011; de-identified. BCS n=399 (rhinoviruses 2, 9, 14, RSV, coronavirus 229E; quarantine to day 6), PCS1 n=276 (RV39/RV21, 5 days), PCS2 n=334 (RV39/RV23, 5 days), PMBC n=193 (influenza A for 38 over 6 days, RV39 for 155 over 5 days), PCS3 n=213 (RV39, 5 days); serum about 28 days after challenge.",
+  "Infection: challenge virus recovered from nasal secretions on any post-challenge day, or a 4-fold rise in virus-specific antibody (BCS RSV/coronavirus: >2 SD rise in IgA or IgG).",
+  "Clinical cold (Pittsburgh studies): infection plus mucus weight >= 10 g or nasal clearance >= 7 min average, or Modified Jackson total >= 6 with self-reported cold or rhinorrhea on 3+ days. BCS: clinician rating >= 2 of 4 plus symptoms on days 2-6.",
+  "Follow-up ends with the 5-6 day quarantine, so most recoveries are right-censored; exact recovery days cannot be trained from it.",
+  "The DSA says planned analyses will be registered; the FAQ calls the analysis form a request. Register before analysing (safe reading). The CMU site states it is no longer maintained.",
+  "Never read participant-level rows into a hosted LLM conversation: passing data to a provider that has not accepted the agreement is passing it to a third party. Agents work through code and aggregate counts only.",
+  "Also contains evening-interview social-activity data (PMBC and PCS3); not used by Hachi.",
+]
+
+[terms]
+license = "CCP Data-Sharing Agreement"
+license_url = "https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html"
+commercial_use = "prohibited"
+redistribution = "only_to_users_who_accepted"
+team_access = "each_user_must_accept"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = true
+
+[[terms.evidence]]
+url = "https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html"
+quote = "the data will be used for research purposes only; the data will not be used for commercial purposes"
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html"
+quote = "the data will not be passed on to a third party who has not accepted the terms of the CCP Data-Sharing Agreement"
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html"
+quote = "planned analyses will be registered with the Laboratory for the Study of Stress, Immunity, and Disease"
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://www.cmu.edu/common-cold-project/data/data-sharing-agreement/index.html"
+quote = "the data will be secured using appropriate technology"
+checked_on = 2026-10-11
+
+[[terms.evidence]]
+url = "https://www.cmu.edu/common-cold-project/how-to-cite-data-and-grants/index.html"
+quote = "accessed via the Common Cold Project website (www.commoncoldproject.com; grant number NCCIH AT006694)"
+checked_on = 2026-10-11
+
+[[files]]
+name = "british cold study.zip"
+bytes = 6224306
+sha256 = "18d44f3f6858565a40a7b3104d9f13a86a57c4e39313cc4a018609ae26683ecb"
+
+[[files]]
+name = "pittsburgh cold study.zip"
+bytes = 9199991
+sha256 = "95f35f02164059fee6b4eb5adbe5102884a87df54627a7259bec5c7ee6e3bea2"
+
+[[files]]
+name = "pittsburgh cold study 2.zip"
+bytes = 10648092
+sha256 = "2e62fdddc2798d3669a9beed6463d2ca3bdc29db9978a57f4ec4eb769af7a3d7"
+
+[[files]]
+name = "Pittsburgh Cold Study 3.zip"
+bytes = 62173222
+sha256 = "95c3936da2e07b80403b2c104279cc74a4748ad6e3537aea8093766b9d8b4c75"
+
+[[files]]
+name = "Pittsburgh Mind-Body Center Study.zip"
+bytes = 25379318
+sha256 = "21ecd518f5503594d086686df72207636e711b4ab1bcb6100c8042a1d85fbaf0"
+
+[[files]]
+name = "Aggregated Cold Study (Studies 1-5) .zip"
+bytes = 60512756
+sha256 = "6a0d7443dac4bedaf8a733564001cf320943b99d13fbb6a343b76eaa70f1d348"
+
+[[tasks]]
+task = "recovery"
+role = "outcome_labels"
+notes = "Symptom-resolution endpoints after a known inoculation time, with right-censoring at the end of quarantine. Supports a symptom-only recovery baseline; no wearable predictors."
+
+[[tasks]]
+task = "illness_onset"
+role = "exploratory"
+notes = "Shows how symptom-onset and clinical-cold definitions behave against lab-confirmed infection. Cannot train or evaluate wearable onset prediction."

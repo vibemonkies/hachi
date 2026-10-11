@@ -1,0 +1,52 @@
+# The consented friend's Apple Health export: the late, held-out case study in #21.
+schema_version = "0.1"
+dataset_id = "personal-apple-export"
+name = "Consented personal Apple Health export (late held-out case study)"
+version = "not-yet-collected"
+status = "candidate"
+access = "private_consented"
+primary_url = "https://support.apple.com/guide/iphone/share-your-health-data-iph5ede58c3d/ios"
+catalog_checked_on = 2026-10-11
+citation = "Not published; cite only with the person's separate presentation consent."
+access_steps = [
+  "Obtain written permission for processing, and separately for any presentation.",
+  "Before anyone sees predictions, have the person privately record symptom onset and how certain they are.",
+  "The person exports from Health > profile > Export All Health Data and hands export.zip to the data holder directly; never through GitHub or chat.",
+  "The data holder keeps the withheld tail sealed until the frozen model's predictions are hashed and saved (#21).",
+]
+access_owner = "justin06lee"
+approved_users = []
+storage = "Only on the data holder's encrypted machine, outside Git and outside the shared GX10 account unless the person agrees otherwise."
+checksum_strategy = "SHA-256 of export.zip recorded privately at hand-over; the registry records only that a checksum exists."
+blocked_capabilities = [
+  "Any use before #21's frozen-model gate.",
+  "Population accuracy claims: this is one person.",
+]
+notes = [
+  "Routine exports contain summaries, not full raw PPG.",
+  "Collected late on purpose so it cannot leak into training or tuning.",
+]
+
+[terms]
+license = "Individual consent from the data subject (processing and presentation consented separately)"
+license_url = "https://support.apple.com/guide/iphone/share-your-health-data-iph5ede58c3d/ios"
+commercial_use = "prohibited"
+redistribution = "prohibited"
+team_access = "each_user_must_accept"
+shared_gx10_account = "only_if_all_users_authorized"
+analysis_registration_required = false
+
+[[terms.evidence]]
+url = "https://github.com/vibemonkies/hachi/blob/main/docs/EVALUATION.md"
+quote = "Obtain the friend's permission for processing and separately for any presentation. Keep raw files, exact dates, and symptom notes out of GitHub."
+checked_on = 2026-10-11
+
+[[tasks]]
+task = "anomaly"
+role = "evaluation"
+notes = "Retrospective held-out replay at prespecified cutoffs before recorded onset."
+
+[[tasks]]
+task = "illness_onset"
+role = "evaluation"
+notes = "Only if a validated illness artifact exists; otherwise the unavailable state is shown."
