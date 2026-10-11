@@ -1,0 +1,1366 @@
+{
+  "active_outer_fold": 0,
+  "baseline": "ridge-handcrafted",
+  "data_mode": "real",
+  "dataset_snapshot": {
+    "dataset_id": "pmdata",
+    "dataset_version": "simula-2020-04-24",
+    "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+  },
+  "embedding_drift": {
+    "between_window_relative_spread_mean": 0.2172343930167412,
+    "wbm_hr_only": {
+      "cosine_mean": 0.8474611480709889,
+      "cosine_p05": 0.7715142612869982,
+      "relative_l2_mean": 0.5854313460108462
+    },
+    "wbm_no_sleep": {
+      "cosine_mean": 0.9636896175544956,
+      "cosine_p05": 0.9455935336544643,
+      "relative_l2_mean": 0.2727344910474259
+    },
+    "wbm_sleep_records_only": {
+      "cosine_mean": 0.9904103960279754,
+      "cosine_p05": 0.9849915643133689,
+      "relative_l2_mean": 0.13596415447010143
+    },
+    "wbm_workouts_zero": {
+      "cosine_mean": 0.795674480660853,
+      "cosine_p05": 0.7068456750941202,
+      "relative_l2_mean": 0.616794691189829
+    }
+  },
+  "embedding_tables": {
+    "meanpool": {
+      "dim": 76,
+      "sha256": "fccec690126f75626500f249840bd16e4b0af708c838266f9b46be6124eb3126"
+    },
+    "moment": {
+      "dim": 5120,
+      "sha256": "a881f8965664d53d16a9e77cd54403f40b227b5bfe44ffbc53efcae26e363801"
+    },
+    "moment_hr_only": {
+      "dim": 1024,
+      "sha256": "c5e823ba37b14714df118099053608f1940139fad81f6b854ef440fef6088bd8"
+    },
+    "wbm_full": {
+      "dim": 256,
+      "sha256": "961f60beecb196c79aa0cf04856448c0de0903b4f0568170cc9ab59354d9dddb"
+    },
+    "wbm_hr_only": {
+      "dim": 256,
+      "sha256": "5861094561b7ea3c70c0e037b7b9729e0332a5496d1035dc99293360d3ee796b"
+    },
+    "wbm_no_sleep": {
+      "dim": 256,
+      "sha256": "2f9a90423e622ea7864442f2bdc23f02e0ea3ca388ce80a1b5fca13346a9da63"
+    },
+    "wbm_sleep_records_only": {
+      "dim": 256,
+      "sha256": "26bf68ded3abe197be1155abad4958b11efab6c186e636e2f216316d5da234c1"
+    },
+    "wbm_workouts_zero": {
+      "dim": 256,
+      "sha256": "5774677534b8e76c66f6a5f7f94b848253591fbf2346428a225cc96d8e775000"
+    }
+  },
+  "environment_sha256": "1b290745f51cf459018c95226823b49db1422e08817402bfc111fef0c30b1297",
+  "evidence_files": [
+    "build-failures.json",
+    "built-wheels-blackwell.json",
+    "built-wheels-upstream.json",
+    "embed-moment.json",
+    "embed-wbm.json",
+    "environment.json",
+    "jobs.json",
+    "kernel-image-probe-blackwell.json",
+    "kernel-image-probe-upstream.json",
+    "kernels-attempt1-no-python-headers.json",
+    "kernels-attempt2-ptxas-sm121a.json",
+    "kernels.json",
+    "moment-proof.json",
+    "wbm-proof.json"
+  ],
+  "experiment_sha256": "257f6e321e9bd26b95aaea2931a3df64f12d8838cb8ad8917abe3f41304c53fc",
+  "git_dirty": false,
+  "git_sha": "82febecbfdc070a0c453a663d814a53c3d047655",
+  "inner_folds": 3,
+  "inputs": {
+    "dataset_snapshot": {
+      "dataset_id": "pmdata",
+      "dataset_version": "simula-2020-04-24",
+      "snapshot_sha256": "06606ac2708b1c5329b1cfa04e6edfb9a0583c5a6c9f2eb1465b07aebab2ee47"
+    },
+    "first_window_end_utc": "2019-11-07T23:00:00+00:00",
+    "inputs_sha256": "63cb2622d8d40038bef1f0cf9d0799dbdc0767aee287f73cbc9001fdb256056e",
+    "last_window_end_utc": "2020-04-01T22:00:00+00:00",
+    "native_observed_fraction": {
+      "heart_rate": 0.8715557851698775,
+      "sleep_asleep": 0.8976540452858698,
+      "sleep_in_bed": 0.8976568228784748,
+      "steps": 0.8740445081439016,
+      "walking_running_distance": 0.8740445081439016
+    },
+    "subjects": 16,
+    "wbm_channel_observed_fraction": {
+      "hk_iphone:HKQuantityTypeIdentifierDistanceWalkingRunning": 0.0,
+      "hk_iphone:HKQuantityTypeIdentifierFlightsClimbed": 0.0,
+      "hk_iphone:HKQuantityTypeIdentifierStepCount": 0.0,
+      "hk_watch:HKQuantityTypeIdentifierActiveEnergyBurned": 0.0,
+      "hk_watch:HKQuantityTypeIdentifierDistanceWalkingRunning": 0.8740445081439016,
+      "hk_watch:HKQuantityTypeIdentifierHeartRate": 0.8715557851698775,
+      "hk_watch:HKQuantityTypeIdentifierStepCount": 0.8740445081439016,
+      "sleep:asleep": 0.8976540452858698,
+      "sleep:inbed": 0.8976568228784748,
+      "workout:HKWorkoutActivityTypeCycling": 0.0,
+      "workout:HKWorkoutActivityTypeElliptical": 0.0,
+      "workout:HKWorkoutActivityTypeFunctionalStrengthTraining": 0.0,
+      "workout:HKWorkoutActivityTypeHighIntensityIntervalTraining": 0.0,
+      "workout:HKWorkoutActivityTypeMixedMetabolicCardioTraining": 0.0,
+      "workout:HKWorkoutActivityTypeOther": 0.0,
+      "workout:HKWorkoutActivityTypeRunning": 0.0,
+      "workout:HKWorkoutActivityTypeTraditionalStrengthTraining": 0.0,
+      "workout:HKWorkoutActivityTypeWalking": 0.0,
+      "workout:HKWorkoutActivityTypeYoga": 0.0
+    },
+    "wbm_device_shift_note": "z uses the checkpoint's MyHeartCounts normalization; an unshifted cohort would sit near mean 0 and std 1 on observed hours.",
+    "wbm_device_shift_z": {
+      "hk_watch:HKQuantityTypeIdentifierDistanceWalkingRunning": {
+        "observed_hours": 314677,
+        "z_mean": 0.4004792869091034,
+        "z_std": 1.7941657304763794
+      },
+      "hk_watch:HKQuantityTypeIdentifierHeartRate": {
+        "observed_hours": 313781,
+        "z_mean": -0.2665685713291168,
+        "z_std": 1.1144667863845825
+      },
+      "hk_watch:HKQuantityTypeIdentifierStepCount": {
+        "observed_hours": 314677,
+        "z_mean": 0.4004846215248108,
+        "z_std": 1.667122483253479
+      }
+    },
+    "windows": 2143,
+    "windows_per_subject": {
+      "max": 147,
+      "min": 89
+    }
+  },
+  "issue": 11,
+  "models": {
+    "causal-hourly-tree-v1": {
+      "artifacts": 0,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.380857323875746,
+            11.302113281852039
+          ],
+          "participants": 12,
+          "value": 10.323923219908261
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.690428661937873,
+            5.6510566409260194
+          ],
+          "participants": 12,
+          "value": 5.161961609954131
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.977478058816462,
+            15.848604476327944
+          ],
+          "participants": 12,
+          "value": 14.385815029087288
+        }
+      },
+      "role": "reference"
+    },
+    "ridge-handcrafted": {
+      "artifacts": 39,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            8.825776476515424,
+            10.738599713064415
+          ],
+          "participants": 12,
+          "value": 9.781968733559461
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.412888238257712,
+            5.369299856532208
+          ],
+          "participants": 12,
+          "value": 4.890984366779731
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.209991613710676,
+            15.349227992771086
+          ],
+          "participants": 12,
+          "value": 13.778597876816933
+        }
+      },
+      "role": "primary"
+    },
+    "ridge-handcrafted-meanpool": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.299157038639406,
+            11.702696204007628
+          ],
+          "participants": 12,
+          "value": 10.47204495252658
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.649578519319703,
+            5.851348102003814
+          ],
+          "participants": 12,
+          "value": 5.23602247626329
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.791743881111131,
+            16.126370072771113
+          ],
+          "participants": 12,
+          "value": 14.468043250353182
+        }
+      },
+      "role": "primary"
+    },
+    "ridge-handcrafted-moment": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.433304170382154,
+            11.166190307416167
+          ],
+          "participants": 12,
+          "value": 10.311737151910956
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.716652085191077,
+            5.583095153708084
+          ],
+          "participants": 12,
+          "value": 5.155868575955478
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.9505450130424,
+            15.522402999966687
+          ],
+          "participants": 12,
+          "value": 14.16882138657447
+        }
+      },
+      "role": "primary"
+    },
+    "ridge-handcrafted-moment-hr-only": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.06060432304511,
+            10.716145760364704
+          ],
+          "participants": 12,
+          "value": 9.8856475679937
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.530302161522555,
+            5.358072880182352
+          ],
+          "participants": 12,
+          "value": 4.94282378399685
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.391209728749896,
+            15.333694814710391
+          ],
+          "participants": 12,
+          "value": 13.792233972410704
+        }
+      },
+      "role": "ablation"
+    },
+    "ridge-handcrafted-wbm": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.089322721300604,
+            10.82708639876313
+          ],
+          "participants": 12,
+          "value": 10.00436319400079
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.544661360650302,
+            5.413543199381565
+          ],
+          "participants": 12,
+          "value": 5.002181597000395
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.89506289356721,
+            15.596360710536157
+          ],
+          "participants": 12,
+          "value": 14.192842467568022
+        }
+      },
+      "role": "primary"
+    },
+    "ridge-handcrafted-wbm-hr-only": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.229504167322947,
+            11.164014906372117
+          ],
+          "participants": 12,
+          "value": 10.223393943368658
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.6147520836614735,
+            5.582007453186058
+          ],
+          "participants": 12,
+          "value": 5.111696971684329
+        },
+        "rmse": {
+          "confidence_interval": [
+            13.08658078008334,
+            16.029560335728824
+          ],
+          "participants": 12,
+          "value": 14.55832226203866
+        }
+      },
+      "role": "ablation"
+    },
+    "ridge-handcrafted-wbm-k32": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.639530147641675,
+            11.731178757185463
+          ],
+          "participants": 12,
+          "value": 10.67746851742777
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.819765073820838,
+            5.865589378592731
+          ],
+          "participants": 12,
+          "value": 5.338734258713885
+        },
+        "rmse": {
+          "confidence_interval": [
+            13.755157768866658,
+            16.36747455853333
+          ],
+          "participants": 12,
+          "value": 14.985682376041773
+        }
+      },
+      "role": "ablation"
+    },
+    "ridge-handcrafted-wbm-k4": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            8.779155352338108,
+            10.357544613599874
+          ],
+          "participants": 12,
+          "value": 9.557545102612961
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.389577676169054,
+            5.178772306799937
+          ],
+          "participants": 12,
+          "value": 4.7787725513064805
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.242761812564675,
+            15.328025990732831
+          ],
+          "participants": 12,
+          "value": 13.752542137739704
+        }
+      },
+      "role": "ablation"
+    },
+    "ridge-handcrafted-wbm-no-sleep": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.281196280805606,
+            10.822385033322885
+          ],
+          "participants": 12,
+          "value": 10.074045128293282
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.640598140402803,
+            5.411192516661442
+          ],
+          "participants": 12,
+          "value": 5.037022564146641
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.983682914074912,
+            15.713543648133815
+          ],
+          "participants": 12,
+          "value": 14.268400796535866
+        }
+      },
+      "role": "ablation"
+    },
+    "ridge-handcrafted-wbm-sleep-records-only": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.128465115509654,
+            10.695397624948331
+          ],
+          "participants": 12,
+          "value": 9.924309776190738
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.564232557754827,
+            5.347698812474166
+          ],
+          "participants": 12,
+          "value": 4.962154888095369
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.928252930394635,
+            15.564128108005727
+          ],
+          "participants": 12,
+          "value": 14.184225341191096
+        }
+      },
+      "role": "ablation"
+    },
+    "ridge-handcrafted-wbm-workouts-zero": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            9.19251208815491,
+            10.996127466880786
+          ],
+          "participants": 12,
+          "value": 10.133966576881884
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            4.596256044077455,
+            5.498063733440393
+          ],
+          "participants": 12,
+          "value": 5.066983288440942
+        },
+        "rmse": {
+          "confidence_interval": [
+            12.812888203597844,
+            15.695957502085928
+          ],
+          "participants": 12,
+          "value": 14.211691425633362
+        }
+      },
+      "role": "ablation"
+    },
+    "ridge-moment": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            11.302239385887347,
+            13.951919971167367
+          ],
+          "participants": 12,
+          "value": 12.643448280686444
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            5.6511196929436736,
+            6.975959985583684
+          ],
+          "participants": 12,
+          "value": 6.321724140343222
+        },
+        "rmse": {
+          "confidence_interval": [
+            14.645033622738131,
+            17.831077533061144
+          ],
+          "participants": 12,
+          "value": 16.334732712000385
+        }
+      },
+      "role": "primary"
+    },
+    "ridge-wbm": {
+      "artifacts": 3,
+      "metrics_full_support": {
+        "mae": {
+          "confidence_interval": [
+            10.882756632780286,
+            12.184717178006474
+          ],
+          "participants": 12,
+          "value": 11.566501888026885
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            5.441378316390143,
+            6.092358589003237
+          ],
+          "participants": 12,
+          "value": 5.783250944013442
+        },
+        "rmse": {
+          "confidence_interval": [
+            14.233642659966069,
+            17.073590680756727
+          ],
+          "participants": 12,
+          "value": 15.69282571436583
+        }
+      },
+      "role": "primary"
+    }
+  },
+  "nested_plan_sha256": "df6fd2b36daf9514b7e2e1c16eb32de414c65712601371a9e08fc0b17b741c06",
+  "outer_test_sealed": true,
+  "paired_definition": "candidate minus baseline per validation participant, pooled across inner folds; negative favours the candidate",
+  "paired_vs_baseline": {
+    "causal-hourly-tree-v1": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            0.27688062554211645,
+            0.8399651782877624
+          ],
+          "participants": 12,
+          "value": 0.5419544863487983
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.13844031277105823,
+            0.4199825891438812
+          ],
+          "participants": 12,
+          "value": 0.27097724317439914
+        },
+        "rmse": {
+          "confidence_interval": [
+            0.3056439490478489,
+            0.9098226581383952
+          ],
+          "participants": 12,
+          "value": 0.6072171522703553
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-meanpool": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.09314705858695888,
+            1.5422750447686004
+          ],
+          "participants": 12,
+          "value": 0.6900762189671186
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.04657352929347944,
+            0.7711375223843002
+          ],
+          "participants": 12,
+          "value": 0.3450381094835593
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.02974977093959063,
+            1.589315951900945
+          ],
+          "participants": 12,
+          "value": 0.6894453735362479
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-moment": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.07876282976520244,
+            1.0833571722285238
+          ],
+          "participants": 12,
+          "value": 0.5297684183514939
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.03938141488260122,
+            0.5416785861142619
+          ],
+          "participants": 12,
+          "value": 0.26488420917574695
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.006645821880602405,
+            0.7940047987878143
+          ],
+          "participants": 12,
+          "value": 0.3902235097575361
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-moment-hr-only": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.4173604072642573,
+            0.6141340418253893
+          ],
+          "participants": 12,
+          "value": 0.1036788344342386
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.20868020363212866,
+            0.30706702091269467
+          ],
+          "participants": 12,
+          "value": 0.0518394172171193
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.41424664354244517,
+            0.4513796148554144
+          ],
+          "participants": 12,
+          "value": 0.01363609559377125
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-wbm": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.4563527505702949,
+            0.9597640846711268
+          ],
+          "participants": 12,
+          "value": 0.22239446044132816
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.22817637528514745,
+            0.4798820423355634
+          ],
+          "participants": 12,
+          "value": 0.11119723022066408
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.20726086958602857,
+            1.0589829362476806
+          ],
+          "participants": 12,
+          "value": 0.4142445907510887
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-wbm-hr-only": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.21882093493279434,
+            1.209611942060186
+          ],
+          "participants": 12,
+          "value": 0.4414252098091959
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.10941046746639717,
+            0.604805971030093
+          ],
+          "participants": 12,
+          "value": 0.22071260490459796
+        },
+        "rmse": {
+          "confidence_interval": [
+            0.038632387646373875,
+            1.515556830739448
+          ],
+          "participants": 12,
+          "value": 0.7797243852217263
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-wbm-k32": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.12839506015176638,
+            2.0462397209048615
+          ],
+          "participants": 12,
+          "value": 0.8954997838683075
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.06419753007588319,
+            1.0231198604524308
+          ],
+          "participants": 12,
+          "value": 0.44774989193415377
+        },
+        "rmse": {
+          "confidence_interval": [
+            0.1823681054589761,
+            2.3888016886205197
+          ],
+          "participants": 12,
+          "value": 1.2070844992248386
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-wbm-k4": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.716172967224102,
+            0.2542381802582882
+          ],
+          "participants": 12,
+          "value": -0.22442363094650122
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.358086483612051,
+            0.1271190901291441
+          ],
+          "participants": 12,
+          "value": -0.11221181547325061
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.4697927375085948,
+            0.51268685226968
+          ],
+          "participants": 12,
+          "value": -0.026055739077229134
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-wbm-no-sleep": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.38433929869927597,
+            0.9696749343454816
+          ],
+          "participants": 12,
+          "value": 0.29207639473381963
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.19216964934963798,
+            0.4848374671727408
+          ],
+          "participants": 12,
+          "value": 0.14603819736690982
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.2020663179147124,
+            1.152474937034841
+          ],
+          "participants": 12,
+          "value": 0.48980291971893397
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-wbm-sleep-records-only": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.3951043010212191,
+            0.8018542752266721
+          ],
+          "participants": 12,
+          "value": 0.1423410426312751
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.19755215051060954,
+            0.40092713761333604
+          ],
+          "participants": 12,
+          "value": 0.07117052131563754
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.08375876135452429,
+            0.9504518882485304
+          ],
+          "participants": 12,
+          "value": 0.4056274643741644
+        }
+      },
+      "participants": 12
+    },
+    "ridge-handcrafted-wbm-workouts-zero": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            -0.4006725656311407,
+            1.1430092423193878
+          ],
+          "participants": 12,
+          "value": 0.35199784332242107
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            -0.20033628281557034,
+            0.5715046211596939
+          ],
+          "participants": 12,
+          "value": 0.17599892166121053
+        },
+        "rmse": {
+          "confidence_interval": [
+            -0.32453305109362307,
+            1.2262528445981675
+          ],
+          "participants": 12,
+          "value": 0.4330935488164281
+        }
+      },
+      "participants": 12
+    },
+    "ridge-moment": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            1.0350978911309616,
+            4.426715787315515
+          ],
+          "participants": 12,
+          "value": 2.8614795471269816
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.5175489455654808,
+            2.2133578936577574
+          ],
+          "participants": 12,
+          "value": 1.4307397735634908
+        },
+        "rmse": {
+          "confidence_interval": [
+            0.9650967948079228,
+            3.9085394885000952
+          ],
+          "participants": 12,
+          "value": 2.5561348351834527
+        }
+      },
+      "participants": 12
+    },
+    "ridge-wbm": {
+      "counts": {
+        "baseline_only_points": 0,
+        "baseline_scored_points": 1481,
+        "both_abstained_points": 118,
+        "candidate_only_points": 0,
+        "candidate_scored_points": 1481,
+        "evaluation_participants": 12,
+        "expected_points": 2016,
+        "insufficient_history_points": 168,
+        "missing_labels": 249,
+        "paired_interval_points": 0,
+        "paired_participants": 12,
+        "paired_points": 1481
+      },
+      "difference": {
+        "mae": {
+          "confidence_interval": [
+            0.5454191468322536,
+            2.9627642438597976
+          ],
+          "participants": 12,
+          "value": 1.7845331544674228
+        },
+        "median_pinball_loss": {
+          "confidence_interval": [
+            0.2727095734161268,
+            1.4813821219298988
+          ],
+          "participants": 12,
+          "value": 0.8922665772337114
+        },
+        "rmse": {
+          "confidence_interval": [
+            0.3830930109306649,
+            3.2210990957459193
+          ],
+          "participants": 12,
+          "value": 1.9142278375488946
+        }
+      },
+      "participants": 12
+    }
+  },
+  "per_fold": {
+    "causal-hourly-tree-v1": {
+      "fold_delta_mae": [
+        0.642,
+        0.789,
+        0.194
+      ],
+      "participant_delta_mae_min_median_max": [
+        -0.084,
+        0.359,
+        1.614
+      ],
+      "participants_lower_higher": [
+        2,
+        10
+      ]
+    },
+    "ridge-handcrafted-meanpool": {
+      "fold_delta_mae": [
+        1.138,
+        -0.626,
+        1.558
+      ],
+      "participant_delta_mae_min_median_max": [
+        -0.849,
+        0.051,
+        3.796
+      ],
+      "participants_lower_higher": [
+        6,
+        6
+      ]
+    },
+    "ridge-handcrafted-moment": {
+      "fold_delta_mae": [
+        0.715,
+        0.23,
+        0.644
+      ],
+      "participant_delta_mae_min_median_max": [
+        -0.899,
+        0.492,
+        2.714
+      ],
+      "participants_lower_higher": [
+        3,
+        9
+      ]
+    },
+    "ridge-handcrafted-moment-hr-only": {
+      "fold_delta_mae": [
+        0.413,
+        -0.425,
+        0.323
+      ],
+      "participant_delta_mae_min_median_max": [
+        -1.779,
+        0.05,
+        1.782
+      ],
+      "participants_lower_higher": [
+        5,
+        7
+      ]
+    },
+    "ridge-handcrafted-wbm": {
+      "fold_delta_mae": [
+        0.092,
+        -0.51,
+        1.085
+      ],
+      "participant_delta_mae_min_median_max": [
+        -1.279,
+        -0.227,
+        2.928
+      ],
+      "participants_lower_higher": [
+        7,
+        5
+      ]
+    },
+    "ridge-handcrafted-wbm-hr-only": {
+      "fold_delta_mae": [
+        1.029,
+        -0.509,
+        0.805
+      ],
+      "participant_delta_mae_min_median_max": [
+        -1.45,
+        0.247,
+        3.623
+      ],
+      "participants_lower_higher": [
+        5,
+        7
+      ]
+    },
+    "ridge-handcrafted-wbm-k32": {
+      "fold_delta_mae": [
+        1.296,
+        0.563,
+        0.828
+      ],
+      "participant_delta_mae_min_median_max": [
+        -1.338,
+        0.013,
+        5.474
+      ],
+      "participants_lower_higher": [
+        6,
+        6
+      ]
+    },
+    "ridge-handcrafted-wbm-k4": {
+      "fold_delta_mae": [
+        -0.107,
+        -0.925,
+        0.358
+      ],
+      "participant_delta_mae_min_median_max": [
+        -1.885,
+        -0.438,
+        1.385
+      ],
+      "participants_lower_higher": [
+        8,
+        4
+      ]
+    },
+    "ridge-handcrafted-wbm-no-sleep": {
+      "fold_delta_mae": [
+        0.362,
+        -0.449,
+        0.964
+      ],
+      "participant_delta_mae_min_median_max": [
+        -1.454,
+        0.078,
+        2.486
+      ],
+      "participants_lower_higher": [
+        6,
+        6
+      ]
+    },
+    "ridge-handcrafted-wbm-sleep-records-only": {
+      "fold_delta_mae": [
+        0.093,
+        -0.49,
+        0.824
+      ],
+      "participant_delta_mae_min_median_max": [
+        -1.12,
+        -0.216,
+        2.786
+      ],
+      "participants_lower_higher": [
+        8,
+        4
+      ]
+    },
+    "ridge-handcrafted-wbm-workouts-zero": {
+      "fold_delta_mae": [
+        0.596,
+        -0.714,
+        1.174
+      ],
+      "participant_delta_mae_min_median_max": [
+        -1.863,
+        -0.02,
+        3.232
+      ],
+      "participants_lower_higher": [
+        6,
+        6
+      ]
+    },
+    "ridge-moment": {
+      "fold_delta_mae": [
+        3.733,
+        1.462,
+        3.389
+      ],
+      "participant_delta_mae_min_median_max": [
+        -4.972,
+        3.083,
+        7.766
+      ],
+      "participants_lower_higher": [
+        2,
+        10
+      ]
+    },
+    "ridge-wbm": {
+      "fold_delta_mae": [
+        2.031,
+        1.004,
+        2.318
+      ],
+      "participant_delta_mae_min_median_max": [
+        -3.315,
+        1.926,
+        5.049
+      ],
+      "participants_lower_higher": [
+        2,
+        10
+      ]
+    }
+  },
+  "protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7",
+  "resources": {
+    "elapsed_seconds": 386.1,
+    "peak_rss_bytes": 1511604224
+  },
+  "tree_crosscheck": {
+    "checked": 9,
+    "matched": 9,
+    "mismatched": [],
+    "published_nested_plan_sha256": "df6fd2b36daf9514b7e2e1c16eb32de414c65712601371a9e08fc0b17b741c06",
+    "published_protocol_sha256": "2adbe991611b949f2a99877422e5836f86540f00ee8961db83128ca554134bd7"
+  },
+  "validation_participants": 12,
+  "window": {
+    "as_of_delay_hours": 16,
+    "days": 7,
+    "local_timezone": "Europe/Oslo",
+    "min_observed_hours": 24
+  }
+}

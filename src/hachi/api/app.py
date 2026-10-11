@@ -33,7 +33,7 @@ from hachi.storage import Metadata, is_name, private_directory
 
 from .catalog import Catalog
 from .errors import ApiProblem, parse_body, path_id, validation_problem
-from .service import CoverageParams, Service, UploadParams
+from .service import CoverageParams, HistoryParams, Service, UploadParams
 from .settings import Settings
 
 log = logging.getLogger("hachi.api")
@@ -248,7 +248,17 @@ def create_app(
     @app.get("/v1/subjects/{subject_id}/observations", responses=documented(SelfReportHistory))
     def get_observations(subject_id: str, request: Request) -> Response:
         subject = path_id(subject_id, "subject_id", subject=True)
-        return _json(service(request).self_report_history(subject))
+        params = _query(HistoryParams, request)
+        return _json(service(request).self_report_history(subject, params))
+
+    @app.delete(
+        "/v1/subjects/{subject_id}/observations/{entry_id}", status_code=204, responses=errors
+    )
+    def delete_observation(subject_id: str, entry_id: str, request: Request) -> Response:
+        subject = path_id(subject_id, "subject_id", subject=True)
+        entry = path_id(entry_id, "entry_id")
+        service(request).delete_self_report(subject, entry, request.query_params.get("confirm"))
+        return Response(status_code=204)
 
     @app.post("/v1/scenarios", responses=documented(ReportResult))
     async def run_scenario(request: Request) -> Response:

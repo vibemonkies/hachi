@@ -36,7 +36,7 @@ def run(client, body) -> ReportJob:
 
 
 def test_forecast_matches_direct_inference_with_provenance(client, served):
-    from hachi.api.handoff import Tally, api_medians, direct_inference, expected_medians
+    from hachi.api.handoff import Tally, api_points, direct_inference, expected_points
 
     job = run(client, forecast())
     result = job.result.root
@@ -58,7 +58,7 @@ def test_forecast_matches_direct_inference_with_provenance(client, served):
     subject = service.catalog.subject("p01", service.metadata, service.workspace)
     direct = direct_inference(artifact, subject, result.as_of, 24)
     tally = Tally()
-    tally.add(api_medians(job), expected_medians(result.as_of, direct))
+    tally.add(api_points(job), expected_points(result.as_of, direct))
     assert tally.agrees and tally.compared == len(series.points) > 0
     assert tally.max_difference == 0.0
 

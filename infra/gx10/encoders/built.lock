@@ -1,0 +1,4 @@
+# Wheels built by build.py (blackwell); hashes are of these exact local builds.
+causal-conv1d==1.5.0.post8 --hash=sha256:8b081a247bb45c764276b76a35751107a51d3ff372e16d13d3a6986e7abcfd02
+mamba-ssm==2.2.4 --hash=sha256:0474fc4685f64b7d0094bf4f8b4f6965603f2a057bb4d0762819129c60167e8e
+momentfm==0.1.5 --hash=sha256:8999ab99302e396428ac08e2bcaaed54067f19a3462e67c7518918d9faef5260
