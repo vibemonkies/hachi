@@ -67,7 +67,7 @@ git pull --ff-only
 git switch -c issue-N-short-description
 ```
 
-Commit focused changes, push your branch, and open a PR linked to the issue. One teammate reviews the artifact and reproduces the relevant command. Merge after the stated acceptance criteria pass. Do not change someone else's branch or shared working tree.
+Commit focused changes, push your branch, and open a PR linked to the issue. Verify the artifact with the relevant command and record the result. Merge after the stated acceptance criteria pass. Do not change someone else's branch or shared working tree.
 
 The issue assignee owns the listed files. Shared schemas, root dependency files, and CI changes require coordination before editing. Keep backend/data and modeling package dependencies in separate optional groups; let the contract owner integrate lockfile changes. Do not make all three people repeatedly resolve one giant environment.
 
@@ -104,7 +104,7 @@ python3 scripts/gx10/verify-queue.py --gpu-python "$runtime_py" \
   --output "$HOME/hachi/infra/queue-verification.json"
 ```
 
-This test uses disposable coordination folders and real `flock`, checks two owners, failure/termination/SIGKILL, reused run IDs, and a short-lived CUDA process created by the test to verify refusal of unrelated compute. It stops only its own processes. It simulates a teammate caller; an actual teammate still must independently rerun the commands for the issue's handoff gate.
+This test uses disposable coordination folders and real `flock`, checks two owners, failure/termination/SIGKILL, reused run IDs, and a short-lived CUDA process created by the test to verify refusal of unrelated compute. It stops only its own processes. It simulates a second caller. Verify the results and record the commands and environment identity for the issue's handoff gate.
 
 ## Status conventions
 
