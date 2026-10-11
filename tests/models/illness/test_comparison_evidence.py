@@ -124,6 +124,41 @@ def test_original_input_capture_detects_changes_outside_scored_packets(tmp_path)
     assert "synthetic-sensitive-token" not in json.dumps(captured)
 
 
+def test_actual_isolated_worker_serializes_typed_support_counts(tmp_path, monkeypatch):
+    commit = "a" * 40
+    root = tmp_path / "packet"
+    root.mkdir()
+    (root / "summary.json").write_text(json.dumps({"git_sha": commit}))
+    (tmp_path / ".cache").mkdir()
+    files = {
+        f"src/{p}/__init__.py": b""
+        for p in ("hachi", "hachi/models", "hachi/models/illness", "hachi/evaluation")
+    }
+    files["src/hachi/models/illness/pretrained_evidence.py"] = (
+        "from dataclasses import dataclass\n"
+        "@dataclass\nclass Counts:\n    participants: int\n"
+        "def compile_report(**kwargs):\n"
+        f"    return {{'scoring_commit': '{commit}', 'counts': Counts(3)}}\n"
+    ).encode()
+    files["src/hachi/evaluation/serialization.py"] = (
+        evidence.REPO / "src/hachi/evaluation/serialization.py"
+    ).read_bytes()
+    payload = io.BytesIO()
+    with tarfile.open(fileobj=payload, mode="w") as archive:
+        for path, data in files.items():
+            member = tarfile.TarInfo(path)
+            member.size = len(data)
+            archive.addfile(member, io.BytesIO(data))
+    monkeypatch.setattr(evidence, "REPO", tmp_path)
+    monkeypatch.setattr(
+        evidence.subprocess,
+        "check_output",
+        lambda args, **kwargs: commit + "\n" if args[1] == "rev-parse" else payload.getvalue(),
+    )
+    result = evidence.archived_report(tmp_path, tmp_path, root, tmp_path, tmp_path, tmp_path)
+    assert result == {"scoring_commit": commit, "counts": {"participants": 3}}
+
+
 def test_markdown_uses_canonical_json_order():
     report = {
         "producing_commit": "a" * 40,

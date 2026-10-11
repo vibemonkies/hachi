@@ -34,10 +34,11 @@ import json, sys
 from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 from hachi.models.illness.pretrained_evidence import compile_report
+from hachi.evaluation.serialization import document_bytes
 args = json.loads(sys.argv[2])
 try:
     result = compile_report(**{k: Path(v) if v is not None else None for k,v in args.items()})
-    print(json.dumps(result, sort_keys=True, allow_nan=False))
+    print(document_bytes(result).decode(), end="")
 except Exception:
     sys.exit(1)
 """
