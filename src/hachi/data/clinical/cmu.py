@@ -28,6 +28,8 @@ from .config import OUTCOMES_DIR, Admission, Loaded, _sha
 from .labels import DayRange, IllnessReport, SubjectInput, SurveyState, TestDay
 
 DATASET_ID = "cmu-common-cold-project"
+# Modified Jackson total of 8 items rated 0-4, minus the Day 0 baseline, floored at 0.
+SCALE = "cmu-modified-jackson-8-items-baseline-adjusted"
 MAX_MEMBER_BYTES = 256 << 20
 CONTRACT_PATHOGENS = Literal["sars_cov_2", "influenza", "rsv", "other", "unknown"]
 
@@ -149,6 +151,7 @@ def label_set(data_dir: Path, settings: CmuSettings, admission: Admission):
     epoch = settings.relative_day_epoch
     counts: Counter = Counter()
     inputs: list[SubjectInput] = []
+    scores: list[dict] = []
     info: dict[str, dict[str, str]] = {}
     seen: set[str] = set()
     for row in rows:
@@ -170,13 +173,26 @@ def label_set(data_dir: Path, settings: CmuSettings, admission: Admission):
             continue
         virus = settings.viruses[viruses[0]]
         states: dict[date, SurveyState] = {}
+        day_scores: list[dict] = []
         for d in days:
-            state = _state(_number(row[score[d]]), _number(row[cold[d]]), s)
+            value, said_cold = _number(row[score[d]]), _number(row[cold[d]])
+            state = _state(value, said_cold, s)
             if state is not None:
                 states[epoch + timedelta(days=d)] = state
+                day_scores.append(
+                    {
+                        "subject_id": subject,
+                        "local_date": epoch + timedelta(days=d),
+                        "scale": SCALE,
+                        "reports": 1,
+                        "jackson_adjusted": value,
+                        "cold_or_flu": None if said_cold is None else said_cold == 1,
+                    }
+                )
         if not states:
             counts[f"excluded_no_daily_symptom_scores_{study}"] += 1
             continue
+        scores += day_scores
         observed = sorted(states)
         gaps = (observed[-1] - observed[0]).days + 1 - len(observed)
         if gaps:
@@ -235,4 +251,5 @@ def label_set(data_dir: Path, settings: CmuSettings, admission: Admission):
         unlabeled_note=None,
         clock=settings.clock,
         extra_audit={},
+        symptom_scores=scores,
     )

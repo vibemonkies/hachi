@@ -2,7 +2,7 @@
 # The admitted files (archive and the paper's Supplementary Data 1) come from the dataset
 # registry, configs/datasets/stanford-covid19-wearables.toml.
 schema_version = "0.1"
-pipeline_version = "clinical-labels-1"
+pipeline_version = "clinical-labels-2"
 dataset_id = "stanford-covid19-wearables"
 # Name of the registered archive holding the wearable CSVs, and of the labels workbook.
 archive = "COVID-19-Wearables.zip"

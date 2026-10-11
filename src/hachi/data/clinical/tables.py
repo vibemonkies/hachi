@@ -106,6 +106,22 @@ STATUS_SCHEMA = pa.schema(
         ("definitions_version", pa.string()),
     ]
 )
+SCORE_SCHEMA = pa.schema(
+    [
+        ("dataset_id", pa.string()),
+        ("subject_id", pa.string()),
+        ("local_date", pa.date32()),
+        ("scale", pa.string()),
+        ("reports", pa.int32()),
+        ("symptom_count", pa.int32()),
+        ("max_severity", pa.int32()),
+        ("severity_sum", pa.int32()),
+        ("jackson_adjusted", pa.float64()),
+        ("cold_or_flu", pa.bool_()),
+        ("available_at_utc", UTC_US),
+        ("availability_rule", pa.string()),
+    ]
+)
 SURVEY_AVAILABILITY_RULE = "survey-available-at-end-of-its-local-day"
 LABEL_AVAILABILITY_RULE = "labels-known-at-end-of-participant-follow-up"
 EVIDENCE = {
@@ -381,3 +397,16 @@ def table(rows: Iterable[dict], schema: pa.Schema) -> pa.Table:
 def outcome_from_row(row: dict) -> SymptomEpisode | TestResult | StatusUnknown:
     kind = row["kind"]
     return MODELS[kind].model_validate({k: v for k, v in row.items() if k in KIND_FIELDS[kind]})
+
+
+def score_rows(dataset_id: str, rows: list[dict]) -> list[dict]:
+    """Per answered survey day severity, available at the end of that day."""
+    return [
+        {
+            "dataset_id": dataset_id,
+            **row,
+            "available_at_utc": at(row["local_date"] + DAY),
+            "availability_rule": SURVEY_AVAILABILITY_RULE,
+        }
+        for row in sorted(rows, key=lambda r: (r["subject_id"], r["local_date"]))
+    ]
