@@ -1,0 +1,15 @@
+{
+  "device": "NVIDIA GB10",
+  "capability": [
+    12,
+    1
+  ],
+  "torch": "2.8.0+cu129",
+  "causal_conv1d": "1.5.0.post8",
+  "import": "ok",
+  "kernel": {
+    "ran": false,
+    "error": "AcceleratorError: CUDA error: no kernel image is available for execution on the device\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n",
+    "traceback": "Traceback (most recent call last):\n  File \"/home/asus/hachi/workspaces/justin06lee/issue-11/src/hachi/models/encoders/gx10/probe_kernel_image.py\", line 32, in main\n    out = causal_conv1d_fn(x, weight, None, activation=\"silu\")\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/probe-venvs/upstream-cc1d-20261011T115317Z/lib/python3.12/site-packages/causal_conv1d/causal_conv1d_interface.py\", line 121, in causal_conv1d_fn\n    return CausalConv1dFn.apply(\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/probe-venvs/upstream-cc1d-20261011T115317Z/lib/python3.12/site-packages/torch/autograd/function.py\", line 576, in apply\n    return super().apply(*args, **kwargs)  # type: ignore[misc]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/asus/hachi/workspaces/justin06lee/probe-venvs/upstream-cc1d-20261011T115317Z/lib/python3.12/site-packages/causal_conv1d/causal_conv1d_interface.py\", line 57, in forward\n    out = causal_conv1d_cuda.causal_conv1d_fwd(\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntorch.AcceleratorError: CUDA error: no kernel image is available for execution on the device\nCUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.\nFor debugging consider passing CUDA_LAUNCH_BLOCKING=1\nCompile with `TORCH_USE_CUDA_DSA` to enable device-side assertions.\n\n"
+  }
+}
