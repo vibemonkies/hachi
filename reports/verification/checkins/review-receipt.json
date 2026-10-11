@@ -1,0 +1,15 @@
+{
+  "synthetic_only": true,
+  "ui_git_sha": "d2868badf2c2c140b7143ec18f2e5b137359bcc5",
+  "api_git_sha": "f2870c36246745ad03c838cacc15510c487cd974",
+  "isolated_ports": {"web": 5181, "api": 8721},
+  "backend_entries_after_full_navigation": 7,
+  "mobile_viewport": {"width": 375, "height": 667, "scroll_width": 375},
+  "desktop_viewport": {"width": 1280, "height": 900, "scroll_width": 1280},
+  "header_binds_ui_and_api_revisions": true,
+  "integrated_source_git_sha": "63dfc4049905abe914c455f225b76412ddb3c38b",
+  "feature_and_package_diff_from_ui_revision_empty": true,
+  "integrated_build_passed": true,
+  "integrated_node_checks_passed": 8,
+  "integrated_scoped_api_checks_passed": 27
+}

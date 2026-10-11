@@ -1,0 +1,21 @@
+{
+  "synthetic_only": true,
+  "api_git_sha": "f2870c36246745ad03c838cacc15510c487cd974",
+  "current_entries": 8,
+  "all_versions": 9,
+  "correction_saved": true,
+  "onset_event_window_preserved": true,
+  "correction_entry_time_later": true,
+  "inclusive_prior_cutoff_original_severity": 2,
+  "current_corrected_severity": 3,
+  "resolution_still_names_original_onset": true,
+  "ui_source_git_sha": "977d3121000e20cbf31f42cf8faa17932c67cd8f",
+  "protected_onset_delete_409_observed": true,
+  "resolution_then_onset_deleted_through_ui": true,
+  "after_deletion_current_entries": 6,
+  "after_deletion_all_versions": 6,
+  "deleted_chain_absent_from_prior_cutoffs": true,
+  "other_six_entries_preserved": true,
+  "delete_error_visible_at_mobile_action": true,
+  "cancel_restores_trigger_focus": true
+}

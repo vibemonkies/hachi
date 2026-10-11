@@ -41,6 +41,7 @@ from hachi.contracts.results import (
     WarningCode,
 )
 from hachi.evaluation import ForecastEstimate, ForecastInput
+from hachi.evaluation.features import HourlyFeaturePolicy
 from hachi.evaluation.serialization import document_sha256
 from hachi.storage import Metadata, Workspace
 
@@ -151,17 +152,33 @@ def self_report_digest(versions: Sequence[Version], as_of: datetime) -> str:
 # Artifact selection --------------------------------------------------------------------
 
 
+def input_policy(artifact: ServedArtifact, subject: SubjectData) -> HourlyFeaturePolicy | None:
+    """The feature policy that feeds this subject to this artifact, if the artifact admits it.
+
+    Dataset snapshots use the artifact's own policy; any other source (an Apple import) only
+    through an explicit `accepted_sources` admission in the artifact's serving profile.
+    """
+    if subject.provides_hourly_features:
+        return artifact.serving.feature_policy
+    admission = artifact.serving.admission(subject.source)
+    return admission.feature_policy if admission else None
+
+
+def hourly_forecasters(catalog: Catalog) -> list[ServedArtifact]:
+    return [
+        a
+        for a in catalog.artifacts
+        if a.serving.task == "physiology_forecast" and a.serving.resolution == "hour"
+    ]
+
+
 def forecast_artifacts(catalog: Catalog, subject: SubjectData | None) -> list[ServedArtifact]:
     """Served hourly forecasters whose declared input this subject's data can supply."""
     return [
         a
-        for a in catalog.artifacts
-        if a.serving.task == "physiology_forecast"
-        and a.serving.resolution == "hour"
-        and (
-            a.serving.input == "observations"
-            or (subject is not None and subject.provides_hourly_features)
-        )
+        for a in hourly_forecasters(catalog)
+        if a.serving.input == "observations"
+        or (subject is not None and input_policy(a, subject) is not None)
     ]
 
 
@@ -329,8 +346,9 @@ def model_inputs(
     cutoff = floor_hour(as_of)
     start = cutoff - artifact.split.lookback_hours * HOUR
     if artifact.serving.input == "hourly_features":
-        assert artifact.serving.feature_policy is not None
-        rows: list = subject.hourly_features(artifact.serving.feature_policy, cutoff, start)
+        policy = input_policy(artifact, subject)
+        assert policy is not None, "selection admits only sources with a policy"
+        rows: list = subject.hourly_features(policy, cutoff, start)
     else:
         rows = subject.observations(artifact.metric, cutoff, start)
     rows.sort(key=lambda o: (o.end_utc, o.available_at_utc, o.record_id))
@@ -359,11 +377,18 @@ def _forecast(
         )
     artifact = select_artifact(request, context.catalog, subject)
     if artifact is None:
-        requirement = (
-            "A served hourly forecast artifact for the requested metrics"
-            if forecast_artifacts(context.catalog, subject)
-            else "A frozen hourly forecast artifact that accepts this subject's data"
+        evaluated = sorted(
+            {a.run.dataset_snapshot.dataset_id for a in hourly_forecasters(context.catalog)}
         )
+        if forecast_artifacts(context.catalog, subject):
+            requirement = "A served hourly forecast artifact for the requested metrics"
+        elif subject.source == "apple_health" and evaluated:
+            requirement = (
+                "A forecast artifact whose serving profile admits Apple Health input; the "
+                f"served models were evaluated on {', '.join(evaluated)} hourly features only"
+            )
+        else:
+            requirement = "A frozen hourly forecast artifact that accepts this subject's data"
         return base.unavailable("NO_ARTIFACT_FOR_TASK", requirement, partial)
     data_mode: DataMode = (
         subject.data_mode if artifact.evaluation.data_mode == "real" else "synthetic"
@@ -489,7 +514,13 @@ def _forecast_result(
             _warning(
                 "DEVICE_SHIFT",
                 f"The model was evaluated on {artifact.run.dataset_snapshot.dataset_id}, "
-                "not on this subject's data source.",
+                "not on this subject's data source."
+                + (
+                    f" {subject.source} input is admitted as an unvalidated transfer: "
+                    f"{admission.rationale}"
+                    if (admission := artifact.serving.admission(subject.source))
+                    else ""
+                ),
             )
         )
     wanted = body.metrics or [artifact.metric]

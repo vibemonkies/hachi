@@ -32,6 +32,7 @@ CPATH = python_headers()
 PTXAS = triton_ptxas()
 
 BATCH = 64
+KEY_ARRAYS = ("subject_ids", "window_end_utc", "as_of_utc", "request_sha256")
 MODEL_PACKAGES = {"wbm": ("mamba-ssm", "causal-conv1d"), "moment": ("momentfm", "transformers")}
 
 
@@ -265,7 +266,10 @@ def main():
         receipt["inputs_sha256"] = sha256(args.inputs)
         arrays = {}
         with np.load(args.inputs, allow_pickle=False) as data:
-            keys = {k: data[k] for k in ("subject_ids", "window_end_utc", "as_of_utc")}
+            # Row keys pass through unchanged: #11 windows, or another lane's request hashes.
+            keys = {k: data[k] for k in KEY_ARRAYS if k in data.files}
+            if not keys:
+                raise SystemExit("inputs carry no row keys")
             started = time.perf_counter()
             if args.model == "wbm":
                 variants = sorted(k for k in data.files if k.startswith("wbm_"))

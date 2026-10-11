@@ -1,0 +1,9 @@
+{
+  "synthetic_only": true,
+  "api_git_sha": "9501011011b3a619f4b3ba557d61ffa522884533",
+  "after_retry_history_entries": 8,
+  "new_rating_count": 1,
+  "draft_preserved_after_network_failure": true,
+  "single_error_announcement_observed": true,
+  "retry_saved_once": true
+}
