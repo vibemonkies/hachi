@@ -117,9 +117,59 @@ def test_export_actual_chronos_boundary_private_folds_and_sealed_reads(tmp_path,
     verification = verify_packet(tmp_path, output)
     assert verification["boundary_verification"]["private_fold_joins_checked"] == 6
     assert verification["boundary_verification"]["encoder_content_hashes_checked"] == 1
-    # Changing active outer would read the originally sealed people. Reject before any read.
+    # Extra physiology must not enter worker inputs without an eligible private join.
+    import hashlib
+
     import pytest
 
+    from hachi.models.chronos.inference import request_id
+
+    names = ("requests.jsonl", "encoder-requests.jsonl", "summary.json", "joins.json")
+    saved = {name: (output / name).read_bytes() for name in names}
+    extra = {**encoder, "channels": {"heart_rate": [61.0]}}
+    extra["request_sha256"] = document_sha256(extra)
+    with (output / "encoder-requests.jsonl").open("ab") as stream:
+        stream.write(document_bytes(extra))
+    with (output / "requests.jsonl").open("ab") as stream:
+        stream.write(
+            document_bytes(
+                {
+                    "request_id": request_id([61.0], protocol.prediction_hours),
+                    "context": [61.0],
+                    "prediction_length": protocol.prediction_hours,
+                }
+            )
+        )
+    summary["unique_requests"] = summary["unique_encoder_requests"] = 2
+    summary["request_file_sha256"] = hashlib.sha256(
+        (output / "requests.jsonl").read_bytes()
+    ).hexdigest()
+    summary["encoder_request_file_sha256"] = hashlib.sha256(
+        (output / "encoder-requests.jsonl").read_bytes()
+    ).hexdigest()
+    (output / "summary.json").write_bytes(document_bytes(summary))
+    with pytest.raises(ValueError, match="without an eligible"):
+        verify_packet(tmp_path, output)
+    for name, payload in saved.items():
+        (output / name).write_bytes(payload)
+    # A claimed zero count cannot hide a nonempty Chronos file from the reader.
+    summary = json.loads(saved["summary.json"])
+    summary["unique_requests"] = summary["unique_encoder_requests"] = 0
+    summary["counts"].update(requested_cutoffs=0, insufficient_hourly_context=2)
+    (output / "encoder-requests.jsonl").write_bytes(b"")
+    summary["encoder_request_file_sha256"] = hashlib.sha256(b"").hexdigest()
+    (output / "summary.json").write_bytes(document_bytes(summary))
+    empty_joins = [
+        {**j, "request_id": None, "encoder_request_sha256": None, "observed_hr_hours": 0}
+        for j in joins
+    ]
+    (output / "joins.json").write_bytes(document_bytes(empty_joins))
+    with pytest.raises(ValueError, match="encoder and Chronos"):
+        verify_packet(tmp_path, output)
+    for name, payload in saved.items():
+        (output / name).write_bytes(payload)
+
+    # Changing active outer would read the originally sealed people. Reject before any read.
     def no_read(*args, **kwargs):
         pytest.fail("unfrozen plan reached private data")
 

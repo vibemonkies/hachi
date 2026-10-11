@@ -79,7 +79,8 @@ def verify_packet(snapshot: Path, output: Path) -> dict:
         "fold_plan_sha256"
     ] != document_sha256(plan):
         raise ValueError("context summary differs from frozen participant protocol")
-    chronos = read_requests(output / "requests.jsonl") if summary["unique_requests"] else []
+    chronos_path = output / "requests.jsonl"
+    chronos = read_requests(chronos_path) if chronos_path.stat().st_size else []
     encoder_rows = [
         json.loads(line) for line in (output / "encoder-requests.jsonl").read_text().splitlines()
     ]
@@ -166,6 +167,8 @@ def verify_packet(snapshot: Path, output: Path) -> dict:
     expected_keys = {(i, subject, cutoff) for i in active for subject, cutoff in eligible}
     if keys != expected_keys or len(eligible) != summary["counts"]["eligible_cutoffs"]:
         raise ValueError("private context joins are incomplete")
+    if {j["request_id"] for j in joins if j["request_id"] is not None} != set(contexts):
+        raise ValueError("transport contains physiology without an eligible private join")
     requested = sum(j["role"] == "validation" and j["request_id"] is not None for j in joins)
     if (
         requested != summary["counts"].get("requested_cutoffs", 0)
