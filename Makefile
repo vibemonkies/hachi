@@ -23,12 +23,17 @@ types: schema
 fixtures:
 	uv run python contracts/scripts/build_fixtures.py
 
+# Lint covers the package and contracts. Standalone scripts/ keep their owners' style until
+# those owners opt in.
+LINT_PATHS := src tests contracts
+
 lint:
-	uv run ruff check .
-	uv run ruff format --check .
+	uv run ruff check $(LINT_PATHS)
+	uv run ruff format --check $(LINT_PATHS)
 
 test:
 	uv run pytest
+	cd scripts/coordination && uv run python -m unittest -q
 
 contracts-check:
 	uv run python -m hachi.contracts.schema --check
