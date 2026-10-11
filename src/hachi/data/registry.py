@@ -3,12 +3,16 @@
 One TOML file per source in configs/datasets/. A catalog entry is not proof of access; only
 `downloaded` and `validated` sources name the archives someone actually holds, by checksum.
 
-    python -m hachi.data.registry                   # summary table
-    python -m hachi.data.registry verify [ROOT]     # compare local archives with the registry
-    python -m hachi.data.registry sums DATASET_ID   # SHA256SUMS lines, for `sha256sum -c` anywhere
+    python -m hachi.data.registry                         # summary table
+    python -m hachi.data.registry verify [ROOT]           # prove every held archive is present
+    python -m hachi.data.registry verify ROOT --dataset ID  # ... for named sources only
+    python -m hachi.data.registry verify ROOT --partial   # catalog audit; tolerates missing
+    python -m hachi.data.registry sums DATASET_ID         # SHA256SUMS lines, for `sha256sum -c`
 
 ROOT defaults to $HACHI_DATA_ROOT. Archives live at ROOT/<dataset_id>/<file name>, or at
-ROOT/<dataset_id>/<version>/<file name> as on the GX10 (~/hachi/data).
+ROOT/<dataset_id>/<version>/<file name> as on the GX10 (~/hachi/data). `verify` exits 0 only
+when every selected archive is present and matches; `--partial` exits 0 unless one is altered
+and says that it proves nothing about acquisition.
 """
 
 import argparse
@@ -85,6 +89,14 @@ class Terms(Contract):
             raise ValueError(
                 "data that each user must accept individually cannot be marked allowed on the "
                 "shared GX10 account"
+            )
+        if (
+            self.team_access == "each_user_must_be_credentialed"
+            and self.shared_gx10_account != "prohibited"
+        ):
+            raise ValueError(
+                "credentialed data must be prohibited on the shared GX10 account: a shared "
+                "login shares access"
             )
         return self
 
@@ -196,6 +208,18 @@ def verify(root: Path, sources: dict[str, DatasetSource]) -> list[tuple[str, str
     return results
 
 
+def verdict(results: list[tuple[str, str, str]], *, partial: bool) -> tuple[int, str]:
+    """Exit code and summary. Acquisition needs every selected archive present and matching."""
+    states = [state for *_, state in results]
+    ok, missing, altered = states.count("ok"), states.count("missing"), states.count("MISMATCH")
+    tally = f"{ok} ok, {missing} missing, {altered} mismatched"
+    if partial:
+        return (1 if altered else 0), f"partial audit: {tally}; not proof of acquisition"
+    if not results or missing or altered:
+        return 1, f"FAILED: {tally}"
+    return 0, f"verified: all {ok} registered archives present and matching"
+
+
 def sha256sums(source: DatasetSource) -> str:
     """Registered archives in `sha256sum -c` format, for machines without this package."""
     return "".join(f"{archive.sha256}  {archive.name}\n" for archive in source.files)
@@ -204,8 +228,14 @@ def sha256sums(source: DatasetSource) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command")
-    check = sub.add_parser("verify", help="compare local archives with registered checksums")
+    check = sub.add_parser("verify", help="prove registered archives are held and unaltered")
     check.add_argument("root", type=Path, nargs="?", help="defaults to $HACHI_DATA_ROOT")
+    check.add_argument(
+        "--dataset", action="append", default=[], metavar="ID", help="only these held sources"
+    )
+    check.add_argument(
+        "--partial", action="store_true", help="catalog audit: report missing without failing"
+    )
     sums = sub.add_parser("sums", help="print SHA256SUMS lines for one dataset")
     sums.add_argument("dataset_id")
     args = parser.parse_args(argv)
@@ -221,10 +251,17 @@ def main(argv: list[str] | None = None) -> int:
         )
         if root is None:
             parser.error("give ROOT or set HACHI_DATA_ROOT")
-        results = verify(root.expanduser(), sources)
+        if unknown := [d for d in args.dataset if d not in sources]:
+            parser.error(f"unknown dataset {', '.join(unknown)}")
+        if unheld := [d for d in args.dataset if not sources[d].files]:
+            parser.error(f"not held, nothing to verify: {', '.join(unheld)}")
+        selected = {d: sources[d] for d in args.dataset} if args.dataset else sources
+        results = verify(root.expanduser(), selected)
         for dataset_id, name, state in results:
             print(f"{state:9} {dataset_id:34} {name}")
-        return 1 if any(state == "MISMATCH" for *_, state in results) else 0
+        code, summary = verdict(results, partial=args.partial)
+        print(summary)
+        return code
     for s in sources.values():
         owner = s.access_owner or "-"
         print(f"{s.dataset_id:34} {s.status:18} {s.access:26} {owner}")
